@@ -8,48 +8,24 @@ import { useMountEffect } from "@/hooks/useMountEffect";
 
 const rawSpeechParts = [
   { text: "um ", filler: true },
-  { text: "thanks for making time today. ", filler: false },
+  { text: "this week we simplified our onboarding. ", filler: false },
   { text: "you know ", filler: true },
-  {
-    text: "the standup notes are in Anarlog, and the client liked the direction. ",
-    filler: false,
-  },
+  { text: "we thought people needed more instructions. ", filler: false },
   { text: "like ", filler: true },
-  {
-    text: "we should make the next version easier to get started with. ",
-    filler: false,
-  },
+  { text: "what they needed was one clear first step. ", filler: false },
   { text: "uh ", filler: true },
-  {
-    text: "let’s simplify the first screen and put the main action at the top. ",
-    filler: false,
-  },
+  { text: "we removed three choices from the first screen. ", filler: false },
   { text: "I mean ", filler: true },
   {
-    text: "people should know what to do without reading a whole guide. ",
+    text: "the lesson for me was to make the next action obvious. ",
     filler: false,
   },
   { text: "so, um ", filler: true },
-  { text: "I’ll send the updated proposal tomorrow morning. ", filler: false },
-  { text: "you know ", filler: true },
-  {
-    text: "please add your feedback before Thursday so we can review it together. ",
-    filler: false,
-  },
-  { text: "and, like ", filler: true },
-  {
-    text: "if anything is unclear, leave a comment next to the relevant section. ",
-    filler: false,
-  },
-  { text: "um ", filler: true },
-  {
-    text: "after that, we can share the final plan with the team and get started. ",
-    filler: false,
-  },
+  { text: "that is the idea I want to share in my next post. ", filler: false },
 ];
 
 const polishedSpeech =
-  "Thanks for making time today. The standup notes are in Anarlog, and the client liked the direction. We should make the next version easier to get started with. Let’s simplify the first screen and put the main action at the top. People should know what to do without reading a whole guide. I’ll send the updated proposal tomorrow morning. Please add your feedback before Thursday so we can review it together. If anything is unclear, leave a comment next to the relevant section. After that, we can share the final plan with the team and get started. ";
+  "This week we simplified our onboarding. We thought people needed more instructions. What they needed was one clear first step. We removed three choices from the first screen. The lesson for me was to make the next action obvious. That is the idea I want to share in my next post. ";
 
 const rawSpeech = rawSpeechParts.map((part) => part.text).join("");
 const streamCopies = 3;
@@ -67,12 +43,11 @@ export function DictationSection() {
   return (
     <section id="dictation" className="pt-16 md:pt-20">
       <h2 className="text-color font-hand text-3xl leading-none font-semibold">
-        <span className="font-hand opacity-45">Stop typing.</span> Start
-        talking.
+        Say the idea before you lose it.
       </h2>
       <p className="text-color mx-auto mt-6 max-w-xl text-lg leading-8">
-        Dictation, built right into Anarlog. Turn your thoughts into text in the
-        apps you already use.
+        Speak a lesson, a strong opinion, or the start of a post. Turn it into
+        content and visuals with Shots, then review and schedule your content.
       </p>
       <SpeechFlowVisual />
     </section>
@@ -150,7 +125,7 @@ function SpeechFlowVisual() {
     <div
       ref={stageRef}
       className="speech-flow-stage"
-      aria-label="Rough speech becomes polished text"
+      aria-label="Illustrative dictation example: a founder reflects on an onboarding lesson"
     >
       <p className="sr-only">
         Rough speech: {rawSpeech}. Polished text: {polishedSpeech}
@@ -220,9 +195,7 @@ function SpeechFlowVisual() {
           <span />
           <span />
         </span>
-        <span className="speech-flow-control__label">
-          Try dictation with Pro
-        </span>
+        <span className="speech-flow-control__label">Explore dictation</span>
       </Link>
     </div>
   );

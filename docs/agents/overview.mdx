@@ -1,9 +1,9 @@
 ---
 title: "Agent overview"
-description: "Give an agent useful Anarlog context without exposing storage internals or unbounded transcripts."
+description: "Give an agent useful Shots Founder Hub context without exposing storage internals or unbounded transcripts."
 ---
 
-Anarlog gives agents three ways to access meeting context. The Anarlog plugin prefers the local CLI or local MCP when the agent can access your database. Remote agents use Cloud MCP through OAuth. Local CLI and MCP reads are bounded; both can also stage proposals for human review. Hosted Cloud API and remote MCP are read-only.
+Shots Founder Hub gives agents three ways to access meeting context. The Shots Founder Hub plugin prefers the local CLI or local MCP when the agent can access your database. Remote agents use Cloud MCP through OAuth. Local CLI and MCP reads are bounded; both can also stage proposals for human review. Hosted Cloud API and remote MCP are read-only.
 
 | Transport | Choose it when | Output |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ Report freshness only when an interface provides it. A meeting's `updated_at` re
 
 ## Safety boundary
 
-Agents should use an Anarlog interface, not SQLite. The supported interfaces apply Anarlog's rules for canonical notes, generated summaries, excluded participants, recurring meetings, and transcript text.
+Agents should use a Shots Founder Hub interface, not SQLite. The supported interfaces apply Shots Founder Hub's rules for canonical notes, generated summaries, excluded participants, recurring meetings, and transcript text.
 
 Meeting reads stay bounded. An agent cannot apply a note or summary change. It can stage a proposal with CLI `proposals` commands or the local MCP `propose_*` tools. A human reviews the unified diff in the desktop app and applies or declines it. Hosted Cloud API and Cloud MCP stay read-only. CLI export can create a separate file; replacing a file requires `--force`.
 

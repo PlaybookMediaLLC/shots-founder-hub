@@ -105,7 +105,7 @@ export function MeetingSettingsView({
       <SettingSwitchRow
         title={<Trans>Show floating bar</Trans>}
         description={
-          <Trans>Control listening without reopening Anarlog.</Trans>
+          <Trans>Control listening without reopening Shots Founder Hub.</Trans>
         }
         checked={floatingBar.value}
         onChange={floatingBar.onChange}

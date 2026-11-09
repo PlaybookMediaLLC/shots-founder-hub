@@ -113,8 +113,12 @@ function Component() {
     <main className="min-h-screen bg-white text-[#181613]">
       <div className="mx-auto w-full max-w-[860px] px-5 py-8 md:px-8 md:py-12">
         <header className="flex items-center justify-between gap-6">
-          <Link to="/" aria-label="Anarlog home">
-            <img src="/logo.svg" alt="Anarlog" className="h-9 w-auto" />
+          <Link to="/" aria-label="Shots Founder Hub home">
+            <img
+              src="/logo.svg"
+              alt="Shots Founder Hub"
+              className="h-9 w-auto"
+            />
           </Link>
         </header>
 
@@ -232,7 +236,7 @@ function BlogTable({ children, ...props }: ComponentProps<"table">) {
 function BlogArticleCta() {
   return (
     <aside
-      aria-label="Try Anarlog for free"
+      aria-label="Try Shots Founder Hub for free"
       className="border-color-subtle mt-20 rounded-sm border bg-[#faf7f1] px-5 py-8 md:px-7"
     >
       <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -241,7 +245,8 @@ function BlogArticleCta() {
             Take notes without inviting a bot
           </p>
           <p className="mt-3 max-w-xl text-base leading-7 text-[#4f4940]">
-            Try Anarlog for private, local-first meeting notes on your desktop.
+            Try Shots Founder Hub for private, local-first meeting notes on your
+            desktop.
           </p>
         </div>
         <Link

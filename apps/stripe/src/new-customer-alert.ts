@@ -46,7 +46,7 @@ export async function sendNewCustomerAlert(
     }
     await activeDependencies.postSlackMessage(
       activeDependencies.anarlogWebhookUrl,
-      `${customerLink(event, customer)} signed up to Anarlog`,
+      `${customerLink(event, customer)} signed up to Shots Founder Hub`,
     );
     return { product: "anarlog" as Product, kind: "signup" as const };
   }
@@ -131,9 +131,9 @@ function customerLink(event: Stripe.Event, customer: Stripe.Customer) {
   return `<${dashboardUrl}|${escapeSlackText(customer.email ?? customer.id)}>`;
 }
 
-// "Anarlog Pro" and "Char Max" read as "Pro" and "Max" in their own channels.
+// "Shots Founder Hub Pro" and "Char Max" read as "Pro" and "Max" in their own channels.
 function planLabel(productName: string) {
-  return productName.replace(/^(Anarlog|Char)\s+/, "");
+  return productName.replace(/^(Shots Founder Hub|Anarlog|Char)\s+/, "");
 }
 
 function escapeSlackText(value: string) {

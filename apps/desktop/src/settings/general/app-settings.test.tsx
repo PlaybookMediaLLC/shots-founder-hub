@@ -91,7 +91,9 @@ describe("AppSettingsView", () => {
     renderAppSettings({ appStoreBuild: true });
 
     expect(
-      screen.queryByRole("switch", { name: "Start Anarlog at login" }),
+      screen.queryByRole("switch", {
+        name: "Start Shots Founder Hub at login",
+      }),
     ).toBeNull();
     expect(
       screen.queryByRole("switch", { name: "Automatically install updates" }),

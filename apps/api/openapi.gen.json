@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Anarlog API",
-    "description": "Anarlog cloud services and opt-in hosted meeting access",
+    "title": "Shots Founder Hub API",
+    "description": "Shots Founder Hub cloud services and opt-in hosted meeting access",
     "license": {
       "name": ""
     },
@@ -2747,7 +2747,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "404": {
             "description": "Backup unavailable"
@@ -2800,7 +2800,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "409": {
             "description": "Backup changed or deletion is already being collected"
@@ -2850,7 +2850,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "404": {
             "description": "Current backup unavailable"
@@ -2903,7 +2903,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "404": {
             "description": "Backup unavailable"
@@ -2959,7 +2959,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "404": {
             "description": "Backup unavailable"
@@ -3013,7 +3013,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "404": {
             "description": "Current backup unavailable"
@@ -3063,7 +3063,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "409": {
             "description": "Backup reservation conflict"
@@ -3116,7 +3116,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription or backup access required"
+            "description": "Shots Founder Hub Pro subscription or backup access required"
           },
           "404": {
             "description": "Backup reservation unavailable"
@@ -3156,7 +3156,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "502": {
             "description": "Device service unavailable"
@@ -3197,7 +3197,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "502": {
             "description": "Device service unavailable"
@@ -3246,7 +3246,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "502": {
             "description": "Device service unavailable"
@@ -3316,7 +3316,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro or a free device slot is required"
+            "description": "Shots Founder Hub Pro or a free device slot is required"
           },
           "409": {
             "description": "An existing device must establish encrypted sync first"
@@ -3379,7 +3379,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "404": {
             "description": "Enrollment request unavailable"
@@ -3433,7 +3433,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "404": {
             "description": "Enrollment request unavailable"
@@ -3486,7 +3486,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "409": {
             "description": "Account already uses a different recovery key"
@@ -3960,7 +3960,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "404": {
             "description": "The calling device is not a registered sync device"
@@ -4023,7 +4023,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "409": {
             "description": "Account already uses a different recovery key"
@@ -4322,7 +4322,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro or share-manager access required"
+            "description": "Shots Founder Hub Pro or share-manager access required"
           },
           "409": {
             "description": "Shared note changed since the supplied base revision"
@@ -4464,7 +4464,7 @@
             "description": "Authentication required"
           },
           "403": {
-            "description": "Anarlog Pro subscription required"
+            "description": "Shots Founder Hub Pro subscription required"
           },
           "426": {
             "description": "Desktop upgrade required"
@@ -5348,7 +5348,7 @@
           {
             "name": "session_id",
             "in": "path",
-            "description": "Anarlog meeting id",
+            "description": "Shots Founder Hub meeting id",
             "required": true,
             "schema": {
               "type": "string"
@@ -5412,7 +5412,7 @@
           {
             "name": "session_id",
             "in": "path",
-            "description": "Anarlog meeting id",
+            "description": "Shots Founder Hub meeting id",
             "required": true,
             "schema": {
               "type": "string"
@@ -14799,7 +14799,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "anl_...",
-        "description": "Anarlog cloud API key"
+        "description": "Shots Founder Hub cloud API key"
       }
     }
   },
@@ -14870,7 +14870,7 @@
     },
     {
       "name": "cloud-api",
-      "description": "Opt-in hosted access to Anarlog meeting data"
+      "description": "Opt-in hosted access to Shots Founder Hub meeting data"
     },
     {
       "name": "subscription",

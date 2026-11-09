@@ -74,7 +74,7 @@ describe("DictionarySettings", () => {
     fireEvent.click(screen.getByRole("textbox"));
 
     expect(mocks.toastWarning).toHaveBeenCalledWith(
-      "This requires Anarlog Pro",
+      "This requires Shots Founder Hub Pro",
       {
         action: {
           label: "Upgrade",
@@ -87,7 +87,9 @@ describe("DictionarySettings", () => {
 
   it("adds entered terms and keeps them normalized", async () => {
     const onSave = vi.fn();
-    render(<DictionarySettings terms={["Anarlog"]} onSave={onSave} />);
+    render(
+      <DictionarySettings terms={["Shots Founder Hub"]} onSave={onSave} />,
+    );
 
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: " FastConformer, Parakeet TDT " },
@@ -100,7 +102,7 @@ describe("DictionarySettings", () => {
 
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith(
-        JSON.stringify(["Anarlog", "FastConformer", "Parakeet TDT"]),
+        JSON.stringify(["Shots Founder Hub", "FastConformer", "Parakeet TDT"]),
       ),
     );
   });
@@ -109,12 +111,14 @@ describe("DictionarySettings", () => {
     const onSave = vi.fn();
     render(
       <DictionarySettings
-        terms={["Anarlog", "Parakeet TDT"]}
+        terms={["Shots Founder Hub", "Parakeet TDT"]}
         onSave={onSave}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Remove Anarlog" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove Shots Founder Hub" }),
+    );
 
     expect(onSave).toHaveBeenCalledWith(JSON.stringify(["Parakeet TDT"]));
   });
@@ -123,18 +127,22 @@ describe("DictionarySettings", () => {
     const onSave = vi.fn();
     render(
       <DictionarySettings
-        terms={["Anarlog", "Parakeet TDT"]}
+        terms={["Shots Founder Hub", "Parakeet TDT"]}
         onSave={onSave}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit: Anarlog" }));
-    const input = screen.getByRole("textbox", { name: "Edit: Anarlog" });
-    fireEvent.change(input, { target: { value: " Anarlog AI " } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit: Shots Founder Hub" }),
+    );
+    const input = screen.getByRole("textbox", {
+      name: "Edit: Shots Founder Hub",
+    });
+    fireEvent.change(input, { target: { value: " Shots Founder Hub AI " } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onSave).toHaveBeenCalledWith(
-      JSON.stringify(["Anarlog AI", "Parakeet TDT"]),
+      JSON.stringify(["Shots Founder Hub AI", "Parakeet TDT"]),
     );
   });
 
@@ -142,15 +150,20 @@ describe("DictionarySettings", () => {
     const onSave = vi.fn();
     render(
       <DictionarySettings
-        terms={["Anarlog", "Parakeet TDT"]}
+        terms={["Shots Founder Hub", "Parakeet TDT"]}
         onSave={onSave}
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit: Anarlog" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Edit: Anarlog" }), {
-      target: { value: "parakeet tdt" },
-    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit: Shots Founder Hub" }),
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Edit: Shots Founder Hub" }),
+      {
+        target: { value: "parakeet tdt" },
+      },
+    );
 
     expect(
       (screen.getByRole("button", { name: "Save" }) as HTMLButtonElement)
@@ -161,23 +174,31 @@ describe("DictionarySettings", () => {
 
   it("cancels inline edits with Escape", () => {
     const onSave = vi.fn();
-    render(<DictionarySettings terms={["Anarlog"]} onSave={onSave} />);
+    render(
+      <DictionarySettings terms={["Shots Founder Hub"]} onSave={onSave} />,
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit: Anarlog" }));
-    const input = screen.getByRole("textbox", { name: "Edit: Anarlog" });
-    fireEvent.change(input, { target: { value: "Anarlog AI" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit: Shots Founder Hub" }),
+    );
+    const input = screen.getByRole("textbox", {
+      name: "Edit: Shots Founder Hub",
+    });
+    fireEvent.change(input, { target: { value: "Shots Founder Hub AI" } });
     fireEvent.keyDown(input, { key: "Escape" });
 
-    expect(screen.getByText("Anarlog")).toBeTruthy();
+    expect(screen.getByText("Shots Founder Hub")).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
   });
 
   it("does not enable adding duplicate terms", async () => {
     const onSave = vi.fn();
-    render(<DictionarySettings terms={["Anarlog"]} onSave={onSave} />);
+    render(
+      <DictionarySettings terms={["Shots Founder Hub"]} onSave={onSave} />,
+    );
 
     fireEvent.change(screen.getByRole("textbox"), {
-      target: { value: "anarlog" },
+      target: { value: "shots founder hub" },
     });
 
     const addButton = screen.getByRole("button", {
@@ -191,7 +212,7 @@ describe("DictionarySettings", () => {
   it("filters saved terms while typing", async () => {
     render(
       <DictionarySettings
-        terms={["Anarlog", "FastConformer", "Parakeet TDT"]}
+        terms={["Shots Founder Hub", "FastConformer", "Parakeet TDT"]}
         onSave={vi.fn()}
       />,
     );
@@ -201,7 +222,7 @@ describe("DictionarySettings", () => {
     });
 
     await waitFor(() => expect(screen.getByText("FastConformer")).toBeTruthy());
-    expect(screen.queryByText("Anarlog")).toBeNull();
+    expect(screen.queryByText("Shots Founder Hub")).toBeNull();
     expect(screen.queryByText("Parakeet TDT")).toBeNull();
   });
 });

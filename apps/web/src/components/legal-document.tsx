@@ -15,7 +15,7 @@ export function legalHead(doc: Legal, path: "/privacy" | "/terms") {
   return {
     links: [{ rel: "canonical", href: url }],
     meta: [
-      { title: `${doc.title} — Anarlog` },
+      { title: `${doc.title} — Shots Founder Hub` },
       { name: "description", content: doc.summary || doc.title },
       { property: "og:title", content: doc.title },
       { property: "og:description", content: doc.summary || doc.title },
@@ -54,6 +54,7 @@ export function LegalDocument({ doc }: { doc: Legal }) {
               month: "long",
               day: "numeric",
               year: "numeric",
+              timeZone: "UTC",
             })}
           </time>
         </header>

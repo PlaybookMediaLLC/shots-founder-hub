@@ -1,59 +1,48 @@
-> **Note:** The team is now building **[char](https://char.com)**. The **anarlog** community application remains open-source, MIT-licensed, and maintained as the local-first meeting notetaker in this repo. Source-visible enterprise components are commercially licensed.
+Shots Founder Hub is a fork of [Anarlog](https://github.com/fastrepl/anarlog). Upstream copyright, license notices, and contributor credits are preserved.
 
 <div align="center">
 
-<img width="110" src="apps/desktop/src-tauri/icons/stable/128x128@2x.png" alt="anarlog icon" />
+<img width="110" src="apps/desktop/src-tauri/icons/stable/128x128@2x.png" alt="Shots Founder Hub icon" />
 
-<h1>anarlog</h1>
+<h1>Shots Founder Hub</h1>
 
 <p>
-    <b>The privacy-first AI meeting notepad.</b>
+    <b>Build your personal brand from the work you already do.</b>
     <br />
-    Open source, local-first, and yours to fork. Granola, rearranged.
+    Speak an idea. Find a takeaway. Create and schedule with Shots.
   </p>
 
 <p>
-    <a href="https://anarlog.so">Website</a>
+    <a href="#get-started">Get started</a>
     &nbsp;•&nbsp;
-    <a href="https://docs.anarlog.so">Docs</a>
+    <a href="docs/">Documentation</a>
     &nbsp;•&nbsp;
-    <a href="https://anarlog.so/download">Download</a>
+    <a href="#contributing">Contributing</a>
     &nbsp;•&nbsp;
-    <a href="https://anarlog.so/discord">Discord</a>
+    <a href="LICENSE">License</a>
     &nbsp;•&nbsp;
-    <a href="https://www.reddit.com/r/anarlog/">r/anarlog</a>
-    &nbsp;•&nbsp;
-    <a href="https://x.com/anarlogapp">@anarlogapp</a>
-    &nbsp;•&nbsp;
-    <a href="https://status.anarlog.so">Status</a>
+    <a href="mailto:team@playbookmedia.io">Contact Playbook</a>
   </p>
 
-<p>
-    <a href="https://github.com/fastrepl/anarlog/stargazers"><img src="https://img.shields.io/github/stars/fastrepl/anarlog?style=flat&color=ffe09d" alt="GitHub stars" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-black" alt="MIT license" /></a>
-    <a href="https://anarlog.so/discord"><img src="https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white" alt="Discord" /></a>
-    <a href="https://deepwiki.com/fastrepl/anarlog"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
-  </p>
-
-<img width="100%" src="apps/web/public/og.jpg" alt="anarlog" />
+<img width="100%" src="apps/web/public/og.jpg" alt="Shots Founder Hub" />
 
 </div>
 
 <br />
 
-anarlog is an open-source alternative to Granola. It takes notes in your meetings without sending a bot to join the call: it listens to your device audio, can transcribe on your machine, and keeps app data in a local SQLite database.
+Shots Founder Hub is developed by Playbook Media Interactive LLC to help founders create content and visuals with Shots. Speak an idea or extract takeaways from meeting notes and transcripts, add your point of view, then review and schedule your content.
 
-It is built for people who want AI meeting notes without handing their conversations to someone else's cloud, and for anyone who needs to get a notetaker past a security review with a straight face.
+The desktop capture foundation stores its core record locally in SQLite and supports notes, audio, transcripts, summaries, and exports. Connected features have separate processing requirements and depend on the services you configure.
 
-## Why anarlog
+## Why Shots Founder Hub
 
-- **No bot joins your call.** anarlog captures audio directly on your device. Nothing appears in the participant list, and nothing records from inside the meeting.
+- **No bot joins your call.** Shots Founder Hub captures audio directly on your device. Nothing appears in the participant list, and nothing records from inside the meeting.
 - **Local when you choose it.** On supported Macs, available built-in transcription models run on-device. Local Intelligence providers keep summaries and chat on your computer too.
 - **Your data, in a format you can read.** Sessions, notes, and transcripts live in local SQLite. Recordings and attachments are plain local files. Export Markdown whenever it fits your workflow.
 - **Bring your own AI.** Use a supported hosted provider, your own API key, or an OpenAI-compatible local server such as Ollama, LM Studio, or Unsloth.
 - **Readable source, MIT.** The community application is MIT-licensed. Fork it, audit it, sell it, or build it yourself.
-- **Cloud is opt-in, not required.** Hosted AI, encrypted CloudSync, and sharing exist when you want them. Nothing depends on them.
-- **A front door for your org.** Source-visible enterprise components and commercial deployment options give security and IT teams a real path to yes.
+- **Explicit cloud choices.** The core local record can be used without cloud services. Hosted AI, encrypted CloudSync, and sharing require their configured services.
+- **Separate component licenses.** Enterprise components remain source-visible under their existing commercial license; the fork does not change those terms.
 
 ## What runs where
 
@@ -67,19 +56,19 @@ It is built for people who want AI meeting notes without handing their conversat
 
 ## How AI works
 
-anarlog keeps audio transcription separate from the language model used for summaries and chat. You can change either one without changing the other.
+Shots Founder Hub keeps audio transcription separate from the language model used for summaries and chat. You can change either one without changing the other.
 
-| Stage                                       | App setting       | Anarlog Cloud                                                                                                                                            | Local or bring your own                                                                   |
+| Stage                                       | App setting       | Hosted path (when configured) | Local or bring your own                                                                   |
 | ------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Audio → transcript                          | **Transcription** | Managed **Pro (Cloud)** prefers Soniox 5 for live and batch transcription, with eligible fallbacks based on language and mode. | Soniqo or Apple Speech when available, or your selected transcription provider and model  |
-| Transcript + memo → summary, title, or chat | **Intelligence**  | Managed **Auto** (also shown as Pro (Cloud)) currently uses the latest Claude Sonnet alias through OpenRouter.                                           | Your selected API, subscription, OpenAI-compatible server, or eligible Apple Intelligence |
+| Audio → transcript                          | **Transcription** | The hosted transcription provider and supported fallback routes configured for the request. | Soniqo or Apple Speech when available, or your selected transcription provider and model  |
+| Transcript + memo → summary, title, or chat | **Intelligence**  | The hosted model configured for summaries or chat. Repository support does not establish the active production provider or model.                                           | Your selected API, subscription, OpenAI-compatible server, or eligible Apple Intelligence |
 
 The active provider and model are always visible under **Settings → Transcription** and **Settings → Intelligence**. Read [Models and providers](https://docs.anarlog.so/models-and-providers) for the current routes, local model list, and privacy boundaries.
 
 ## Get started
 
-1. [Download Anarlog](https://anarlog.so/download) for macOS, Windows, or Linux.
-2. Open it and join a meeting. anarlog records on your device and transcribes with the model you selected.
+1. Build this fork from source using the instructions below. Existing [upstream downloads](https://anarlog.so/download) are Anarlog release artifacts; this change does not publish fork-branded binaries.
+2. Open it and join a meeting. Shots Founder Hub records on your device and transcribes with the model you selected.
 3. Generate a note, edit it like a document, and export Markdown when you need it.
 4. Optional: connect an LLM provider or a local model in settings for summaries and chat.
 
@@ -126,24 +115,18 @@ Process Compose builds shared UI first, manages the app processes, and saves log
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/fastrepl/anarlog) for a code-indexed explanation of a subsystem.
 
-## Name history
+## Upstream history and attribution
 
-**anarlog** started as **Hyprnote**, then briefly used the **char** name.
+Shots Founder Hub is a separate fork of **Anarlog** developed by **Playbook Media Interactive LLC**. Anarlog's upstream project previously used the **Hyprnote** and **Char** names. The upstream team also maintains a separate productivity product at [char.com](https://char.com).
 
-We later split the work into two projects. **[char](https://char.com)** is the team's current productivity app. **anarlog** is this open-source, local-first meeting notetaker.
-
-This repository is not the current char codebase, and anarlog is not being retired. Its community application stays MIT-licensed, forkable, buildable from source, and built for local notes you control.
-
-If you came here from Granola, welcome. If you came here from Hyprnote, welcome back.
-
-Either way, it's yours.
+That history, upstream customers, contributors, and release notes are not claims about Playbook's company history or customer base. Required copyright, contributor attribution, and component license notices are preserved.
 
 ## Contributing
 
 Issues, pull requests, bug reports, and docs fixes are all welcome.
 
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
-- Join the community on [Discord](https://anarlog.so/discord) or [r/anarlog](https://www.reddit.com/r/anarlog/).
+- Contact [team@playbookmedia.io](mailto:team@playbookmedia.io) with project questions.
 
 Contributions outside `enterprise/` are distributed under the MIT license.
 

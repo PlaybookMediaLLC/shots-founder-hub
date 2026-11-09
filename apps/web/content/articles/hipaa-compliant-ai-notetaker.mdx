@@ -77,7 +77,7 @@ Every product below can be part of a compliant deployment under the right plan a
 | **Avoma** | Yes | Enterprise | HIPAA, DPAs, and custom retention are Enterprise-only; see our [Avoma alternatives guide](/blog/avoma-alternatives/) |
 | **Sembly** | Yes | Enterprise-oriented | Broad certification set including SOC 2 Type II, HIPAA, GDPR, FERPA |
 | **Zoom AI Companion** | No | Not applicable | Zoom's HIPAA-compliant instances do not offer AI Companion. Institutional guidance warns against using it for sensitive discussion |
-| **Anarlog** | Not applicable — no third party receives the data by default | Any | Local capture removes the vendor from the pipeline; your device controls become the safeguard |
+| **Shots Founder Hub** | Not applicable — no third party receives the data by default | Any | Local capture removes the vendor from the pipeline; your device controls become the safeguard |
 
 The pattern is consistent: HIPAA coverage lives on the top tier. If you evaluated a notetaker on its free plan and liked it, the price you will actually pay for a compliant deployment is a different number, usually with a seat minimum and an annual contract.
 
@@ -87,7 +87,7 @@ Zoom is the case worth flagging. Teams often assume the AI summary comes with th
 
 Local capture does not make you compliant. It changes which safeguards are in play.
 
-[Anarlog](/) captures microphone and system audio from your machine without joining the call as a participant, transcribes on-device, and stores the meeting in local SQLite. In that configuration, no third party creates, receives, maintains, or transmits the recording or transcript, so there is no business associate to contract with for those steps.
+[Shots Founder Hub](/) captures microphone and system audio from your machine without joining the call as a participant, transcribes on-device, and stores the meeting in local SQLite. In that configuration, no third party creates, receives, maintains, or transmits the recording or transcript, so there is no business associate to contract with for those steps.
 
 What this removes:
 
@@ -105,7 +105,7 @@ What it does not remove:
 - Workforce training, sanctions, and documented policies
 - Consent and recording obligations under state law, which are separate from HIPAA — see [is AI notetaking legal](/blog/is-ai-notetaking-legal/)
 
-If you enable a hosted AI provider for summaries, that provider is back in scope and needs a BAA like any other. Anarlog supports local models and your own provider keys precisely so this is a decision you make rather than a default you inherit, but the decision still has to be made deliberately.
+If you enable a hosted AI provider for summaries, that provider is back in scope and needs a BAA like any other. Shots Founder Hub supports local models and your own provider keys precisely so this is a decision you make rather than a default you inherit, but the decision still has to be made deliberately.
 
 The honest framing: local processing reduces the number of parties who touch PHI and shrinks the contractual surface. It moves responsibility onto your device management rather than eliminating it. Organizations without endpoint controls may be worse off with unmanaged laptops holding transcripts than with a properly contracted hosted vendor.
 
@@ -181,4 +181,4 @@ The analysis is similar and the stakes differ. Sharing a privileged conversation
 
 ### Which notetaker should a small clinic actually use?
 
-If PHI is involved, the shortlist is a vendor with an executed BAA on a plan you can afford, or a fully local setup on managed devices. Fathom Enterprise+ and Fireflies Enterprise with Private Storage are the common hosted answers. If the practice already manages its endpoints and would rather not add a business associate at all, [Anarlog](/) keeps capture, transcription, and storage on the clinician's own machine. Either way, the decision should be documented and reviewed by whoever signs off on your risk analysis.
+If PHI is involved, the shortlist is a vendor with an executed BAA on a plan you can afford, or a fully local setup on managed devices. Fathom Enterprise+ and Fireflies Enterprise with Private Storage are the common hosted answers. If the practice already manages its endpoints and would rather not add a business associate at all, [Shots Founder Hub](/) keeps capture, transcription, and storage on the clinician's own machine. Either way, the decision should be documented and reviewed by whoever signs off on your risk analysis.

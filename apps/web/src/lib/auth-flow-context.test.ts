@@ -52,7 +52,7 @@ test("keeps legacy desktop schemes valid during migration", () => {
   );
 });
 
-test("defaults new desktop flows to the canonical Anarlog scheme", () => {
+test("defaults new desktop flows to the canonical Shots Founder Hub scheme", () => {
   assert.deepEqual(resolveAuthFlowContext({ flow: "desktop" }), {
     flow: "desktop",
     scheme: "anarlog",

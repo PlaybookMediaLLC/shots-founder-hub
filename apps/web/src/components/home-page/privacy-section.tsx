@@ -8,21 +8,21 @@ import { cn } from "@anlg/utils";
 
 const privacyCommitments = [
   {
-    title: "Invisible while you meet",
+    title: "Keep the useful moments",
     description:
-      "No bot joins the meeting, and Anarlog stays hidden while sharing screens.",
+      "Notes and supported meeting capture can help you revisit a useful lesson. Get permission before recording or sharing someone else’s words.",
     visual: "meeting",
   },
   {
-    title: "Local by default",
+    title: "Keep private work private",
     description:
-      "Your notes, transcripts, attachments, and recordings stay on your device by default.",
+      "Your core desktop record is local. Choose what you take into your content workflow; AI, sync, and sharing have separate data paths.",
     visual: "files",
   },
   {
-    title: "Own your AI stack",
+    title: "Choose your AI",
     description:
-      "Run models on your device, bring your own keys, or use our AI.",
+      "Choose supported local models or connect the providers that fit your workflow.",
     visual: "key",
   },
 ];
@@ -31,12 +31,13 @@ export function PrivacySection() {
   return (
     <section className="py-16 md:py-20">
       <div>
-        <h2 className="font-hand text-3xl leading-none font-semibold text-[#756b5d]">
-          Private from call to file
+        <h2 className="font-hand text-fg-muted text-3xl leading-none font-semibold">
+          Your ideas. Your voice. Your choices.
         </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#4f4940]">
-          Anarlog works quietly from your desktop, without joining your calls,
-          forcing your data into the cloud, or locking it inside our app.
+        <p className="text-fg-muted mx-auto mt-6 max-w-2xl text-lg leading-8">
+          Building a personal brand starts with deciding what you want to say.
+          Keep material you may want to revisit, and choose what belongs in your
+          public story.
         </p>
       </div>
 
@@ -49,10 +50,10 @@ export function PrivacySection() {
                 className="flex flex-col px-6 py-3 text-center md:w-[31%] md:p-4"
               >
                 <PrivacyVisual type={commitment.visual} />
-                <h3 className="mt-5 text-base font-medium text-[#4f4940] md:mt-7">
+                <h3 className="text-fg mt-5 text-base font-medium md:mt-7">
                   {commitment.title}
                 </h3>
-                <p className="mx-auto mt-1 max-w-[17rem] text-sm leading-6 text-[#4f4940]">
+                <p className="text-fg-muted mx-auto mt-1 max-w-[17rem] text-sm leading-6">
                   {commitment.description}
                 </p>
               </div>
@@ -150,7 +151,7 @@ function LocalFilesVisual() {
 function MeetingCaptureVisual() {
   return (
     <div className="flex h-20 items-center justify-center select-none md:h-28 md:w-full">
-      <div className="flex w-full max-w-[260px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white py-2 pr-3 pl-4 text-left shadow-[0_3px_10px_rgba(24,22,19,0.04)]">
+      <div className="border-border-subtle bg-page flex w-full max-w-[260px] items-center gap-3 rounded-2xl border py-2 pr-3 pl-4 text-left shadow-[0_3px_10px_rgba(24,22,19,0.04)]">
         <img
           src="/icons/google-meet.svg"
           alt=""
@@ -158,10 +159,8 @@ function MeetingCaptureVisual() {
           draggable={false}
         />
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-stone-800">
-            Sprint 3 planning
-          </span>
-          <span className="text-sm text-stone-400">5 participants</span>
+          <span className="text-fg text-sm font-medium">Sprint 3 planning</span>
+          <span className="text-fg-muted text-sm">5 participants</span>
         </div>
         <div
           className="meeting-audio-bars ml-auto flex h-6 items-center gap-0.5"

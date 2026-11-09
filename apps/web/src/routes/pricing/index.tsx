@@ -13,9 +13,9 @@ import {
 } from "@/lib/competitors";
 import { getCanonicalUrl } from "@/lib/seo";
 
-const title = "Pricing · Anarlog";
+const title = "Pricing · Shots Founder Hub";
 const description =
-  "Compare Anarlog Free, Pro, and Enterprise. Pro adds dictation, cloud features, and team collaboration for $14/person/month or $140/person/year.";
+  "Compare Shots Founder Hub Free, Pro, and Enterprise. Pro adds dictation, cloud features, and team collaboration for $14/person/month or $140/person/year.";
 
 const reviewedOnLabel = new Date(COMPARISON_REVIEWED_ON).toLocaleDateString(
   "en-US",
@@ -45,7 +45,11 @@ function PricingPage() {
       <div className="mx-auto w-full max-w-[700px] px-5 pt-4 pb-8 md:px-8 md:pt-4 md:pb-12">
         <div className="min-w-0 text-center">
           <section className="pt-10 md:pt-12">
-            <Link to="/" aria-label="Anarlog home" className="inline-flex">
+            <Link
+              to="/"
+              aria-label="Shots Founder Hub home"
+              className="inline-flex"
+            >
               <AnarlogLogo className="h-8 w-auto md:h-9" />
             </Link>
           </section>

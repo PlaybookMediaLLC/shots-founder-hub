@@ -1,9 +1,9 @@
 ---
-title: "Anarlog skill"
-description: "Teach a compatible agent when and how to use Anarlog's MCP and CLI surfaces."
+title: "Shots Founder Hub skill"
+description: "Teach a compatible agent when and how to use Shots Founder Hub's MCP and CLI surfaces."
 ---
 
-The public Anarlog skill teaches agents a single workflow across Cloud MCP and the local CLI:
+The public Shots Founder Hub skill teaches agents a single workflow across Cloud MCP and the local CLI:
 
 1. Prefer local MCP or `anarlog --json meetings --source local list` when the agent can access your database.
 2. Use OAuth-connected Cloud MCP when running remotely or when local access is unavailable.
@@ -21,10 +21,10 @@ The published file is self-contained. The repository package adds references for
 
 ## Install the plugin
 
-The `Anarlog` plugin bundles the skill and an optional hosted Cloud MCP connection. [Install the Anarlog CLI](/installation) for local access; no Cloud login or Pro subscription is needed. For remote access, enable **Settings → Developers → Cloud API & Connectors** with Pro access through a personal plan or an eligible paid Pro workspace membership and connect through OAuth.
+The `Shots Founder Hub` plugin bundles the skill and an optional hosted Cloud MCP connection. [Install the Shots Founder Hub CLI](/installation) for local access; no Cloud login or Pro subscription is needed. For remote access, enable **Settings → Developers → Cloud API & Connectors** with Pro access through a personal plan or an eligible paid Pro workspace membership and connect through OAuth.
 
 <Note>
-  The repository package is named **Anarlog**. Its optional hosted connection appears as **Anarlog Cloud**.
+  The repository package is named **Shots Founder Hub**. Its optional hosted connection appears as **Shots Founder Hub Cloud**.
 </Note>
 
 For Claude Code:
@@ -41,7 +41,7 @@ copilot plugin marketplace add fastrepl/anarlog
 copilot plugin install anarlog@fastrepl
 ```
 
-For ChatGPT and Codex, add the repository source, restart the ChatGPT desktop app, then install **Anarlog** from the Fastrepl source in the Plugins Directory:
+For ChatGPT and Codex, add the repository source, restart the ChatGPT desktop app, then install **Shots Founder Hub** from the Fastrepl source in the Plugins Directory:
 
 ```bash
 codex plugin marketplace add fastrepl/anarlog \
@@ -51,9 +51,9 @@ codex plugin marketplace add fastrepl/anarlog \
 
 Use the host's cloud connection control to sign in and approve OAuth. Some MCP hosts prompt on first cloud tool use. No cloud API key is required for OAuth connections. A skill-only installation does not create an account connection.
 
-The Fastrepl plugin includes an optional **Anarlog Cloud** App connection for Codex. Leave it disconnected for local CLI access. Public directory listings have a separate review and release process from the repository marketplace.
+The Fastrepl plugin includes an optional **Shots Founder Hub Cloud** App connection for Codex. Leave it disconnected for local CLI access. Public directory listings have a separate review and release process from the repository marketplace.
 
-Cursor Teams and Enterprise administrators can import `https://github.com/fastrepl/anarlog` as a team marketplace, then install **Anarlog**.
+Cursor Teams and Enterprise administrators can import `https://github.com/fastrepl/anarlog` as a team marketplace, then install **Shots Founder Hub**.
 
 ## Install in an agent
 
@@ -69,4 +69,4 @@ For a filesystem-based agent, copy the complete `skills/anarlog` directory into 
   Agent skill locations and installer commands vary by client. Follow your agent's skill installation instructions rather than copying only `SKILL.md`.
 </Note>
 
-The contributor skills under `.agents/skills` are internal repository workflows. They are not part of the public Anarlog skill.
+The contributor skills under `.agents/skills` are internal repository workflows. They are not part of the public Shots Founder Hub skill.

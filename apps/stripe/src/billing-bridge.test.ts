@@ -41,7 +41,7 @@ const dependencies = (
 });
 
 describe("syncBillingBridge", () => {
-  it("never assigns Anarlog owner metadata or syncs mixed-metadata Autumn customers", async () => {
+  it("never assigns Shots Founder Hub owner metadata or syncs mixed-metadata Autumn customers", async () => {
     for (const key of ["user_id", "workspaceId"]) {
       await syncBillingBridge(
         event(

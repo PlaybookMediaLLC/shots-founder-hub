@@ -6,7 +6,6 @@ import {
   ABOUT_UPDATED_ON,
   differentiators,
   faqs,
-  team,
   howAnarlogWorks,
   keyFacts,
   originStory,
@@ -15,14 +14,14 @@ import {
   whoUsesAnarlog,
 } from "@/lib/about";
 import {
-  ANARLOG_SITE_URL,
+  getOrganizationJsonLd,
   getCanonicalUrl,
   getStructuredDataGraph,
 } from "@/lib/seo";
 
-const title = "About · Anarlog";
+const title = "About · Shots Founder Hub";
 const description =
-  "Who builds Anarlog, what it does, how it differs from Granola, Otter, and Fathom, who uses it, and the key facts about the company.";
+  "Shots Founder Hub by Playbook Media Interactive LLC: create content and visuals from spoken ideas and meeting takeaways, then schedule your content in Shots.";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -43,41 +42,7 @@ export const Route = createFileRoute("/about")({
         type: "application/ld+json",
         children: JSON.stringify(
           getStructuredDataGraph([
-            {
-              "@type": "Organization",
-              name: "Anarlog",
-              legalName: "Fastrepl, Inc.",
-              url: getCanonicalUrl(),
-              logo: `${ANARLOG_SITE_URL}/logo.svg`,
-              foundingDate: "2023",
-              founder: {
-                "@type": "Person",
-                name: team[0].name,
-                jobTitle: team[0].role,
-                sameAs: team[0].links.map((link) => link.href),
-              },
-              employee: team.map((member) => ({
-                "@type": "Person",
-                name: member.name,
-                jobTitle: member.role,
-                sameAs: member.links.map((link) => link.href),
-              })),
-              location: [
-                { "@type": "Place", name: "Seoul, South Korea" },
-                { "@type": "Place", name: "San Francisco, California" },
-              ],
-              contactPoint: {
-                "@type": "ContactPoint",
-                email: "team@fastrepl.com",
-                contactType: "customer support",
-              },
-              sameAs: [
-                "https://github.com/fastrepl/anarlog",
-                "https://x.com/anarlogapp",
-                "https://www.linkedin.com/company/anarlog/",
-                "https://www.reddit.com/r/anarlog/",
-              ],
-            },
+            getOrganizationJsonLd(),
             {
               "@type": "FAQPage",
               mainEntity: faqs.map((faq) => ({
@@ -115,11 +80,15 @@ function AboutPage() {
     <main className="min-h-screen bg-white text-[#181613]">
       <div className="mx-auto w-full max-w-[700px] px-5 pt-4 pb-8 md:px-8 md:pt-4 md:pb-12">
         <section className="pt-10 pb-4 text-center md:pt-12 md:pb-6">
-          <Link to="/" aria-label="Anarlog home" className="inline-flex">
+          <Link
+            to="/"
+            aria-label="Shots Founder Hub home"
+            className="inline-flex"
+          >
             <AnarlogLogo className="h-8 w-auto md:h-9" />
           </Link>
           <h1 className="font-hand mt-12 text-4xl leading-none font-semibold text-[#181613] md:mt-16 md:text-5xl">
-            About Anarlog
+            About Shots Founder Hub
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#4f4940]">
             {VALUE_PROP}
@@ -130,7 +99,7 @@ function AboutPage() {
         </section>
 
         <section className="pt-10 pb-4 md:pt-12">
-          <SectionHeading>What Anarlog does</SectionHeading>
+          <SectionHeading>What Shots Founder Hub does</SectionHeading>
           <div className="mt-6 flex flex-col gap-6">
             {whatAnarlogDoes.map((item) => (
               <div key={item.title}>
@@ -146,14 +115,13 @@ function AboutPage() {
         </section>
 
         <section className="pt-10 pb-4 md:pt-12">
-          <SectionHeading>What makes Anarlog different</SectionHeading>
-          <p className="mt-5 text-base leading-7 text-[#4f4940]">
-            Compare recording methods, free-plan limits and example paid plans
-            on the{" "}
-            <Link to="/pricing/" className="underline">
-              pricing page
-            </Link>
-            .
+          <SectionHeading>
+            What makes Shots Founder Hub different
+          </SectionHeading>
+          <p className="text-fg-muted mt-5 text-base leading-7">
+            We’re shaping a workflow around what founders already know and
+            learn, with their own voice at the center of the content and visuals
+            they create with Shots.
           </p>
           <ol className="mt-8 flex flex-col gap-4">
             {differentiators.map((item, index) => (
@@ -176,7 +144,7 @@ function AboutPage() {
         </section>
 
         <section className="pt-10 pb-4 md:pt-12">
-          <SectionHeading>Who uses Anarlog</SectionHeading>
+          <SectionHeading>Who we’re building for</SectionHeading>
           <ul className="mt-6 list-disc space-y-2 pl-5 text-sm leading-6 text-[#4f4940]">
             {whoUsesAnarlog.map((item) => (
               <li key={item}>{item}</li>
@@ -185,7 +153,9 @@ function AboutPage() {
         </section>
 
         <section className="pt-10 pb-4 md:pt-12">
-          <SectionHeading>The team behind Anarlog</SectionHeading>
+          <SectionHeading>
+            Built by Playbook Media Interactive LLC
+          </SectionHeading>
           {originStory.map((paragraph) => (
             <p
               key={paragraph}
@@ -194,41 +164,10 @@ function AboutPage() {
               {paragraph}
             </p>
           ))}
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {team.map((founder) => (
-              <div
-                key={founder.name}
-                className="rounded-2xl border border-[#eadfce] px-5 py-4"
-              >
-                <h3 className="text-base font-medium text-[#181613]">
-                  {founder.name}
-                </h3>
-                <p className="text-xs tracking-[0.04em] text-[#756b5d]">
-                  {founder.role}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[#4f4940]">
-                  {founder.bio}
-                </p>
-                <div className="mt-3 flex gap-3 text-xs">
-                  {founder.links.map((link) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-[#181613]"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
 
         <section className="pt-10 pb-4 md:pt-12">
-          <SectionHeading>How Anarlog works</SectionHeading>
+          <SectionHeading>How Shots Founder Hub works</SectionHeading>
           <div className="mt-6 flex flex-col gap-6">
             {howAnarlogWorks.map((item) => (
               <div key={item.title}>

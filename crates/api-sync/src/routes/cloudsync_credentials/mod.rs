@@ -283,7 +283,7 @@ async fn set_workspace_e2ee_key(
         (status = 200, description = "Encrypted replica credentials", body = ReplicaCredentials),
         (status = 400, description = "Invalid E2EE key identity"),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 409, description = "Account already uses a different recovery key"),
         (status = 502, description = "Replica credential service unavailable")
     )
@@ -363,7 +363,7 @@ pub struct RenameSyncDeviceRequest {
     responses(
         (status = 200, description = "Approved and pending sync devices", body = SyncDevicesResponse),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 502, description = "Device service unavailable")
     )
 )]
@@ -396,7 +396,7 @@ async fn get_devices(
         (status = 204, description = "Device renamed"),
         (status = 400, description = "Invalid device fingerprint or name"),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 502, description = "Device service unavailable")
     )
 )]
@@ -422,7 +422,7 @@ async fn patch_device(
         (status = 204, description = "Device removed"),
         (status = 400, description = "Invalid device fingerprint"),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 502, description = "Device service unavailable")
     )
 )]
@@ -447,7 +447,7 @@ async fn delete_device(
         (status = 200, description = "E2EE recovery-key identity claimed", body = E2eeIdentity),
         (status = 400, description = "Invalid E2EE key identity"),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 409, description = "Account already uses a different recovery key"),
         (status = 502, description = "E2EE identity service unavailable")
     )
@@ -480,7 +480,7 @@ async fn claim_e2ee_identity(
     responses(
         (status = 200, description = "Short-lived CloudSync credentials", body = CloudsyncCredentialResponse),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 426, description = "Desktop upgrade required"),
         (status = 502, description = "Credential issuer unavailable")
     )

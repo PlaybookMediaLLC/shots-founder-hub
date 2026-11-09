@@ -143,8 +143,8 @@ export async function sendSubscriptionNotice(
       firstName: customer.name?.trim().split(/\s+/)[0] || "there",
       planName:
         owner.kind === "workspace"
-          ? `Anarlog Team (${item.quantity ?? 1} seats)`
-          : "Anarlog Pro",
+          ? `Shots Founder Hub Team (${item.quantity ?? 1} seats)`
+          : "Shots Founder Hub Pro",
       price,
       paymentSummary,
       renewalSummary,
@@ -155,7 +155,7 @@ export async function sendSubscriptionNotice(
       renewalDate,
       cancellationUrl:
         owner.kind === "workspace"
-          ? `mailto:team@fastrepl.com?${`subject=${encodeURIComponent("Cancel my Anarlog Team subscription")}&body=${encodeURIComponent(`Please cancel automatic renewal of my Anarlog Team subscription ${id}.`)}`}`
+          ? `mailto:team@fastrepl.com?${`subject=${encodeURIComponent("Cancel my Shots Founder Hub Team subscription")}&body=${encodeURIComponent(`Please cancel automatic renewal of my Shots Founder Hub Team subscription ${id}.`)}`}`
           : "https://anarlog.so/app/portal",
     },
   );

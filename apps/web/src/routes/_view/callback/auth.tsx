@@ -212,7 +212,7 @@ function Component() {
           hasTokens
             ? search.scheme.startsWith("anarlog-dev") ||
               search.scheme === "anarlog"
-              ? "Return to the Anarlog app to keep going."
+              ? "Return to the Shots Founder Hub app to keep going."
               : "Return to the desktop app to keep going."
             : "Please wait while we complete the secure handoff."
         }
@@ -265,7 +265,7 @@ function DesktopAuthHandoffActions({ deeplink }: { deeplink: string }) {
         {...getDesktopAppOpenLinkProps(deeplink)}
         className={authPrimaryButtonClassName}
       >
-        Open Anarlog
+        Open Shots Founder Hub
       </a>
 
       <div className="rounded-xl border border-[#e5ddcf] bg-[#fbfaf7] p-4 text-center">

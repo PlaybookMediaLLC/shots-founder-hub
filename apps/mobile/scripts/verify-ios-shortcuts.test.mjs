@@ -22,6 +22,6 @@ test("accepts an app with the ready-made recording shortcut", () => {
 test("rejects a shortcut that cannot foreground microphone capture", () => {
   assert.throws(
     () => verifyAppShortcuts({ actions: {}, autoShortcuts }),
-    /open Anarlog/,
+    /open Shots Founder Hub/,
   );
 });

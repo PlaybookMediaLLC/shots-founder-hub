@@ -79,6 +79,7 @@ export function SignInScreen({
       <View style={styles.signInBrand} testID="sign-in-screen">
         <Image
           contentFit="contain"
+          accessibilityLabel="Shots Founder Hub"
           source={require("../../assets/images/anarlog-wordmark.png")}
           style={styles.wordmark}
         />
@@ -295,16 +296,20 @@ export function ProScreen({
       <IconButton accessibilityLabel="Back" icon="back" onPress={onClose} />
       <View style={styles.body}>
         <View style={styles.titleRow}>
-          <Text style={styles.paywallTitle}>More with Anarlog Pro</Text>
+          <Text style={styles.paywallTitle}>
+            More with Shots Founder Hub Pro
+          </Text>
           <View style={styles.accentDot} />
         </View>
         <Text style={styles.copy}>
-          Sync across your devices and use Anarlog models for transcription and
-          summaries. New users get a free two-week trial, shared with desktop.
+          Sync across your devices and use Shots Founder Hub models for
+          transcription and summaries. New users get a free two-week trial,
+          shared with desktop.
         </Text>
         <Text style={styles.trialLine}>
           After your trial, your notes and recordings stay on this device.
-          Subscribe to keep sync and Anarlog models, or use your own API keys.
+          Subscribe to keep sync and Shots Founder Hub models, or use your own
+          API keys.
         </Text>
         {accessPending && (
           <Text style={styles.pendingCopy}>
@@ -359,6 +364,7 @@ const useStyles = createStyleHook((Colors) => ({
     gap: Spacing.lg,
   },
   wordmark: {
+    tintColor: Colors.ink,
     width: 200,
     height: 56,
   },

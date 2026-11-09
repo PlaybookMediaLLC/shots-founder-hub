@@ -38,7 +38,7 @@ export function useTrial() {
         const unlocked = await auth.refreshBilling();
         if (started && !unlocked && !signal.aborted)
           throw new Error(
-            "Your trial has started. Refresh your plan to finish activating sync and Anarlog models.",
+            "Your trial has started. Refresh your plan to finish activating sync and Shots Founder Hub models.",
           );
         return started;
       } finally {

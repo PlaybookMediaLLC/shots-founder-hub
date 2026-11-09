@@ -156,7 +156,9 @@ function ReferralInvites() {
         </Button>
         {signIn.isSuccess && (
           <p role="status">
-            <Trans>Finish in your browser, then return to Anarlog.</Trans>
+            <Trans>
+              Finish in your browser, then return to Shots Founder Hub.
+            </Trans>
           </p>
         )}
       </div>

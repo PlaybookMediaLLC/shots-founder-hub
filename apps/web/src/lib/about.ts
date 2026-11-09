@@ -1,199 +1,103 @@
-export const ABOUT_UPDATED_ON = "2026-10-15";
+export const ABOUT_UPDATED_ON = "2026-11-09";
 
 export const VALUE_PROP =
-  "Anarlog is an open-source, bot-free AI meeting notetaker with device-audio capture, local SQLite meeting records, and a choice of local, hosted, or bring-your-own-key AI for transcription and summaries.";
+  "Build your personal brand from the work you already do. Turn spoken ideas and meeting takeaways into content and visuals with Shots, then review and schedule your content.";
 
 export const whatAnarlogDoes = [
   {
-    title: "Bot-free meeting capture",
-    body: "Anarlog records system audio and your microphone directly from your computer. Nothing joins the call, nothing shows up in the participant list, and no calendar permissions are needed. It works the same on Zoom, Google Meet, Teams, phone calls, and in-person conversations.",
+    title: "Capture material worth revisiting",
+    body: "Keep notes about what you are building and learning. Supported meeting capture and transcripts can help you revisit a conversation when you have permission to record it.",
   },
   {
-    title: "Live transcription while you take notes",
-    body: "A transcript is generated while you jot notes, on-device with a local model or through hosted transcription on Pro. You stay in the meeting instead of typing everything down, and the transcript fills in what you missed.",
+    title: "Find the lesson you want to share",
+    body: "Extract takeaways from meeting notes, transcripts, and editable summaries. Choose a useful example or lesson, then add your own point of view before turning it into content.",
   },
   {
-    title: "AI summaries you control",
-    body: "After the meeting, Anarlog combines your notes with the transcript into an editable summary. You pick the model: hosted AI on Pro, your own API keys (OpenAI, Anthropic, Deepgram, and others), or a local model through Ollama or LM Studio.",
-  },
-  {
-    title: "Local-first storage",
-    body: "Sessions, notes, and transcripts live in a SQLite database on your device, with recordings kept as local files. Export to Markdown and other formats whenever you want; there is no vendor-hosted workspace you have to leave.",
-  },
-  {
-    title: "Search, chat, and agent access",
-    body: "Search across every meeting, ask questions of your transcripts in chat, and reach the same data from the CLI, MCP server, and webhooks. Pro adds end-to-end encrypted Cloud Sync, shareable links, integrations, and automations.",
+    title: "Choose how AI helps",
+    body: "Select supported local models, bring your own provider keys, or use available hosted features. What leaves your device depends on the options you enable.",
   },
 ] as const;
 
 export const differentiators = [
   {
-    title: "No bot joins your meeting",
-    body: "Anarlog captures microphone and system audio without adding a participant to the call. Capture and processing are separate choices: select your transcription and summary providers, and handle the required participant notice and permission before recording.",
+    title: "Start with your own experience",
+    body: "The work of building a company gives you ideas worth sharing. Use real lessons and your own perspective as the starting point for content and visuals with Shots.",
+  },
+  {
+    title: "Your voice stays central",
+    body: "Edit your notes, review AI output, and choose the material you want to take into your content workflow. You decide what is ready to share.",
   },
   {
     title: "Local records and explicit cloud choices",
-    body: "Anarlog keeps canonical meeting records in local SQLite. Hosted or BYOK AI requests send the audio or text needed by the selected provider. Optional Cloud Sync encrypts content on-device before upload; shared notes and the Cloud API are separate opt-in paths that store a server-readable copy.",
-  },
-  {
-    title: "Open source under the MIT license",
-    body: "The community desktop app is on GitHub under MIT. Security teams can audit it and developers can fork it. Enterprise components use a separate commercial license; check the license of the component you intend to use.",
-  },
-  {
-    title: "Unlimited free local use",
-    body: "The Free plan has no app meeting or minute cap for on-device models and BYOK. Your provider can charge for API usage, and local models require suitable hardware. Compare transcription, summary, storage and sharing allowances separately when choosing a plan.",
-  },
-  {
-    title: "Bring your own AI, or run it offline",
-    body: "Transcription and Intelligence are independent settings. For an offline meeting workflow, prepare both local speech and summary models and test them without a connection. Hosted transcription receives audio; hosted Intelligence receives the text and context needed for its request.",
+    body: "The desktop app stores its core meeting record locally. Hosted AI, sharing, and sync have separate data paths; enable only the features you want to use.",
   },
 ] as const;
 
 export const whoUsesAnarlog = [
-  "Engineers, developers, and technical founders who want a notetaker they can audit and fork",
-  "Lawyers, healthcare, and finance professionals whose meetings cannot go through a third-party bot",
-  "People whose company has banned cloud notetakers like Otter, Granola, or ChatGPT",
-  "Obsidian, Notion, and local-first users who want meeting notes as portable files",
-  "Teams that want a shared workspace with per-seat billing and roles, without giving up local storage",
-  "Enterprises that need SSO, SCIM, retention controls, or a self-hosted server",
-] as const;
-
-export const team = [
-  {
-    name: "John Jeong",
-    role: "Founder & CEO",
-    bio: "Spent five years co-founding startups, including an AI-native investment research platform he sold, and sat through hundreds of meetings where notetakers transcribed but never went further. He leads product and design.",
-    links: [
-      { label: "X", href: "https://x.com/computeless" },
-      { label: "GitHub", href: "https://github.com/computelesscomputer" },
-      { label: "LinkedIn", href: "https://linkedin.com/in/johntopia" },
-    ],
-  },
-  {
-    name: "Artem",
-    role: "Design Engineer",
-    bio: "Design engineer and member of technical staff at Fastrepl, working across Anarlog and its sister product Char.",
-    links: [{ label: "X", href: "https://x.com/s_II_a" }],
-  },
+  "Founders who want to share what they are building and learning",
+  "Founders finding a clear point of view for their content",
+  "Founders creating content and visuals with Shots",
 ] as const;
 
 export const originStory = [
-  "John spent five years co-founding startups and sat through hundreds of meetings where notetakers transcribed but never went further. In 2025 he built Hyprnote, an on-device AI notetaker, and took it through Y Combinator in the Summer 2025 batch.",
-  "Hyprnote was renamed Char, then split into two products in 2026: Anarlog is the meeting notetaker, relicensed from GPL to MIT and kept open source; Char became a separate agentic notepad. Anarlog is built by Fastrepl, a small software studio between Seoul and San Francisco.",
+  "Shots Founder Hub is developed by Playbook Media Interactive LLC. Our core promise is to help you build your personal brand from the work you already do, with your own ideas at the center of the content and visuals you create with Shots.",
+  "The application builds on Anarlog’s open-source foundation. Upstream copyright notices, contributor credits, and applicable software licenses are retained. Shots Founder Hub is a separate fork; upstream customers, testimonials, founders, and investors are not claims about this company.",
 ] as const;
 
 export const howAnarlogWorks = [
   {
-    title: "Getting started",
-    body: "Download the desktop app for macOS, Windows, or Linux and start recording. Free can run without an account after you configure and download supported local models. Pro is free for 30 days when you sign up with your work email (7 days with a personal email), and includes shared workspaces for teams.",
+    title: "Start with a lesson",
+    body: "Start with your meeting notes or a transcript and pull out a takeaway worth sharing. If you record a conversation, give participants the required notice and obtain permission.",
   },
   {
-    title: "Support",
-    body: "Email team@fastrepl.com, open an issue on GitHub, or ask in the Discord community. The team reads and answers support directly.",
+    title: "Shape your point of view",
+    body: "Revisit your notes and decide what you want to say. Check AI output, add your perspective, and leave out private or confidential details.",
   },
   {
-    title: "Enterprise rollout",
-    body: "Enterprise deals start with a 30-minute call directly with the founder, followed by a pilot. Security questionnaires, a DPA, and the trust packet are answered from the Security page.",
-  },
-  {
-    title: "Release cadence",
-    body: "Anarlog ships regularly with release notes on the changelog. Development happens in the open on GitHub, so you can see what is being worked on before it ships.",
+    title: "Create and schedule with Shots",
+    body: "Use spoken ideas or selected takeaways from notes and transcripts to create content and visuals with Shots. Review your work, then schedule your content in Shots.",
   },
 ] as const;
 
 export const keyFacts = [
-  { term: "Company name", detail: "Fastrepl, Inc. (product: Anarlog)" },
+  { term: "Product", detail: "Shots Founder Hub" },
+  { term: "Company", detail: "Playbook Media Interactive LLC" },
   {
-    term: "Type",
-    detail: "Open-source desktop software with Free, Pro, and Enterprise plans",
-  },
-  {
-    term: "Founded",
+    term: "Focus",
     detail:
-      "Fastrepl in 2023; the notetaker launched in 2025 as Hyprnote and became Anarlog in 2026",
+      "Helping founders build personal brands through content and visuals with Shots",
   },
-  { term: "Founder", detail: "John Jeong (CEO)" },
-  { term: "Team", detail: "John Jeong and Artem" },
   {
-    term: "Headquarters",
-    detail: "Seoul, South Korea and San Francisco, California",
-  },
-  { term: "Website", detail: "https://anarlog.so" },
-  {
-    term: "Core offering",
+    term: "Desktop record",
     detail:
-      "Bot-free, local-first AI meeting notetaker for macOS, Windows, and Linux",
+      "Local notes, transcripts, and recordings, with optional connected features",
   },
   {
-    term: "Pricing",
+    term: "Software foundation",
     detail:
-      "Free (unlimited local use); Pro $14/person/month or $140/person/year; Enterprise custom",
-  },
-  {
-    term: "Contract terms",
-    detail:
-      "Monthly or annual self-serve billing, cancel any time; Enterprise is a custom agreement",
-  },
-  { term: "License", detail: "MIT" },
-  {
-    term: "Platforms",
-    detail: "macOS, Windows, Linux; CLI, MCP server, webhooks, and Cloud API",
-  },
-  {
-    term: "Backed by",
-    detail:
-      "Y Combinator (S25), Pioneer Fund, TRAC, Krew Capital, Blast Club, and angels",
-  },
-  {
-    term: "Communication",
-    detail: "team@fastrepl.com, GitHub issues, Discord",
-  },
-  {
-    term: "Competitors",
-    detail:
-      "Granola, Otter.ai, Fireflies.ai, Fathom, tl;dv, Notta, Avoma, Read AI, MeetGeek, Tactiq, Sembly AI",
-  },
-  {
-    term: "Social",
-    detail:
-      "github.com/fastrepl/anarlog, x.com/anarlogapp, linkedin.com/company/anarlog, reddit.com/r/anarlog",
+      "Anarlog, with upstream attribution and component licenses preserved",
   },
 ] as const;
 
 export const faqs = [
   {
-    question: "Is Anarlog free?",
+    question: "Who makes Shots Founder Hub?",
     answer:
-      "Yes. The Free plan has no app meeting or minute limits for on-device models or BYOK; API providers can charge for usage. Pro ($14/person/month) adds hosted transcription and AI, Cloud Sync, and sharing.",
+      "Playbook Media Interactive LLC develops Shots Founder Hub as a separate fork built on Anarlog’s open-source foundation.",
   },
   {
-    question: "Does Anarlog join my meetings as a bot?",
+    question: "Who is it for?",
     answer:
-      "No. Anarlog captures system audio and your microphone directly on your computer. Nothing is added to the call and no calendar access is required.",
+      "We are building for founders who want to turn what they know and learn into content and visuals with Shots, while keeping their own voice and point of view.",
   },
   {
-    question: "Where is my meeting data stored?",
+    question: "Does it join meetings as a bot?",
     answer:
-      "In a SQLite database on your device, with recordings as local files. If you enable Cloud Sync on Pro, content is encrypted on your device before upload and sync servers only store ciphertext. Shared notes and the Cloud API are opt-in and store a server-readable copy.",
+      "The desktop capture flow records supported microphone and system audio on your computer. It does not add a participant to the call.",
   },
   {
-    question: "Which AI models can I use?",
+    question: "Where does my content go?",
     answer:
-      "Choose Transcription and Intelligence separately: hosted models on Pro, your own provider keys, or supported local models. Ollama and LM Studio can provide local Intelligence. Fastrepl never trains models on your notes, transcripts, or audio; hosted and BYOK providers handle requests under their own terms.",
-  },
-  {
-    question: "Is Anarlog open source?",
-    answer:
-      "Yes. The community desktop app is MIT-licensed and developed in the open at github.com/fastrepl/anarlog. Enterprise components have a separate commercial license.",
-  },
-  {
-    question: "What is the relationship between Anarlog, Char, and Hyprnote?",
-    answer:
-      "Same company, one lineage. The notetaker launched as Hyprnote, was renamed Char, and became Anarlog in 2026. Char now refers to a separate agentic todo notepad at char.com.",
-  },
-  {
-    question: "Which platforms are supported?",
-    answer:
-      "macOS is the most mature build; Windows and Linux are available in beta. Anarlog works with Zoom, Google Meet, Teams, phone calls, and in-person meetings in 45+ languages.",
+      "The core desktop record is local. Selected AI providers, sync, sharing, and other connected features can send content off-device. Review the settings and the provider’s terms before enabling them.",
   },
 ] as const;

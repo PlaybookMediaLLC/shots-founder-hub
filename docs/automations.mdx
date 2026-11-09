@@ -3,7 +3,7 @@ title: "Automate meeting follow-up"
 description: "Send recaps, create issues, update project notes, or export every meeting."
 ---
 
-Automations run repeatable work when a meeting ends. They are part of Anarlog Pro.
+Automations run repeatable work when a meeting ends. They are part of Shots Founder Hub Pro.
 
 ## Use a starter
 
@@ -33,7 +33,7 @@ For Markdown exports, confirm that the chosen folder still exists and is writabl
 
 In a Markdown export action, choose any combination of **Memo**, **Summary**, **Transcript**, and **Collect action items**. Keep at least one section selected.
 
-Leave **Filename** blank to use the meeting date and title, or enter a pattern such as `{date} {title}.md`. **Include meeting ID** adds a short ID suffix to distinguish similarly named meetings. Anarlog refuses to overwrite a file belonging to a different meeting or an unrelated file; choose another name if an export reports a collision.
+Leave **Filename** blank to use the meeting date and title, or enter a pattern such as `{date} {title}.md`. **Include meeting ID** adds a short ID suffix to distinguish similarly named meetings. Shots Founder Hub refuses to overwrite a file belonging to a different meeting or an unrelated file; choose another name if an export reports a collision.
 
 These options belong to desktop Automations. CLI `meetings export` still exports a complete meeting and uses the output path you provide; it does not accept these automation settings.
 
@@ -72,11 +72,11 @@ Every note summarized after you enable the workflow is exported to that folder
 as one file in the selected format containing its summary, transcript, title, date, and meeting
 ID. Notes without a transcript include a message that no transcript is available.
 Choose a collection folder that should receive all of these notes; this action
-does not filter by Anarlog folder or automatically route projects.
+does not filter by Shots Founder Hub folder or automatically route projects.
 
 Generating a summary again updates the existing export for that meeting and
 folder and format. Changing formats keeps previous exports and uses the new
-format on subsequent runs; it does not convert old exports in bulk. Renaming a note updates its exported filename. Anarlog owns the exported
+format on subsequent runs; it does not convert old exports in bulk. Renaming a note updates its exported filename. Shots Founder Hub owns the exported
 file content, so a later export replaces edits made directly to that file.
 
 The action shows the exported file link or its latest unresolved failure. Use
@@ -90,7 +90,7 @@ If a creation response is lost and Drive search has not indexed the document yet
 a retry can create a duplicate. There is no separate recovery queue or guarantee
 of exactly-once creation.
 
-Anarlog must be open to run the workflow. This action does not backfill older
+Shots Founder Hub must be open to run the workflow. This action does not backfill older
 notes or queue deliveries while the app is closed. It uses the same plan access
 as other connected automation actions and sends the exported content through
-Anarlog's integration API to Google Drive; CloudSync is not required.
+Shots Founder Hub's integration API to Google Drive; CloudSync is not required.

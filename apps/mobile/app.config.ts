@@ -6,23 +6,23 @@ type AppVariant = "dev" | "staging" | "stable";
 
 const variants = {
   dev: {
-    name: "Anarlog Dev",
+    name: "Shots Founder Hub Dev",
     icon: "./assets/images/icon-dev.png",
-    iconBackgroundColor: "#0099FF",
+    iconBackgroundColor: "#0A0A0A",
     scheme: "anarlog-dev",
     bundleIdentifier: "so.anarlog.mobile.dev",
   },
   staging: {
-    name: "Anarlog Staging",
+    name: "Shots Founder Hub Staging",
     icon: "./assets/images/icon-staging.png",
-    iconBackgroundColor: "#D1D1D1",
+    iconBackgroundColor: "#0A0A0A",
     scheme: "anarlog-staging",
     bundleIdentifier: "so.anarlog.mobile.staging",
   },
   stable: {
-    name: "Anarlog",
+    name: "Shots Founder Hub",
     icon: "./assets/images/icon.png",
-    iconBackgroundColor: "#F7E7B0",
+    iconBackgroundColor: "#0A0A0A",
     scheme: "anarlog",
     bundleIdentifier: "so.anarlog.mobile",
   },

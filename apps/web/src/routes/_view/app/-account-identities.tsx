@@ -100,8 +100,8 @@ export function AccountIdentitiesSection({
           )}
         </p>
         <p className="text-muted-foreground text-sm leading-6">
-          If you already have separate Anarlog accounts,{" "}
-          <a href="mailto:team@fastrepl.com" className="underline">
+          If you already have separate Shots Founder Hub accounts,{" "}
+          <a href="mailto:team@playbookmedia.io" className="underline">
             contact support
           </a>{" "}
           for help bringing them together.

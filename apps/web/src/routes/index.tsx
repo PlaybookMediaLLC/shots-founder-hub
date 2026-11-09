@@ -1,14 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { MARKETING_PLAN_TIERS } from "@anlg/pricing";
-
 import { HomePage } from "@/components/home-page";
 import {
   DEFAULT_DESKTOP_SCHEME,
   desktopSchemeSchema,
 } from "@/functions/desktop-flow";
-import { getGitHubStats } from "@/functions/github";
 import {
   ROOT_DESCRIPTION,
   getCanonicalUrl,
@@ -18,23 +15,14 @@ import {
 } from "@/lib/seo";
 
 const featureList = [
-  "Bot-free meeting capture",
-  "Fully offline notes",
+  "Voice-to-content",
+  "Content scheduling in Shots",
+  "Editable notes and summaries",
+  "Searchable notes and transcripts",
+  "Exportable conversation records",
   "On-device or bring-your-own-key AI",
   "Local-first storage",
-  "Open source foundations",
 ];
-
-const monthlyPrices = MARKETING_PLAN_TIERS.flatMap((plan) => {
-  if (plan.price.kind === "free") return [0];
-  if (plan.price.kind === "fixed") return [plan.price.monthly];
-  return [];
-});
-const aggregateOffer = {
-  lowPrice: Math.min(...monthlyPrices),
-  highPrice: Math.max(...monthlyPrices),
-  offerCount: MARKETING_PLAN_TIERS.length,
-};
 
 const authCallbackSearchSchema = z.object({
   code: z.string().optional(),
@@ -97,13 +85,6 @@ export const Route = createFileRoute("/")({
     });
   },
   component: Component,
-  loader: async () => {
-    const githubStats = await getGitHubStats();
-
-    return {
-      githubStars: githubStats.stars ?? 8466,
-    };
-  },
   head: () => ({
     links: [{ rel: "canonical", href: getCanonicalUrl() }],
     scripts: [
@@ -114,13 +95,12 @@ export const Route = createFileRoute("/")({
             getOrganizationJsonLd(),
             {
               "@type": "WebSite",
-              name: "Anarlog",
+              name: "Shots Founder Hub",
               url: getCanonicalUrl(),
             },
             getSoftwareApplicationJsonLd({
               description: ROOT_DESCRIPTION,
               featureList,
-              aggregateOffer,
             }),
           ]),
         ),
@@ -130,9 +110,5 @@ export const Route = createFileRoute("/")({
 });
 
 function Component() {
-  const { githubStars } = Route.useLoaderData();
-
-  return (
-    <HomePage formattedGithubStars={githubStars.toLocaleString("en-US")} />
-  );
+  return <HomePage />;
 }

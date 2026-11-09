@@ -55,7 +55,7 @@ infisical run --silent \
     --slug meeting-minutes-software \
     --filename meeting-minutes-workflow.png \
     --content-file /tmp/meeting-minutes-workflow.txt \
-    --context "Anarlog blog figure for private, bot-free meeting notes" \
+    --context "Shots Founder Hub blog figure for private, bot-free meeting notes" \
     --visual-query flowchart \
     --orientation horizontal \
     --width 1200

@@ -192,7 +192,7 @@ function SharedNoteMeetingMetadata({
 }
 
 export function SharedNoteLoading({
-  headerLabel = "Shared with Anarlog",
+  headerLabel = "Shared with Shots Founder Hub",
   loadingLabel = "Loading shared note",
 }: {
   headerLabel?: string;
@@ -228,7 +228,7 @@ export function SharedNoteTransientError({ retry }: { retry?: () => void }) {
     <SharedNotePrompt
       icon={<WarningCircle className="size-6" aria-hidden="true" />}
       title="We couldn’t load this shared note"
-      description="Anarlog had a temporary problem loading the note. Please try again."
+      description="Shots Founder Hub had a temporary problem loading the note. Please try again."
       actions={
         <button
           type="button"
@@ -246,7 +246,7 @@ export function SharedNoteTransientError({ retry }: { retry?: () => void }) {
 export function SharedNotePrompt({
   actions,
   description,
-  headerLabel = "Shared with Anarlog",
+  headerLabel = "Shared with Shots Founder Hub",
   icon,
   title,
 }: {
@@ -301,7 +301,7 @@ function SharedNotePromptShell({
 
 function SharedNoteShell({
   children,
-  headerLabel = "Shared with Anarlog",
+  headerLabel = "Shared with Shots Founder Hub",
   topActions,
 }: {
   children: React.ReactNode;
@@ -323,7 +323,7 @@ function SharedNoteShell({
           headerHidden && "-translate-y-full",
         ])}
       >
-        <a href="/" aria-label="Anarlog home" className="inline-flex">
+        <a href="/" aria-label="Shots Founder Hub home" className="inline-flex">
           <AnarlogLogo className="h-7 w-auto" />
         </a>
         {topActions ?? (

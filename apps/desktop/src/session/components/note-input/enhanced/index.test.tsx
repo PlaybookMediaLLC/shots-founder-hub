@@ -188,7 +188,7 @@ describe("Enhanced", () => {
     expect(screen.getByRole("status")).not.toBeNull();
     expect(screen.getByText("Analyzing structure...")).not.toBeNull();
     expect(
-      screen.getByText("Tip: The Anarlog team loves our users!"),
+      screen.getByText("Tip: The Shots Founder Hub team loves our users!"),
     ).not.toBeNull();
   });
 

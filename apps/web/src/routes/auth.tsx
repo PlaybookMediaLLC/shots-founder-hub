@@ -161,7 +161,7 @@ function Component() {
   const showEmail = !provider;
 
   return (
-    <AuthShell title="Welcome to Anarlog" showEyebrow={false}>
+    <AuthShell title="Welcome to Shots Founder Hub" showEyebrow={false}>
       {view === "main" && (
         <>
           <TrialOfferCard />

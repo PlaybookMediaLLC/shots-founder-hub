@@ -207,7 +207,7 @@ test("keeps posthog-js device, browser, and page context", () => {
     $timezone: "Asia/Seoul",
     $raw_user_agent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
-    title: "Anarlog - Open source AI meeting notetaker",
+    title: "Shots Founder Hub - Open source AI meeting notetaker",
     $host: "anarlog.so",
     $device_id: "019c1234-abcd-7000-8000-123456789abc",
     $window_id: "019c1234-abcd-7000-8000-123456789abd",

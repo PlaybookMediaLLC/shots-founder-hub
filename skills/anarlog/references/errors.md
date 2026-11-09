@@ -10,7 +10,7 @@ An empty list means no meetings matched in that source. It does not mean the loc
 
 ## Database not found
 
-Run `anarlog --json doctor`. Ask the user to open Anarlog once if the database does not exist. If they keep data in a custom location, use `--db-path FILE` or `ANARLOG_DB_PATH` after they provide the path.
+Run `anarlog --json doctor`. Ask the user to open Shots Founder Hub once if the database does not exist. If they keep data in a custom location, use `--db-path FILE` or `ANARLOG_DB_PATH` after they provide the path.
 
 ## Database operation failed
 

@@ -1,13 +1,20 @@
-# Anarlog Brand
+# Shots Founder Hub Brand
 
-This document is the single source of truth for Anarlog's visual identity on the web. All tokens referenced here are defined in `src/styles.css` and available as Tailwind utilities.
+This document is the single source of truth for Shots Founder Hub's visual identity on the web. All tokens referenced here are defined in `src/styles.css` and available as Tailwind utilities.
 
 ---
 
-## Review
+## Positioning
 
-Overall feeling from the marketing websites should be like from carefully crafted notebook that lives in the digital space: lines and grids from the notebook with handwritten patterns or dropped graphic on it (like cut from other sources) stays near the mono fonts, structured outputs and interfaces.
-Char is brand that values place for thoughts and slow pace of exploration. It transforms into layouts with a lot of air in them and free spaces. Less distracting colors and small elements.
+Shots Founder Hub is built by Playbook Media Interactive LLC to help founders build personal brands with Shots.
+
+Core promise: **Build your personal brand from the work you already do.** Lead with turning a founder’s ideas, lessons, and point of view into content and visuals with Shots. Explicitly include extracting takeaways from meeting notes and transcripts as a source for content. Founders review those takeaways, add their perspective, and decide what they have permission to share. Capture and notes are inputs to that workflow, not the headline benefit.
+
+Voice-to-content and content scheduling in Shots are confirmed available features. Describe the workflow as founder-directed: speak an idea or extract a meeting takeaway, shape a point of view, create content and visuals with Shots, then review and schedule. Do not imply automatic publishing, specific supported networks or formats, quotas, follower growth, or integration details that have not been verified.
+
+Customer logos, adoption counts, testimonials, founder identities, investor names, and social links must belong to Playbook’s product and be verified before use. Upstream software attribution belongs in the relevant license and origin notices, not in claims about this company’s customers or team.
+
+The visual language stays quiet and readable, with familiar notebook details and space for the product’s content.
 
 ## Color
 
@@ -256,7 +263,7 @@ The homepage hero uses a bright-bordered rounded container at full viewport heig
 
 ## Logo
 
-Use the official Anarlog wordmark SVG for website and public-facing artifacts.
+Use the official Shots Founder Hub wordmark SVG for website and public-facing artifacts.
 Do not re-render the wordmark as text in any font or alter its letterforms.
 
 - The website serves the black wordmark from `public/logo.svg` through the
@@ -264,7 +271,7 @@ Do not re-render the wordmark as text in any font or alter its letterforms.
 - Public documentation uses `docs/logo/light.svg` on light backgrounds and
   the white `docs/logo/dark.svg` variant on dark backgrounds.
 - Preserve the wordmark's aspect ratio and provide the accessible name
-  "Anarlog" when it is rendered as meaningful content.
+  "Shots Founder Hub" when it is rendered as meaningful content.
 
 ---
 

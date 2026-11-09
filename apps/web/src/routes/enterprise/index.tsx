@@ -14,9 +14,9 @@ import { ENTERPRISE_EVENTS } from "@/lib/enterprise";
 import { getCanonicalUrl } from "@/lib/seo";
 import { proofStatus, shipsToday, shipsWithPartners } from "@/lib/trust-center";
 
-const title = "Enterprise · Anarlog";
+const title = "Enterprise · Shots Founder Hub";
 const description =
-  "Anarlog Enterprise adds organization-wide security, policy, and deployment controls to local-first, bot-free Team workspaces, with a founder-led rollout.";
+  "Shots Founder Hub Enterprise adds organization-wide security, policy, and deployment controls to local-first, bot-free Team workspaces, with a founder-led rollout.";
 
 export const Route = createFileRoute("/enterprise/")({
   component: EnterprisePage,
@@ -44,7 +44,7 @@ const pillarRows = [
     },
     {
       title: "No bots in your meetings",
-      body: "Anarlog listens locally. Nothing joins your calls, and nothing appears in participant lists.",
+      body: "Shots Founder Hub listens locally. Nothing joins your calls, and nothing appears in participant lists.",
       image: "/images/enterprise/no-bots.webp",
     },
     {
@@ -61,7 +61,7 @@ const pillarRows = [
     },
     {
       title: "Self-host the whole stack",
-      body: "Run the Anarlog server on infrastructure you control for regulated environments.",
+      body: "Run the Shots Founder Hub server on infrastructure you control for regulated environments.",
       image: "/images/enterprise/self-host.webp",
     },
   ],
@@ -79,7 +79,11 @@ function EnterprisePage() {
       <div className="mx-auto w-full max-w-[700px] px-5 pt-4 pb-8 md:px-8 md:pt-4 md:pb-12">
         <div className="min-w-0 text-center">
           <section className="pt-10 pb-4 md:pt-12 md:pb-6">
-            <Link to="/" aria-label="Anarlog home" className="inline-flex">
+            <Link
+              to="/"
+              aria-label="Shots Founder Hub home"
+              className="inline-flex"
+            >
               <AnarlogLogo className="h-8 w-auto md:h-9" />
             </Link>
             <h1 className="font-hand mt-12 text-4xl leading-none font-semibold text-[#181613] md:mt-16 md:text-5xl">
@@ -87,8 +91,8 @@ function EnterprisePage() {
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#4f4940]">
               Enterprise adds org-wide security, policy, and deployment controls
-              to Anarlog Pro — built to forward straight to IT, security, and
-              legal.
+              to Shots Founder Hub Pro — built to forward straight to IT,
+              security, and legal.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3">
               <BookFounderCall location="hero" page="enterprise" />
@@ -108,7 +112,7 @@ function EnterprisePage() {
 
           <section className="pt-12 pb-4 md:pt-16 md:pb-6">
             <h2 className="font-hand text-3xl leading-none font-semibold text-[#756b5d]">
-              Why organizations pick Anarlog
+              Why organizations pick Shots Founder Hub
             </h2>
             <div className="relative left-1/2 mt-6 w-screen max-w-[1120px] -translate-x-1/2">
               <div className="flex flex-col gap-4 md:gap-8">

@@ -55,7 +55,7 @@ Declare figures in content/articles/figures.json:
       {
         "filename": "capture-flow.png",
         "content": "Meeting audio\\nLocal transcription\\nMarkdown note",
-        "context": "Horizontal flow diagram for an Anarlog blog post.",
+        "context": "Horizontal flow diagram for an Shots Founder Hub blog post.",
         "visualQuery": "flowchart",
         "orientation": "horizontal",
         "width": 1200

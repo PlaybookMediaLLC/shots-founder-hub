@@ -270,7 +270,7 @@ pub async fn send_test(
     let _permit = acquire_test_delivery_slot().await?;
     let body = Bytes::from(envelope(
         EVENT_TEST,
-        serde_json::json!({ "message": "This is a test delivery from Anarlog." }),
+        serde_json::json!({ "message": "This is a test delivery from Shots Founder Hub." }),
     ));
     let delivery_id = format!("dlv_{}", uuid::Uuid::new_v4().simple());
     let status = deliver_once(endpoint, EVENT_TEST, &body, &delivery_id).await;

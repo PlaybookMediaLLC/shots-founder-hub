@@ -46,7 +46,7 @@ test("article links skip canonical redirects without losing queries or anchors",
 
 test("emits offers when pricing is supplied", () => {
   const jsonLd = getSoftwareApplicationJsonLd({
-    description: "Anarlog",
+    description: "Shots Founder Hub",
     aggregateOffer: { lowPrice: 0, highPrice: 15, offerCount: 2 },
   });
 
@@ -68,18 +68,19 @@ test("builds blog posting metadata with typed authors", () => {
     description: "A practical guide.",
     image: getBlogOgImageUrl("local-ai-meeting-notes"),
     datePublished: "2026-01-01",
-    authors: ["Jeehoon Ong", "Anarlog Team"],
+    authors: ["Jeehoon Ong", "Shots Founder Hub Team"],
   });
 
   assert.deepEqual(jsonLd.author, [
     { "@type": "Person", name: "Jeehoon Ong" },
-    { "@type": "Organization", name: "Anarlog Team" },
+    { "@type": "Organization", name: "Shots Founder Hub Team" },
   ]);
   assert.deepEqual(jsonLd.mainEntityOfPage, {
     "@type": "WebPage",
     "@id": url,
   });
-  assert.equal(jsonLd.publisher.name, "Anarlog");
+  assert.equal(jsonLd.publisher.name, "Playbook Media Interactive LLC");
+  assert.equal(jsonLd.publisher.brand.name, "Shots Founder Hub");
   assert.equal(
     jsonLd.image,
     "https://static.anarlog.so/og/blog/local-ai-meeting-notes",

@@ -99,8 +99,8 @@ export function SkillsRow() {
       void queryClient.invalidateQueries({ queryKey: SKILL_AGENTS_QUERY_KEY });
       toast.success(
         statuses.length === 1
-          ? t`Anarlog skill added to ${statuses[0].displayName}`
-          : t`Anarlog skill added to ${statuses.length} agents`,
+          ? t`Shots Founder Hub skill added to ${statuses[0].displayName}`
+          : t`Shots Founder Hub skill added to ${statuses.length} agents`,
       );
     },
     onError: (error) => {
@@ -120,7 +120,8 @@ export function SkillsRow() {
         </h3>
         <p className="text-muted-foreground mt-1 text-xs">
           <Trans>
-            Teach coding agents when and how to use the Anarlog CLI and MCP
+            Teach coding agents when and how to use the Shots Founder Hub CLI
+            and MCP
           </Trans>
         </p>
       </div>

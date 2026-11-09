@@ -1,151 +1,173 @@
-export const TRUST_CENTER_UPDATED_ON = "2026-08-29";
+export const TRUST_CENTER_UPDATED_ON = "2026-11-09";
 
 export const securityReviewAnswers = [
   {
     question: "How is meeting content encrypted?",
     summary:
-      "Notes live in local SQLite on the device. Cloud Sync encrypts content on the device before upload; Fastrepl only stores ciphertext plus operational metadata.",
+      "The implemented sync path encrypts supported content before upload. Shared notes and Cloud API copies have separate, server-readable paths.",
     detail:
-      "The desktop app stores notes, transcripts, and meeting metadata in a local SQLite database. Optional Cloud Sync encrypts that content on the device with keys derived from a recovery key that stays in the operating-system keychain and never reaches Fastrepl. Sync servers see encrypted records plus account and workspace identifiers, timestamps, sizes, and device names — not titles or note content. Data in transit uses HTTPS/TLS. Shared notes and Cloud API & Connectors are separate, opt-in paths that store a server-readable copy so a recipient or agent can open the note.",
+      "The desktop stores notes, transcripts, and meeting metadata in local SQLite, with audio and attachments as separate files. The implemented encrypted-sync path sends ciphertext and operational metadata to sync storage. Shared notes and Cloud API connectors can create separate server-readable copies. Deployed encryption settings, key handling, access controls, and enabled paths still require operational verification; this review draft is not a deployment attestation.",
   },
   {
     question: "Where does data live, and which jurisdiction applies?",
     summary:
-      "Canonical meeting data stays on employee devices. Fastrepl-operated cloud services run in the United States. A customer-hosted data plane is the path for a different region.",
+      "Playbook reports US East and US West operations. Exact provider-region mappings and downstream locations remain unspecified; repository defaults are separate evidence.",
     detail:
-      "Local notes never leave the device unless a user enables a cloud feature. Fastrepl-operated cloud — accounts, optional Cloud Sync ciphertext, shared notes, and hosted AI/transcription gateways — currently runs in the United States. Customer-hosted capture and a customer-controlled data plane are the way to keep meeting infrastructure in a region you choose. We do not offer a certified-cloud EU SKU today.",
+      "Playbook owns and operates the product’s cloud-service accounts and reports US East and US West operations. This has not been independently account-verified. Exact provider mappings, replicas, backups, downstream processing, and any governing-law provisions remain unspecified. Repository Fly templates specify sjc, generated Vercel functions specify sfo1, and PostHog defaults to a US endpoint. These source values do not establish active production vendors or actual processing locations; their difference from the confirmed operating inventory needs reconciliation.",
   },
   {
     question: "How long do you keep data?",
     summary:
-      "Local data stays until the user deletes it. Cloud data we control is deleted within 30 days of account deletion. Audio uploaded for cloud transcription is deleted when the job finishes.",
+      "Playbook confirms indefinite hosted retention until user deletion or a request, same-day request processing, and monitored deletion jobs. Completed erasure has no formal deadline.",
     detail:
-      "Local notes, transcripts, and recordings stay on the device until the user removes them. Audio retention on the desktop is a user setting (don't save, 1 day, 3 days, 1 week, 1 month, or forever). Cloud Sync records, transcription results, shared notes, and Cloud API copies are deleted within 30 days of account deletion unless the law requires a longer hold. Audio uploaded for cloud transcription is deleted from our storage once the job completes. Cloud API copies are deleted when the feature is turned off. Shared notes remain available until sharing stops or the account is deleted.",
+      "Playbook states that deletion jobs are enabled and monitored and requests are handled or initiated the same day. These are user-confirmed practices, not independently observed results or a same-day erasure guarantee. The local audio fallback is Forever, with explicit or legacy don’t-save, 1, 3, 7, or 30-day options. Uploaded audio callback cleanup is best-effort. Account deletion is asynchronous and its initial 24h 5m safety horizon can be extended; that wait is not a completion SLA. Workspace retention covers shares and snapshots only. Backup erasure, log expiry, provider-held records, and legal or billing exceptions remain unspecified.",
   },
   {
     question: "Do you train models on our meetings?",
     summary:
-      "Fastrepl does not train models on notes, transcripts, audio, or connected calendar data. Review the selected AI provider if you use hosted or bring-your-own-key models.",
+      "Playbook states that its AI providers do not use content for training. This is a user-confirmed operational statement, not independent verification of vendor accounts or agreements.",
     detail:
-      "Fastrepl does not use notes, transcripts, audio, or connected calendar data to train AI models, and we do not sell that data. If a team uses on-device transcription and a local language model, meeting content never leaves the device for AI. If they use Anarlog Cloud or a bring-your-own-key provider, the audio or text needed for that request goes to the selected provider under that provider's terms — review that provider's retention and training policy before sending sensitive meetings.",
+      "Playbook identifies OpenRouter as active and states that its AI providers do not use content for training. The supporting account settings and agreements have not been independently verified. Provider prompt and response retention and downstream model routing remain to be documented. Local models process supported requests on the device; hosted routes can send audio, text, and request context off-device. Optional AI, speech, diarization, and research integrations in source do not establish active production vendors or their policies.",
   },
   {
     question: "Who are your subprocessors?",
     summary:
-      "Hosting, encrypted sync storage, payments, analytics, and optional speech-to-text or AI providers. None of them join the meeting.",
+      "Playbook identifies DigitalOcean, Azure, Resend, Stripe, OpenRouter, and OpenPanel as active. The separate repository inventory does not establish that its other vendors are active.",
     detail:
-      "The current processor list lives in the table below and in the privacy policy. Providers receive only what the enabled feature needs. Cloud Sync storage holds ciphertext. Speech-to-text and model providers receive content only when a user selects a hosted or bring-your-own-key route. Analytics and error tools are designed not to include meeting audio, transcripts, notes, or summaries.",
+      "Playbook confirms DigitalOcean, Azure, Resend, Stripe, OpenRouter, and OpenPanel, with OpenPanel for session replay. These statements have not been independently account-verified. The repository separately contains Fly/Vercel, Supabase, SQLite Cloud, Nango, Loops, optional speech and research integrations, PostHog, Google Analytics, Microsoft Clarity, and Sentry paths. Their presence is not a claim of active use. Exact provider-region mappings, any additional analytics tools, replay retention, consent, masking, and provider agreements remain unspecified; configuration differences require separate reconciliation.",
   },
   {
     question: "Does a bot join our calls?",
     summary:
-      "No. The desktop app captures microphone and system audio locally. Nothing is added to the participant list.",
+      "The desktop capture flow records supported microphone and system audio locally without adding a meeting participant.",
     detail:
-      "Anarlog does not send a meeting bot into Zoom, Google Meet, Microsoft Teams, or other calls. Capture happens on the desktop from microphone and system audio. That is the product, not a setting. Customer-hosted Meet or Zoom workers, when used by an enterprise pilot, are a separate capture path and are disclosed as such — they are not the default desktop product.",
+      "The desktop capture implementation uses microphone and system audio rather than adding a bot to the call. Any separately configured enterprise capture worker is a different path and must be assessed separately. Before recording or sharing someone else’s words, provide required notice and obtain the required permission. This description of the desktop implementation does not verify which optional capture services are deployed.",
   },
 ];
 
 export const architectureLayers = [
   {
-    title: "Employee devices",
-    body: "Canonical notes, transcripts, recordings, and most settings live in local SQLite. The MIT-licensed desktop client is auditable.",
+    title: "User devices",
+    body: "Canonical notes, transcripts, and meeting metadata live in local SQLite. Recordings and attachments are separate local files. Local audio has its own retention setting.",
   },
   {
-    title: "Optional Cloud Sync",
-    body: "End-to-end encrypted replicas so other signed-in devices stay current. Fastrepl cannot read the recovery key or the note content.",
+    title: "Optional encrypted sync",
+    body: "The implemented sync path encrypts supported content before upload. Sync storage also handles operational metadata; deployed settings and access still require verification.",
   },
   {
     title: "Optional AI and transcription",
-    body: "On-device models, bring-your-own keys, or Anarlog Cloud. Content goes only to the provider the user selected for that request.",
+    body: "Supported on-device models, bring-your-own keys, and hosted routes have different data paths. The actual enabled vendors, downstream routing, and provider policies remain to be confirmed.",
   },
   {
     title: "Optional sharing and Cloud API",
-    body: "A server-readable copy exists only when someone shares a note or turns on Cloud API & Connectors. Turning the API off deletes those copies.",
+    body: "Sharing and remote-access features can create server-readable copies. Revocation, retention, and cleanup must be verified separately from encrypted sync; no deletion deadline is established here.",
   },
 ];
 
 export const subprocessors = [
   {
-    name: "Fly.io, Netlify, Supabase, Render, Amazon Web Services, Cloudflare",
-    purpose: "Hosting, authentication, storage, and downloads",
+    name: "Fly.io, Vercel, Supabase, Cloudflare",
+    purpose: "Code-supported hosting, authentication, storage, and delivery",
     receives:
-      "Account data, operational metadata, and any server-side records created by an enabled cloud feature",
+      "Depending on deployment: requests, account data, operational metadata, and records needed by enabled hosted features; active services and regions unverified",
   },
   {
     name: "SQLite Cloud",
-    purpose: "Cloud Sync storage",
-    receives: "End-to-end encrypted sync records plus operational metadata",
+    purpose: "Optional Cloud Sync storage",
+    receives:
+      "Encrypted sync records and operational metadata on the implemented path; active project and region unverified",
   },
   {
     name: "Nango",
-    purpose: "Calendar and connected-account integrations",
+    purpose: "Connected-account integration paths",
     receives:
-      "Encrypted OAuth tokens and the calendar or issue-tracker data needed for a connected feature",
+      "OAuth credentials and authorized integration data when the corresponding path is enabled; deployed scopes and configuration unverified",
   },
   {
     name: "Stripe",
-    purpose: "Payments",
-    receives: "Billing details; Fastrepl never stores card numbers",
+    purpose: "Billing integration",
+    receives:
+      "Customer, subscription, and payment information for enabled paid services; account settings and provider retention unverified",
   },
   {
     name: "PostHog, Google Analytics, Microsoft Clarity",
-    purpose: "Product and website analytics",
+    purpose: "Product and website analytics integrations",
     receives:
-      "Pseudonymous usage events, page views, and optional website session replay — not meeting audio, transcripts, notes, or summaries",
+      "Usage and page events; Clarity supports session replay. Actual enablement, consent, content masking, collection, and retention unverified",
   },
   {
-    name: "Sentry, Honeycomb",
-    purpose: "Error monitoring and observability",
+    name: "Sentry and the configured telemetry destination",
+    purpose: "Error reporting and observability integrations",
     receives:
-      "Sanitized diagnostics and crash reports with meeting content stripped",
+      "Diagnostic and telemetry payloads according to the configured path; active destination, sanitization, access, and retention unverified",
   },
   {
-    name: "Deepgram, Soniox, AssemblyAI, Gladia, ElevenLabs, Fireworks AI, OpenAI, Mistral, Alibaba Cloud",
-    purpose: "Optional cloud transcription",
+    name: "Deepgram, Cartesia, AssemblyAI, Soniox, Fireworks AI, OpenAI, Gladia, ElevenLabs, Alibaba DashScope, Mistral, AquaVoice, Cohere",
+    purpose: "Twelve optional speech-to-text vendor configurations",
     receives:
-      "Audio for a transcription job when a user selects a hosted speech-to-text route",
+      "Audio and request context for enabled speech routes; supplied keys and routing determine available vendors, not this inventory",
   },
   {
-    name: "OpenRouter, routing to providers such as Anthropic, Google, and Mistral",
-    purpose: "Optional cloud AI",
+    name: "OpenRouter and configured downstream model providers",
+    purpose: "Optional hosted AI",
     receives:
-      "The text and instructions needed for a summary or chat request the user starts",
+      "Text, instructions, and request context for an enabled AI route; active downstream vendors, retention, and training terms unverified",
+  },
+  {
+    name: "Pyannote",
+    purpose: "Optional speaker diarization",
+    receives:
+      "Audio or an audio reference when the corresponding integration is enabled; deployed use and policies unverified",
   },
   {
     name: "Exa, Jina",
-    purpose: "Optional web search from AI chat",
-    receives: "Search queries when a user enables web search in chat",
+    purpose: "Optional research integrations",
+    receives:
+      "Queries and request context for enabled research routes; deployed use and provider policies unverified",
   },
   {
-    name: "Loops",
-    purpose: "Email",
+    name: "Loops, Resend",
+    purpose: "Email integrations",
     receives:
-      "Email address and the content of transactional or marketing messages",
+      "Recipients, message contents, and delivery metadata for enabled email paths; sender settings and retention unverified",
   },
 ];
 
 export const retentionRows = [
   {
-    item: "Local notes, transcripts, and recordings",
-    retention: "On the device until the user deletes them",
+    item: "Local notes and transcripts",
+    retention:
+      "On the device until removed; deleting an account does not itself delete local copies or exports",
   },
   {
     item: "Desktop audio files",
     retention:
-      "User-selected: don't save, 1 day, 3 days, 1 week, 1 month, or forever",
+      "Fallback default: Forever. Explicit or legacy settings can select don’t save, 1, 3, 7, or 30 days, or Forever; this applies to local audio only",
   },
   {
-    item: "Cloud Sync, transcription results, shared notes, Cloud API copies",
+    item: "Uploaded transcription audio",
     retention:
-      "Deleted within 30 days of account deletion, unless the law requires a hold",
+      "Terminal callback attempts Supabase object deletion; lookup/deletion failures are logged. Best-effort cleanup, not an immediate-deletion guarantee",
   },
   {
-    item: "Audio uploaded for cloud transcription",
-    retention: "Deleted from Fastrepl storage when the job completes",
+    item: "Account deletion and hosted content",
+    retention:
+      "User-confirmed: same-day request handling or initiation, enabled and monitored jobs. Code uses pending acceptance and an extendable initial 24h 5m safety horizon, not a completion SLA. Loops deletion is a best-effort source path, not a confirmed active service",
   },
   {
-    item: "Cloud API & Connectors copies",
-    retention: "Deleted when the feature is turned off",
+    item: "Workspace retention",
+    retention:
+      "Optional capability-gated retention_days applies to shares and snapshots, not all local or hosted data",
+  },
+  {
+    item: "Hosted retention (Playbook-confirmed)",
+    retention:
+      "Indefinite until user deletion or a request; no formal completion deadline. Not independently account-verified",
+  },
+  {
+    item: "Provider-held copies, backups, and logs",
+    retention:
+      "Retention, expiry, deletion completion, and legal exceptions remain unconfirmed",
   },
 ];
 
@@ -166,11 +188,11 @@ export const contractualDocs = [
   {
     label: "Terms of Service",
     href: "/terms/",
-    note: "Contract for using Anarlog",
+    note: "Contract for using Shots Founder Hub",
   },
   {
     label: "Data Processing Addendum",
-    href: "mailto:team@fastrepl.com?subject=Anarlog%20DPA",
+    href: "mailto:team@playbookmedia.io?subject=Shots Founder Hub%20DPA",
     note: "Available on request for enterprise evaluations",
   },
 ];

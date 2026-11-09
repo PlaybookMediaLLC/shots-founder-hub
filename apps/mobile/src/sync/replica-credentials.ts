@@ -29,7 +29,7 @@ export class ReplicaCredentialError extends Error {
         device_limit: "Your plan’s sync device limit is reached.",
         identity_mismatch: "This account uses a different recovery key.",
         invalid_response: "The sync service returned an invalid response.",
-        not_entitled: "Anarlog Pro is required for cloud sync.",
+        not_entitled: "Shots Founder Hub Pro is required for cloud sync.",
         reauth_required: "Sign in again to continue syncing.",
         unavailable: "Cloud sync is temporarily unavailable.",
       }[code],

@@ -3,7 +3,7 @@ source: apps/cli/src/cli.rs
 expression: canonicalize_json(contract)
 ---
 {
-  "about": "Access Anarlog from the command line",
+  "about": "Access Shots Founder Hub from the command line",
   "global_options": [
     {
       "flags": "--base",
@@ -40,7 +40,7 @@ expression: canonicalize_json(contract)
   ],
   "subcommands": [
     {
-      "about": "Sign in to an Anarlog account from a browser",
+      "about": "Sign in to a Shots Founder Hub account from a browser",
       "name": "anarlog auth",
       "options": [
         {
@@ -729,7 +729,7 @@ expression: canonicalize_json(contract)
       "synopsis": "anarlog proposals [-h] <command>"
     },
     {
-      "about": "Run the Anarlog MCP server over stdio",
+      "about": "Run the Shots Founder Hub MCP server over stdio",
       "name": "anarlog mcp",
       "options": [
         {

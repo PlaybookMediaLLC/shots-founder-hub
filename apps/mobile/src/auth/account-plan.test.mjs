@@ -57,7 +57,10 @@ test("a Team member with the shared Pro entitlement is shown as Pro", async () =
     entitlements: ["hyprnote_pro"],
   });
   const { load } = fixture(["free", "team"]);
-  assert.equal(accountPlanLabel(billing, await load()), "Anarlog Pro");
+  assert.equal(
+    accountPlanLabel(billing, await load()),
+    "Shots Founder Hub Pro",
+  );
   assert.equal(billing.isPro, true);
 });
 
@@ -69,7 +72,7 @@ test("Enterprise takes precedence over Team across memberships", async () => {
     const { load } = fixture(tiers);
     assert.equal(
       accountPlanLabel(deriveBillingInfo(null), await load()),
-      "Anarlog Enterprise",
+      "Shots Founder Hub Enterprise",
     );
   }
 });
@@ -81,7 +84,7 @@ test("a free workspace does not upgrade an individual Pro subscription", async (
       deriveBillingInfo({ entitlements: ["hyprnote_pro"] }),
       await load(),
     ),
-    "Anarlog Pro",
+    "Shots Founder Hub Pro",
   );
 });
 
@@ -100,7 +103,7 @@ test("an account with no shared workspaces keeps its individual plan", async () 
     now,
   );
   assert.equal(accountPlanLabel(trial, tier), "Pro trial · 21 days left");
-  assert.equal(accountPlanLabel(trial, "team"), "Anarlog Pro");
+  assert.equal(accountPlanLabel(trial, "team"), "Shots Founder Hub Pro");
 });
 
 test("a plan refresh reflects a workspace subscription ending", async () => {

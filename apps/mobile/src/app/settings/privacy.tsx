@@ -40,12 +40,12 @@ export default function PrivacySettings() {
         <FieldGroup.SectionFooter>
           <Text>
             {security.data === LocalAuthentication.SecurityLevel.NONE
-              ? "Set up a device passcode to lock Anarlog."
-              : "Require Face ID, fingerprint, or your device passcode to open Anarlog. Recording continues while the app is locked."}
+              ? "Set up a device passcode to lock Shots Founder Hub."
+              : "Require Face ID, fingerprint, or your device passcode to open Shots Founder Hub. Recording continues while the app is locked."}
           </Text>
         </FieldGroup.SectionFooter>
       </FieldGroup.Section>
-      <FieldGroup.Section title="Help improve Anarlog">
+      <FieldGroup.Section title="Help improve Shots Founder Hub">
         <Switch
           label="Usage analytics"
           value={preferences.analytics}

@@ -139,12 +139,12 @@ mod tests {
             &owhisper_interface::ListenParams {
                 model: Some("nova-3".to_string()),
                 languages: vec![ISO639::En.into()],
-                keywords: vec!["Anarlog".to_string(), "transcription".to_string()],
+                keywords: vec!["Shots Founder Hub".to_string(), "transcription".to_string()],
                 ..Default::default()
             },
             1,
         );
-        assert!(url.as_str().contains("keyword=Anarlog"));
+        assert!(url.as_str().contains("keyword=Shots Founder Hub"));
         assert!(url.as_str().contains("keyword=transcription"));
 
         let url = adapter.build_ws_url(

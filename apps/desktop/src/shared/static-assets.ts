@@ -5,6 +5,12 @@ import manifest from "./static-assets.manifest.json";
 import { env } from "~/env";
 
 export function staticAssetUrl(localPath: string) {
+  if (
+    localPath === "/assets/logo.svg" ||
+    localPath === "/assets/anarlog-icon.png" ||
+    localPath.startsWith("/assets/app-icons/")
+  )
+    return localPath;
   const object = manifest[localPath as keyof typeof manifest];
   const origin = env.VITE_STATIC_ASSETS_URL;
   if (!origin || !object) return localPath;

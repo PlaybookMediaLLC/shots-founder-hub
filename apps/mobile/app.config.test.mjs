@@ -13,19 +13,19 @@ const releaseVersion = JSON.parse(
 
 const expectedVariants = {
   dev: {
-    name: "Anarlog Dev",
+    name: "Shots Founder Hub Dev",
     icon: "./assets/images/icon-dev.png",
     scheme: "anarlog-dev",
     bundleIdentifier: "so.anarlog.mobile.dev",
   },
   staging: {
-    name: "Anarlog Staging",
+    name: "Shots Founder Hub Staging",
     icon: "./assets/images/icon-staging.png",
     scheme: "anarlog-staging",
     bundleIdentifier: "so.anarlog.mobile.staging",
   },
   stable: {
-    name: "Anarlog",
+    name: "Shots Founder Hub",
     icon: "./assets/images/icon.png",
     scheme: "anarlog",
     bundleIdentifier: "so.anarlog.mobile",
@@ -61,7 +61,7 @@ test("configures distinct app identities for every build profile", () => {
         config.android.adaptiveIcon;
       assert.equal(
         backgroundColor,
-        { dev: "#0099FF", staging: "#D1D1D1", stable: "#F7E7B0" }[appVariant],
+        { dev: "#0A0A0A", staging: "#0A0A0A", stable: "#0A0A0A" }[appVariant],
       );
       for (const asset of [foregroundImage, monochromeImage]) {
         const png = readFileSync(new URL(asset, import.meta.url));

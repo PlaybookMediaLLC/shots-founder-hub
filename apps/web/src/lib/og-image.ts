@@ -221,9 +221,9 @@ function createAnarlogWordmark({
   y: number;
   width: number;
 }) {
-  const height = (width * ANARLOG_WORDMARK.height) / ANARLOG_WORDMARK.width;
+  const height = (width * 100) / 620;
 
-  return `<svg data-wordmark="anarlog" aria-label="Anarlog" x="${x}" y="${y}" width="${width}" height="${height.toFixed(1)}" viewBox="0 0 ${ANARLOG_WORDMARK.width} ${ANARLOG_WORDMARK.height}" preserveAspectRatio="xMidYMid meet"><path d="${ANARLOG_WORDMARK.path}" fill="#000000"/></svg>`;
+  return `<svg data-wordmark="anarlog" aria-label="Shots Founder Hub" x="${x}" y="${y}" width="${width}" height="${height.toFixed(1)}" viewBox="0 0 620 100" preserveAspectRatio="xMidYMid meet"><svg x="0" y="6" width="88" height="88" viewBox="100 100 440 440"><path d="${ANARLOG_WORDMARK.path}" fill="#000000"/></svg><text x="102" y="65" fill="#000000" font-family="Arial, sans-serif" font-size="46" font-weight="600">Shots Founder Hub</text></svg>`;
 }
 
 function participantAvatarRecipe(seed: string): AvatarRecipe {
@@ -345,7 +345,7 @@ export function createBlogOgSvg(input: BlogOgImageInput) {
         `<text x="90" y="${descriptionStartY + index * 42}" fill="#57534e" font-family="${fonts.sans}" font-size="32" font-weight="500">${escapeXml(line)}</text>`,
     )
     .join("")}
-  <text x="86" y="552" fill="#756b5d" font-family="${fonts.sans}" font-size="26" font-weight="600">${escapeXml(meta || "anarlog")}</text>
+  <text x="86" y="552" fill="#756b5d" font-family="${fonts.sans}" font-size="26" font-weight="600">${escapeXml(meta || "Shots Founder Hub")}</text>
   ${createAnarlogWordmark({ x: 962, y: 516, width: 152 })}
 </svg>`;
 }

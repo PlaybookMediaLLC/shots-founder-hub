@@ -74,7 +74,7 @@ fn is_valid_meeting_key(key: &str) -> bool {
         (status = 200, description = "Devices present for the meeting", body = MeetingDevicesResponse),
         (status = 400, description = "Invalid meeting key or device fingerprint"),
         (status = 401, description = "Authentication required"),
-        (status = 403, description = "Anarlog Pro subscription required"),
+        (status = 403, description = "Shots Founder Hub Pro subscription required"),
         (status = 404, description = "The calling device is not a registered sync device"),
         (status = 502, description = "Device service unavailable")
     )

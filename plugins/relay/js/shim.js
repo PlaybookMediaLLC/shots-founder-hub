@@ -33,7 +33,9 @@
   function createRelayConnection(port) {
     var maxPendingInvokes = 64;
     if (window.location.port !== String(port)) {
-      throw new Error("Open the desktop relay URL to connect to Anarlog");
+      throw new Error(
+        "Open the desktop relay URL to connect to Shots Founder Hub",
+      );
     }
     var wsUrl = "ws://" + window.location.host + "/ws";
     var ws = null;

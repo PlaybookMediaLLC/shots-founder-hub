@@ -11,7 +11,7 @@ export type ComparisonRow = {
 };
 
 export const ANARLOG_ROW: ComparisonRow = {
-  name: "Anarlog",
+  name: "Shots Founder Hub",
   icon: "/icon-192x192.png",
   url: "/",
   paidPlan: "Pro $14/person/month or $140/person/year",

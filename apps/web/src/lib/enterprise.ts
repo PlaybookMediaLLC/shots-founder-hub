@@ -1,8 +1,9 @@
-export const BOOK_CALL_URL = "https://cal.com/team/fastrepl/hi";
-export const SECURITY_REPORT_EMAIL = "team@fastrepl.com";
+export const BOOK_CALL_URL =
+  "mailto:team@playbookmedia.io?subject=Shots%20Founder%20Hub";
+export const SECURITY_REPORT_EMAIL = "team@playbookmedia.io";
 export const SECURITY_ADVISORY_URL =
-  "https://github.com/fastrepl/anarlog/security/advisories/new";
-export const PROCUREMENT_EMAIL = "team@fastrepl.com";
+  "mailto:team@playbookmedia.io?subject=Shots%20Founder%20Hub%20security%20report";
+export const PROCUREMENT_EMAIL = "team@playbookmedia.io";
 
 export const ENTERPRISE_EVENTS = {
   pageViewed: "enterprise_page_viewed",

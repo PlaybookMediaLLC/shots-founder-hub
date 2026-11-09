@@ -103,11 +103,11 @@ async fn verifies_and_sends_a_resend_shared_note_invitation_email() {
         .and(header("authorization", "Bearer resend-key"))
         .and(header("idempotency-key", INVITATION_ID))
         .and(body_partial_json(json!({
-            "from": "Owner via Anarlog <notes@send.anarlog.so>",
+            "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
             "to": "invitee@example.com",
             "reply_to": "owner@example.com",
             "subject": "Owner invited you to Planning",
-            "text": "Owner invited you to view \"Planning\" in Anarlog.\n\nOpen the meeting notes:\nhttps://fastrepl.anarlog.so/share/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
+            "text": "Owner invited you to view \"Planning\" in Shots Founder Hub.\n\nOpen the meeting notes:\nhttps://fastrepl.anarlog.so/share/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "id": "email-id" })))
         .expect(1)
@@ -175,11 +175,11 @@ async fn verifies_and_sends_a_workspace_invitation_email() {
         .and(header("authorization", "Bearer resend-key"))
         .and(header("idempotency-key", INVITATION_ID))
         .and(body_partial_json(json!({
-            "from": "Owner via Anarlog <notes@send.anarlog.so>",
+            "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
             "to": "invitee@example.com",
             "reply_to": "owner@example.com",
-            "subject": "You're invited to join the \"Fastrepl\" team in Anarlog",
-            "text": "Owner invited you to join \"Fastrepl\", a team in Anarlog.\n\nAccept the invitation:\nhttps://anarlog.so/team/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
+            "subject": "You're invited to join the \"Fastrepl\" team in Shots Founder Hub",
+            "text": "Owner invited you to join \"Fastrepl\", a team in Shots Founder Hub.\n\nAccept the invitation:\nhttps://anarlog.so/team/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "id": "email-id" })))
         .expect(1)
@@ -242,18 +242,18 @@ async fn authorizes_and_sends_a_meeting_recap_to_each_recipient() {
         .and(header("idempotency-key", INVITATION_ID))
         .and(body_json(json!([
             {
-                "from": "Owner via Anarlog <notes@send.anarlog.so>",
+                "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
                 "to": "one@example.com",
                 "reply_to": "owner@example.com",
                 "subject": "Meeting notes: Planning",
-                "text": "Planning\n\n## Decisions\n\nShip it.\n\nSent by Owner via Anarlog. Reply to this email to contact them."
+                "text": "Planning\n\n## Decisions\n\nShip it.\n\nSent by Owner via Shots Founder Hub. Reply to this email to contact them."
             },
             {
-                "from": "Owner via Anarlog <notes@send.anarlog.so>",
+                "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
                 "to": "two@example.com",
                 "reply_to": "owner@example.com",
                 "subject": "Meeting notes: Planning",
-                "text": "Planning\n\n## Decisions\n\nShip it.\n\nSent by Owner via Anarlog. Reply to this email to contact them."
+                "text": "Planning\n\n## Decisions\n\nShip it.\n\nSent by Owner via Shots Founder Hub. Reply to this email to contact them."
             }
         ])))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "data": [] })))

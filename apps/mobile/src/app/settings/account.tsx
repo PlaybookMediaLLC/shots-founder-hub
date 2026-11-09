@@ -84,19 +84,19 @@ export default function AccountSettings() {
         <FieldGroup.Section>
           {(!auth.billing.isPro || auth.billing.isTrialing) && (
             <SettingsRow
-              title="Explore Anarlog Pro"
+              title="Explore Shots Founder Hub Pro"
               onPress={() => router.push("/settings/pro")}
             />
           )}
           <FieldGroup.SectionFooter>
             <Text>
               {auth.billing.isTrialing
-                ? "Your Pro trial includes cloud sync and Anarlog models. After it ends, you can keep using your notes, recording, and your own API keys."
+                ? "Your Pro trial includes cloud sync and Shots Founder Hub models. After it ends, you can keep using your notes, recording, and your own API keys."
                 : auth.billing.isPro
-                  ? "Cloud sync and Anarlog models are included in your subscription."
+                  ? "Cloud sync and Shots Founder Hub models are included in your subscription."
                   : trial.isFetching
                     ? "Checking your free Pro trial. You can start taking notes and recording now."
-                    : "Notes and recording are free. Cloud sync and Anarlog models require an active Pro trial or subscription. You can also use your own API keys."}
+                    : "Notes and recording are free. Cloud sync and Shots Founder Hub models require an active Pro trial or subscription. You can also use your own API keys."}
             </Text>
           </FieldGroup.SectionFooter>
           {!auth.billing.isPro && trial.error && (

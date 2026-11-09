@@ -84,9 +84,9 @@ pub fn is_transient_lock_error(error: &impl std::fmt::Display) -> bool {
 // Matches MigrateError::SchemaFromNewerApp, which reaches startup as a string
 // after crossing the tauri plugin setup boundary.
 pub fn is_newer_schema_error(error: &impl std::fmt::Display) -> bool {
-    error
-        .to_string()
-        .contains("created by a newer version of Anarlog")
+    let message = error.to_string();
+    message.contains("created by a newer version of Shots Founder Hub")
+        || message.contains("created by a newer version of Anarlog")
 }
 pub fn cloudsync_runtime_config_from_env()
 -> Result<Option<anlg_db_core::CloudsyncRuntimeConfig>, String> {
@@ -248,7 +248,10 @@ mod tests {
         // Rendered form of MigrateError::SchemaFromNewerApp after crossing the
         // plugin setup boundary as a string.
         assert!(is_newer_schema_error(
-            &"plugin db failed: the database was created by a newer version of Anarlog: it requires migration 20260901000000, but this build only includes migrations up to 20260816100100"
+            &"plugin db failed: the database was created by a newer version of Shots Founder Hub: it requires migration 20260901000000, but this build only includes migrations up to 20260816100100"
+        ));
+        assert!(is_newer_schema_error(
+            &"the database was created by a newer version of Anarlog"
         ));
         assert!(!is_newer_schema_error(
             &"unable to open database file: /tmp/app.db"

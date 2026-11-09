@@ -568,102 +568,6 @@ msgstr ""
 msgid "Analyzing structure..."
 msgstr ""
 
-#. placeholder {0}: update.version
-#: src/sidebar/toast/registry.tsx
-msgid "Anarlog {0} is available"
-msgstr ""
-
-#. placeholder {0}: update.version
-#: src/sidebar/toast/registry.tsx
-msgid "Anarlog {0} is ready to install"
-msgstr ""
-
-#: src/onboarding/permissions.tsx
-msgid "Anarlog can hear others"
-msgstr ""
-
-#: src/onboarding/permissions.tsx
-msgid "Anarlog can hear your voice"
-msgstr ""
-
-#: src/onboarding/permissions.tsx
-msgid "Anarlog can read meeting details"
-msgstr ""
-
-#: src/settings/developers/cli.tsx
-msgid "Anarlog CLI"
-msgstr ""
-
-#: src/session/components/note-input/enhanced/enhance-error.tsx
-msgid "Anarlog could not generate this summary because you were not signed in. Sign in, then try again."
-msgstr ""
-
-#: src/shared-notes/index.tsx
-msgid "Anarlog could not read the local shared-note cache."
-msgstr ""
-
-#: src/settings/sync/index.tsx
-msgid "Anarlog could not start cloud sync on this device."
-msgstr ""
-
-#: src/settings/sync/index.tsx
-msgid "Anarlog could not start cloud sync on this device. It will keep retrying."
-msgstr ""
-
-#: src/settings/general/account.tsx
-msgid "Anarlog couldn't sign you out. Try again."
-msgstr ""
-
-#: src/lock/gate.tsx
-msgid "Anarlog is Locked"
-msgstr ""
-
-#: src/session-sharing/access-management.tsx
-msgid "Anarlog member"
-msgstr ""
-
-#: src/onboarding/index.tsx
-msgid "Anarlog needs access to your microphone and system audio to record and transcribe your meetings"
-msgstr ""
-
-#: src/onboarding/index.tsx
-msgid "Anarlog needs microphone and system audio to transcribe your meetings, plus Accessibility to read meeting controls, visible chat."
-msgstr ""
-
-#: src/settings/general/primary-recording-device.tsx
-msgid "Anarlog Pro coordinates recording across your devices."
-msgstr ""
-
-#. placeholder {0}: statuses[0].displayName
-#: src/settings/developers/skills.tsx
-msgid "Anarlog skill added to {0}"
-msgstr ""
-
-#. placeholder {0}: statuses.length
-#: src/settings/developers/skills.tsx
-msgid "Anarlog skill added to {0} agents"
-msgstr ""
-
-#: src/session-sharing/access-management.tsx
-msgid "Anarlog user"
-msgstr ""
-
-#: src/settings/sync/index.tsx
-msgid "Anarlog will keep retrying."
-msgstr ""
-
-#: src/settings/sync/index.tsx
-msgid "Anarlog will retry automatically."
-msgstr ""
-
-#: src/settings/general/storage/legacy-cleanup.tsx
-msgid "Anarlog will retry automatically. This does not affect your notes."
-msgstr ""
-
-#: src/onboarding/index.tsx
-msgid "Anarlog will sync your calendar to get meeting reminders"
-msgstr ""
-
 #: src/templates/template-icon-picker.tsx
 msgid "Animals & Nature"
 msgstr ""
@@ -730,25 +634,25 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-#: src/composer/index.tsx
-msgid "Ask Anarlog AI anything"
-msgstr ""
-
-#: src/shared/chat-cta.tsx
-msgid "Ask Anarlog anything"
-msgstr ""
-
 #: src/chat/components/input/index.tsx
 #: src/shared/chat-cta.tsx
 msgid "Ask anything"
 msgstr ""
 
 #: src/settings/general/notification.tsx
-msgid "Ask before stopping when a meeting may have ended. When alerts are off, Anarlog keeps listening."
+msgid "Ask before stopping when a meeting may have ended. When alerts are off, Shots Founder Hub keeps listening."
 msgstr ""
 
 #: src/settings/general/primary-recording-device.tsx
 msgid "Ask each meeting"
+msgstr ""
+
+#: src/composer/index.tsx
+msgid "Ask Shots Founder Hub AI anything"
+msgstr ""
+
+#: src/shared/chat-cta.tsx
+msgid "Ask Shots Founder Hub anything"
 msgstr ""
 
 #: src/task/resource-view.tsx
@@ -764,7 +668,7 @@ msgid "Attach Markdown or text"
 msgstr ""
 
 #: src/templates/auto-format-examples-dialog.tsx
-msgid "Attach up to three past summaries you like. Anarlog will learn how you prefer meeting notes to be structured and written."
+msgid "Attach up to three past summaries you like. Shots Founder Hub will learn how you prefer meeting notes to be structured and written."
 msgstr ""
 
 #: src/session-sharing/attachment-management.ts
@@ -797,7 +701,7 @@ msgid "Authenticating…"
 msgstr ""
 
 #: src/instruction/index.tsx
-msgid "Authorize access in your browser, then return to Anarlog."
+msgid "Authorize access in your browser, then return to Shots Founder Hub."
 msgstr ""
 
 #: src/templates/auto-form.tsx
@@ -1231,20 +1135,20 @@ msgstr ""
 msgid "Choose Google Drive folder"
 msgstr ""
 
-#: src/settings/appearance/app-icon.tsx
-msgid "Choose how Anarlog appears in the Dock."
-msgstr ""
-
-#: src/settings/appearance/theme.tsx
-msgid "Choose how Anarlog looks on this device."
-msgstr ""
-
 #: src/templates/auto-form.tsx
 msgid "Choose how Auto structures and styles your summaries."
 msgstr ""
 
 #: src/settings/general/audio-settings.tsx
 msgid "Choose how long recordings stay on this device."
+msgstr ""
+
+#: src/settings/appearance/app-icon.tsx
+msgid "Choose how Shots Founder Hub appears in the Dock."
+msgstr ""
+
+#: src/settings/appearance/theme.tsx
+msgid "Choose how Shots Founder Hub looks on this device."
 msgstr ""
 
 #: src/templates/template-icon-picker.tsx
@@ -1352,7 +1256,7 @@ msgid "Cloud API enabled — 1 meeting uploaded"
 msgstr ""
 
 #: src/settings/developers/cloud-api.tsx
-msgid "Cloud API enabled, but existing meetings could not be uploaded. Anarlog will retry."
+msgid "Cloud API enabled, but existing meetings could not be uploaded. Shots Founder Hub will retry."
 msgstr ""
 
 #: src/settings/developers/cloud-api.tsx
@@ -1471,7 +1375,7 @@ msgid "Complete onboarding. You're ready for your next conversation."
 msgstr ""
 
 #: src/instruction/index.tsx
-msgid "Complete sign-in in your browser, then return to Anarlog."
+msgid "Complete sign-in in your browser, then return to Shots Founder Hub."
 msgstr ""
 
 #: src/settings/general/notification.tsx
@@ -1531,7 +1435,7 @@ msgid "Connect a CRM in Settings › CRM to enrich contacts."
 msgstr ""
 
 #: src/settings/crm/index.tsx
-msgid "Connect a CRM to look up your contacts from Anarlog. Connections are managed through your Anarlog account."
+msgid "Connect a CRM to look up your contacts from Shots Founder Hub. Connections are managed through your Shots Founder Hub account."
 msgstr ""
 
 #: src/onboarding/calendar.tsx
@@ -1658,7 +1562,7 @@ msgid "Continuing without trial"
 msgstr ""
 
 #: src/settings/general/meeting-settings.tsx
-msgid "Control listening without reopening Anarlog."
+msgid "Control listening without reopening Shots Founder Hub."
 msgstr ""
 
 #: src/settings/stats/index.tsx
@@ -2004,7 +1908,7 @@ msgid "Create your account"
 msgstr ""
 
 #: src/settings/stats/badge-collection.tsx
-msgid "Create your Anarlog account. A place for your conversations to call home."
+msgid "Create your Shots Founder Hub account. A place for your conversations to call home."
 msgstr ""
 
 #: src/session/components/outer-header/overflow/export-modal.tsx
@@ -2226,7 +2130,7 @@ msgid "Dictation shortcut"
 msgstr ""
 
 #: src/settings/dictation.tsx
-msgid "Dictation uses your microphone, transcription provider, languages, and dictionary. Temporary audio is deleted after transcription. Your last transcript stays in memory until dictation is disabled or Anarlog closes."
+msgid "Dictation uses your microphone, transcription provider, languages, and dictionary. Temporary audio is deleted after transcription. Your last transcript stays in memory until dictation is disabled or Shots Founder Hub closes."
 msgstr ""
 
 #: src/settings/dictation.tsx
@@ -2288,13 +2192,13 @@ msgstr ""
 msgid "Downloading {downloadingModel}"
 msgstr ""
 
-#. placeholder {0}: update.version
-#: src/sidebar/toast/registry.tsx
-msgid "Downloading Anarlog {0}{progress}"
-msgstr ""
-
 #: src/sidebar/toast/registry.tsx
 msgid "Downloading model"
+msgstr ""
+
+#. placeholder {0}: update.version
+#: src/sidebar/toast/registry.tsx
+msgid "Downloading Shots Founder Hub {0}{progress}"
 msgstr ""
 
 #: src/settings/automations/index.tsx
@@ -2482,7 +2386,7 @@ msgid "Every conversation adds to your story."
 msgstr ""
 
 #: src/settings/automations/google-drive-config.tsx
-msgid "Every note summarized after enabling this automation is saved here as one file with its summary and transcript in the selected format. Anarlog must be open."
+msgid "Every note summarized after enabling this automation is saved here as one file with its summary and transcript in the selected format. Shots Founder Hub must be open."
 msgstr ""
 
 #. placeholder {0}: owned.workspaceName
@@ -2621,12 +2525,12 @@ msgid "Finding Your Rhythm"
 msgstr ""
 
 #: src/instruction/index.tsx
-msgid "Finish checkout in your browser to unlock more, then return to Anarlog."
+msgid "Finish checkout in your browser to unlock more, then return to Shots Founder Hub."
 msgstr ""
 
 #: src/settings/general/account.tsx
 #: src/settings/referrals.tsx
-msgid "Finish in your browser, then return to Anarlog."
+msgid "Finish in your browser, then return to Shots Founder Hub."
 msgstr ""
 
 #: src/settings/general/account.tsx
@@ -2844,7 +2748,7 @@ msgid "Hands-free dictation"
 msgstr ""
 
 #: src/settings/general/app-settings.tsx
-msgid "Have Anarlog ready when you sign in."
+msgid "Have Shots Founder Hub ready when you sign in."
 msgstr ""
 
 #: src/calendar/components/apple/permission.tsx
@@ -2856,31 +2760,31 @@ msgid "Having trouble? Paste the redirect URL"
 msgstr ""
 
 #: src/settings/stats/badge-collection.tsx
-msgid "Hello, Anarlog"
+msgid "Hello, Shots Founder Hub"
 msgstr ""
 
 #: src/main/windows-title-bar.tsx
 msgid "Help"
 msgstr ""
 
-#: src/onboarding/permissions.tsx
-msgid "Help Anarlog listen to others"
-msgstr ""
-
-#: src/onboarding/permissions.tsx
-msgid "Help Anarlog listen to you"
-msgstr ""
-
-#: src/onboarding/permissions.tsx
-msgid "Help Anarlog read meeting activity"
-msgstr ""
-
 #: src/settings/general/app-settings.tsx
-msgid "Help improve Anarlog with anonymous usage data."
+msgid "Help improve Shots Founder Hub with anonymous usage data."
+msgstr ""
+
+#: src/onboarding/permissions.tsx
+msgid "Help Shots Founder Hub listen to others"
+msgstr ""
+
+#: src/onboarding/permissions.tsx
+msgid "Help Shots Founder Hub listen to you"
+msgstr ""
+
+#: src/onboarding/permissions.tsx
+msgid "Help Shots Founder Hub read meeting activity"
 msgstr ""
 
 #: src/chat/components/body/empty.tsx
-msgid "Hi, I'm Anarlog AI. Set up a language model and I'll be ready to help."
+msgid "Hi, I'm Shots Founder Hub AI. Set up a language model and I'll be ready to help."
 msgstr ""
 
 #: src/settings/general/notification.tsx
@@ -2950,7 +2854,7 @@ msgid "Icons"
 msgstr ""
 
 #: src/settings/general/account.tsx
-msgid "If Anarlog stays closed, paste the link in the sign-in window."
+msgid "If Shots Founder Hub stays closed, paste the link in the sign-in window."
 msgstr ""
 
 #: src/settings/referrals.tsx
@@ -3040,7 +2944,7 @@ msgid "Install"
 msgstr ""
 
 #: src/settings/sync/index.tsx
-msgid "Install Anarlog and sign in with this account on the new device. Keep this device online and the new device will connect automatically."
+msgid "Install Shots Founder Hub and sign in with this account on the new device. Keep this device online and the new device will connect automatically."
 msgstr ""
 
 #: src/settings/developers/skills.tsx
@@ -3170,10 +3074,6 @@ msgstr ""
 msgid "Keep {PRO_TRIAL_DAYS} days"
 msgstr ""
 
-#: src/settings/dictation.tsx
-msgid "Keep Anarlog running to use your shortcut in other apps."
-msgstr ""
-
 #: src/session-sharing/management-panel.tsx
 msgid "Keep desktop edits"
 msgstr ""
@@ -3188,6 +3088,10 @@ msgstr ""
 
 #: src/settings/sync/index.tsx
 msgid "Keep notes encrypted and synced across your devices."
+msgstr ""
+
+#: src/settings/dictation.tsx
+msgid "Keep Shots Founder Hub running to use your shortcut in other apps."
 msgstr ""
 
 #: src/session/components/note-conflict-banner.tsx
@@ -3441,7 +3345,7 @@ msgid "Low-light canvas"
 msgstr ""
 
 #: src/settings/ai/shared/index.tsx
-msgid "macOS cannot access your login Keychain. Repairing briefly locks it and asks for your Mac password before Anarlog retries this API key."
+msgid "macOS cannot access your login Keychain. Repairing briefly locks it and asks for your Mac password before Shots Founder Hub retries this API key."
 msgstr ""
 
 #: src/auth/cloudsync-keychain-repair.tsx
@@ -3486,7 +3390,7 @@ msgid "Manage workspace billing"
 msgstr ""
 
 #: src/settings/general/account.tsx
-msgid "Manage your sign-in methods on the Anarlog website."
+msgid "Manage your sign-in methods on the Shots Founder Hub website."
 msgstr ""
 
 #: src/settings/automations/google-drive-config.tsx
@@ -3636,7 +3540,7 @@ msgid "Merged"
 msgstr ""
 
 #: src/composer/index.tsx
-msgid "Message Anarlog AI"
+msgid "Message Shots Founder Hub AI"
 msgstr ""
 
 #: src/session/components/outer-header/overflow/export-modal.tsx
@@ -3765,7 +3669,7 @@ msgid "New folder"
 msgstr ""
 
 #: src/imports/screen.tsx
-msgid "New meetings are imported automatically while Anarlog is running."
+msgid "New meetings are imported automatically while Shots Founder Hub is running."
 msgstr ""
 
 #: src/main/empty.tsx
@@ -3943,7 +3847,7 @@ msgid "No page selected yet."
 msgstr ""
 
 #: src/settings/automations/starter-config.tsx
-msgid "No pages found. Share the page with the Anarlog integration in Notion first."
+msgid "No pages found. Share the page with the Shots Founder Hub integration in Notion first."
 msgstr ""
 
 #: src/session/components/note-input/transcript/renderer/speaker-assign.tsx
@@ -4148,20 +4052,6 @@ msgstr ""
 msgid "Open AI Settings"
 msgstr ""
 
-#: src/composer/index.tsx
-#: src/onboarding/final.tsx
-#: src/services/enhancer/summary-notification.ts
-msgid "Open Anarlog"
-msgstr ""
-
-#: src/settings/general/app-settings.tsx
-msgid "Open Anarlog from the menu bar."
-msgstr ""
-
-#: src/settings/sync/index.tsx
-msgid "Open Anarlog on an existing synced device signed in to the same account. This device will connect automatically."
-msgstr ""
-
 #: src/sidebar/timeline/index.tsx
 msgid "Open calendar"
 msgstr ""
@@ -4208,6 +4098,20 @@ msgstr ""
 msgid "Open Settings"
 msgstr ""
 
+#: src/composer/index.tsx
+#: src/onboarding/final.tsx
+#: src/services/enhancer/summary-notification.ts
+msgid "Open Shots Founder Hub"
+msgstr ""
+
+#: src/settings/general/app-settings.tsx
+msgid "Open Shots Founder Hub from the menu bar."
+msgstr ""
+
+#: src/settings/sync/index.tsx
+msgid "Open Shots Founder Hub on an existing synced device signed in to the same account. This device will connect automatically."
+msgstr ""
+
 #: src/resource-sharing/share-dialog.tsx
 #: src/settings/general/billing.tsx
 msgid "Open Teams"
@@ -4234,12 +4138,12 @@ msgstr ""
 
 #. placeholder {0}: accessibilityGuidance.paneTitle ?? "Privacy"
 #: src/onboarding/permissions.tsx
-msgid "Opens System Settings and guides you to add Anarlog to the {0} list"
+msgid "Opens System Settings and guides you to add Shots Founder Hub to the {0} list"
 msgstr ""
 
 #. placeholder {0}: accessibilityGuidance.paneTitle ?? "Privacy"
 #: src/settings/general/permissions.tsx
-msgid "Opens System Settings and guides you to add Anarlog to the {0} list."
+msgid "Opens System Settings and guides you to add Shots Founder Hub to the {0} list."
 msgstr ""
 
 #: src/calendar/components/apple/permission.tsx
@@ -4315,7 +4219,7 @@ msgid "Paste the authorization code"
 msgstr ""
 
 #: src/instruction/index.tsx
-msgid "Paste the browser URL here if the browser button did not reopen Anarlog."
+msgid "Paste the browser URL here if the browser button did not reopen Shots Founder Hub."
 msgstr ""
 
 #: src/settings/ai/llm/subscriptions/connect.tsx
@@ -4456,7 +4360,7 @@ msgid "Preparing…"
 msgstr ""
 
 #: src/settings/dictation.tsx
-msgid "Press Escape to cancel. Dictation stops after five minutes and pauses while Anarlog records a meeting."
+msgid "Press Escape to cancel. Dictation stops after five minutes and pauses while Shots Founder Hub records a meeting."
 msgstr ""
 
 #: src/settings/dictation-shortcut.tsx
@@ -4862,16 +4766,16 @@ msgid "Require SSO"
 msgstr ""
 
 #: src/settings/privacy/index.tsx
-msgid "Require Touch ID or your password when opening Anarlog."
+msgid "Require Touch ID or your password when opening Shots Founder Hub."
 msgstr ""
 
 #: src/settings/privacy/index.tsx
-msgid "Require Windows Hello face, PIN, or password when opening Anarlog."
+msgid "Require Windows Hello face, PIN, or password when opening Shots Founder Hub."
 msgstr ""
 
 #: src/shared/open-note-dialog.tsx
 #: src/sidebar/settings.tsx
-msgid "Requires Anarlog Pro"
+msgid "Requires Shots Founder Hub Pro"
 msgstr ""
 
 #: src/settings/team/index.tsx
@@ -5133,7 +5037,7 @@ msgid "Search or type owner/repo"
 msgstr ""
 
 #: src/settings/automations/starter-config.tsx
-msgid "Search pages shared with Anarlog…"
+msgid "Search pages shared with Shots Founder Hub…"
 msgstr ""
 
 #: src/settings/ai/shared/provider-search.tsx
@@ -5242,7 +5146,7 @@ msgid "Send message"
 msgstr ""
 
 #: src/settings/privacy/index.tsx
-msgid "Send sanitized crash and error reports to help improve Anarlog."
+msgid "Send sanitized crash and error reports to help improve Shots Founder Hub."
 msgstr ""
 
 #: src/automations/starters.tsx
@@ -5423,12 +5327,104 @@ msgstr ""
 msgid "Sharing paused to protect your edits"
 msgstr ""
 
-#: src/sidebar/timeline/item.tsx
-msgid "Show All Recurring Events"
+#. placeholder {0}: update.version
+#: src/sidebar/toast/registry.tsx
+msgid "Shots Founder Hub {0} is available"
 msgstr ""
 
-#: src/settings/general/app-settings.tsx
-msgid "Show Anarlog in the Dock and app switcher."
+#. placeholder {0}: update.version
+#: src/sidebar/toast/registry.tsx
+msgid "Shots Founder Hub {0} is ready to install"
+msgstr ""
+
+#: src/onboarding/permissions.tsx
+msgid "Shots Founder Hub can hear others"
+msgstr ""
+
+#: src/onboarding/permissions.tsx
+msgid "Shots Founder Hub can hear your voice"
+msgstr ""
+
+#: src/onboarding/permissions.tsx
+msgid "Shots Founder Hub can read meeting details"
+msgstr ""
+
+#: src/settings/developers/cli.tsx
+msgid "Shots Founder Hub CLI"
+msgstr ""
+
+#: src/session/components/note-input/enhanced/enhance-error.tsx
+msgid "Shots Founder Hub could not generate this summary because you were not signed in. Sign in, then try again."
+msgstr ""
+
+#: src/shared-notes/index.tsx
+msgid "Shots Founder Hub could not read the local shared-note cache."
+msgstr ""
+
+#: src/settings/sync/index.tsx
+msgid "Shots Founder Hub could not start cloud sync on this device."
+msgstr ""
+
+#: src/settings/sync/index.tsx
+msgid "Shots Founder Hub could not start cloud sync on this device. It will keep retrying."
+msgstr ""
+
+#: src/settings/general/account.tsx
+msgid "Shots Founder Hub couldn't sign you out. Try again."
+msgstr ""
+
+#: src/lock/gate.tsx
+msgid "Shots Founder Hub is Locked"
+msgstr ""
+
+#: src/session-sharing/access-management.tsx
+msgid "Shots Founder Hub member"
+msgstr ""
+
+#: src/onboarding/index.tsx
+msgid "Shots Founder Hub needs access to your microphone and system audio to record and transcribe your meetings"
+msgstr ""
+
+#: src/onboarding/index.tsx
+msgid "Shots Founder Hub needs microphone and system audio to transcribe your meetings, plus Accessibility to read meeting controls, visible chat."
+msgstr ""
+
+#: src/settings/general/primary-recording-device.tsx
+msgid "Shots Founder Hub Pro coordinates recording across your devices."
+msgstr ""
+
+#. placeholder {0}: statuses[0].displayName
+#: src/settings/developers/skills.tsx
+msgid "Shots Founder Hub skill added to {0}"
+msgstr ""
+
+#. placeholder {0}: statuses.length
+#: src/settings/developers/skills.tsx
+msgid "Shots Founder Hub skill added to {0} agents"
+msgstr ""
+
+#: src/session-sharing/access-management.tsx
+msgid "Shots Founder Hub user"
+msgstr ""
+
+#: src/settings/sync/index.tsx
+msgid "Shots Founder Hub will keep retrying."
+msgstr ""
+
+#: src/settings/sync/index.tsx
+msgid "Shots Founder Hub will retry automatically."
+msgstr ""
+
+#: src/settings/general/storage/legacy-cleanup.tsx
+msgid "Shots Founder Hub will retry automatically. This does not affect your notes."
+msgstr ""
+
+#: src/onboarding/index.tsx
+msgid "Shots Founder Hub will sync your calendar to get meeting reminders"
+msgstr ""
+
+#: src/sidebar/timeline/item.tsx
+msgid "Show All Recurring Events"
 msgstr ""
 
 #: src/settings/general/app-settings.tsx
@@ -5436,7 +5432,7 @@ msgid "Show app in Dock"
 msgstr ""
 
 #: src/settings/general/permissions.tsx
-msgid "Show Apple Calendar events in Anarlog."
+msgid "Show Apple Calendar events in Shots Founder Hub."
 msgstr ""
 
 #: src/session/components/outer-header/overflow/index.tsx
@@ -5480,6 +5476,10 @@ msgstr "Toon vergadertijden als 14:00 in plaats van 2:00 PM."
 
 #: src/settings/general/app-settings.tsx
 msgid "Show release notes"
+msgstr ""
+
+#: src/settings/general/app-settings.tsx
+msgid "Show Shots Founder Hub in the Dock and app switcher."
 msgstr ""
 
 #: src/main/windows-title-bar.tsx
@@ -5552,11 +5552,6 @@ msgstr ""
 msgid "Sign in to add this folder"
 msgstr ""
 
-#: src/settings/general/account.tsx
-#: src/settings/general/billing.tsx
-msgid "Sign in to Anarlog"
-msgstr ""
-
 #: src/settings/general/primary-recording-device.tsx
 msgid "Sign in to choose a primary recording device."
 msgstr ""
@@ -5588,7 +5583,7 @@ msgid "Sign in to generate this summary"
 msgstr ""
 
 #: src/sidebar/toast/registry.tsx
-msgid "Sign in to get the most out of Anarlog"
+msgid "Sign in to get the most out of Shots Founder Hub"
 msgstr ""
 
 #: src/settings/referrals.tsx
@@ -5605,6 +5600,11 @@ msgstr ""
 
 #: src/session-sharing/index.tsx
 msgid "Sign in to share this note with others."
+msgstr ""
+
+#: src/settings/general/account.tsx
+#: src/settings/general/billing.tsx
+msgid "Sign in to Shots Founder Hub"
 msgstr ""
 
 #: src/settings/sync/index.tsx
@@ -5624,7 +5624,7 @@ msgid "Sign in with ChatGPT Plus or Pro, then paste the redirect URL from your b
 msgstr ""
 
 #: src/settings/ai/llm/subscriptions/connect.tsx
-msgid "Sign in with ChatGPT Plus or Pro. We'll open Anarlog and finish connecting."
+msgid "Sign in with ChatGPT Plus or Pro. We'll open Shots Founder Hub and finish connecting."
 msgstr ""
 
 #: src/settings/ai/llm/subscriptions/connect.tsx
@@ -5648,7 +5648,7 @@ msgid "Sign out and sign in again to resume cloud sync."
 msgstr ""
 
 #: src/settings/general/account.tsx
-msgid "Sign out of Anarlog?"
+msgid "Sign out of Shots Founder Hub?"
 msgstr ""
 
 #: src/onboarding/account/after-login.tsx
@@ -5736,15 +5736,15 @@ msgid "Source: AI model provider"
 msgstr ""
 
 #: src/session/components/note-input/enhanced/enhance-error.tsx
-msgid "Source: Anarlog"
-msgstr ""
-
-#: src/session/components/note-input/enhanced/enhance-error.tsx
 msgid "Source: OpenRouter (AI routing service)"
 msgstr ""
 
 #: src/session/components/note-input/enhanced/enhance-error.tsx
 msgid "Source: OpenRouter or the AI model provider"
+msgstr ""
+
+#: src/session/components/note-input/enhanced/enhance-error.tsx
+msgid "Source: Shots Founder Hub"
 msgstr ""
 
 #: src/settings/general/notification.tsx
@@ -5767,10 +5767,6 @@ msgstr ""
 msgid "Start a Pro trial or add your own LLM API key to generate a summary from this transcript."
 msgstr ""
 
-#: src/settings/general/app-settings.tsx
-msgid "Start Anarlog at login"
-msgstr "Start Anarlog bij inloggen"
-
 #: src/settings/general/billing.tsx
 msgid "Start free trial"
 msgstr ""
@@ -5790,6 +5786,10 @@ msgstr ""
 #: src/main/empty.tsx
 msgid "Start Recording"
 msgstr ""
+
+#: src/settings/general/app-settings.tsx
+msgid "Start Shots Founder Hub at login"
+msgstr "Start Shots Founder Hub bij inloggen"
 
 #: src/chat/components/input/index.tsx
 msgid "Start voice input"
@@ -5845,7 +5845,7 @@ msgid "Starting…"
 msgstr ""
 
 #: src/settings/general/app-settings.tsx
-msgid "Stay current with updates installed the next time Anarlog opens."
+msgid "Stay current with updates installed the next time Shots Founder Hub opens."
 msgstr ""
 
 #: src/settings/automations/index.tsx
@@ -6048,7 +6048,7 @@ msgid "Talk to sales"
 msgstr ""
 
 #: src/settings/developers/skills.tsx
-msgid "Teach coding agents when and how to use the Anarlog CLI and MCP"
+msgid "Teach coding agents when and how to use the Shots Founder Hub CLI and MCP"
 msgstr ""
 
 #: src/resource-sharing/share-dialog.tsx
@@ -6172,7 +6172,7 @@ msgid "This guest needs Team access"
 msgstr ""
 
 #: src/session/components/outer-header/index.tsx
-msgid "This is a prerecorded demo, so your camera stays off. Click Join & record to see Anarlog in action."
+msgid "This is a prerecorded demo, so your camera stays off. Click Join & record to see Shots Founder Hub in action."
 msgstr ""
 
 #: src/settings/sync/index.tsx
@@ -6192,11 +6192,11 @@ msgid "This recording is using batch transcription, so the transcript isn't avai
 msgstr ""
 
 #: src/settings/plan-gate.tsx
-msgid "This requires Anarlog Enterprise"
+msgid "This requires Shots Founder Hub Enterprise"
 msgstr ""
 
 #: src/settings/plan-gate.tsx
-msgid "This requires Anarlog Pro"
+msgid "This requires Shots Founder Hub Pro"
 msgstr ""
 
 #. placeholder {0}: status.fileCount
@@ -6218,7 +6218,7 @@ msgid "Tip: Add teammate names, acronyms, company jargon, and product terms."
 msgstr ""
 
 #: src/session/components/note-input/enhanced/streaming.tsx
-msgid "Tip: The Anarlog team loves our users!"
+msgid "Tip: The Shots Founder Hub team loves our users!"
 msgstr ""
 
 #: src/sidebar/timeline/utils/index.ts
@@ -6315,7 +6315,7 @@ msgid "Turn assigned follow-ups into Linear issue drafts."
 msgstr ""
 
 #: src/calendar/components/apple/permission.tsx
-msgid "Turn on Anarlog in System Settings → Privacy & Security → Calendars, then return here."
+msgid "Turn on Shots Founder Hub in System Settings → Privacy & Security → Calendars, then return here."
 msgstr ""
 
 #: src/settings/appearance/app-icon.tsx
@@ -6369,7 +6369,7 @@ msgid "Unlock the Team library"
 msgstr ""
 
 #: src/settings/ai/shared/index.tsx
-msgid "Unlock your login Keychain in the macOS prompt. Anarlog will retry saving this API key automatically."
+msgid "Unlock your login Keychain in the macOS prompt. Shots Founder Hub will retry saving this API key automatically."
 msgstr ""
 
 #: src/contacts/details.tsx
@@ -6501,7 +6501,7 @@ msgid "Upload transcript"
 msgstr ""
 
 #: src/settings/developers/cloud-api.tsx
-msgid "Uploads meeting content for remote access while Anarlog is closed."
+msgid "Uploads meeting content for remote access while Shots Founder Hub is closed."
 msgstr ""
 
 #: src/settings/team/index.tsx
@@ -6598,10 +6598,6 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: src/lock/gate.tsx
-msgid "View Anarlog"
-msgstr ""
-
 #: src/settings/referrals.tsx
 msgid "View billing"
 msgstr ""
@@ -6614,12 +6610,16 @@ msgstr ""
 msgid "View Note"
 msgstr ""
 
+#: src/lock/gate.tsx
+msgid "View Shots Founder Hub"
+msgstr ""
+
 #: src/settings/sync/log.tsx
 msgid "View sync log"
 msgstr ""
 
 #: src/chat/components/input/use-dictation.ts
-msgid "Voice input is unavailable while Anarlog is recording a meeting."
+msgid "Voice input is unavailable while Shots Founder Hub is recording a meeting."
 msgstr ""
 
 #: src/settings/general/notification.tsx
@@ -6664,7 +6664,7 @@ msgid "Weekly streak: {0}"
 msgstr ""
 
 #: src/onboarding/index.tsx
-msgid "Welcome to Anarlog"
+msgid "Welcome to Shots Founder Hub"
 msgstr ""
 
 #: src/chat/components/body/empty.tsx
@@ -6854,7 +6854,7 @@ msgid "Your notes remain available locally."
 msgstr ""
 
 #: src/settings/sync/index.tsx
-msgid "Your notes remain available locally. Anarlog will keep retrying."
+msgid "Your notes remain available locally. Shots Founder Hub will keep retrying."
 msgstr ""
 
 #: src/settings/sync/index.tsx
@@ -6895,7 +6895,7 @@ msgid "Your Pro trial just started"
 msgstr ""
 
 #: src/settings/general/e2ee-setup.tsx
-msgid "Your recovery key encrypts synced notes before they leave this device. Anarlog cannot read or recover it."
+msgid "Your recovery key encrypts synced notes before they leave this device. Shots Founder Hub cannot read or recover it."
 msgstr ""
 
 #: src/settings/referrals.tsx

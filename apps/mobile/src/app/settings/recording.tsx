@@ -46,8 +46,8 @@ export default function RecordingSettings() {
         />
         <FieldGroup.SectionFooter>
           <Text>
-            Recordings are saved on this device first. Keep Anarlog open to
-            finish backing them up.
+            Recordings are saved on this device first. Keep Shots Founder Hub
+            open to finish backing them up.
           </Text>
         </FieldGroup.SectionFooter>
       </FieldGroup.Section>

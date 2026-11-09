@@ -119,7 +119,7 @@ mod tests {
             fs::create_dir_all(vault.join("search_index")).unwrap();
             fs::write(vault.join("search_index").join("meta.json"), "{}").unwrap();
             fs::write(vault.join("settings.json"), r#"{"theme":"dark"}"#).unwrap();
-            fs::write(vault.join("AGENTS.md"), "# Anarlog Desktop\n").unwrap();
+            fs::write(vault.join("AGENTS.md"), "# Shots Founder Hub Desktop\n").unwrap();
             fs::create_dir_all(vault.join(".obsidian")).unwrap();
             fs::write(vault.join("Daily note.md"), "note").unwrap();
         }

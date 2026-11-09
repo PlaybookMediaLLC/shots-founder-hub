@@ -275,7 +275,7 @@ export async function resolveProvider(kind: ProviderKind) {
       return { ...config, apiKey: session.access_token };
     }
     if (!supabase) return { ...config, apiKey: "" };
-    throw new Error("Sign in to use Anarlog Pro.");
+    throw new Error("Sign in to use Shots Founder Hub Pro.");
   }
   const key = await readProviderKey(
     session?.user.id ?? null,

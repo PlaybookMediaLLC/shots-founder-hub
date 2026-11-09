@@ -17,7 +17,7 @@ test("packages only Android architectures with a bundled CloudSync library", asy
     { type: "property", key: "newArchEnabled", value: "true" },
   ];
   const config = withAnarlogAndroidArchitectures({
-    name: "Anarlog",
+    name: "Shots Founder Hub",
     slug: "anarlog-mobile",
   });
   let result = {

@@ -109,7 +109,7 @@ test("exact page redirects accept canonical trailing slashes", () => {
   }
 });
 
-test("the About page is reachable on Anarlog and legacy hosts keep their redirect", () => {
+test("the About page is reachable on Shots Founder Hub and legacy hosts keep their redirect", () => {
   for (const suffix of ["", "/"]) {
     assert.equal(routeFor(`https://anarlog.so/about${suffix}`), undefined);
     assert.equal(

@@ -21,7 +21,7 @@ fn build_preamble() -> String {
     #grid(
       columns: (1fr, auto),
       text(size: 8pt, fill: muted)[#session-title],
-      text(size: 8pt, fill: subtle, tracking: 0.14em)[ANARLOG],
+      text(size: 8pt, fill: subtle, tracking: 0.14em)[Shots Founder Hub],
     )
     #v(5pt)
     #line(length: 100%, stroke: 0.5pt + hairline)

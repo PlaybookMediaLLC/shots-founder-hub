@@ -10,7 +10,7 @@ date: "2025-08-22"
 
 **Yes, but local transcription is only one part of a cloud-free meeting workflow.** Audio capture, speech recognition, summaries, storage, and connected features can follow different data paths. Check each one before assuming that a local transcript means the entire meeting stays on your device.
 
-Anarlog stores its canonical meeting record in local SQLite. You can keep transcription and summaries local too, with a supported setup. Choosing a hosted model or another connected feature changes that boundary.
+Shots Founder Hub stores its canonical meeting record in local SQLite. You can keep transcription and summaries local too, with a supported setup. Choosing a hosted model or another connected feature changes that boundary.
 
 ## Local storage and local processing are different
 
@@ -18,7 +18,7 @@ Anarlog stores its canonical meeting record in local SQLite. You can keep transc
 
 A cloud transcription service receives audio to turn speech into text. Saving its resulting transcript locally does not undo that upload. Likewise, a local speech model can create a transcript that a cloud language model later receives to generate a summary.
 
-Anarlog keeps those choices separate in **Settings → Transcription** and **Settings → Intelligence**. Changing one does not change the other. The [models and providers documentation](https://docs.anarlog.so/models-and-providers) explains their inputs and requirements.
+Shots Founder Hub keeps those choices separate in **Settings → Transcription** and **Settings → Intelligence**. Changing one does not change the other. The [models and providers documentation](https://docs.anarlog.so/models-and-providers) explains their inputs and requirements.
 
 | Setup | Audio processing | Summary processing | What leaves the device for AI processing |
 | --- | --- | --- | --- |
@@ -31,7 +31,7 @@ Using your own API key gives you a choice of provider; it does not make that pro
 
 ## Check your hardware and language first
 
-Anarlog's built-in on-device transcription options require a supported Apple Silicon Mac. Apple Speech has additional macOS 26 and system-language requirements. An Intel Mac, Windows installer, or Linux installer does not establish that these built-in models are available there.
+Shots Founder Hub's built-in on-device transcription options require a supported Apple Silicon Mac. Apple Speech has additional macOS 26 and system-language requirements. An Intel Mac, Windows installer, or Linux installer does not establish that these built-in models are available there.
 
 Language coverage also depends on the selected speech model. The app's overall language support is not a promise that every local model handles the same languages. Check the current [on-device model requirements](https://docs.anarlog.so/models-and-providers#on-device-models) before downloading one.
 
@@ -39,7 +39,7 @@ Local and cloud accuracy or speed depend on the model, hardware, language, and r
 
 ## Prepare both AI stages before disconnecting
 
-Choose and download your speech model, then configure a local Intelligence provider and download its language model. A local server must remain available to Anarlog during summaries and chat.
+Choose and download your speech model, then configure a local Intelligence provider and download its language model. A local server must remain available to Shots Founder Hub during summaries and chat.
 
 For the actual setup and a short disconnected test, follow the [offline meeting transcription guide](/blog/offline-meeting-transcription-mac/). It covers audio permissions, model preparation, and checking the transcript and summary separately. The [official offline checklist](https://docs.anarlog.so/offline) explains what can work without a network.
 
@@ -56,6 +56,6 @@ Avoid those features for a meeting that must remain on one device. Review usage 
 
 ## Can you transcribe without retaining the audio?
 
-Transcription and permanent audio retention are separate choices. Anarlog offers **Don't save** under **Settings → Meetings → Audio file retention**, but capture still uses temporary audio for recovery. Once that audio is deleted, an incomplete transcript cannot be repaired from it. Choose retention deliberately rather than treating transcription as a guarantee that no audio file ever existed.
+Transcription and permanent audio retention are separate choices. Shots Founder Hub offers **Don't save** under **Settings → Meetings → Audio file retention**, but capture still uses temporary audio for recovery. Once that audio is deleted, an incomplete transcript cannot be repaired from it. Choose retention deliberately rather than treating transcription as a guarantee that no audio file ever existed.
 
 If you are comparing broader deployment choices, the [local AI meeting notes comparison](/blog/local-ai-meeting-notes/) separates desktop local processing from hosted services. A configurable desktop app is not proof of a complete self-hosted storage service or automatic compliance.

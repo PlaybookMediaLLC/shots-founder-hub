@@ -48,9 +48,9 @@ export function accountPlanLabel(
   billing: BillingInfo,
   workspacePlan: "team" | "enterprise" | null,
 ) {
-  if (workspacePlan === "enterprise") return "Anarlog Enterprise";
-  if (workspacePlan === "team") return "Anarlog Pro";
+  if (workspacePlan === "enterprise") return "Shots Founder Hub Enterprise";
+  if (workspacePlan === "team") return "Shots Founder Hub Pro";
   if (billing.plan === "trial")
     return `Pro trial · ${billing.trialDaysRemaining ?? 0} days left`;
-  return billing.plan === "pro" ? "Anarlog Pro" : "Free";
+  return billing.plan === "pro" ? "Shots Founder Hub Pro" : "Free";
 }

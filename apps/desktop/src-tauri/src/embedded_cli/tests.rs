@@ -44,10 +44,10 @@ fn resolves_linux_arm64_bundled_binary() {
 
 #[test]
 fn finds_windows_path_entries_case_insensitively() {
-    let expected = Path::new(r"C:\Users\Test\AppData\Local\Anarlog\bin");
+    let expected = Path::new(r"C:\Users\Test\AppData\Local\Shots Founder Hub\bin");
 
     assert!(path_list_contains(
-        r"C:\Windows;C:\USERS\TEST\APPDATA\LOCAL\ANARLOG\BIN\;C:\Tools",
+        r"C:\Windows;C:\USERS\TEST\APPDATA\LOCAL\Shots Founder Hub\BIN\;C:\Tools",
         expected
     ));
     assert!(!path_list_contains(
@@ -103,7 +103,7 @@ fn classifies_legacy_app_resource_symlink_as_missing() {
     let managed_path = dir.path().join("managed-anarlog-cli");
     let app_resource_path = dir
         .path()
-        .join("Anarlog.app/Contents/Resources/anarlog-cli");
+        .join("Shots Founder Hub.app/Contents/Resources/anarlog-cli");
     let install_path = dir.path().join("anarlog");
     std::fs::create_dir_all(app_resource_path.parent().unwrap()).unwrap();
     std::fs::write(&app_resource_path, "cli").unwrap();
