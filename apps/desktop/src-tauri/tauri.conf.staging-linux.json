@@ -1,0 +1,10 @@
+{
+  "productName": "Anarlog Staging",
+  "bundle": {
+    "linux": {
+      "deb": {
+        "desktopTemplate": "assets/shots-staging.desktop"
+      }
+    }
+  }
+}

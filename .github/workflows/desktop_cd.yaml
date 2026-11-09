@@ -424,6 +424,8 @@ jobs:
             --bundles appimage,deb
             --target "${{ matrix.target }}"
             --config "$TAURI_CONF_PATH"
+            # Tauri derives the Debian package identity from productName.
+            --config "./src-tauri/tauri.conf.$RELEASE_CHANNEL-linux.json"
             --verbose
           )
           if [[ "$RELEASE_CHANNEL" == "staging" ]]; then
@@ -555,7 +557,7 @@ jobs:
             bash -euxo pipefail -c '
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              apt-get install -y "$DEB_PATH"
+              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH"
               apt-get install -y dbus-x11 xvfb
               set +e
               timeout --signal=TERM 20s xvfb-run -a dbus-run-session -- "$BINARY_PATH" >/tmp/anarlog.log 2>&1

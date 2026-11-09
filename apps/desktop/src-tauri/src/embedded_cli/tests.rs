@@ -44,16 +44,43 @@ fn resolves_linux_arm64_bundled_binary() {
 
 #[test]
 fn finds_windows_path_entries_case_insensitively() {
-    let expected = Path::new(r"C:\Users\Test\AppData\Local\Shots Founder Hub\bin");
+    let expected = Path::new(r"C:\Users\Test\AppData\Local\Anarlog\bin");
 
     assert!(path_list_contains(
-        r"C:\Windows;C:\USERS\TEST\APPDATA\LOCAL\Shots Founder Hub\BIN\;C:\Tools",
+        r"C:\Windows;C:\USERS\TEST\APPDATA\LOCAL\ANARLOG\BIN\;C:\Tools",
         expected
     ));
     assert!(!path_list_contains(
         r"C:\Windows;C:\Users\Test\AppData\Local\Other\bin",
         expected
     ));
+}
+
+#[test]
+fn windows_upgrade_replaces_cli_at_existing_path_entry() {
+    let dir = tempfile::tempdir().unwrap();
+    let old_install_path = dir.path().join("Anarlog/bin/anarlog.exe");
+    std::fs::create_dir_all(old_install_path.parent().unwrap()).unwrap();
+    std::fs::write(&old_install_path, "old cli").unwrap();
+    let old_path = format!(
+        "C:\\Windows;{};C:\\Tools",
+        old_install_path.parent().unwrap().display()
+    );
+    let resource_path = dir.path().join("bundled-cli.exe");
+    std::fs::write(&resource_path, "updated cli").unwrap();
+
+    let install_path = windows_install_path(dir.path(), "anarlog");
+    assert_eq!(install_path, old_install_path);
+    install_windows_cli(&resource_path, &install_path).unwrap();
+
+    assert!(path_list_contains(
+        &old_path,
+        install_path.parent().unwrap()
+    ));
+    assert_eq!(
+        std::fs::read_to_string(old_install_path).unwrap(),
+        "updated cli"
+    );
 }
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]

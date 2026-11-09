@@ -1,0 +1,10 @@
+{
+  "productName": "Anarlog",
+  "bundle": {
+    "linux": {
+      "deb": {
+        "desktopTemplate": "assets/shots-stable.desktop"
+      }
+    }
+  }
+}

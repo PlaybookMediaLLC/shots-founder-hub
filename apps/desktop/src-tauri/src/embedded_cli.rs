@@ -239,18 +239,23 @@ fn command_name_from_identifier(identifier: &str) -> &'static str {
 fn install_path_for_command(command_name: &str) -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     {
-        return dirs::data_local_dir().map(|data_dir| {
-            data_dir
-                .join("Shots Founder Hub")
-                .join("bin")
-                .join(format!("{command_name}.exe"))
-        });
+        return dirs::data_local_dir()
+            .map(|data_dir| windows_install_path(&data_dir, command_name));
     }
 
     #[cfg(not(target_os = "windows"))]
     {
         dirs::home_dir().map(|home| home.join(".local/bin").join(command_name))
     }
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn windows_install_path(data_dir: &Path, command_name: &str) -> PathBuf {
+    // Keep the managed directory already on existing users' PATH.
+    data_dir
+        .join("Anarlog")
+        .join("bin")
+        .join(format!("{command_name}.exe"))
 }
 
 #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
@@ -393,7 +398,7 @@ fn windows_details_for_state(state: EmbeddedCliState, install_path: &Path) -> Op
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(any(test, target_os = "windows"))]
 fn install_windows_cli(resource_path: &Path, install_path: &Path) -> Result<(), String> {
     let install_dir = install_path
         .parent()
