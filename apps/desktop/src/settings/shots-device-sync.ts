@@ -6,7 +6,15 @@ import { open as chooseFolder } from "@tauri-apps/plugin-dialog";
 import { platform } from "@tauri-apps/plugin-os";
 import { z } from "zod";
 
-import { execute, getCloudsyncStatus, syncCloudsyncNow } from "@anlg/plugin-db";
+import {
+  createE2eeIdentity,
+  execute,
+  getCloudsyncStatus,
+  getE2eeIdentityStatus,
+  importE2eeIdentity,
+  inspectE2eeRecoveryKey,
+  syncCloudsyncNow,
+} from "@anlg/plugin-db";
 import { commands as detect } from "@anlg/plugin-detect";
 import { commands as opener } from "@anlg/plugin-opener2";
 import { commands as permissions } from "@anlg/plugin-permissions";
@@ -18,6 +26,7 @@ import {
   openAutoFormatRequest,
   openAIProviderRequest,
   openCloudsyncLogRequest,
+  openCloudsyncRecoveryRequest,
   openDictationStatusRequest,
 } from "./shots-private-action";
 
@@ -71,6 +80,7 @@ const commandSchema = z.object({
     "cloudsync-status",
     "cloudsync-now",
     "cloudsync-log",
+    "cloudsync-recovery",
     "ai-provider",
   ]),
   argument: z.string().max(201000),
@@ -83,6 +93,34 @@ function unwrap<T>(
 ): T {
   if (result.status === "error") throw new Error(result.error);
   return result.data;
+}
+
+async function claimE2eeIdentity(
+  accessToken: string,
+  keyId: string,
+  signal: AbortSignal,
+) {
+  const response = await fetch(
+    new URL("/sync/e2ee/identity", env.VITE_API_URL),
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ keyId }),
+      signal,
+    },
+  );
+  if (response.status === 409)
+    throw new Error(
+      "This account already uses another recovery key. Use the key from your first device.",
+    );
+  if (!response.ok)
+    throw new Error("Could not protect this account. Try again.");
+  const identity = (await response.json()) as { keyId?: unknown };
+  if (identity.keyId !== keyId)
+    throw new Error("The server returned an invalid key identity.");
 }
 
 export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
@@ -196,6 +234,7 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
               ...inventory.data,
               supportsCloudsyncSettings: true,
               supportsAIProviderSettings: true,
+              supportsCloudsyncRecovery: true,
               platform: platform(),
               locale: navigator.language,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -282,6 +321,54 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
               result = await request.sealResult(
                 truncatePrivateLog(log.data ?? ""),
               );
+              break;
+            }
+            case "cloudsync-recovery": {
+              if (!privateIdentity.data)
+                throw new Error("Private device connection is unavailable.");
+              const requestValue = await openCloudsyncRecoveryRequest(
+                privateIdentity.data.privateKey,
+                command.argument,
+              );
+              if (!(await current())) return null;
+              const session = await auth.getSessionForRequest({
+                requireLibraryAdmission: true,
+              });
+              if (!session || session.user.id !== accountId)
+                throw new Error(
+                  "Sign in again before changing the sync recovery key.",
+                );
+              let recoveryKey: string | undefined;
+              if (requestValue.value.operation === "status") {
+                const status = await getE2eeIdentityStatus(accountId!);
+                result = await requestValue.sealResult({
+                  configured: status.configured,
+                });
+                break;
+              }
+              if (requestValue.value.operation === "create") {
+                recoveryKey = await createE2eeIdentity(accountId!);
+                if (!(await current())) return null;
+                result = await requestValue.sealResult({
+                  configured: false,
+                  recoveryKey,
+                });
+                break;
+              }
+              recoveryKey =
+                requestValue.value.operation === "import"
+                  ? requestValue.value.recoveryKey
+                  : await createE2eeIdentity(accountId!);
+              const identity = await inspectE2eeRecoveryKey(recoveryKey);
+              if (!(await current())) return null;
+              await claimE2eeIdentity(
+                session.access_token,
+                identity.keyId,
+                signal,
+              );
+              if (!(await current())) return null;
+              await importE2eeIdentity(accountId!, recoveryKey);
+              result = await requestValue.sealResult({ configured: true });
               break;
             }
             case "ai-provider": {
