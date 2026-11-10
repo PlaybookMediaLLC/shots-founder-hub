@@ -24,6 +24,34 @@ export const dictationStatusSchema = z
   })
   .strict();
 export const cloudsyncLogResultSchema = z.string().max(110_000);
+export const aiProviderRequestSchema = z.discriminatedUnion("operation", [
+  z
+    .object({
+      operation: z.literal("status"),
+      type: z.enum(["llm", "stt"]),
+      providerId: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/),
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal("save"),
+      type: z.enum(["llm", "stt"]),
+      providerId: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/),
+      baseUrl: z.string().max(2048),
+      apiKey: z.string().max(16000),
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal("clear"),
+      type: z.enum(["llm", "stt"]),
+      providerId: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/),
+    })
+    .strict(),
+]);
+export const aiProviderResultSchema = z
+  .object({ configured: z.boolean(), baseUrl: z.string().max(2048) })
+  .strict();
 const context = new TextEncoder();
 
 function encode(value: ArrayBuffer | Uint8Array): string {
@@ -64,7 +92,7 @@ async function seal(
   key: CryptoKey,
   value: unknown,
   direction: "request" | "response",
-  kind: "auto-format" | "dictation-status" | "cloudsync-log",
+  kind: "auto-format" | "dictation-status" | "cloudsync-log" | "ai-provider",
 ) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
@@ -82,7 +110,7 @@ async function open(
   key: CryptoKey,
   value: z.infer<typeof responseSchema>,
   direction: "request" | "response",
-  kind: "auto-format" | "dictation-status" | "cloudsync-log",
+  kind: "auto-format" | "dictation-status" | "cloudsync-log" | "ai-provider",
 ): Promise<unknown> {
   const cleartext = await crypto.subtle.decrypt(
     {
@@ -123,7 +151,7 @@ export async function sealDictationStatusRequest(publicKey: string) {
 
 async function sealPrivateRequest(
   publicKey: string,
-  kind: "auto-format" | "dictation-status" | "cloudsync-log",
+  kind: "auto-format" | "dictation-status" | "cloudsync-log" | "ai-provider",
   value: unknown,
 ) {
   const identity = await createPrivateActionIdentity();
@@ -190,9 +218,21 @@ export async function openCloudsyncLogRequest(
   };
 }
 
+export async function openAIProviderRequest(
+  privateKey: CryptoKey,
+  argument: string,
+) {
+  const request = await openPrivateRequest(privateKey, "ai-provider", argument);
+  return {
+    value: aiProviderRequestSchema.parse(request.value),
+    sealResult: (result: z.infer<typeof aiProviderResultSchema>) =>
+      request.sealResult(aiProviderResultSchema.parse(result)),
+  };
+}
+
 async function openPrivateRequest(
   privateKey: CryptoKey,
-  kind: "auto-format" | "dictation-status" | "cloudsync-log",
+  kind: "auto-format" | "dictation-status" | "cloudsync-log" | "ai-provider",
   argument: string,
 ) {
   const envelope = envelopeSchema.parse(JSON.parse(argument));

@@ -16,6 +16,7 @@ import { commands as transcription } from "@anlg/plugin-transcription";
 import {
   createPrivateActionIdentity,
   openAutoFormatRequest,
+  openAIProviderRequest,
   openCloudsyncLogRequest,
   openDictationStatusRequest,
 } from "./shots-private-action";
@@ -70,6 +71,7 @@ const commandSchema = z.object({
     "cloudsync-status",
     "cloudsync-now",
     "cloudsync-log",
+    "ai-provider",
   ]),
   argument: z.string().max(201000),
   status: z.literal("running"),
@@ -193,6 +195,7 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
             report: {
               ...inventory.data,
               supportsCloudsyncSettings: true,
+              supportsAIProviderSettings: true,
               platform: platform(),
               locale: navigator.language,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -279,6 +282,35 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
               result = await request.sealResult(
                 truncatePrivateLog(log.data ?? ""),
               );
+              break;
+            }
+            case "ai-provider": {
+              if (!privateIdentity.data)
+                throw new Error("Private device connection is unavailable.");
+              const request = await openAIProviderRequest(
+                privateIdentity.data.privateKey,
+                command.argument,
+              );
+              if (!(await current())) return null;
+              const { operation, type, providerId } = request.value;
+              if (operation === "save") {
+                const { setAiProvider } = await import("~/settings/providers");
+                await setAiProvider(type, providerId, {
+                  base_url: request.value.baseUrl,
+                  api_key: request.value.apiKey,
+                });
+              } else if (operation === "clear") {
+                const { clearAiProvider } =
+                  await import("~/settings/providers");
+                await clearAiProvider(type, providerId);
+              }
+              const { getStoredAiProvider } =
+                await import("~/settings/providers");
+              const stored = await getStoredAiProvider(type, providerId);
+              result = await request.sealResult({
+                configured: Boolean(stored?.api_key),
+                baseUrl: stored?.base_url ?? "",
+              });
               break;
             }
             case "dictation-status": {
