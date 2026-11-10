@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIdentifier, getVersion } from "@tauri-apps/api/app";
 import { downloadDir, homeDir } from "@tauri-apps/api/path";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open as chooseFolder } from "@tauri-apps/plugin-dialog";
 import { platform } from "@tauri-apps/plugin-os";
 import { z } from "zod";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
+import { execute, getCloudsyncStatus, syncCloudsyncNow } from "@anlg/plugin-db";
 import { commands as detect } from "@anlg/plugin-detect";
 import { commands as opener } from "@anlg/plugin-opener2";
 import { commands as permissions } from "@anlg/plugin-permissions";
@@ -21,8 +22,8 @@ import { useLanguageModel } from "~/ai/hooks";
 import { useAuth } from "~/auth";
 import { useBillingAccess } from "~/auth/billing-context";
 import { getDeviceIdentity } from "~/auth/cloudsync-credentials";
-import { env } from "~/env";
 import { useDictationStatus } from "~/dictation/state";
+import { env } from "~/env";
 import {
   authenticateDevice,
   DEVICE_AUTH_REASON,
@@ -64,6 +65,8 @@ const commandSchema = z.object({
     "dictation-retry",
     "dictation-cancel",
     "show-dictation-shortcut",
+    "cloudsync-status",
+    "cloudsync-now",
   ]),
   argument: z.string().max(201000),
   status: z.literal("running"),
@@ -186,6 +189,7 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
             name: identity.name ?? "Computer",
             report: {
               ...inventory.data,
+              supportsCloudsyncSettings: true,
               platform: platform(),
               locale: navigator.language,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -208,22 +212,87 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
         let result = "";
         try {
           switch (command.kind) {
+            case "cloudsync-status": {
+              const [status, conflicts, parked] = await Promise.all([
+                getCloudsyncStatus(),
+                execute<{ note_count: number }>(`
+                  SELECT COUNT(DISTINCT row_id) AS note_count
+                  FROM e2ee_field_conflicts
+                  WHERE resolved_at IS NULL
+                    AND ((table_name = 'session_documents' AND field_name = 'body')
+                      OR (table_name = 'sessions' AND field_name = 'title'))
+                `),
+                execute<{ reason: string; record_count: number }>(`
+                  SELECT reason, COUNT(*) AS record_count
+                  FROM e2ee_parked_records
+                  GROUP BY reason
+                `),
+              ]);
+              const parkedCounts = parked.reduce(
+                (counts, row) => {
+                  if (row.reason === "too_large")
+                    counts.tooLarge += row.record_count;
+                  if (
+                    row.reason === "unknown_table" ||
+                    row.reason === "unknown_field"
+                  ) {
+                    counts.pendingUpdate += row.record_count;
+                  }
+                  return counts;
+                },
+                { pendingUpdate: 0, tooLarge: 0 },
+              );
+              result = JSON.stringify({
+                cloudsync_enabled: status.cloudsync_enabled,
+                configured: status.configured,
+                running: status.running,
+                activity_paused: status.activity_paused,
+                deferred_for_capture: status.deferred_for_capture,
+                last_sync_at_ms: status.last_sync_at_ms,
+                has_unsent_changes: status.has_unsent_changes,
+                last_error_kind: status.last_error_kind,
+                consecutive_failures: status.consecutive_failures,
+                recovery_pending: status.recovery_pending ?? false,
+                recovery_delayed: status.recovery_delayed ?? false,
+                conflicted_notes: conflicts[0]?.note_count ?? 0,
+                pending_update_records: parkedCounts.pendingUpdate,
+                too_large_records: parkedCounts.tooLarge,
+              });
+              break;
+            }
+            case "cloudsync-now":
+              await syncCloudsyncNow();
+              break;
             case "dictation-status": {
-              if (!privateIdentity.data) throw new Error("Private device connection is unavailable.");
-              const request = await openDictationStatusRequest(privateIdentity.data.privateKey, command.argument);
+              if (!privateIdentity.data)
+                throw new Error("Private device connection is unavailable.");
+              const request = await openDictationStatusRequest(
+                privateIdentity.data.privateKey,
+                command.argument,
+              );
               if (!(await current())) return null;
-              const { phase, ready, error, lastTranscript } = useDictationStatus.getState();
-              result = await request.sealResult({phase, ready, error, lastTranscript});
+              const { phase, ready, error, lastTranscript } =
+                useDictationStatus.getState();
+              result = await request.sealResult({
+                phase,
+                ready,
+                error,
+                lastTranscript,
+              });
               break;
             }
             case "dictation-retry":
-              useDictationStatus.setState(state => ({ retry: state.retry + 1 }));
+              useDictationStatus.setState((state) => ({
+                retry: state.retry + 1,
+              }));
               break;
             case "dictation-cancel":
               useDictationStatus.getState().cancel?.();
               break;
             case "show-dictation-shortcut":
-              useTabs.getState().openNew({type: "settings", state: {tab: "dictation"}});
+              useTabs
+                .getState()
+                .openNew({ type: "settings", state: { tab: "dictation" } });
               await getCurrentWindow().show();
               await getCurrentWindow().setFocus();
               break;
