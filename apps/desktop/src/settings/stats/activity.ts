@@ -118,3 +118,23 @@ export function summarizeActivity(
     ).size,
   };
 }
+
+/** Bounded activity data safe to return to Shots; never includes local session IDs or transcript text. */
+export function summarizeActivityForShots(
+  records: ActivityRecord[],
+  now: Date,
+  timezone: string | undefined,
+  weekStartsOn: 0 | 1,
+  range: "all" | "30d" | "7d",
+) {
+  const stats = summarizeActivity(records, now, timezone, weekStartsOn, range);
+  return {
+    conversations: stats.conversations,
+    totalConversations: stats.totalConversations,
+    hours: stats.hours,
+    activeDays: stats.activeDays,
+    streak: stats.streak,
+    days: stats.days.map(({ key, count }) => ({ key, count })),
+    weekdayCounts: stats.weekdayCounts,
+  };
+}

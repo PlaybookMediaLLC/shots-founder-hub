@@ -78,6 +78,7 @@ describe("getScheme", () => {
     ["com.hyprnote.staging", "anarlog-staging"],
     ["com.hyprnote.nightly", "anarlog-nightly"],
     ["com.hyprnote.dev", "anarlog-dev"],
+    ["com.hyprnote.dev.test", "anarlog-dev"],
     ["so.anarlog.Anarlog", "anarlog"],
     ["unknown", "anarlog"],
   ])("maps %s to %s", async (identifier, scheme) => {

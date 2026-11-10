@@ -2,9 +2,51 @@ import { describe, expect, it } from "vitest";
 
 import {
   createPrivateActionIdentity,
+  aiProviderModelIdSchema,
+  aiProviderRequestSchema,
+  aiProviderResultSchema,
   sealAutoFormatRequest,
   openAutoFormatRequest,
 } from "./shots-private-action";
+
+describe("private AI provider actions", () => {
+  it("accepts bounded model discovery results for LLM providers only", () => {
+    expect(aiProviderModelIdSchema.safeParse("m".repeat(128)).success).toBe(
+      true,
+    );
+    expect(
+      aiProviderModelIdSchema.safeParse("\u0000".repeat(128)).success,
+    ).toBe(false);
+    expect(
+      aiProviderRequestSchema.parse({
+        operation: "discover",
+        type: "llm",
+        providerId: "openai",
+      }),
+    ).toEqual({ operation: "discover", type: "llm", providerId: "openai" });
+    expect(
+      aiProviderRequestSchema.safeParse({
+        operation: "discover",
+        type: "stt",
+        providerId: "openai",
+      }).success,
+    ).toBe(false);
+    expect(
+      aiProviderResultSchema.parse({
+        configured: true,
+        baseUrl: "https://api.openai.com/v1",
+        models: ["gpt-5.6"],
+      }).models,
+    ).toEqual(["gpt-5.6"]);
+    expect(
+      aiProviderResultSchema.safeParse({
+        configured: true,
+        baseUrl: "",
+        models: ["m".repeat(129)],
+      }).success,
+    ).toBe(false);
+  });
+});
 
 describe("private summary format requests", () => {
   it("only lets the selected desktop read examples and the requesting browser read the result", async () => {

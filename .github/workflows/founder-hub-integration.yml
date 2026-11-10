@@ -1,0 +1,220 @@
+name: Founder Hub paired integration
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - "apps/desktop/src/settings/**"
+      - "apps/desktop/src/auth/**"
+      - "apps/desktop/src-tauri/**"
+      - "e2e/blackbox/**"
+      - "apps/api/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".node-version"
+      - "scripts/**"
+      - "process-compose*.yaml"
+      - "scripts/local-dev.mjs"
+      - "scripts/local-dev.test.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/founder-hub-integration.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "apps/desktop/src/settings/**"
+      - "apps/desktop/src/auth/**"
+      - "apps/desktop/src-tauri/**"
+      - "e2e/blackbox/**"
+      - "apps/api/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".node-version"
+      - "scripts/**"
+      - "process-compose*.yaml"
+      - "scripts/local-dev.mjs"
+      - "scripts/local-dev.test.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/founder-hub-integration.yml"
+  workflow_dispatch:
+    inputs:
+      counterpart_ref:
+        description: Branch or tag to test from shots-founder-hub-backend
+        required: false
+        default: develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: founder-hub-central-auth-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  paired-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: shots-founder-hub-central-auth
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: shots-founder-hub-central-auth
+      - uses: actions/checkout@v4
+        with:
+          repository: PlaybookMediaLLC/shots
+          ref: ${{ inputs.counterpart_ref || 'develop' }}
+          path: shots-founder-hub-backend
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: shots-founder-hub-backend/server/go.mod
+          cache-dependency-path: shots-founder-hub-backend/server/go.sum
+      - name: Read central-auth Node version
+        id: node-version
+        run: |
+          version=$(cat .node-version 2>/dev/null || sed -n 's/.*>=\([0-9.]*\).*/\1/p' package.json)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node-version.outputs.version }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.1
+      - name: Install central-auth dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Rust toolchain
+        id: rust-toolchain
+        run: |
+          toolchain=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' rust-toolchain.toml)
+          components=$(sed -n 's/^components = \[\(.*\)\]/\1/p' rust-toolchain.toml | tr -d '" ')
+          test -n "$toolchain" && test -n "$components"
+          echo "channel=$toolchain" >> "$GITHUB_OUTPUT"
+          echo "components=$components" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: ${{ steps.rust-toolchain.outputs.channel }}
+          components: ${{ steps.rust-toolchain.outputs.components }}
+      - name: Install Rust API system dependency
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: Install process-compose
+        run: go install github.com/f1bonacc1/process-compose@v1.124.0
+      - name: Install Shots dependencies
+        working-directory: shots-founder-hub-backend/clients
+        run: npm ci
+      - name: Install the isolated pair
+        run: pnpm dev:local setup --profile ci --shots-path ../shots-founder-hub-backend --port 4400
+      - name: Install Chromium for authenticated browser tests
+        working-directory: shots-founder-hub-backend/clients
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated pair
+        working-directory: shots-founder-hub-central-auth
+        run: pnpm dev:local up --profile ci
+      - name: Test both repositories
+        working-directory: shots-founder-hub-central-auth
+        run: pnpm dev:local test --profile ci
+
+  macos-native-settings:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+      - uses: actions/checkout@v4
+        with:
+          repository: PlaybookMediaLLC/shots
+          ref: develop
+          path: shots-founder-hub-backend
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: shots-founder-hub-backend/server/go.mod
+          cache-dependency-path: shots-founder-hub-backend/server/go.sum
+      - name: Install process-compose
+        run: go install github.com/f1bonacc1/process-compose@v1.124.0
+      - uses: ./.github/actions/pnpm_install
+      - name: Use the pinned local-stack Node version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Install Shots dependencies
+        working-directory: shots-founder-hub-backend/clients
+        run: npm ci
+      - name: Install the isolated pair
+        run: pnpm dev:local setup --profile ci --shots-path shots-founder-hub-backend --port 4400
+      - name: Install Chromium for authenticated browser tests
+        working-directory: shots-founder-hub-backend/clients
+        run: npx playwright install chromium
+      - name: Start isolated pair
+        run: pnpm dev:local up --profile ci
+      - name: Test both repositories
+        run: pnpm dev:local test --profile ci
+      - name: Test native settings persistence and command construction
+        run: pnpm --filter @anlg/desktop exec vitest run src/settings/queries.test.tsx src/settings/shots-private-action.test.ts
+      - name: Typecheck desktop settings consumers
+        run: pnpm --filter @anlg/desktop typecheck
+      - uses: ./.github/actions/install_desktop_deps
+        with:
+          target: macos
+      - uses: ./.github/actions/rust_install
+        with:
+          platform: macos
+      - name: Build shared UI
+        run: pnpm -F @anlg/ui build
+      - name: Build the paired desktop automation binary
+        run: pnpm -F @anlg/desktop tauri build --debug --bundles app --target aarch64-apple-darwin --config '{"identifier":"com.hyprnote.dev.ci"}' --features dev,devtools,automation
+        env:
+          CI: 'false'
+          POSTHOG_API_KEY: phc_e2e
+          VITE_API_URL: http://localhost:4408
+          VITE_SHOTS_URL: http://localhost:4401
+          VITE_APP_URL: http://localhost:4400
+      - name: Check CrabNebula WebDriver credential
+        id: webdriver
+        run: |
+          if [ -n "$CN_API_KEY_WEBDRIVER" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          CN_API_KEY_WEBDRIVER: ${{ secrets.CN_API_KEY_WEBDRIVER }}
+      - name: Run native desktop settings round-trip
+        if: steps.webdriver.outputs.available == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        id: desktop-e2e
+        run: |
+          mkdir -p e2e/blackbox/logs
+          pnpm -F e2e-blackbox e2e 2>&1 | tee e2e/blackbox/logs/e2e-test-output.log
+          exit ${PIPESTATUS[0]}
+        env:
+          APP_BINARY_PATH: ${{ github.workspace }}/apps/desktop/src-tauri/target/aarch64-apple-darwin/debug/anarlog-dev
+          CN_API_KEY_WEBDRIVER: ${{ secrets.CN_API_KEY_WEBDRIVER }}
+        continue-on-error: true
+      - name: Explain native E2E skip for fork pull requests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: echo "Native WebDriver E2E is skipped because fork pull requests do not receive repository secrets."
+      - name: Explain native E2E skip without WebDriver credential
+        if: steps.webdriver.outputs.available != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        run: echo "Native WebDriver E2E is skipped because CN_API_KEY_WEBDRIVER is not configured."
+      - name: Upload native desktop logs on failure
+        if: steps.desktop-e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: founder-hub-native-settings-e2e
+          path: |
+            e2e/blackbox/logs/
+            e2e/blackbox/videos/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Fail on native desktop E2E failure
+        if: steps.desktop-e2e.outcome == 'failure'
+        run: exit 1
+      - name: Test native desktop commands
+        run: cargo test -p desktop

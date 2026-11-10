@@ -1,8 +1,15 @@
 import * as prompts from "@clack/prompts";
 import { spawn } from "node:child_process";
 import { createHash, createHmac, randomBytes } from "node:crypto";
-import { existsSync } from "node:fs";
-import { chmod, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { existsSync, watch as watchFiles } from "node:fs";
+import {
+  chmod,
+  mkdir,
+  readFile,
+  readdir,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -10,13 +17,39 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const state = join(root, ".local/founder-hub");
+const profileOption = process.argv.findIndex(
+  (value) => value === "--profile" || value.startsWith("--profile="),
+);
+const profileName =
+  profileOption < 0
+    ? "default"
+    : process.argv[profileOption] === "--profile"
+      ? process.argv[profileOption + 1]
+      : process.argv[profileOption].slice("--profile=".length);
+if (!profileName || !/^[a-z0-9][a-z0-9-]{0,30}$/.test(profileName))
+  throw new Error(
+    "--profile must be a lowercase name of 1–31 letters, numbers, or hyphens.",
+  );
+const state = join(
+  root,
+  ".local",
+  profileName === "default" ? "founder-hub" : `founder-hub-${profileName}`,
+);
 const configFile = join(state, "config.json");
+const nangoConfigFile = join(state, "nango.json");
+const nangoKeys = [
+  "NANGO_API_KEY",
+  "NANGO_API_BASE",
+  "NANGO_CONNECT_URL",
+  "NANGO_WEBHOOK_SIGNING_KEY",
+];
 const launcher = fileURLToPath(import.meta.url);
+const supervisorSeed =
+  profileName === "default" ? root : `${root}:${profileName}`;
 // macOS Unix socket paths are limited to 104 bytes; checkout paths can exceed that.
 const supervisorSocket = join(
   tmpdir(),
-  `shots-hub-${createHash("sha256").update(root).digest("hex").slice(0, 10)}.sock`,
+  `shots-hub-${createHash("sha256").update(supervisorSeed).digest("hex").slice(0, 10)}.sock`,
 );
 const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
 const secret = () => randomBytes(32).toString("hex");
@@ -69,7 +102,11 @@ function profile(config) {
   const urls = Object.fromEntries(
     names.map((name) => [name, `http://localhost:${ports[name]}`]),
   );
-  const project = `founder-hub-${createHash("sha256").update(root).digest("hex").slice(0, 10)}`;
+  const projectSeed =
+    (config.profileName ?? "default") === "default"
+      ? root
+      : `${root}:${config.profileName}`;
+  const project = `founder-hub-${createHash("sha256").update(projectSeed).digest("hex").slice(0, 10)}`;
   return { ports, urls, project };
 }
 
@@ -204,6 +241,7 @@ function serviceEnv(config) {
     ...storageEnv(config),
     NODE_ENV: "development",
     PLATFORM_NEXT_DIST_DIR: `.next-founder-hub-${profile(config).project}`,
+    PLATFORM_NEXT_TSCONFIG_PATH: `tsconfig.local-${profile(config).project}.json`,
     GOFLAGS: "-p=2",
     GOMAXPROCS: "2",
     CARGO_INCREMENTAL: "0",
@@ -255,8 +293,41 @@ function serviceEnv(config) {
   };
 }
 
+async function writeNangoConfiguration() {
+  if (!nangoKeys.some((key) => process.env[key] !== undefined)) return false;
+  const nango = Object.fromEntries(
+    nangoKeys
+      .filter((key) => process.env[key])
+      .map((key) => [key, process.env[key]]),
+  );
+  let previous = {};
+  try {
+    previous = JSON.parse(await readFile(nangoConfigFile, "utf8"));
+  } catch {}
+  await writeFile(nangoConfigFile, `${JSON.stringify(nango, null, 2)}\n`, {
+    mode: 0o600,
+  });
+  await chmod(nangoConfigFile, 0o600);
+  return JSON.stringify(previous) !== JSON.stringify(nango);
+}
+
+async function readNangoConfiguration() {
+  try {
+    return JSON.parse(await readFile(nangoConfigFile, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
 async function writeConfiguration(config) {
   const { ports, project } = profile(config);
+  const webDir = join(config.shotsPath, "clients/apps/web");
+  const webTsconfig = join(webDir, "tsconfig.json");
+  if (existsSync(webTsconfig))
+    await writeFile(
+      join(webDir, `tsconfig.local-${project}.json`),
+      await readFile(webTsconfig),
+    );
   await mkdir(join(state, "logs"), { recursive: true, mode: 0o700 });
   await chmod(state, 0o700);
   const compose = {
@@ -423,7 +494,7 @@ async function writeConfiguration(config) {
     "hub-web",
   ]) {
     processes[name] = {
-      command: `${quote(process.execPath)} ${quote(launcher)} _run ${name}`,
+      command: `${quote(process.execPath)} ${quote(launcher)} _run ${name}${profileName === "default" ? "" : ` --profile ${quote(profileName)}`}`,
       working_dir: root,
       log_location: join(state, "logs", `${name}.log`),
     };
@@ -509,6 +580,7 @@ async function setup(options) {
     ]) {
       config[key] ||= secret();
     }
+    config.profileName ||= profileName;
     if (options["api-binary"]) {
       config.apiBinary = resolve(options["api-binary"]);
       if (!existsSync(config.apiBinary))
@@ -518,6 +590,7 @@ async function setup(options) {
       mode: 0o600,
     });
     await writeConfiguration(config);
+    await writeNangoConfiguration();
     return config;
   }
   let shotsPath = options["shots-path"] || resolve(root, "../shots");
@@ -538,6 +611,7 @@ async function setup(options) {
     );
   const config = {
     shotsPath,
+    profileName,
     port: Number(options.port || 4000),
     postgresPassword: secret(),
     serviceToken: secret(),
@@ -558,6 +632,7 @@ async function setup(options) {
   }
   profile(config);
   await writeConfiguration(config);
+  await writeNangoConfiguration();
   await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`, {
     mode: 0o600,
     flag: "wx",
@@ -566,30 +641,220 @@ async function setup(options) {
 }
 
 async function doctor(config) {
+  const hubPackage = JSON.parse(
+    await readFile(join(root, "package.json"), "utf8"),
+  );
+  const shotsGoMod = await readFile(
+    join(config.shotsPath, "server/go.mod"),
+    "utf8",
+  );
+  const rustToolchain = await readFile(
+    join(root, "rust-toolchain.toml"),
+    "utf8",
+  );
+  const expectedNode = (
+    await readFile(join(root, ".node-version"), "utf8")
+  ).trim();
+  const expectedPnpm = hubPackage.packageManager.match(/^pnpm@([^+]+)/)?.[1];
+  const expectedGo = shotsGoMod.match(/^go\s+(\S+)/m)?.[1];
+  const expectedRust = rustToolchain.match(/^channel\s*=\s*"([^"]+)"/m)?.[1];
   const checks = [
-    ["pnpm", ["--version"]],
-    ["go", ["version"]],
-    ["cargo", ["--version"]],
-    ["process-compose", ["version"]],
+    ["pnpm", ["--version"], expectedPnpm],
+    [
+      "go",
+      ["version"],
+      expectedGo && new RegExp(`\\bgo${expectedGo.replaceAll(".", "\\.")}\\b`),
+      join(config.shotsPath, "server"),
+    ],
+    [
+      "rustc",
+      ["--version"],
+      expectedRust &&
+        new RegExp(`^rustc ${expectedRust.replaceAll(".", "\\.")}\\b`),
+    ],
+    ["process-compose", ["version"], /Version:\s+v1\.124\.0\b/],
     ["docker", ["info", "--format", "{{.ServerVersion}}"]],
   ];
-  for (const [command, args] of checks) {
+  for (const [command, args, expected, cwd] of checks) {
     try {
-      await run(command, args, { capture: true, timeout: 10_000 });
-      prompts.log.success(`${command} ready`);
-    } catch {
+      const version = (
+        await run(command, args, {
+          capture: true,
+          timeout: 10_000,
+          cwd: cwd ?? root,
+        })
+      ).trim();
+      if (
+        expected &&
+        !(expected instanceof RegExp
+          ? expected.test(version)
+          : version === expected)
+      )
+        throw new Error(`found ${version}; expected ${expected}`);
+      prompts.log.success(
+        expected ? `${command} ${version}` : `${command} ready`,
+      );
+    } catch (error) {
       throw new Error(
-        `${command} unavailable. Start Docker Desktop; install Go, Rust, and process-compose (macOS: brew install f1bonacc1/tap/process-compose).`,
+        `${command} unavailable or incompatible${expected ? ` (expected ${expected})` : ""}${error instanceof Error ? `: ${error.message}` : ""}. Start Docker Desktop; install the versions pinned by the Hub and Shots repositories, plus process-compose (macOS: brew install f1bonacc1/tap/process-compose).`,
       );
     }
   }
+  if (process.versions.node !== expectedNode)
+    throw new Error(
+      `Node ${process.versions.node} does not match .node-version ${expectedNode} (engines: ${hubPackage.engines.node}).`,
+    );
+  prompts.log.success(`node ${process.versions.node}`);
   if (!existsSync(join(config.shotsPath, "clients/node_modules")))
     throw new Error(
       "Shots packages are missing. Run pnpm dev:local setup --install.",
     );
   prompts.log.info(
-    `Node ${process.versions.node}; use the version pinned in package.json. Local email verification is disabled.`,
+    `Node ${process.versions.node}; use the version pinned in .node-version. Local email verification is disabled.`,
   );
+  try {
+    await pc(["process", "list", "--output", "json"]);
+  } catch {
+    for (const port of Object.values(profile(config).ports)) {
+      await freePort(port);
+    }
+    prompts.log.success("Local service ports are available.");
+  }
+  const { urls } = profile(config);
+  if (await healthy(urls.shots)) {
+    if (
+      !(await healthy(
+        `${urls.shots}/.well-known/oauth-authorization-server/api/auth`,
+      ))
+    )
+      throw new Error(
+        "Shots OAuth discovery is unavailable. Check local OAuth migrations and client registration.",
+      );
+    if (
+      !(await healthy(`${urls.api}/health`)) ||
+      !(await healthy(`${urls.storageGateway}/healthz`))
+    )
+      throw new Error("Founder Hub API or storage gateway is unavailable.");
+    prompts.log.success(
+      "Shots OAuth, Founder Hub API, and storage gateway are ready.",
+    );
+  } else {
+    prompts.log.info(
+      "OAuth and gateway configuration will be checked when the stack starts.",
+    );
+  }
+  if (config.apiBinary) {
+    if (!existsSync(config.apiBinary))
+      throw new Error(`Configured API binary not found: ${config.apiBinary}`);
+    const sourceMtime = await newestRustSourceMtime(
+      [join(root, "apps/api"), join(root, "crates")],
+      [join(root, "Cargo.toml"), join(root, "Cargo.lock")],
+    );
+    if ((await stat(config.apiBinary)).mtimeMs < sourceMtime)
+      prompts.log.warn(
+        "Configured Rust API binary is older than source. Run pnpm dev:local restart hub-api --source to rebuild from checkout sources.",
+      );
+  }
+  if (await healthy(profile(config).urls.shots)) {
+    const platformMigrations = (
+      await readdir(join(config.shotsPath, "server/platformmigrations/sql"))
+    ).filter((name) => name.endsWith(".sql")).length;
+    const socialMigrations = (
+      await readdir(join(config.shotsPath, "server/internal/social/migrations"))
+    ).filter((name) => name.endsWith(".sql")).length;
+    const founderHubMigrations = (
+      await readdir(join(config.shotsPath, "server/founderhubmigrations/sql"))
+    ).filter((name) => name.endsWith(".sql")).length;
+    const [platformApplied, socialApplied, founderHubApplied] =
+      await Promise.all([
+        docker(
+          config,
+          [
+            "exec",
+            "-T",
+            "postgres",
+            "psql",
+            "-U",
+            "shots",
+            "-d",
+            "shots",
+            "-Atc",
+            `SELECT count(*) FROM "_screenshot_studio_go_migrations"`,
+          ],
+          { capture: true },
+        ),
+        docker(
+          config,
+          [
+            "exec",
+            "-T",
+            "postgres",
+            "psql",
+            "-U",
+            "shots",
+            "-d",
+            "shots",
+            "-Atc",
+            `SELECT count(*) FROM "_social_migrations"`,
+          ],
+          { capture: true },
+        ),
+        docker(
+          config,
+          [
+            "exec",
+            "-T",
+            "postgres",
+            "psql",
+            "-U",
+            "shots",
+            "-d",
+            "shots",
+            "-Atc",
+            "SELECT count(*) FROM founder_hub_private.schema_migrations",
+          ],
+          { capture: true },
+        ),
+      ]);
+    if (
+      Number(platformApplied.trim()) !== platformMigrations ||
+      Number(socialApplied.trim()) !== socialMigrations ||
+      Number(founderHubApplied.trim()) !== founderHubMigrations
+    )
+      throw new Error(
+        `Database migrations are incomplete (Shots ${platformApplied.trim()}/${platformMigrations}; social ${socialApplied.trim()}/${socialMigrations}; Founder Hub ${founderHubApplied.trim()}/${founderHubMigrations}). Run pnpm dev:local up.`,
+      );
+    prompts.log.success(
+      `Shots, social, and Founder Hub migrations current (${platformMigrations} + ${socialMigrations} + ${founderHubMigrations}).`,
+    );
+  } else {
+    prompts.log.info(
+      "Migration state will be checked when the local database starts.",
+    );
+  }
+}
+
+async function newestRustSourceMtime(directories, files = []) {
+  let newest = 0;
+  for (const file of files)
+    newest = Math.max(newest, (await stat(file)).mtimeMs);
+  for (const directory of directories) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      if (
+        entry.name === ".git" ||
+        entry.name === "target" ||
+        entry.name === "node_modules"
+      )
+        continue;
+      const path = join(directory, entry.name);
+      if (entry.isDirectory())
+        newest = Math.max(newest, await newestRustSourceMtime([path]));
+      else if (/\.(rs|toml)$/.test(entry.name))
+        newest = Math.max(newest, (await stat(path)).mtimeMs);
+    }
+  }
+  return newest;
 }
 
 async function healthy(url) {
@@ -612,12 +877,18 @@ async function status(config) {
   let ready = true;
   for (const [name, url, probe] of [
     ["Shots", urls.shots, "/sign-in"],
+    [
+      "Shots OAuth",
+      urls.shots,
+      "/.well-known/oauth-authorization-server/api/auth",
+    ],
     ["Founder Hub", urls.web, "/@vite/client"],
     ["Hub API", urls.api, "/health"],
     ["Hub cleanup", urls.core, "/health"],
     ["Shots worker", urls.worker, "/readyz"],
     ["Shots API", urls.backend, "/readyz"],
     ["Hub data API", urls.rest, "/"],
+    ["Founder Hub gateway", urls.storageGateway, "/healthz"],
     ["Hub attachments", urls.storage, "/status"],
   ]) {
     const available = await healthy(url + probe);
@@ -635,6 +906,7 @@ async function status(config) {
 
 async function runService(name, config) {
   const env = serviceEnv(config);
+  const nangoEnv = await readNangoConfiguration();
   const { ports } = profile(config);
   if (name === "prepare") {
     await docker(config, [
@@ -703,7 +975,11 @@ async function runService(name, config) {
   } else if (name === "shots-api") {
     await run("go", ["run", "./cmd/product-api"], {
       cwd: join(config.shotsPath, "server"),
-      env: { ...env, PORT: String(ports.backend) },
+      env: {
+        ...env,
+        PORT: String(ports.backend),
+        ...nangoEnv,
+      },
     });
   } else if (name === "shots-worker") {
     await run("go", ["run", "./cmd/product-worker"], {
@@ -733,6 +1009,15 @@ async function runService(name, config) {
       {
         env: {
           ...env,
+          ...(name === "hub-core" &&
+          nangoEnv.NANGO_API_KEY &&
+          nangoEnv.NANGO_WEBHOOK_SIGNING_KEY
+            ? Object.fromEntries(
+                ["NANGO_API_KEY", "NANGO_API_BASE", "NANGO_WEBHOOK_SIGNING_KEY"]
+                  .filter((key) => nangoEnv[key])
+                  .map((key) => [key, nangoEnv[key]]),
+              )
+            : {}),
           PORT: String(name === "hub-core" ? ports.core : ports.api),
           ANARLOG_SERVICE: name === "hub-core" ? "core" : "sync",
           ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED:
@@ -777,8 +1062,13 @@ async function freePort(port) {
 
 async function up(config) {
   await doctor(config);
+  const nangoChanged = await writeNangoConfiguration();
   try {
     await pc(["process", "list", "--output", "json"]);
+    if (nangoChanged) {
+      await pc(["process", "restart", "shots-api"]);
+      await pc(["process", "restart", "hub-core"]);
+    }
     return await status(config);
   } catch {}
   const { ports } = profile(config);
@@ -839,6 +1129,10 @@ async function desktop(config) {
     throw new Error(
       "Packaged desktop launch currently supports macOS. Use the printed URLs for browser testing.",
     );
+  const identifier =
+    profileName === "default"
+      ? "com.hyprnote.dev"
+      : `com.hyprnote.dev.${profileName}`;
   await run("pnpm", ["-F", "@anlg/desktop", "build"], { env });
   await run(
     "pnpm",
@@ -855,6 +1149,7 @@ async function desktop(config) {
       "dev",
       "--config",
       JSON.stringify({
+        identifier,
         build: { beforeBuildCommand: "" },
         bundle: { createUpdaterArtifacts: false },
       }),
@@ -871,9 +1166,9 @@ async function desktop(config) {
     "--sign",
     "-",
     "--identifier",
-    "com.hyprnote.dev",
+    identifier,
     "--requirements",
-    '=designated => identifier "com.hyprnote.dev"',
+    `=designated => identifier "${identifier}"`,
     "--entitlements",
     join(root, "apps/desktop/src-tauri/Entitlements.plist"),
     appPath,
@@ -886,13 +1181,304 @@ async function desktop(config) {
   await run("open", [appPath]);
 }
 
+async function desktopDev(config) {
+  if (!(await status(config)))
+    throw new Error("Start the local stack with pnpm dev:local up first.");
+  if (process.platform !== "darwin")
+    throw new Error(
+      "The live desktop development app currently requires macOS.",
+    );
+  await run(
+    "pnpm",
+    [
+      "-F",
+      "@anlg/desktop",
+      "exec",
+      "tauri",
+      "dev",
+      "--features",
+      "dev",
+      "--config",
+      JSON.stringify({
+        identifier:
+          profileName === "default"
+            ? "com.hyprnote.dev"
+            : `com.hyprnote.dev.${profileName}`,
+      }),
+    ],
+    { cwd: root, env: serviceEnv(config) },
+  );
+}
+
+async function restartProcess(config, name, source = false) {
+  const allowed = [
+    "shots-api",
+    "shots-worker",
+    "hub-api",
+    "hub-core",
+    "hub-storage",
+  ];
+  if (!allowed.includes(name))
+    throw new Error(`Choose a restartable service: ${allowed.join(", ")}.`);
+  await writeNangoConfiguration();
+  if (source && name !== "hub-api" && name !== "hub-core")
+    throw new Error("--source applies only to hub-api or hub-core.");
+  const switchedToSource = source && Boolean(config.apiBinary);
+  if (switchedToSource) {
+    config.apiBinary = null;
+    await writeFile(configFile, JSON.stringify(config, null, 2), {
+      mode: 0o600,
+    });
+    await chmod(configFile, 0o600);
+    prompts.log.info(
+      "Hub API will build from the Rust sources on the next start.",
+    );
+  }
+  const services = switchedToSource ? ["hub-api", "hub-core"] : [name];
+  for (const service of services) {
+    await pc(["process", "restart", service]);
+    prompts.log.success(`Restarted ${service}.`);
+  }
+}
+
+async function watchProcess(config, name) {
+  if (name === "desktop") return desktopDev(config);
+  const sourceByService = {
+    "shots-api": {
+      directories: [join(config.shotsPath, "server")],
+      matches: /\.(go|mod|sum)$/,
+    },
+    "hub-api": {
+      directories: [root, join(root, "apps/api"), join(root, "crates")],
+      matches: /\.(rs|toml|lock)$/,
+    },
+    "hub-core": {
+      directories: [root, join(root, "apps/api"), join(root, "crates")],
+      matches: /\.(rs|toml|lock)$/,
+    },
+  };
+  const source = sourceByService[name];
+  if (!source)
+    throw new Error("Watch shots-api, hub-api, hub-core, or desktop.");
+  if (!(await status(config)))
+    throw new Error("Start the local stack with pnpm dev:local up first.");
+  await restartProcess(
+    config,
+    name,
+    (name === "hub-api" || name === "hub-core") && Boolean(config.apiBinary),
+  );
+  const watchers = source.directories.map((directory) =>
+    watchFiles(
+      directory,
+      { recursive: directory !== root },
+      (_event, filename) => {
+        if (!filename || !source.matches.test(filename.toString())) return;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (!restarting) {
+            restarting = restartProcess(config, name)
+              .catch((error) => {
+                prompts.log.error(error.message);
+              })
+              .finally(() => {
+                restarting = null;
+              });
+          }
+        }, 500);
+      },
+    ),
+  );
+  let timer;
+  let restarting = null;
+  prompts.note(`Watching source files for ${name}; press Ctrl-C to stop.`);
+  await new Promise((resolve) => {
+    const stop = () => {
+      clearTimeout(timer);
+      for (const watcher of watchers) watcher.close();
+      process.off("SIGINT", stop);
+      process.off("SIGTERM", stop);
+      resolve();
+    };
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+  });
+}
+
+async function integrationTest(config) {
+  if (
+    profileName === "default" ||
+    !config.profileName ||
+    config.profileName === "default"
+  )
+    throw new Error(
+      "Integration tests require an isolated named profile. Set one up with pnpm dev:local setup --profile test --shots-path ../shots --port 4400.",
+    );
+  await doctor(config);
+  if (!(await status(config)))
+    throw new Error(
+      "The local stack is incomplete; run pnpm dev:local up first.",
+    );
+  try {
+    await docker(
+      config,
+      [
+        "exec",
+        "-T",
+        "postgres",
+        "psql",
+        "-U",
+        "shots",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-c",
+        "ALTER DATABASE shots ALLOW_CONNECTIONS false",
+      ],
+      { capture: true },
+    );
+    await docker(
+      config,
+      [
+        "exec",
+        "-T",
+        "postgres",
+        "psql",
+        "-U",
+        "shots",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-c",
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'shots' AND pid <> pg_backend_pid()",
+      ],
+      { capture: true },
+    );
+    await docker(
+      config,
+      [
+        "exec",
+        "-T",
+        "postgres",
+        "dropdb",
+        "-U",
+        "shots",
+        "--if-exists",
+        "shots_test",
+      ],
+      { capture: true },
+    );
+    await docker(
+      config,
+      [
+        "exec",
+        "-T",
+        "postgres",
+        "createdb",
+        "-U",
+        "shots",
+        "-T",
+        "shots",
+        "shots_test",
+      ],
+      { capture: true },
+    );
+  } finally {
+    await docker(
+      config,
+      [
+        "exec",
+        "-T",
+        "postgres",
+        "psql",
+        "-U",
+        "shots",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-c",
+        "ALTER DATABASE shots ALLOW_CONNECTIONS true",
+      ],
+      { capture: true },
+    );
+  }
+  const { urls } = profile(config);
+  const databaseOrigin = `postgres://shots:${config.postgresPassword}@127.0.0.1:${profile(config).ports.postgres}`;
+  const testDatabaseURL = `${databaseOrigin}/shots_test?sslmode=disable`;
+  const env = {
+    ...serviceEnv(config),
+    BETTER_AUTH_URL: urls.shots,
+    FOUNDER_HUB_TEST_API_URL: urls.backend,
+    PUBLISHING_TEST_DATABASE_URL: testDatabaseURL,
+    E2E_DATABASE_URL: `${databaseOrigin}/shots?sslmode=disable`,
+    E2E_REDIS_URL: `redis://127.0.0.1:${profile(config).ports.redis}`,
+    E2E_R2_ENDPOINT: urls.objects,
+    E2E_R2_ACCESS_KEY_ID: "shots-local",
+    E2E_R2_SECRET_ACCESS_KEY: config.objectPassword,
+    E2E_R2_BUCKET_NAME: "shots-local",
+    E2E_R2_REGION: "us-east-1",
+    E2E_MAINTENANCE_SECRET: config.serviceToken,
+    E2E_WEBHOOK_SECRET: config.serviceToken,
+    FOUNDER_HUB_GATEWAY_URL: `${urls.api}/cloud`,
+    E2E_BASE_URL: urls.shots,
+  };
+  const server = join(config.shotsPath, "server");
+  const clients = join(config.shotsPath, "clients");
+  prompts.log.info(
+    "Testing the Go Founder Hub identity, referral, and settings paths.",
+  );
+  await run(
+    "go",
+    [
+      "test",
+      "-count=1",
+      "-run",
+      "^(TestFounderHub|TestActivityInsightsCommand)",
+      "./internal/httpapi",
+      "./internal/product",
+      "./internal/founderhub",
+    ],
+    {
+      cwd: server,
+      env,
+    },
+  );
+  prompts.log.info(
+    "Testing OAuth, gateway storage, token refresh, and revocation.",
+  );
+  await run(
+    "npm",
+    ["run", "test:founder-hub-auth", "--workspace", "screenshot-studio"],
+    { cwd: clients, env },
+  );
+  prompts.log.info("Testing authenticated Founder Hub settings in Playwright.");
+  await run(
+    "npm",
+    [
+      "run",
+      "test:e2e",
+      "--workspace",
+      "screenshot-studio",
+      "--",
+      "test/e2e/founder-hub-settings.spec.ts",
+      "--workers=1",
+    ],
+    { cwd: clients, env },
+  );
+  prompts.log.success("Shots and Founder Hub integration checks passed.");
+}
+
 async function main() {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
     options: {
       "shots-path": { type: "string" },
+      profile: { type: "string" },
       port: { type: "string" },
       "api-binary": { type: "string" },
+      source: { type: "boolean" },
       install: { type: "boolean" },
       help: { type: "boolean" },
     },
@@ -900,7 +1486,7 @@ async function main() {
   let [command, target] = positionals;
   if (values.help) {
     console.log(
-      "pnpm dev:local [setup|doctor|up|status|logs [service]|stop|open [shots|web|temporalUi]|desktop]\nsetup: --shots-path ../shots --port 4000 --install [--api-binary /path/to/local/api]\nNo command opens the Clack menu. stop preserves the Shots database and attachments.",
+      "pnpm dev:local [setup|doctor|up|status|test|restart <service> [--source]|watch <service>|logs [service]|stop|open [shots|web|temporalUi]|desktop|desktop-dev]\nsetup: --profile test --shots-path ../shots --port 4400 --install [--api-binary /path/to/local/api]\ntest requires a named isolated profile and a running local stack. watch supports shots-api, hub-api, hub-core, and desktop. stop preserves data.",
     );
     return;
   }
@@ -918,7 +1504,17 @@ async function main() {
         { value: "setup", label: "Set up this checkout" },
         { value: "doctor", label: "Check prerequisites" },
         { value: "status", label: "Show service status and URLs" },
+        { value: "test", label: "Run Shots and Founder Hub integration tests" },
         { value: "desktop", label: "Build and open desktop" },
+        {
+          value: "desktop-dev",
+          label: "Run desktop with live frontend and Rust reloads",
+        },
+        {
+          value: "watch",
+          label: "Watch Go or Rust source and restart its API",
+        },
+        { value: "restart", label: "Restart a local service" },
         { value: "open", label: "Open local Shots" },
         { value: "logs", label: "View service logs" },
         { value: "stop", label: "Stop local stack (keep data)" },
@@ -935,10 +1531,14 @@ async function main() {
       "doctor",
       "up",
       "status",
+      "test",
+      "restart",
+      "watch",
       "logs",
       "stop",
       "open",
       "desktop",
+      "desktop-dev",
     ].includes(command)
   )
     throw new Error(`Unknown command: ${command}. Use --help.`);
@@ -955,15 +1555,23 @@ async function main() {
       await run("npm", ["ci"], { cwd: join(config.shotsPath, "clients") });
     }
     prompts.log.success(
-      "Profile ready. Run pnpm dev:local up, then pnpm dev:local desktop.",
+      "Profile ready. Run pnpm dev:local up, then pnpm dev:local desktop-dev.",
     );
   } else if (command === "doctor") await doctor(config);
   else if (command === "up") {
     if (!(await up(config))) process.exitCode = 1;
   } else if (command === "status") {
     if (!(await status(config))) process.exitCode = 1;
-  } else if (command === "desktop") await desktop(config);
-  else if (command === "open") {
+  } else if (command === "test") await integrationTest(config);
+  else if (command === "desktop") await desktop(config);
+  else if (command === "desktop-dev") await desktopDev(config);
+  else if (command === "restart") {
+    if (!target) throw new Error("Choose a service to restart.");
+    await restartProcess(config, target, values.source);
+  } else if (command === "watch") {
+    if (!target) throw new Error("Choose a service to watch.");
+    await watchProcess(config, target);
+  } else if (command === "open") {
     target ||= "shots";
     if (!["shots", "web", "temporalUi"].includes(target))
       throw new Error("Choose shots, web, or temporalUi.");

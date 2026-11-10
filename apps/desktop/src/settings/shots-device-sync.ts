@@ -20,9 +20,14 @@ import { commands as opener } from "@anlg/plugin-opener2";
 import { commands as permissions } from "@anlg/plugin-permissions";
 import { commands as tracing } from "@anlg/plugin-tracing";
 import { commands as transcription } from "@anlg/plugin-transcription";
+import {
+  validateProviderBaseUrl,
+  verifyProviderCredentials,
+} from "@anlg/provider-validation";
 
 import {
   createPrivateActionIdentity,
+  aiProviderModelIdSchema,
   openAutoFormatRequest,
   openAIProviderRequest,
   openCloudsyncLogRequest,
@@ -31,9 +36,11 @@ import {
 } from "./shots-private-action";
 
 import { useLanguageModel } from "~/ai/hooks";
+import { providerFetch } from "~/ai/provider-fetch";
 import { useAuth } from "~/auth";
 import { useBillingAccess } from "~/auth/billing-context";
 import { getDeviceIdentity } from "~/auth/cloudsync-credentials";
+import { getSystemWeekStart } from "~/calendar/hooks";
 import { useDictationStatus } from "~/dictation/state";
 import { env } from "~/env";
 import {
@@ -43,6 +50,8 @@ import {
 } from "~/lock/auth";
 import { useAppLock } from "~/lock/store";
 import { getStoredSettingValues, setSettingValue } from "~/settings/queries";
+import { summarizeActivityForShots } from "~/settings/stats/activity";
+import { ACTIVITY_SQL, type ActivityRecord } from "~/settings/stats/queries";
 import { isAppStoreBuild } from "~/shared/app-store";
 import {
   normalizeCompletionSoundName,
@@ -82,6 +91,8 @@ const commandSchema = z.object({
     "cloudsync-log",
     "cloudsync-recovery",
     "ai-provider",
+    "activity-insights",
+    "open-settings-page",
   ]),
   argument: z.string().max(201000),
   status: z.literal("running"),
@@ -235,6 +246,7 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
               supportsCloudsyncSettings: true,
               supportsAIProviderSettings: true,
               supportsCloudsyncRecovery: true,
+              supportsSettingsNavigation: true,
               platform: platform(),
               locale: navigator.language,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -308,6 +320,33 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
             case "cloudsync-now":
               await syncCloudsyncNow();
               break;
+            case "activity-insights": {
+              const range = z
+                .enum(["all", "30d", "7d"])
+                .parse(command.argument);
+              const [records, settings] = await Promise.all([
+                execute<ActivityRecord>(ACTIVITY_SQL, [accountId]),
+                getStoredSettingValues(),
+              ]);
+              if (!(await current())) return null;
+              const timezone = settings.values.timezone || undefined;
+              const weekStartsOn =
+                settings.values.week_start === "monday"
+                  ? 1
+                  : settings.values.week_start === "sunday"
+                    ? 0
+                    : getSystemWeekStart();
+              result = JSON.stringify(
+                summarizeActivityForShots(
+                  records,
+                  new Date(),
+                  timezone,
+                  weekStartsOn,
+                  range,
+                ),
+              );
+              break;
+            }
             case "cloudsync-log": {
               if (!privateIdentity.data)
                 throw new Error("Private device connection is unavailable.");
@@ -394,9 +433,66 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
               const { getStoredAiProvider } =
                 await import("~/settings/providers");
               const stored = await getStoredAiProvider(type, providerId);
+              let models: string[] | undefined;
+              if (operation === "discover") {
+                const [
+                  { getLlmProviderStatus },
+                  { PROVIDERS },
+                  { requiresKeyVerification },
+                ] = await Promise.all([
+                  import("~/settings/ai/llm/select"),
+                  import("~/settings/ai/llm/shared"),
+                  import("~/settings/ai/shared"),
+                ]);
+                const provider = PROVIDERS.find(
+                  (candidate) => candidate.id === providerId,
+                );
+                if (!provider)
+                  throw new Error(
+                    "The selected model provider is unavailable.",
+                  );
+                const baseUrl = String(
+                  stored?.base_url || provider.baseUrl || "",
+                ).trim();
+                const apiKey = String(stored?.api_key || "").trim();
+                if (provider.id !== "apple_foundation")
+                  validateProviderBaseUrl(baseUrl);
+                if (provider.checkAvailability) {
+                  if (!(await provider.checkAvailability(baseUrl, apiKey)))
+                    throw new Error("The selected provider is unavailable.");
+                } else if (requiresKeyVerification(provider)) {
+                  await verifyProviderCredentials(
+                    { type: "llm", provider: providerId, baseUrl, apiKey },
+                    providerFetch,
+                    signal,
+                  );
+                }
+                if (!(await current())) return null;
+                const status = getLlmProviderStatus({
+                  provider,
+                  config: stored,
+                  isAuthenticated: Boolean(auth.session),
+                  isPaid: billing.isPaid,
+                  isAvailable: true,
+                });
+                if (!status.listModels)
+                  throw new Error(
+                    "Configure this provider before discovering models.",
+                  );
+                const catalog = await status.listModels();
+                if (!(await current())) return null;
+                models = [...new Set(catalog.models)]
+                  .filter(
+                    (modelId) =>
+                      aiProviderModelIdSchema.safeParse(modelId).success,
+                  )
+                  // shortcut: cap the private response at 400 models; raise both schema limits with it.
+                  .slice(0, 400);
+              }
               result = await request.sealResult({
                 configured: Boolean(stored?.api_key),
                 baseUrl: stored?.base_url ?? "",
+                ...(models ? { models } : {}),
               });
               break;
             }
@@ -433,6 +529,15 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
               await getCurrentWindow().show();
               await getCurrentWindow().setFocus();
               break;
+            case "open-settings-page": {
+              const tab = z
+                .enum(["imports", "intelligence", "transcription"])
+                .parse(command.argument);
+              useTabs.getState().openNew({ type: "settings", state: { tab } });
+              await getCurrentWindow().show();
+              await getCurrentWindow().setFocus();
+              break;
+            }
             case "auto-format": {
               if (!privateIdentity.data || !model || !billing.isPro) {
                 throw new Error(

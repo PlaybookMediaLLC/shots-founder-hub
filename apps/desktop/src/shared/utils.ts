@@ -30,6 +30,7 @@ export const getScheme = async (): Promise<DesktopScheme> => {
     "com.anarlog.staging": "anarlog-staging",
     "com.anarlog.dev": "anarlog-dev",
   };
+  if (id.startsWith("com.hyprnote.dev.")) return "anarlog-dev";
   return schemes[id] ?? "anarlog";
 };
 
