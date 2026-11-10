@@ -3,7 +3,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { z } from "zod";
 
+import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+
 import { AnarlogLogo } from "@/components/anarlog-logo";
+import { env } from "@/env";
 import { desktopSchemeSchema } from "@/functions/desktop-flow";
 import {
   identityLinkMessages,
@@ -25,6 +28,7 @@ import { capturePrivateRouteEvent } from "@/lib/private-route-analytics";
 
 import { AccountTabs } from "./-account-nav";
 import { accountSessionQueryKey } from "./-account-session";
+import { accountPillSecondaryClassName } from "./-account-ui";
 
 const loadAccountIdentitiesSection = () => import("./-account-identities");
 const loadAccountAccessSection = () => import("./-account-access");
@@ -259,18 +263,30 @@ function Component() {
             className="mt-10 flex min-w-0 flex-col gap-14"
           >
             <Suspense fallback={<AccountTabFallback tabId={activeTab} />}>
-              {sectionsForAccountTab(activeTab).map((section) => (
-                <AccountSection key={section.id} id={section.id}>
-                  <AccountSectionBody
-                    id={section.id}
-                    email={user?.email}
-                    expectedUserId={search.account_user_id ?? user!.id}
-                    identityLinkResult={search.identity_link}
-                    perk={search.perk}
-                    referralIneligible={search.referral === "ineligible"}
-                  />
-                </AccountSection>
-              ))}
+              {sectionsForAccountTab(activeTab)
+                .filter(
+                  (section) =>
+                    !env.VITE_SHOTS_URL ||
+                    ![
+                      "connected-accounts",
+                      "plan",
+                      "referrals",
+                      "danger",
+                    ].includes(section.id),
+                )
+                .map((section) => (
+                  <AccountSection key={section.id} id={section.id}>
+                    <AccountSectionBody
+                      id={section.id}
+                      shotsUserId={user?.shotsUserId ?? undefined}
+                      email={user?.email}
+                      expectedUserId={search.account_user_id ?? user!.id}
+                      identityLinkResult={search.identity_link}
+                      perk={search.perk}
+                      referralIneligible={search.referral === "ineligible"}
+                    />
+                  </AccountSection>
+                ))}
             </Suspense>
           </div>
         </div>
@@ -325,6 +341,7 @@ function AccountSectionBody({
   referralIneligible,
   expectedUserId,
   identityLinkResult,
+  shotsUserId,
 }: {
   id: AccountSectionId;
   email?: string;
@@ -332,9 +349,40 @@ function AccountSectionBody({
   referralIneligible: boolean;
   expectedUserId: string;
   identityLinkResult?: IdentityLinkStatus;
+  shotsUserId?: string;
 }) {
   switch (id) {
     case "profile":
+      if (env.VITE_SHOTS_URL) {
+        return (
+          <div className="flex flex-col gap-4">
+            <p>Your account, teams, and plan are managed by Shots.</p>
+            <div className="flex flex-wrap gap-3">
+              {(["account", "members", "billing", "security"] as const).map(
+                (section) => (
+                  <a
+                    key={section}
+                    className={accountPillSecondaryClassName}
+                    href={getShotsSettingsUrl(
+                      env.VITE_SHOTS_URL!,
+                      shotsUserId ?? "",
+                      section,
+                    )}
+                  >
+                    {section === "members"
+                      ? "Teams"
+                      : section === "account"
+                        ? "Account"
+                        : section === "billing"
+                          ? "Billing"
+                          : "Security"}
+                  </a>
+                ),
+              )}
+            </div>
+          </div>
+        );
+      }
       return <ProfileInfoSection email={email} />;
     case "connected-accounts":
       return (

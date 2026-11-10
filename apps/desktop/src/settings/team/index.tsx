@@ -101,6 +101,7 @@ import { env } from "~/env";
 import { SettingsPageTitle } from "~/settings/page-title";
 import { PlanGate } from "~/settings/plan-gate";
 import { SettingSwitchRow } from "~/settings/setting-row";
+import { ShotsSettings } from "~/settings/shots";
 import { DestructiveConfirmationDialog } from "~/shared/ui/destructive-confirmation-dialog";
 import {
   GlassDialogCancelButton,
@@ -109,6 +110,14 @@ import {
 import { buildWebAppUrl } from "~/shared/utils";
 
 export function SettingsTeam() {
+  return env.VITE_SHOTS_URL ? (
+    <ShotsSettings section="team" />
+  ) : (
+    <LegacySettingsTeam />
+  );
+}
+
+function LegacySettingsTeam() {
   const auth = useAuth();
   const { isPro } = useBillingAccess();
   const { t } = useLingui();

@@ -13,6 +13,7 @@ import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
 import { useAuth } from "~/auth";
 import { createAuthCallbackHandler } from "~/auth/deeplink";
 import { completeDrivePicker } from "~/automations/drive-picker";
+import { env } from "~/env";
 import { stopActiveWelcomeDemo } from "~/onboarding/welcome-note";
 import {
   allowReconnectedCalendarConnections,
@@ -45,6 +46,9 @@ export function useDeeplinkHandler() {
     authCallbackHandlerRef.current = createAuthCallbackHandler({
       setSessionFromTokens: (accessToken, refreshToken) =>
         authRef.current.setSessionFromTokens(accessToken, refreshToken),
+      handleShotsCallback: env.VITE_SHOTS_URL
+        ? (url) => authRef.current.handleAuthCallback(url)
+        : undefined,
     });
   }
   const authCallbackHandler = authCallbackHandlerRef.current;
@@ -70,19 +74,12 @@ export function useDeeplinkHandler() {
     };
     const handleDeepLink = (payload: DeepLink) => {
       if (payload.to === "/auth/callback") {
-        const { access_token, refresh_token, state } = payload.search;
-        if (access_token && refresh_token) {
-          void authCallbackHandler(
-            access_token,
-            refresh_token,
-            state ?? undefined,
-          ).catch((error) => {
-            console.error(
-              "[auth] sign-in failed; retry the callback or start sign-in again",
-              error,
-            );
-          });
-        }
+        void authCallbackHandler(payload.search).catch((error) => {
+          console.error(
+            "[auth] sign-in failed; retry the callback or start sign-in again",
+            error,
+          );
+        });
       } else if (payload.to === "/billing/refresh") {
         void authRef.current.refreshSession();
         void dismissInstruction();

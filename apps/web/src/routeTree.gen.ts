@@ -46,6 +46,7 @@ import { Route as ViewAppTeamCheckoutRouteImport } from './routes/_view/app/team
 import { Route as ViewCallbackAuthRouteImport } from './routes/_view/callback/auth'
 import { Route as ViewCallbackBillingRouteImport } from './routes/_view/callback/billing'
 import { Route as ViewCallbackIntegrationRouteImport } from './routes/_view/callback/integration'
+import { Route as ViewCallbackShotsRouteImport } from './routes/_view/callback/shots'
 import { Route as ViewCallbackSignoutRouteImport } from './routes/_view/callback/signout'
 import { Route as ViewDownloadIndexRouteImport } from './routes/_view/download/index'
 import { Route as ViewDownloadAppleIntelRouteImport } from './routes/_view/download/apple-intel'
@@ -249,6 +250,11 @@ const ViewCallbackIntegrationRoute = ViewCallbackIntegrationRouteImport.update({
   path: '/callback/integration',
   getParentRoute: () => ViewRouteRoute,
 } as any)
+const ViewCallbackShotsRoute = ViewCallbackShotsRouteImport.update({
+  id: '/callback/shots',
+  path: '/callback/shots',
+  getParentRoute: () => ViewRouteRoute,
+} as any)
 const ViewCallbackSignoutRoute = ViewCallbackSignoutRouteImport.update({
   id: '/callback/signout',
   path: '/callback/signout',
@@ -375,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/callback/auth': typeof ViewCallbackAuthRoute
   '/callback/billing': typeof ViewCallbackBillingRoute
   '/callback/integration': typeof ViewCallbackIntegrationRoute
+  '/callback/shots': typeof ViewCallbackShotsRoute
   '/callback/signout': typeof ViewCallbackSignoutRoute
   '/download/apple-intel': typeof ViewDownloadAppleIntelRoute
   '/download/apple-silicon': typeof ViewDownloadAppleSiliconRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/callback/auth': typeof ViewCallbackAuthRoute
   '/callback/billing': typeof ViewCallbackBillingRoute
   '/callback/integration': typeof ViewCallbackIntegrationRoute
+  '/callback/shots': typeof ViewCallbackShotsRoute
   '/callback/signout': typeof ViewCallbackSignoutRoute
   '/download/apple-intel': typeof ViewDownloadAppleIntelRoute
   '/download/apple-silicon': typeof ViewDownloadAppleSiliconRoute
@@ -486,6 +494,7 @@ export interface FileRoutesById {
   '/_view/callback/auth': typeof ViewCallbackAuthRoute
   '/_view/callback/billing': typeof ViewCallbackBillingRoute
   '/_view/callback/integration': typeof ViewCallbackIntegrationRoute
+  '/_view/callback/shots': typeof ViewCallbackShotsRoute
   '/_view/callback/signout': typeof ViewCallbackSignoutRoute
   '/_view/download/apple-intel': typeof ViewDownloadAppleIntelRoute
   '/_view/download/apple-silicon': typeof ViewDownloadAppleSiliconRoute
@@ -543,6 +552,7 @@ export interface FileRouteTypes {
     | '/callback/auth'
     | '/callback/billing'
     | '/callback/integration'
+    | '/callback/shots'
     | '/callback/signout'
     | '/download/apple-intel'
     | '/download/apple-silicon'
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/callback/auth'
     | '/callback/billing'
     | '/callback/integration'
+    | '/callback/shots'
     | '/callback/signout'
     | '/download/apple-intel'
     | '/download/apple-silicon'
@@ -653,6 +664,7 @@ export interface FileRouteTypes {
     | '/_view/callback/auth'
     | '/_view/callback/billing'
     | '/_view/callback/integration'
+    | '/_view/callback/shots'
     | '/_view/callback/signout'
     | '/_view/download/apple-intel'
     | '/_view/download/apple-silicon'
@@ -974,6 +986,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ViewCallbackIntegrationRouteImport
       parentRoute: typeof ViewRouteRoute
     }
+    '/_view/callback/shots': {
+      id: '/_view/callback/shots'
+      path: '/callback/shots'
+      fullPath: '/callback/shots'
+      preLoaderRoute: typeof ViewCallbackShotsRouteImport
+      parentRoute: typeof ViewRouteRoute
+    }
     '/_view/callback/signout': {
       id: '/_view/callback/signout'
       path: '/callback/signout'
@@ -1127,6 +1146,7 @@ interface ViewRouteRouteChildren {
   ViewCallbackAuthRoute: typeof ViewCallbackAuthRoute
   ViewCallbackBillingRoute: typeof ViewCallbackBillingRoute
   ViewCallbackIntegrationRoute: typeof ViewCallbackIntegrationRoute
+  ViewCallbackShotsRoute: typeof ViewCallbackShotsRoute
   ViewCallbackSignoutRoute: typeof ViewCallbackSignoutRoute
   ViewDownloadAppleIntelRoute: typeof ViewDownloadAppleIntelRoute
   ViewDownloadAppleSiliconRoute: typeof ViewDownloadAppleSiliconRoute
@@ -1139,6 +1159,7 @@ const ViewRouteRouteChildren: ViewRouteRouteChildren = {
   ViewCallbackAuthRoute: ViewCallbackAuthRoute,
   ViewCallbackBillingRoute: ViewCallbackBillingRoute,
   ViewCallbackIntegrationRoute: ViewCallbackIntegrationRoute,
+  ViewCallbackShotsRoute: ViewCallbackShotsRoute,
   ViewCallbackSignoutRoute: ViewCallbackSignoutRoute,
   ViewDownloadAppleIntelRoute: ViewDownloadAppleIntelRoute,
   ViewDownloadAppleSiliconRoute: ViewDownloadAppleSiliconRoute,

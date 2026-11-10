@@ -59,6 +59,8 @@ struct TicketClaims {
     capability: LiveCapability,
     content_revision: i64,
     expires_at: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    shots_session_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -67,6 +69,7 @@ pub(crate) struct LiveTicket {
     pub(crate) user_id: String,
     pub(crate) capability: LiveCapability,
     pub(crate) content_revision: i64,
+    pub(crate) shots_session_id: Option<String>,
 }
 
 fn ticket_mac(secret: &str) -> Hmac<Sha256> {
@@ -81,6 +84,7 @@ pub(crate) fn issue_ticket(
     user_id: &str,
     access: &LiveAccess,
     now_unix: i64,
+    shots_session_id: Option<&str>,
 ) -> String {
     let claims = TicketClaims {
         share_id: access.share_id.clone(),
@@ -88,6 +92,7 @@ pub(crate) fn issue_ticket(
         capability: access.capability,
         content_revision: access.content_revision,
         expires_at: now_unix + LIVE_TICKET_TTL.as_secs() as i64,
+        shots_session_id: shots_session_id.map(str::to_owned),
     };
     let payload =
         URL_SAFE_NO_PAD.encode(serde_json::to_vec(&claims).expect("ticket claims serialize"));
@@ -116,6 +121,7 @@ pub(crate) fn verify_ticket(secret: &str, ticket: &str, now_unix: i64) -> Option
         user_id: claims.user_id,
         capability: claims.capability,
         content_revision: claims.content_revision,
+        shots_session_id: claims.shots_session_id,
     })
 }
 
@@ -777,7 +783,7 @@ mod tests {
 
     #[test]
     fn ticket_round_trips_and_expires() {
-        let ticket = issue_ticket("secret", "user-1", &access(), 1_000);
+        let ticket = issue_ticket("secret", "user-1", &access(), 1_000, None);
         let verified = verify_ticket("secret", &ticket, 1_030).expect("ticket verifies");
         assert_eq!(verified.share_id, access().share_id);
         assert_eq!(verified.user_id, "user-1");
@@ -789,7 +795,7 @@ mod tests {
 
     #[test]
     fn tampered_tickets_are_rejected() {
-        let ticket = issue_ticket("secret", "user-1", &access(), 1_000);
+        let ticket = issue_ticket("secret", "user-1", &access(), 1_000, None);
         let (payload, signature) = ticket.split_once('.').unwrap();
         let mut claims: serde_json::Value =
             serde_json::from_slice(&URL_SAFE_NO_PAD.decode(payload).unwrap()).unwrap();

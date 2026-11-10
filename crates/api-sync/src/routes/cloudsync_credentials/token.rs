@@ -46,12 +46,13 @@ pub(super) fn token_expiry(token_ttl_seconds: u64) -> Result<String> {
 
 pub(super) async fn mint_cloudsync_token(
     state: &AppState,
+    issuer: &crate::config::CloudsyncIssuer,
     request: &impl Serialize,
 ) -> Result<String> {
     let response = state
         .client
-        .post(format!("{}/v2/tokens", state.config.project_url))
-        .bearer_auth(&state.config.token_issuer_api_key)
+        .post(format!("{}/v2/tokens", issuer.project_url))
+        .bearer_auth(&issuer.token_issuer_api_key)
         .json(request)
         .send()
         .await

@@ -9,9 +9,11 @@
     "lint": "pnpm lint:oxlint && pnpm lint:eslint",
     "lint:eslint": "eslint",
     "lint:oxlint": "oxlint --type-aware",
-    "plugin:hello-world:install": "pnpm --dir examples/plugins/hello-world install:dev"
+    "plugin:hello-world:install": "pnpm --dir examples/plugins/hello-world install:dev",
+    "dev:local": "node scripts/local-dev.mjs"
   },
   "devDependencies": {
+    "@clack/prompts": "1.9.0",
     "@dotenvx/dotenvx": "^1.61.0",
     "@infisical/cli": "^0.43.72",
     "@tanstack/eslint-plugin-query": "^5.99.0",

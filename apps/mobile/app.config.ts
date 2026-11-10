@@ -102,6 +102,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ...config.extra,
       appVariant,
       appScheme: variant.scheme,
+      shotsUrl: process.env.EXPO_PUBLIC_SHOTS_URL ?? "",
       supabaseUrl:
         process.env.EXPO_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "",
       supabaseAnonKey:

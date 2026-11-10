@@ -7,6 +7,7 @@ mod proxy;
 mod rate_limit;
 mod routes;
 mod service;
+mod shots;
 
 use std::net::SocketAddr;
 #[cfg(test)]
@@ -98,6 +99,16 @@ async fn app_with_session_gate(
     let service = env.anarlog_service;
     let analytics = build_analytics_client(env);
     let mut routes = Router::new();
+    if let Some(shots) = &env.shots {
+        routes = routes.nest(
+            "/cloud",
+            shots::router(
+                shots.clone(),
+                &env.supabase.supabase_url,
+                &env.supabase.supabase_anon_key,
+            ),
+        );
+    }
     if service.includes(Service::Ai) {
         routes = routes.merge(proxy::route(
             routes::ai(env, session_gate.clone(), analytics.clone()),
@@ -136,14 +147,15 @@ async fn app_with_session_gate(
         billing_configured: env.subscription.is_some(),
         billing_webhooks: env.anarlog_billing_webhooks,
         cloudsync_configured: service.includes(Service::Sync)
-            && anlg_api_sync::SyncConfig::from_env(
-                &env.sync,
-                &env.supabase.supabase_url,
-                &env.supabase.supabase_anon_key,
-                &env.supabase.supabase_service_role_key,
-            )
-            .expect("sync configuration validated")
-            .is_some(),
+            && (env.shots.is_some()
+                || anlg_api_sync::SyncConfig::from_env(
+                    &env.sync,
+                    &env.supabase.supabase_url,
+                    &env.supabase.supabase_anon_key,
+                    &env.supabase.supabase_service_role_key,
+                )
+                .expect("sync configuration validated")
+                .is_some()),
         transcription_configured: env
             .stt
             .as_ref()
@@ -412,6 +424,10 @@ fn main() -> std::io::Result<()> {
             let app = app_with_session_gate(env, session_gate.clone()).await;
             let cancellation = CancellationToken::new();
             let worker_task = env.anarlog_attachment_backup_gc_enabled.then(|| {
+                if env.shots.is_some() {
+                    let worker = anlg_api_subscription::CleanupWorker::for_shots(&env.supabase);
+                    return tokio::spawn(worker.run(cancellation.clone()));
+                }
                 let (stripe, loops) = env
                     .subscription
                     .as_ref()

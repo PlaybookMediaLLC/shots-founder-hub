@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createClientOnlyFn, createServerOnlyFn } from "@tanstack/react-start";
 import { getCookies, setCookie } from "@tanstack/react-start/server";
 
+import { getShotsCloudUrl } from "@anlg/supabase/shots";
+
 import { env, requireEnv } from "@/env";
 import {
   filterInvalidSupabaseCookies,
@@ -17,11 +19,15 @@ function getSupabaseCookies() {
 
 export const getSupabaseBrowserClient = createClientOnlyFn(() => {
   return createBrowserClient(
-    requireEnv(env.VITE_SUPABASE_URL, "VITE_SUPABASE_URL"),
-    requireEnv(env.VITE_SUPABASE_ANON_KEY, "VITE_SUPABASE_ANON_KEY"),
+    env.VITE_SHOTS_URL
+      ? getShotsCloudUrl(env.VITE_API_URL)
+      : requireEnv(env.VITE_SUPABASE_URL, "VITE_SUPABASE_URL"),
+    env.VITE_SHOTS_URL
+      ? "shots-founder-hub"
+      : requireEnv(env.VITE_SUPABASE_ANON_KEY, "VITE_SUPABASE_ANON_KEY"),
     {
       auth: {
-        detectSessionInUrl: true,
+        detectSessionInUrl: !env.VITE_SHOTS_URL,
         flowType: "pkce",
       },
     },
@@ -30,8 +36,12 @@ export const getSupabaseBrowserClient = createClientOnlyFn(() => {
 
 export const getSupabaseServerClient = createServerOnlyFn(() => {
   return createServerClient(
-    requireEnv(env.SUPABASE_URL, "SUPABASE_URL"),
-    requireEnv(env.SUPABASE_ANON_KEY, "SUPABASE_ANON_KEY"),
+    env.VITE_SHOTS_URL
+      ? getShotsCloudUrl(env.VITE_API_URL)
+      : requireEnv(env.SUPABASE_URL, "SUPABASE_URL"),
+    env.VITE_SHOTS_URL
+      ? "shots-founder-hub"
+      : requireEnv(env.SUPABASE_ANON_KEY, "SUPABASE_ANON_KEY"),
     {
       auth: {
         autoRefreshToken: false,
@@ -51,6 +61,8 @@ export const getSupabaseServerClient = createServerOnlyFn(() => {
 });
 
 export const getSupabaseDesktopFlowClient = createServerOnlyFn(() => {
+  if (env.VITE_SHOTS_URL)
+    throw new Error("Sign in through Shots using the current Founder Hub app.");
   return createServerClient(
     requireEnv(env.SUPABASE_URL, "SUPABASE_URL"),
     requireEnv(env.SUPABASE_ANON_KEY, "SUPABASE_ANON_KEY"),
@@ -82,6 +94,8 @@ export const getSupabasePublicServerClient = createServerOnlyFn(() => {
 });
 
 export const getSupabaseAdminClient = createServerOnlyFn(() => {
+  if (env.VITE_SHOTS_URL)
+    throw new Error("Account and billing changes are managed by Shots.");
   return createClient(
     requireEnv(env.SUPABASE_URL, "SUPABASE_URL"),
     requireEnv(env.SUPABASE_SERVICE_ROLE_KEY, "SUPABASE_SERVICE_ROLE_KEY"),

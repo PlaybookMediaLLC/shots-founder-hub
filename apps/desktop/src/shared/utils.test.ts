@@ -3,6 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getIdentifier: vi.fn(),
   startCallbackServer: vi.fn(),
+  getSession: vi.fn(),
+  env: {
+    VITE_APP_URL: "http://localhost:3000",
+    VITE_SHOTS_URL: undefined as string | undefined,
+  },
+}));
+
+vi.mock("~/env", () => ({ env: mocks.env }));
+vi.mock("~/auth/client", () => ({
+  supabase: { auth: { getSession: mocks.getSession } },
 }));
 
 vi.mock("@tauri-apps/api/app", () => ({
@@ -14,6 +24,48 @@ vi.mock("@anlg/plugin-deeplink2", () => ({
 }));
 
 import { buildWebAppUrl, getScheme } from "./utils";
+
+describe("Shots account management", () => {
+  it("binds account and billing destinations to the native account without leaking credentials", async () => {
+    mocks.env.VITE_SHOTS_URL = "https://shots.example";
+    mocks.getSession.mockResolvedValue({
+      data: {
+        session: {
+          access_token: "private-bearer",
+          user: { app_metadata: { shots_user_id: "shots-user" } },
+        },
+      },
+    });
+    try {
+      for (const [path, section] of [
+        ["/app/account", "account"],
+        ["/app/team", "members"],
+        ["/app/checkout", "billing"],
+        ["/app/portal", "billing"],
+      ] as const) {
+        const url = new URL(
+          await buildWebAppUrl(path, {
+            workspace_id: "local-uuid",
+            redirect: "https://attacker.example",
+          }),
+        );
+        expect(url.origin + url.pathname).toBe(
+          "https://shots.example/founder-hub/manage",
+        );
+        expect(Object.fromEntries(url.searchParams)).toEqual({
+          user: "shots-user",
+          section,
+        });
+      }
+      mocks.getSession.mockResolvedValue({ data: { session: null } });
+      await expect(buildWebAppUrl("/app/account")).rejects.toThrow(
+        "Sign in to Shots",
+      );
+    } finally {
+      mocks.env.VITE_SHOTS_URL = undefined;
+    }
+  });
+});
 
 describe("getScheme", () => {
   beforeEach(() => {

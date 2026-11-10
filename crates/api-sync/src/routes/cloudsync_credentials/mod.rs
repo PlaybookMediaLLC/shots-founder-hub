@@ -513,6 +513,23 @@ async fn create_credentials(
         ));
     }
 
+    if auth.shots.is_some() {
+        let key_id = requested_key_id.ok_or(SyncError::CloudsyncUpgradeRequired)?;
+        if !client_accepts_replica_transport(&headers) {
+            return Err(SyncError::CloudsyncUpgradeRequired);
+        }
+        let credentials = issue_replica_credentials(&state.replica, auth, key_id, &headers).await?;
+        return Ok((
+            [(header::CACHE_CONTROL, HeaderValue::from_static("no-store"))],
+            Json(CloudsyncCredentialResponse::Replica(credentials)),
+        ));
+    }
+
+    let issuer = state
+        .config
+        .issuer
+        .as_ref()
+        .ok_or(SyncError::CloudsyncUpgradeRequired)?;
     let expires_at = token_expiry(state.config.token_ttl_seconds)?;
     if requested_key_id.is_none() {
         if state.config.protocol_mode != CloudsyncProtocolMode::Dual {
@@ -525,6 +542,7 @@ async fn create_credentials(
         })?;
         let token = mint_cloudsync_token(
             &state,
+            issuer,
             &LegacyCreateTokenRequest {
                 name: "anarlog-cloudsync",
                 user_id: &auth.claims.sub,
@@ -581,6 +599,7 @@ async fn create_credentials(
 
     let token = mint_cloudsync_token(
         &state,
+        issuer,
         &E2eeCreateTokenRequest {
             name: "anarlog-cloudsync",
             user_id: &auth.claims.sub,
@@ -595,7 +614,7 @@ async fn create_credentials(
         Json(CloudsyncCredentialResponse::E2ee(CloudsyncCredentials {
             encryption_version: CLOUDSYNC_ENCRYPTION_VERSION,
             encryption_key_id,
-            database_id: state.config.database_id,
+            database_id: issuer.database_id.clone(),
             token,
             expires_at,
             workspace_id: personal_workspace_id.clone(),

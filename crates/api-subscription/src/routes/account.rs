@@ -167,6 +167,7 @@ mod tests {
             .with_durable_cleanup_enabled(cleanup_enabled),
         )
         .layer(Extension(AuthContext {
+            shots: None,
             token: "user-token".to_string(),
             claims: Claims {
                 sub: owner.to_string(),

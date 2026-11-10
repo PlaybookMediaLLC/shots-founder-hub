@@ -1,6 +1,6 @@
 import unittest
 
-from prepare_api_service_secrets import AI, BILLING, CORE, SHARED, SYNC, select
+from prepare_api_service_secrets import AI, BILLING, CORE, SHARED, SHOTS, SYNC, select
 
 
 class ServiceSecretsTests(unittest.TestCase):
@@ -78,6 +78,35 @@ class ServiceSecretsTests(unittest.TestCase):
     def test_unknown_role_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "Unknown"):
             select("misspelled", self.api, [])
+
+    def test_shots_authority_reaches_services_without_requiring_legacy_billing(self):
+        api = [
+            secret
+            for secret in self.api
+            if secret["key"]
+            not in BILLING | (SYNC - {"RESEND_API_KEY", "RESEND_FROM_EMAIL"})
+        ]
+        api += [{"key": key, "value": "test-shots-value"} for key in SHOTS]
+        for role in ["ai", "core"]:
+            self.assertTrue(SHOTS <= select(role, api, []).keys())
+        with self.assertRaisesRegex(ValueError, "FOUNDER_HUB_MCP_URL"):
+            select("sync", api, [])
+        api.append({"key": "FOUNDER_HUB_MCP_URL", "value": "https://hub.example/mcp"})
+        self.assertEqual(
+            select("sync", api, [])["FOUNDER_HUB_MCP_URL"], "https://hub.example/mcp"
+        )
+        with self.assertRaisesRegex(ValueError, "Shots owns billing"):
+            select("billing", api, [], self.webhooks)
+        with self.assertRaisesRegex(ValueError, "SHOTS_AUTH_SERVICE_TOKEN"):
+            select(
+                "core",
+                [
+                    secret
+                    for secret in api
+                    if secret["key"] != "SHOTS_AUTH_SERVICE_TOKEN"
+                ],
+                [],
+            )
 
     def test_drive_callback_reaches_core_and_combined_roles(self):
         key = "GOOGLE_DRIVE_PICKER_REDIRECT_URI"

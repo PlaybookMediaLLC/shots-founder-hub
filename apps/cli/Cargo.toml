@@ -12,9 +12,10 @@ anlg-agent-access = { workspace = true }
 anlg-db-app = { workspace = true }
 anlg-db-core = { workspace = true }
 anlg-storage = { workspace = true }
-anlg-supabase-auth = { workspace = true }
+anlg-supabase-auth = { workspace = true, features = ["refresh"] }
 anlg-user-error = { workspace = true }
 
+axum = { workspace = true }
 base64 = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 dirs = { workspace = true }
@@ -28,8 +29,9 @@ serde_json = { workspace = true }
 sha2 = { workspace = true }
 sqlx = { workspace = true, features = ["runtime-tokio", "sqlite"] }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["io-std", "macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["io-std", "macros", "net", "rt-multi-thread", "sync", "time"] }
 url = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 keyring = { workspace = true }

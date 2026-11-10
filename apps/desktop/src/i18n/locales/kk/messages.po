@@ -891,6 +891,7 @@ msgid "Beta"
 msgstr ""
 
 #: src/settings/general/billing.tsx
+#: src/settings/shots.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Billing"
 msgstr ""
@@ -3489,6 +3490,10 @@ msgstr ""
 msgid "Manage your sign-in methods on the Anarlog website."
 msgstr ""
 
+#: src/settings/shots.tsx
+msgid "Manage your teams, invitations, and roles in Shots."
+msgstr ""
+
 #: src/settings/automations/google-drive-config.tsx
 msgid "Markdown (.md)"
 msgstr ""
@@ -4206,6 +4211,10 @@ msgstr ""
 
 #: src/calendar/components/apple/permission.tsx
 msgid "Open Settings"
+msgstr ""
+
+#: src/settings/shots.tsx
+msgid "Open Shots settings"
 msgstr ""
 
 #: src/resource-sharing/share-dialog.tsx
@@ -5607,6 +5616,10 @@ msgstr ""
 msgid "Sign in to share this note with others."
 msgstr ""
 
+#: src/settings/shots.tsx
+msgid "Sign in to Shots"
+msgstr ""
+
 #: src/settings/sync/index.tsx
 msgid "Sign in to use cloud sync"
 msgstr ""
@@ -6067,6 +6080,7 @@ msgstr ""
 msgid "teammate@company.com"
 msgstr ""
 
+#: src/settings/shots.tsx
 #: src/settings/team/index.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Teams"
@@ -6904,6 +6918,10 @@ msgstr ""
 
 #: src/auth/context.tsx
 msgid "Your session has expired. Sign in again to reconnect."
+msgstr ""
+
+#: src/settings/shots.tsx
+msgid "Your Shots workspace plan controls your Founder Hub access. Manage plans and payments in Shots."
 msgstr ""
 
 #: src/services/enhancer/summary-notification.ts

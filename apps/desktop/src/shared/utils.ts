@@ -1,5 +1,7 @@
 import { getIdentifier } from "@tauri-apps/api/app";
 
+import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+
 import { beginDesktopAuth } from "~/auth/deeplink";
 import { env } from "~/env";
 
@@ -35,6 +37,7 @@ type DesktopFlowPath =
   | "/app/google-drive-picker"
   | "/auth"
   | "/app/account"
+  | "/app/team"
   | "/app/integration"
   | "/app/checkout"
   | "/app/team-checkout"
@@ -45,6 +48,33 @@ export const buildWebAppUrl = async (
   path: DesktopFlowPath,
   params?: Record<string, string>,
 ): Promise<string> => {
+  if (
+    env.VITE_SHOTS_URL &&
+    [
+      "/app/account",
+      "/app/team",
+      "/app/checkout",
+      "/app/team-checkout",
+      "/app/switch-plan",
+      "/app/portal",
+    ].includes(path)
+  ) {
+    const { supabase } = await import("~/auth/client");
+    const result = await supabase?.auth.getSession();
+    if (result?.error) throw result.error;
+    const userId = result?.data.session?.user.app_metadata.shots_user_id;
+    if (typeof userId !== "string")
+      throw new Error("Sign in to Shots to manage your account.");
+    return getShotsSettingsUrl(
+      env.VITE_SHOTS_URL,
+      userId,
+      path === "/app/account"
+        ? "account"
+        : path === "/app/team"
+          ? "members"
+          : "billing",
+    );
+  }
   const scheme = await getScheme();
   const url = new URL(path, env.VITE_APP_URL);
   url.searchParams.set("flow", "desktop");

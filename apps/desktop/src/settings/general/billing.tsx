@@ -23,13 +23,23 @@ import { cn } from "@anlg/utils";
 import { useAuth } from "~/auth";
 import { useBillingAccess } from "~/auth/billing-context";
 import { requestSyncDevices } from "~/auth/sync-devices";
+import { env } from "~/env";
 import { SettingsPageTitle } from "~/settings/page-title";
+import { ShotsSettings } from "~/settings/shots";
 import { getWorkspaceAccess, requireTeamContext } from "~/settings/team/client";
 import { useMyWorkspacesWithMirror } from "~/settings/team/mirror";
 import { buildWebAppUrl } from "~/shared/utils";
 import { useTabs } from "~/store/zustand/tabs";
 
 export function SettingsBilling() {
+  return env.VITE_SHOTS_URL ? (
+    <ShotsSettings section="billing" />
+  ) : (
+    <LegacySettingsBilling />
+  );
+}
+
+function LegacySettingsBilling() {
   const auth = useAuth();
   const openNew = useTabs((state) => state.openNew);
   const billing = useBillingAccess();

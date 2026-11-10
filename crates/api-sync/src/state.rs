@@ -95,6 +95,7 @@ pub struct ReplicaState {
     pub(crate) client: reqwest::Client,
     pub(crate) witness_wakes: WitnessWakes,
     pub(crate) witness_writes: WitnessWrites,
+    pub(crate) shots: Option<anlg_api_auth::ShotsAuth>,
 }
 
 impl ReplicaState {
@@ -110,7 +111,13 @@ impl ReplicaState {
             client,
             witness_wakes: WitnessWakes::default(),
             witness_writes: WitnessWrites::default(),
+            shots: None,
         }
+    }
+
+    pub fn with_shots(mut self, shots: Option<anlg_api_auth::ShotsAuth>) -> Self {
+        self.shots = shots;
+        self
     }
 }
 
@@ -144,5 +151,10 @@ impl AppState {
             )),
             live_docs: LiveDocs::default(),
         }
+    }
+
+    pub fn with_shots(mut self, shots: Option<anlg_api_auth::ShotsAuth>) -> Self {
+        self.replica.shots = shots;
+        self
     }
 }

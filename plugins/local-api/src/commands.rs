@@ -464,10 +464,16 @@ pub async fn get_cloud_snapshot<R: tauri::Runtime>(
     meeting_id: String,
 ) -> Result<serde_json::Value, String> {
     let pool = pool(&app)?;
-    let export = anlg_agent_access::get_meeting_export(&pool, meeting_id)
+    let export = anlg_agent_access::get_meeting_export(&pool, meeting_id.clone())
         .await
         .map_err(|error| error.to_string())?;
-    prepare_cloud_snapshot(export)
+    let session = anlg_db_app::get_session(&pool, &meeting_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "meeting no longer exists".to_string())?;
+    let mut snapshot = prepare_cloud_snapshot(export)?;
+    snapshot["source_workspace_id"] = session.workspace_id.into();
+    Ok(snapshot)
 }
 
 pub(crate) fn prepare_cloud_snapshot(

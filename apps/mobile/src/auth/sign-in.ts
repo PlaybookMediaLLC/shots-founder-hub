@@ -1,4 +1,5 @@
 export type SignInMethod =
+  | "shots"
   | "apple"
   | "google"
   | "azure"
@@ -16,6 +17,7 @@ export function parseLastSignInMethod(
   value: string | null,
 ): SignInMethod | null {
   switch (value) {
+    case "shots":
     case "apple":
     case "google":
     case "azure":
