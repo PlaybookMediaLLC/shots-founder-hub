@@ -1,3 +1,5 @@
+description: Repository helper for sentry cli.
+name: sentry cli
 inputs:
   version:
     required: false

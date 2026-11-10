@@ -1,3 +1,5 @@
+description: Repository helper for rust install.
+name: rust install
 inputs:
   platform:
     required: false

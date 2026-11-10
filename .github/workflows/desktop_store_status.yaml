@@ -1,10 +1,11 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: Desktop Store Status
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       submission_id:
-        description: "Existing Microsoft Store submission ID to inspect"
+        description: Existing Microsoft Store submission ID to inspect
         required: true
         type: string
 
@@ -12,7 +13,7 @@ permissions: {}
 
 jobs:
   status:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -67,3 +68,4 @@ jobs:
               throw "Store API reported failure for $($query.Key)"
             }
           }
+    permissions: {}

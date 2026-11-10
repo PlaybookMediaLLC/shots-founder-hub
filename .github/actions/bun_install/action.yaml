@@ -1,3 +1,5 @@
+description: Repository helper for bun install.
+name: bun install
 runs:
   using: "composite"
   steps:

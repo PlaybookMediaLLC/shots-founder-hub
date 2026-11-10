@@ -1,10 +1,10 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       service:
-        type: choice
+        type: string
         default: gateway
-        options: [ai, sync, core, billing, gateway]
       image:
         description: Existing image digest for a verified rollback or shared build
         type: string
@@ -31,8 +31,7 @@ env:
   SERVICE: ${{ inputs.service || 'gateway' }}
   FLY_ORG: fastrepl
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   compute-version:
@@ -52,6 +51,8 @@ jobs:
           VERSION=$(doxxer --config doxxer.api.toml next patch)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Computed version: $VERSION"
+    if: false
+    permissions: {}
 
   deploy:
     needs: compute-version
@@ -60,9 +61,7 @@ jobs:
     concurrency:
       group: api-fly-deploy
       cancel-in-progress: false
-    permissions:
-      contents: read
-      id-token: write
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -234,13 +233,13 @@ jobs:
         run: timeout 60s flyctl logs --app "$FLY_APP" --no-tail || true
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    if: false
 
   tag:
-    if: ${{ (inputs.service == 'gateway' || inputs.service == '') && inputs.image == '' }}
+    if: false
     needs: [compute-version, deploy]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

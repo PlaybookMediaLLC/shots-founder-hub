@@ -1,36 +1,11 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: web_ci
 
 # https://github.com/tauri-apps/tauri-action/blob/3013cac/examples/test-build-only.yml
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - apps/web/**
-      - packages/**
-      - .github/workflows/web_ci.yaml
-      - .github/workflows/web_cd.yaml
-      - .github/actions/pnpm_install/**
-      - .github/actions/doxxer_install/**
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - turbo.json
-      - doxxer.web.toml
   pull_request:
-    paths:
-      - apps/web/**
-      - packages/**
-      - .github/workflows/web_ci.yaml
-      - .github/workflows/web_cd.yaml
-      - .github/actions/pnpm_install/**
-      - .github/actions/doxxer_install/**
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - turbo.json
-      - doxxer.web.toml
+    branches:
+      - develop
 
 permissions:
   contents: read
@@ -44,6 +19,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/pnpm_install
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
       - run: pnpm -F ui build
@@ -55,12 +32,13 @@ jobs:
       # A declared-but-ungenerated figure only warns; use --strict to gate on it.
       # Public HEAD requests only, so no Napkin or Supabase credentials needed.
       - run: pnpm -F web media:figures:check
+    if: ${{ github.repository == 'PlaybookMediaLLC/shots-founder-hub' && github.event_name == 'pull_request' && github.base_ref == 'develop' && github.event.pull_request.head.repo.full_name == github.repository }}
+    timeout-minutes: 30
 
   deploy:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
+    if: false
+    permissions: {}
     uses: $/.github/workflows/web_cd.yaml
     with:
       sha: ${{ github.sha }}

@@ -1,65 +1,10 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: mobile_ci
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 9 * * *"
-  push:
-    branches:
-      - main
-    paths:
-      - .github/actions/pnpm_install/**
-      - .github/workflows/mobile_ci.yaml
-      - apps/mobile/**
-      - release-version.json
-      - scripts/release-version.mjs
-      - apps/watch/apple/**
-      - crates/db-app/**
-      - crates/db-core/**
-      - crates/cloudsync/**
-      - crates/db-execute/**
-      - crates/mobile-bridge/**
-      - crates/xtask/**
-      - crates/ws-client/**
-      - packages/mobile-bridge-rn/**
-      - packages/db-react/**
-      - packages/db-runtime/**
-      - packages/provider-validation/**
-      - packages/utils/**
-      - patches/expo-audio*.patch
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - rust-toolchain.toml
-      - Cargo.toml
-      - Cargo.lock
   pull_request:
-    paths:
-      - .github/actions/pnpm_install/**
-      - .github/workflows/mobile_ci.yaml
-      - apps/mobile/**
-      - release-version.json
-      - scripts/release-version.mjs
-      - apps/watch/apple/**
-      - crates/db-app/**
-      - crates/db-core/**
-      - crates/cloudsync/**
-      - crates/db-execute/**
-      - crates/mobile-bridge/**
-      - crates/xtask/**
-      - crates/ws-client/**
-      - packages/mobile-bridge-rn/**
-      - packages/db-react/**
-      - packages/db-runtime/**
-      - packages/provider-validation/**
-      - packages/utils/**
-      - patches/expo-audio*.patch
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - rust-toolchain.toml
-      - Cargo.toml
-      - Cargo.lock
+    branches:
+      - develop
 
 permissions:
   contents: read
@@ -71,7 +16,7 @@ concurrency:
 env:
   APP_VARIANT: stable
   CI: "1"
-  EXPO_PUBLIC_API_URL: https://api.anarlog.so
+  EXPO_PUBLIC_API_URL: http://127.0.0.1:9
   EXPO_NO_GIT_STATUS: "1"
   SENTRY_DISABLE_AUTO_UPLOAD: "true"
 
@@ -80,14 +25,18 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/pnpm_install
       - run: pnpm -F @anlg/mobile typecheck
       - run: pnpm -F @anlg/mobile test
       - run: pnpm -F @anlg/provider-validation typecheck
       - run: pnpm -F @anlg/provider-validation test
+    if: ${{ github.repository == 'PlaybookMediaLLC/shots-founder-hub' && github.event_name == 'pull_request' && github.base_ref == 'develop' && github.event.pull_request.head.repo.full_name == github.repository }}
+    timeout-minutes: 30
 
   watchos_build:
-    if: ${{ github.event_name != 'pull_request' }}
+    if: false
     runs-on: macos-26
     timeout-minutes: 30
     steps:
@@ -101,9 +50,10 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/AnarlogWatchDerivedData" \
             CODE_SIGNING_ALLOWED=NO \
             build
+    permissions: {}
 
   ios_build:
-    if: ${{ github.event_name != 'pull_request' }}
+    if: false
     runs-on: macos-26
     timeout-minutes: 90
     steps:
@@ -140,9 +90,10 @@ jobs:
           test -f "$app/Frameworks/CloudSync.framework/CloudSync"
           strings "$app/Frameworks/CloudSync.framework/CloudSync" | grep -F network_connect_timeout >/dev/null
           node apps/mobile/scripts/verify-ios-shortcuts.mjs "$app"
+    permissions: {}
 
   android_build:
-    if: ${{ github.event_name != 'pull_request' }}
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -207,11 +158,13 @@ jobs:
                   for abi in sorted(supported_abis):
                       library = package.read(f"lib/{abi}/libcloudsync.so")
                       assert b"network_connect_timeout" in library, f"{apk}: stale CloudSync for {abi}"
+    permissions: {}
 
   mobile_ci:
-    if: always()
-    needs: [mobile_checks, watchos_build, ios_build, android_build]
+    if: false
+    needs: [ mobile_checks, watchos_build, ios_build, android_build ]
     runs-on: ubuntu-latest
     steps:
       - run: exit 1
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+    permissions: {}

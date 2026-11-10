@@ -1,12 +1,8 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: openstatus
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - openstatus.yaml
-      - .github/workflows/openstatus.yaml
+  workflow_call: null
 
 jobs:
   sync:
@@ -16,3 +12,6 @@ jobs:
       - uses: Homebrew/actions/setup-homebrew@1e34f2e2acaa766b7efacb8c26352e6abbb023f9
       - run: brew install openstatusHQ/cli/openstatus --cask
       - run: openstatus monitors apply --access-token ${{ secrets.OPENSTATUS_API_KEY }} -y
+    if: false
+    permissions: {}
+permissions: {}

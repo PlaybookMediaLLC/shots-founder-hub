@@ -1,6 +1,6 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
-
+  workflow_call: null
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,3 +35,6 @@ jobs:
           name: anarlog-flatpak-${{ github.sha }}
           path: anarlog.flatpak
           if-no-files-found: error
+    if: false
+    permissions: {}
+permissions: {}

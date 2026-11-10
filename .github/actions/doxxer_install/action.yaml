@@ -1,3 +1,5 @@
+description: Repository helper for doxxer install.
+name: doxxer install
 runs:
   using: "composite"
   steps:

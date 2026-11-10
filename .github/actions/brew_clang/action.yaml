@@ -1,3 +1,5 @@
+description: Repository helper for brew clang.
+name: brew clang
 runs:
   using: "composite"
   steps:

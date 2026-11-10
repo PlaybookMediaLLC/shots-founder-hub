@@ -1,5 +1,5 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       sha:
@@ -37,13 +37,14 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "Computed version: $VERSION"
+    if: false
+    permissions: {}
 
   deploy:
     needs: compute-version
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    permissions:
-      contents: read
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -107,12 +108,12 @@ jobs:
           VERCEL_PROJECT_ID: ${{ vars.ANARLOG_VERCEL_PROJECT_ID }}
       - if: always()
         run: rm -f .vercel/.env.production.local
+    if: false
 
   tag:
-    needs: [compute-version, deploy]
+    needs: [ compute-version, deploy ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -123,3 +124,5 @@ jobs:
           commit_sha: ${{ needs.compute-version.outputs.sha }}
           custom_tag: web_v${{ needs.compute-version.outputs.version }}
           tag_prefix: ""
+    if: false
+permissions: {}

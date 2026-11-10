@@ -1,3 +1,5 @@
+description: Repository helper for infisical install.
+name: infisical install
 runs:
   using: "composite"
   steps:

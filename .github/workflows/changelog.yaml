@@ -1,29 +1,5 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
-    inputs:
-      channel:
-        description: "Release channel"
-        required: true
-        type: choice
-        options:
-          - stable
-          - beta
-      stream:
-        description: "Release stream"
-        required: true
-        default: desktop
-        type: choice
-        options:
-          - desktop
-          - mobile
-      version:
-        description: "Explicit version (defaults to next desktop patch or current mobile version)"
-        required: false
-        type: string
-      source_sha:
-        description: "Optional exact source commit SHA for candidate notes or build promotion"
-        required: false
-        type: string
   workflow_call:
     inputs:
       channel:
@@ -46,9 +22,7 @@ on:
         required: false
         type: number
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   generate:
@@ -134,3 +108,5 @@ jobs:
             Create a PR with title "Prepare ${{ steps.version.outputs.stream }} Changelog for ${{ steps.version.outputs.version }}"
 
             3. Do not run `typecheck`, `dprint` or `pnpm` things.
+    if: false
+    permissions: {}

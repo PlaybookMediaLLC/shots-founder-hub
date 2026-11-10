@@ -1,3 +1,5 @@
+description: Repository helper for hf unzip resource.
+name: hf unzip resource
 inputs:
   repo:
     required: true

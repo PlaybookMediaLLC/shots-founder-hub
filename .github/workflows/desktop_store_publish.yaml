@@ -1,22 +1,23 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: Desktop Store Publish
 
 on:
   workflow_call:
     inputs:
       version:
-        description: "Stable desktop version to release (e.g., 1.4.12)"
+        description: Stable desktop version to release (e.g., 1.4.12)
         required: true
         type: string
       candidate_sha:
-        description: "Exact 40-character commit tagged for the stable release"
+        description: Exact 40-character commit tagged for the stable release
         required: true
         type: string
       include_windows:
-        description: "Prepare the Microsoft Store package update"
+        description: Prepare the Microsoft Store package update
         type: boolean
         default: true
       submit_to_stores:
-        description: "Submit the Microsoft Store update"
+        description: Submit the Microsoft Store update
         type: boolean
         default: false
     secrets:
@@ -26,31 +27,12 @@ on:
         required: false
       SELLER_ID:
         required: false
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Stable desktop version to release (e.g., 1.4.12)"
-        required: true
-        type: string
-      candidate_sha:
-        description: "Exact 40-character commit tagged for the stable release"
-        required: true
-        type: string
-      include_windows:
-        description: "Prepare the Microsoft Store package update"
-        type: boolean
-        default: true
-      submit_to_stores:
-        description: "Submit the Microsoft Store update"
-        type: boolean
-        default: false
 
 concurrency:
   group: desktop-store-release
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   validate:
@@ -119,9 +101,11 @@ jobs:
 
           echo "candidate_sha=$candidate_sha" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+    if: false
+    permissions: {}
 
   microsoft-store:
-    if: ${{ inputs.include_windows }}
+    if: false
     needs: validate
     runs-on: windows-latest
     steps:
@@ -133,8 +117,7 @@ jobs:
         uses: ./.github/actions/cn_release
         with:
           raw: >-
-            release show fastrepl/hyprnote2 ${{ needs.validate.outputs.version }}
-            --channel stable
+            release show fastrepl/hyprnote2 ${{ needs.validate.outputs.version }} --channel stable
           key: ${{ secrets.CN_API_KEY }}
       - name: Download and verify stable Windows installer
         shell: pwsh
@@ -264,3 +247,4 @@ jobs:
           - SHA-256: ``$env:MICROSOFT_STORE_PACKAGE_SHA256``
           - Submitted for certification: ``$env:SUBMITTED``
           "@ | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+    permissions: {}

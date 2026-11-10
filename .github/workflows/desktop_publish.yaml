@@ -1,24 +1,25 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
-        description: "Version to publish (e.g., 1.0.2)"
+        description: Version to publish (e.g., 1.0.2)
         required: true
         type: string
       candidate_sha:
-        description: "Exact 40-character main commit used to build the candidate"
+        description: Exact 40-character main commit used to build the candidate
         required: true
         type: string
       dry_run_id:
-        description: "Successful publish=false desktop CD run that built the candidate"
+        description: Successful publish=false desktop CD run that built the candidate
         required: true
         type: string
       include_linux:
-        description: "Publish Linux beta artifacts from the candidate"
+        description: Publish Linux beta artifacts from the candidate
         type: boolean
         default: true
       include_windows:
-        description: "Publish Windows artifacts from the candidate"
+        description: Publish Windows artifacts from the candidate
         type: boolean
         default: true
 
@@ -85,6 +86,8 @@ jobs:
           echo "dry_run_id=$INPUT_DRY_RUN_ID" >> $GITHUB_OUTPUT
           echo "include_linux=$INPUT_INCLUDE_LINUX" >> $GITHUB_OUTPUT
           echo "include_windows=$INPUT_INCLUDE_WINDOWS" >> $GITHUB_OUTPUT
+    if: false
+    permissions: {}
 
   verify-candidate:
     needs: parse
@@ -115,9 +118,11 @@ jobs:
             echo "::error::Missing changelog for $VERSION at candidate $EXPECTED_SHA"
             exit 1
           fi
+    if: false
+    permissions: {}
 
   verify-windows-signature:
-    if: ${{ needs.parse.outputs.include_windows == 'true' }}
+    if: false
     needs: [parse, verify-candidate]
     runs-on: windows-latest
     steps:
@@ -153,14 +158,13 @@ jobs:
           if (-not $signature.TimeStamperCertificate) {
             throw "Windows Authenticode signature is missing a trusted timestamp"
           }
+    permissions: {}
 
   cn-publish:
     needs: [parse, verify-candidate, verify-windows-signature]
-    if: ${{ !cancelled() && needs.parse.result == 'success' && needs.verify-candidate.result == 'success' && (needs.parse.outputs.include_windows != 'true' || needs.verify-windows-signature.result == 'success') }}
+    if: false
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: write
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -204,8 +208,7 @@ jobs:
         uses: ./.github/actions/cn_release
         with:
           raw: >-
-            release show ${{ env.CN_APPLICATION }} ${{ needs.parse.outputs.version }}
-            --channel ${{ needs.parse.outputs.channel }}
+            release show ${{ env.CN_APPLICATION }} ${{ needs.parse.outputs.version }} --channel ${{ needs.parse.outputs.channel }}
           key: ${{ secrets.CN_API_KEY }}
       - id: publish-decision
         env:
@@ -318,11 +321,9 @@ jobs:
 
   gh-release:
     needs: [parse, cn-publish]
-    if: ${{ !cancelled() && needs.parse.result == 'success' && needs.cn-publish.result == 'success' }}
+    if: false
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: write
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -567,9 +568,8 @@ jobs:
 
   store-publish:
     needs: [parse, gh-release]
-    if: ${{ !cancelled() && needs.parse.result == 'success' && needs.gh-release.result == 'success' }}
-    permissions:
-      contents: read
+    if: false
+    permissions: {}
     uses: ./.github/workflows/desktop_store_publish.yaml
     with:
       version: ${{ needs.parse.outputs.version }}
@@ -583,14 +583,12 @@ jobs:
 
   linux-package-bump:
     needs: [parse, gh-release]
-    if: ${{ !cancelled() && needs.parse.outputs.include_linux == 'true' && needs.gh-release.result == 'success' }}
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
       sha: ${{ steps.merge.outputs.sha || steps.package-pr.outputs.sha }}
-    permissions:
-      contents: write
-      pull-requests: write
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -733,8 +731,7 @@ jobs:
 
   linux-apt-deploy:
     needs: linux-package-bump
-    permissions:
-      contents: write
+    permissions: {}
     uses: $/.github/workflows/web_cd.yaml
     with:
       sha: ${{ needs.linux-package-bump.outputs.sha }}
@@ -742,13 +739,13 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
       INFISICAL_SENTRY_TOKEN: ${{ secrets.INFISICAL_SENTRY_TOKEN }}
+    if: false
 
   linux-apt-verify:
     needs: [parse, linux-package-bump, linux-apt-deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -759,3 +756,5 @@ jobs:
         run: |
           node scripts/verify-apt-repository.mjs --version "$VERSION"
           echo "Signed APT repository for $VERSION is live at https://anarlog.so/apt/ (amd64 and arm64)." >> "$GITHUB_STEP_SUMMARY"
+    if: false
+permissions: {}

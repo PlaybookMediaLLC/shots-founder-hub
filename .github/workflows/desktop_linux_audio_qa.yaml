@@ -1,8 +1,9 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: Desktop Linux Virtual Audio QA
 run-name: Linux audio QA v${{ inputs.version }} at ${{ inputs.candidate_sha }}
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: Stable version whose CrabNebula DEBs should be tested
@@ -17,9 +18,7 @@ on:
         required: true
         type: string
 
-permissions:
-  actions: read
-  contents: read
+permissions: {}
 
 concurrency:
   group: desktop-linux-audio-qa-${{ inputs.version }}-${{ inputs.candidate_sha }}
@@ -58,6 +57,8 @@ jobs:
           echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
           echo "candidate_sha=${INPUT_CANDIDATE_SHA,,}" >> "$GITHUB_OUTPUT"
           echo "dry_run_id=$INPUT_DRY_RUN_ID" >> "$GITHUB_OUTPUT"
+    if: false
+    permissions: {}
 
   verify-candidate:
     needs: parse
@@ -111,9 +112,11 @@ jobs:
             echo
             echo "This gate uses \`NO_AEC=1\` and does not validate AEC."
           } >> "$GITHUB_STEP_SUMMARY"
+    if: false
+    permissions: {}
 
   audio-qa:
-    needs: [parse, verify-candidate]
+    needs: [ parse, verify-candidate ]
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -199,8 +202,7 @@ jobs:
         uses: ./.github/actions/cn_release
         with:
           raw: >-
-            release show ${{ env.CN_APPLICATION }} ${{ needs.parse.outputs.version }}
-            --channel stable
+            release show ${{ env.CN_APPLICATION }} ${{ needs.parse.outputs.version }} --channel stable
           key: ${{ secrets.CN_API_KEY }}
       - id: asset
         env:
@@ -378,3 +380,5 @@ jobs:
           retention-days: 14
       - if: steps.audio-qa.outcome == 'failure'
         run: exit 1
+    if: false
+    permissions: {}

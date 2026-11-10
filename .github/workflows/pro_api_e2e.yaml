@@ -1,18 +1,8 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: Pro API E2E
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 9 * * *"
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/pro_api_e2e.yaml
-      - crates/llm-proxy/**
-      - crates/owhisper-client/**
-      - crates/soniox/**
-      - crates/transcribe-proxy/**
+  workflow_call: null
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -40,6 +30,8 @@ jobs:
             -- cargo test -p transcribe-proxy --test pro_api_e2e -- --ignored --nocapture
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_STT_TOKEN }}
+    if: false
+    permissions: {}
 
   pro-intelligence:
     name: Pro intelligence API
@@ -63,3 +55,6 @@ jobs:
             -- cargo test -p llm-proxy --test proxy_e2e proxy_e2e::openrouter -- --ignored --nocapture
         env:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_LLM_TOKEN }}
+    if: false
+    permissions: {}
+permissions: {}

@@ -1,6 +1,6 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
-
+  workflow_call: null
 jobs:
   sign-passthrough:
     runs-on: macos-14
@@ -39,3 +39,6 @@ jobs:
           path: |
             build/anarlog-passthrough
           retention-days: 7
+    if: false
+    permissions: {}
+permissions: {}

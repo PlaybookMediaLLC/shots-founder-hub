@@ -1,3 +1,5 @@
+description: Repository helper for debug.
+name: debug
 inputs:
   enabled:
     required: false

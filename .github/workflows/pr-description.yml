@@ -1,11 +1,10 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: PR description
 
 on:
-  pull_request:
-    types: [opened, edited, reopened, synchronize, ready_for_review]
+  workflow_call: null
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -203,3 +202,5 @@ jobs:
           console.log("PR title and summary are complete.");
 
           NODE
+    if: false
+    permissions: {}

@@ -1,7 +1,8 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 # https://supabase.com/docs/guides/deployment/ci/testing
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       include_all:
         description: Apply reviewed migrations older than the last deployed migration
@@ -28,3 +29,6 @@ jobs:
             arguments+=(--include-all)
           fi
           supabase "${arguments[@]}"
+    if: false
+    permissions: {}
+permissions: {}

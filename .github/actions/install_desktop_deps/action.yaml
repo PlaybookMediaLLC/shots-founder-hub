@@ -1,3 +1,5 @@
+description: Repository helper for install desktop deps.
+name: install desktop deps
 inputs:
   target:
     required: false

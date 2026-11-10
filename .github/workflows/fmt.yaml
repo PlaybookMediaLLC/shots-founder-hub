@@ -1,12 +1,10 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: fmt
 
 on:
-  push:
-    branches:
-      - main
-      - .github/workflows/fmt.yaml
   pull_request:
-
+    branches:
+      - develop
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -18,6 +16,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           run_install: false
@@ -39,12 +38,17 @@ jobs:
             echo "scoped=false" >> "$GITHUB_OUTPUT"
             echo "rust=true" >> "$GITHUB_OUTPUT"
           fi
+      - id: toolchain
+        if: steps.changed.outputs.rust == 'true'
+        shell: bash
+        run: |
+          echo "channel=$(grep 'channel' rust-toolchain.toml | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+          echo "components=$(grep 'components' rust-toolchain.toml | sed 's/.*\[//' | sed 's/\].*//' | tr -d '"' | tr -d ' ')" >> "$GITHUB_OUTPUT"
       - if: steps.changed.outputs.rust == 'true'
-        uses: $/.github/actions/rust_install
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
         with:
-          path: ~/.cache/dprint/cache/plugins
-          key: dprint-${{ hashFiles('dprint.json') }}
+          toolchain: ${{ steps.toolchain.outputs.channel }}
+          components: ${{ steps.toolchain.outputs.components }}
       - env:
           SCOPED: ${{ steps.changed.outputs.scoped }}
         run: |
@@ -54,3 +58,7 @@ jobs:
           else
             pnpm fmt:check
           fi
+    if: ${{ github.repository == 'PlaybookMediaLLC/shots-founder-hub' && github.event_name == 'pull_request' && github.base_ref == 'develop' && github.event.pull_request.head.repo.full_name == github.repository }}
+    timeout-minutes: 30
+permissions:
+  contents: read

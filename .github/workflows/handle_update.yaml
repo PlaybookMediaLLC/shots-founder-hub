@@ -1,3 +1,4 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
   workflow_call:
     inputs:
@@ -62,3 +63,6 @@ jobs:
           repo: ${{ github.repository }}
           comment: ${{ inputs.comment_id }}
           reaction: confused
+    if: false
+    permissions: {}
+permissions: {}

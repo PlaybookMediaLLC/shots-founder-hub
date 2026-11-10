@@ -1,33 +1,6 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 # https://docs.crabnebula.dev/cloud/ci/tauri-v2-workflow/
 on:
-  workflow_dispatch:
-    inputs:
-      channel:
-        description: "Release channel"
-        required: true
-        type: choice
-        options:
-          - staging
-          - stable
-      candidate_sha:
-        description: "Immutable candidate commit to check out"
-        required: false
-        type: string
-        default: ""
-      include_linux:
-        description: "Build and include Linux beta artifacts"
-        type: boolean
-        default: true
-      include_windows:
-        description: "Build and include Windows artifacts"
-        type: boolean
-        default: true
-      version:
-        description: "Explicit semantic version required for stable releases"
-        required: false
-        type: string
-        default: ""
-
   workflow_call:
     inputs:
       channel:
@@ -105,9 +78,11 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Computed version: $VERSION"
+    if: false
+    permissions: {}
 
   cn-draft:
-    if: ${{ inputs.channel != 'staging' }}
+    if: false
     needs: compute-version
     runs-on: ubuntu-latest
     steps:
@@ -148,12 +123,12 @@ jobs:
           channel: ${{ env.RELEASE_CHANNEL }}
           framework: tauri
           working-directory: ./apps/desktop
+    permissions: {}
 
   build-macos:
-    needs: [compute-version, cn-draft]
-    if: ${{ !cancelled() && (needs.cn-draft.result == 'success' || needs.cn-draft.result == 'skipped') }}
-    permissions:
-      contents: write
+    needs: [ compute-version, cn-draft ]
+    if: false
+    permissions: {}
     runs-on: macos-26
     strategy:
       fail-fast: true
@@ -369,8 +344,8 @@ jobs:
           retention-days: 3
 
   build-linux:
-    needs: [compute-version, cn-draft]
-    if: ${{ inputs.include_linux && !cancelled() && (needs.cn-draft.result == 'success' || needs.cn-draft.result == 'skipped') }}
+    needs: [ compute-version, cn-draft ]
+    if: false
     strategy:
       fail-fast: true
       matrix:
@@ -589,13 +564,12 @@ jobs:
           channel: ${{ env.RELEASE_CHANNEL }}
           framework: tauri
           working-directory: ./apps/desktop
+    permissions: {}
 
   build-windows:
-    needs: [compute-version, cn-draft]
-    if: ${{ inputs.include_windows && !cancelled() && (needs.cn-draft.result == 'success' || needs.cn-draft.result == 'skipped') }}
-    permissions:
-      contents: read
-      id-token: write
+    needs: [ compute-version, cn-draft ]
+    if: false
+    permissions: {}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -893,10 +867,9 @@ jobs:
           working-directory: ./apps/desktop
 
   verify-cn-release:
-    permissions:
-      contents: write
-    if: ${{ inputs.channel != 'staging' && !cancelled() && needs.build-macos.result == 'success' && (!inputs.include_linux || needs.build-linux.result == 'success') && (!inputs.include_windows || needs.build-windows.result == 'success') }}
-    needs: [compute-version, build-macos, build-windows, build-linux]
+    permissions: {}
+    if: false
+    needs: [ compute-version, build-macos, build-windows, build-linux ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -906,8 +879,7 @@ jobs:
         uses: ./.github/actions/cn_release
         with:
           raw: >-
-            release show ${{ env.CN_APPLICATION }} ${{ needs.compute-version.outputs.version }}
-            --channel ${{ env.RELEASE_CHANNEL }}
+            release show ${{ env.CN_APPLICATION }} ${{ needs.compute-version.outputs.version }} --channel ${{ env.RELEASE_CHANNEL }}
           key: ${{ secrets.CN_API_KEY }}
       - env:
           EXPECTED_VERSION: ${{ needs.compute-version.outputs.version }}
@@ -1003,3 +975,4 @@ jobs:
           path: release-provenance/manifest.json
           if-no-files-found: error
           retention-days: 30
+permissions: {}

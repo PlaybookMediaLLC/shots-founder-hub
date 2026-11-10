@@ -1,6 +1,6 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
-
+  workflow_call: null
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -29,6 +29,8 @@ jobs:
         with:
           channel: staging
           target_triple: x86_64-unknown-linux-gnu
+    if: false
+    permissions: {}
 
   e2e-macos:
     runs-on: macos-14
@@ -76,3 +78,6 @@ jobs:
           if-no-files-found: ignore
       - if: steps.e2e-test.outcome == 'failure'
         run: exit 1
+    if: false
+    permissions: {}
+permissions: {}

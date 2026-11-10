@@ -1,20 +1,14 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 name: Content Check
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "apps/web/content/docs/**"
-      - "apps/web/content/handbook/**"
+  workflow_call: null
 
 jobs:
   content-check:
-    if: startsWith(github.head_ref, 'content/docs/') || startsWith(github.head_ref, 'content/handbook/')
+    if: false
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    permissions: {}
 
     steps:
       - name: Checkout code
@@ -86,3 +80,4 @@ jobs:
                 body: body
               });
             }
+permissions: {}

@@ -1,3 +1,5 @@
+description: Repository helper for infisical export.
+name: infisical export
 inputs:
   project-id:
     required: true

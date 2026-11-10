@@ -1,3 +1,5 @@
+description: Repository helper for install app deps.
+name: install app deps
 runs:
   using: "composite"
   steps:

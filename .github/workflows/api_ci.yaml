@@ -1,72 +1,12 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/scripts/prepare_api_service_secrets.py
-      - .github/scripts/test_prepare_api_service_secrets.py
-      - .github/scripts/verify_api_continuity.py
-      - .github/scripts/test_verify_api_continuity.py
-      - .github/scripts/deploy_api_drain.py
-      - .github/scripts/test_deploy_api_drain.py
-      - .github/scripts/test_verify_cloudsync_e2ee.py
-      - .github/scripts/verify_cloudsync_e2ee.py
-      - .github/workflows/api_cd.yaml
-      - .github/workflows/api_ci.yaml
-      - apps/api/**
-      - apps/stripe/**
-      - packages/supabase/**
-      - packages/user-error/**
-      - crates/agent-access/**
-      - crates/api-auth/**
-      - crates/api-calendar/**
-      - crates/api-nango/**
-      - crates/api-notion/**
-      - crates/api-cloud/**
-      - crates/api-subscription/**
-      - crates/api-sync/**
-      - crates/llm-proxy/**
-      - crates/mcp/**
-      - crates/supabase-auth/**
-      - crates/supabase-storage/**
-      - crates/transcribe-proxy/**
-  pull_request:
-    paths:
-      - .github/scripts/prepare_api_service_secrets.py
-      - .github/scripts/test_prepare_api_service_secrets.py
-      - .github/scripts/verify_api_continuity.py
-      - .github/scripts/test_verify_api_continuity.py
-      - .github/scripts/deploy_api_drain.py
-      - .github/scripts/test_deploy_api_drain.py
-      - .github/scripts/test_verify_cloudsync_e2ee.py
-      - .github/scripts/verify_cloudsync_e2ee.py
-      - .github/workflows/api_cd.yaml
-      - .github/workflows/api_ci.yaml
-      - apps/api/**
-      - apps/stripe/**
-      - packages/supabase/**
-      - packages/user-error/**
-      - crates/agent-access/**
-      - crates/api-auth/**
-      - crates/api-calendar/**
-      - crates/api-nango/**
-      - crates/api-notion/**
-      - crates/api-cloud/**
-      - crates/api-subscription/**
-      - crates/api-sync/**
-      - crates/llm-proxy/**
-      - crates/mcp/**
-      - crates/supabase-auth/**
-      - crates/supabase-storage/**
-      - crates/transcribe-proxy/**
+  workflow_call: null
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   ci:
@@ -99,3 +39,5 @@ jobs:
       - run: |
           cargo test -p api gen_openapi_json
           git diff --exit-code -- apps/api/openapi.gen.json
+    if: false
+    permissions: {}

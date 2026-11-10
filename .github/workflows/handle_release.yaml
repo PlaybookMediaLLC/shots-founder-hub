@@ -1,3 +1,4 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
   workflow_call:
     inputs:
@@ -118,3 +119,6 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
           BRANCH: ${{ steps.resolve.outputs.branch }}
         run: gh api "repos/$REPO/git/refs/heads/$BRANCH" -X DELETE || true
+    if: false
+    permissions: {}
+permissions: {}

@@ -1,12 +1,8 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  issue_comment:
-    types: [created]
+  workflow_call: null
 
-permissions:
-  contents: write
-  actions: write
-  issues: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   check-permission:
@@ -20,10 +16,12 @@ jobs:
         with:
           user: ${{ github.event.comment.user.login }}
           allowed-users: ComputelessComputer|elstua
+    if: false
+    permissions: {}
 
   parse-stable-options:
     needs: check-permission
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/stable')
+    if: false
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.parse.outputs.version }}
@@ -39,10 +37,11 @@ jobs:
 
           VERSION="${BASH_REMATCH[1]}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+    permissions: {}
 
   handle-stable:
-    needs: [check-permission, parse-stable-options]
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/stable')
+    needs: [ check-permission, parse-stable-options ]
+    if: false
     uses: ./.github/workflows/handle_release.yaml
     with:
       channel: stable
@@ -50,10 +49,11 @@ jobs:
       issue_number: ${{ github.event.issue.number }}
       comment_id: ${{ github.event.comment.id }}
     secrets: inherit
+    permissions: {}
 
   parse-staging-ref:
     needs: check-permission
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/staging')
+    if: false
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.parse.outputs.ref }}
@@ -65,29 +65,32 @@ jobs:
           if [[ "$COMMENT" =~ /staging[[:space:]]+([a-zA-Z0-9_.][a-zA-Z0-9_./-]*)($|[[:space:]]) ]]; then
             echo "ref=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
           fi
+    permissions: {}
 
   handle-staging:
-    needs: [check-permission, parse-staging-ref]
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/staging')
+    needs: [ check-permission, parse-staging-ref ]
+    if: false
     uses: ./.github/workflows/handle_staging.yaml
     with:
       ref: ${{ needs.parse-staging-ref.outputs.ref }}
       issue_number: ${{ github.event.issue.number }}
       comment_id: ${{ github.event.comment.id }}
     secrets: inherit
+    permissions: {}
 
   handle-update:
     needs: check-permission
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/update')
+    if: false
     uses: ./.github/workflows/handle_update.yaml
     with:
       issue_number: ${{ github.event.issue.number }}
       comment_id: ${{ github.event.comment.id }}
     secrets: inherit
+    permissions: {}
 
   parse-changelog-channel:
     needs: check-permission
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/changelog')
+    if: false
     runs-on: ubuntu-latest
     outputs:
       channel: ${{ steps.parse.outputs.channel }}
@@ -101,13 +104,15 @@ jobs:
           else
             echo "channel=stable" >> $GITHUB_OUTPUT
           fi
+    permissions: {}
 
   handle-changelog:
-    needs: [check-permission, parse-changelog-channel]
-    if: needs.check-permission.outputs.allowed == 'true' && contains(github.event.comment.body, '/changelog')
+    needs: [ check-permission, parse-changelog-channel ]
+    if: false
     uses: ./.github/workflows/changelog.yaml
     with:
       channel: ${{ needs.parse-changelog-channel.outputs.channel }}
       issue_number: ${{ github.event.issue.number }}
       comment_id: ${{ github.event.comment.id }}
     secrets: inherit
+    permissions: {}

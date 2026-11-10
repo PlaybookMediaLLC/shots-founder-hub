@@ -1,14 +1,8 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 # https://supabase.com/docs/guides/deployment/ci/testing
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - supabase/**
-  pull_request:
-    paths:
-      - supabase/**
+  workflow_call: null
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,3 +19,6 @@ jobs:
           version: latest
       - run: supabase db start
       - run: supabase test db
+    if: false
+    permissions: {}
+permissions: {}

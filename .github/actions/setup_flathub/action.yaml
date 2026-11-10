@@ -1,3 +1,5 @@
+description: Repository helper for setup flathub.
+name: setup flathub
 runs:
   using: "composite"
   steps:

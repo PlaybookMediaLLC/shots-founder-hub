@@ -1,8 +1,6 @@
+# CI-only activation: non-allowlisted jobs remain disabled, including reusable calls.
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-
+  workflow_call: null
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -10,10 +8,7 @@ concurrency:
 jobs:
   zizmor:
     runs-on: ubuntu-24.04
-    permissions:
-      security-events: write
-      contents: read
-      actions: read
+    permissions: {}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -28,3 +23,5 @@ jobs:
         with:
           sarif_file: results.sarif
           category: zizmor
+    if: false
+permissions: {}
