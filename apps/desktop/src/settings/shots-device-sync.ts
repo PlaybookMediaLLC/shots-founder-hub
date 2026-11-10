@@ -10,11 +10,13 @@ import { execute, getCloudsyncStatus, syncCloudsyncNow } from "@anlg/plugin-db";
 import { commands as detect } from "@anlg/plugin-detect";
 import { commands as opener } from "@anlg/plugin-opener2";
 import { commands as permissions } from "@anlg/plugin-permissions";
+import { commands as tracing } from "@anlg/plugin-tracing";
 import { commands as transcription } from "@anlg/plugin-transcription";
 
 import {
   createPrivateActionIdentity,
   openAutoFormatRequest,
+  openCloudsyncLogRequest,
   openDictationStatusRequest,
 } from "./shots-private-action";
 
@@ -67,6 +69,7 @@ const commandSchema = z.object({
     "show-dictation-shortcut",
     "cloudsync-status",
     "cloudsync-now",
+    "cloudsync-log",
   ]),
   argument: z.string().max(201000),
   status: z.literal("running"),
@@ -263,6 +266,21 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
             case "cloudsync-now":
               await syncCloudsyncNow();
               break;
+            case "cloudsync-log": {
+              if (!privateIdentity.data)
+                throw new Error("Private device connection is unavailable.");
+              const request = await openCloudsyncLogRequest(
+                privateIdentity.data.privateKey,
+                command.argument,
+              );
+              if (!(await current())) return null;
+              const log = await tracing.logContent(true);
+              if (log.status === "error") throw new Error(log.error);
+              result = await request.sealResult(
+                truncatePrivateLog(log.data ?? ""),
+              );
+              break;
+            }
             case "dictation-status": {
               if (!privateIdentity.data)
                 throw new Error("Private device connection is unavailable.");
@@ -403,4 +421,19 @@ export function useShotsDeviceSync(auth: ReturnType<typeof useAuth>) {
     },
   });
   return { error: inventory.error || privateIdentity.error || sync.error };
+}
+
+function truncatePrivateLog(value: string) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const bytes = encoder.encode(value);
+  let start = 0;
+  let end = bytes.length;
+  while (start < end) {
+    const middle = Math.floor((start + end) / 2);
+    const tail = decoder.decode(bytes.subarray(middle));
+    if (encoder.encode(JSON.stringify(tail)).length <= 100_000) end = middle;
+    else start = middle + 1;
+  }
+  return decoder.decode(bytes.subarray(start));
 }

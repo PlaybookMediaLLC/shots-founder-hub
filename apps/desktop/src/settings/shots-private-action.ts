@@ -15,12 +15,15 @@ export const autoFormatExamplesSchema = z
   .min(1)
   .max(3);
 export const autoFormatResultSchema = z.string().trim().min(1).max(16000);
-export const dictationStatusSchema = z.object({
-  phase: z.enum(["idle", "starting", "recording", "transcribing"]),
-  ready: z.boolean(),
-  error: z.string().max(1000).nullable(),
-  lastTranscript: z.string().max(32000),
-}).strict();
+export const dictationStatusSchema = z
+  .object({
+    phase: z.enum(["idle", "starting", "recording", "transcribing"]),
+    ready: z.boolean(),
+    error: z.string().max(1000).nullable(),
+    lastTranscript: z.string().max(32000),
+  })
+  .strict();
+export const cloudsyncLogResultSchema = z.string().max(110_000);
 const context = new TextEncoder();
 
 function encode(value: ArrayBuffer | Uint8Array): string {
@@ -61,16 +64,14 @@ async function seal(
   key: CryptoKey,
   value: unknown,
   direction: "request" | "response",
-  kind: "auto-format" | "dictation-status",
+  kind: "auto-format" | "dictation-status" | "cloudsync-log",
 ) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
       iv,
-      additionalData: context.encode(
-        `shots-founder-hub:${kind}:${direction}`,
-      ),
+      additionalData: context.encode(`shots-founder-hub:${kind}:${direction}`),
     },
     key,
     context.encode(JSON.stringify(value)),
@@ -81,15 +82,13 @@ async function open(
   key: CryptoKey,
   value: z.infer<typeof responseSchema>,
   direction: "request" | "response",
-  kind: "auto-format" | "dictation-status",
+  kind: "auto-format" | "dictation-status" | "cloudsync-log",
 ): Promise<unknown> {
   const cleartext = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
       iv: decode(value.iv),
-      additionalData: context.encode(
-        `shots-founder-hub:${kind}:${direction}`,
-      ),
+      additionalData: context.encode(`shots-founder-hub:${kind}:${direction}`),
     },
     key,
     decode(value.ciphertext),
@@ -101,16 +100,32 @@ export async function sealAutoFormatRequest(
   publicKey: string,
   examples: string[],
 ) {
-  const request = await sealPrivateRequest(publicKey, "auto-format", autoFormatExamplesSchema.parse(examples));
-  return { argument: request.argument, readResult: async (result: string) => autoFormatResultSchema.parse(await request.readResult(result)) };
+  const request = await sealPrivateRequest(
+    publicKey,
+    "auto-format",
+    autoFormatExamplesSchema.parse(examples),
+  );
+  return {
+    argument: request.argument,
+    readResult: async (result: string) =>
+      autoFormatResultSchema.parse(await request.readResult(result)),
+  };
 }
 
 export async function sealDictationStatusRequest(publicKey: string) {
   const request = await sealPrivateRequest(publicKey, "dictation-status", {});
-  return { argument: request.argument, readResult: async (result: string) => dictationStatusSchema.parse(await request.readResult(result)) };
+  return {
+    argument: request.argument,
+    readResult: async (result: string) =>
+      dictationStatusSchema.parse(await request.readResult(result)),
+  };
 }
 
-async function sealPrivateRequest(publicKey: string, kind: "auto-format" | "dictation-status", value: unknown) {
+async function sealPrivateRequest(
+  publicKey: string,
+  kind: "auto-format" | "dictation-status" | "cloudsync-log",
+  value: unknown,
+) {
   const identity = await createPrivateActionIdentity();
   const key = await sharedKey(identity.privateKey, publicKey);
   return {
@@ -118,7 +133,8 @@ async function sealPrivateRequest(publicKey: string, kind: "auto-format" | "dict
       publicKey: identity.publicKey,
       ...(await seal(key, value, "request", kind)),
     }),
-    readResult: async (result: string) => open(key, responseSchema.parse(JSON.parse(result)), "response", kind),
+    readResult: async (result: string) =>
+      open(key, responseSchema.parse(JSON.parse(result)), "response", kind),
   };
 }
 export async function openAutoFormatRequest(
@@ -126,20 +142,64 @@ export async function openAutoFormatRequest(
   argument: string,
 ) {
   const request = await openPrivateRequest(privateKey, "auto-format", argument);
-  return { examples: autoFormatExamplesSchema.parse(request.value), sealResult: (format: string) => request.sealResult(autoFormatResultSchema.parse(format)) };
+  return {
+    examples: autoFormatExamplesSchema.parse(request.value),
+    sealResult: (format: string) =>
+      request.sealResult(autoFormatResultSchema.parse(format)),
+  };
 }
 
-export async function openDictationStatusRequest(privateKey: CryptoKey, argument: string) {
-  const request = await openPrivateRequest(privateKey, "dictation-status", argument);
+export async function openDictationStatusRequest(
+  privateKey: CryptoKey,
+  argument: string,
+) {
+  const request = await openPrivateRequest(
+    privateKey,
+    "dictation-status",
+    argument,
+  );
   z.object({}).strict().parse(request.value);
-  return { sealResult: (status: z.infer<typeof dictationStatusSchema>) => request.sealResult(dictationStatusSchema.parse(status)) };
+  return {
+    sealResult: (status: z.infer<typeof dictationStatusSchema>) =>
+      request.sealResult(dictationStatusSchema.parse(status)),
+  };
 }
 
-async function openPrivateRequest(privateKey: CryptoKey, kind: "auto-format" | "dictation-status", argument: string) {
+export async function sealCloudsyncLogRequest(publicKey: string) {
+  const request = await sealPrivateRequest(publicKey, "cloudsync-log", {});
+  return {
+    argument: request.argument,
+    readResult: async (result: string) =>
+      cloudsyncLogResultSchema.parse(await request.readResult(result)),
+  };
+}
+
+export async function openCloudsyncLogRequest(
+  privateKey: CryptoKey,
+  argument: string,
+) {
+  const request = await openPrivateRequest(
+    privateKey,
+    "cloudsync-log",
+    argument,
+  );
+  z.object({}).strict().parse(request.value);
+  return {
+    sealResult: (log: string) =>
+      request.sealResult(cloudsyncLogResultSchema.parse(log)),
+  };
+}
+
+async function openPrivateRequest(
+  privateKey: CryptoKey,
+  kind: "auto-format" | "dictation-status" | "cloudsync-log",
+  argument: string,
+) {
   const envelope = envelopeSchema.parse(JSON.parse(argument));
   const key = await sharedKey(privateKey, envelope.publicKey);
   return {
     value: await open(key, envelope, "request", kind),
-    sealResult: async (value: unknown) => JSON.stringify(await seal(key, value, "response", kind)),
+    sealResult: async (value: unknown) =>
+      JSON.stringify(await seal(key, value, "response", kind)),
   };
 }
