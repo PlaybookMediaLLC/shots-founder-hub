@@ -12,7 +12,7 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
   - org.freedesktop.Sdk.Extension.node24
 
-command: anarlog
+command: shots-founder-hub
 
 finish-args:
   - --socket=wayland
@@ -92,7 +92,7 @@ modules:
       - pnpm install --offline --frozen-lockfile
       - cargo build --locked --offline --release -p anarlog-cli
       - pnpm -F desktop tauri build --no-bundle --config src-tauri/tauri.conf.flatpak.json
-      - install -Dm755 apps/desktop/src-tauri/target/release/anarlog /app/bin/anarlog
+      - install -Dm755 apps/desktop/src-tauri/target/release/shots-founder-hub /app/bin/shots-founder-hub
       - install -Dm755 target/release/sfh /app/libexec/sfh
       - install -Dm755 apps/desktop/flatpak/sfh /app/bin/sfh
       - install -Dm644 apps/desktop/flatpak/so.anarlog.Anarlog.desktop /app/share/applications/so.anarlog.Anarlog.desktop

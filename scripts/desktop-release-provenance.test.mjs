@@ -331,7 +331,6 @@ test("stable desktop releases submit only the Microsoft Store package", async ()
 
   assert.deepEqual(declaredSecrets, [
     "AZURE_AD_APPLICATION_SECRET",
-    "CN_API_KEY",
     "SELLER_ID",
   ]);
   assert.deepEqual(forwardedSecrets, declaredSecrets);

@@ -58,7 +58,8 @@ const routes = [
     ],
     status: 302,
     headers: {
-      Location: "https://cdn.crabnebula.app/update/fastrepl/hyprnote2/$1",
+      Location:
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest/download/latest.json",
     },
   },
   {
@@ -71,7 +72,8 @@ const routes = [
     ],
     status: 302,
     headers: {
-      Location: "https://cdn.crabnebula.app/download/fastrepl/hyprnote2/$1",
+      Location:
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest",
     },
   },
   {
@@ -84,7 +86,8 @@ const routes = [
     ],
     status: 302,
     headers: {
-      Location: "https://anarlog.so/download",
+      Location:
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest",
     },
   },
   {
@@ -97,7 +100,8 @@ const routes = [
     ],
     status: 302,
     headers: {
-      Location: "https://desktop.anarlog.so/$1",
+      Location:
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest",
     },
   },
   {

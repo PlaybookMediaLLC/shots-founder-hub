@@ -272,8 +272,8 @@ variables do not prove per-display scale.
 ### Artifact and package metadata
 
 ```bash
-appimage="/path/to/Anarlog.AppImage"
-deb="/path/to/anarlog.deb"
+appimage="/path/to/shots-founder-hub.AppImage"
+deb="/path/to/shots-founder-hub.deb"
 
 sha256sum "$appimage" "$deb"
 file "$appimage" "$deb"
@@ -286,8 +286,8 @@ chmod +x "$appimage"
 sudo apt install "$deb"
 pkg="$(dpkg-deb --field "$deb" Package)"
 dpkg-query -W "$pkg"
-file "$(command -v anarlog)"
-ldd "$(command -v anarlog)"
+file "$(command -v shots-founder-hub)"
+ldd "$(command -v shots-founder-hub)"
 ```
 
 For the .deb upgrade test:
@@ -328,7 +328,7 @@ Use com.hyprnote.staging for a staging package and com.hyprnote.dev for a dev
 build. To capture the foreground process as well as file logs:
 
 ```bash
-RUST_LOG=info,audio_actual=debug ./Anarlog.AppImage 2>&1 |
+RUST_LOG=info,audio_actual=debug ./shots-founder-hub.AppImage 2>&1 |
   tee anarlog-console.log
 ```
 
@@ -338,7 +338,7 @@ source. Use a disposable launch to exercise the fallback:
 ```bash
 PIPEWIRE_REMOTE=anarlog-invalid \
 RUST_LOG=info,audio_actual=debug \
-./Anarlog.AppImage 2>&1 |
+./shots-founder-hub.AppImage 2>&1 |
   tee anarlog-pulse-fallback.log
 ```
 

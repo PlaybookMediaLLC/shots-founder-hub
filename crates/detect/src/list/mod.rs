@@ -37,6 +37,10 @@ const SELF_APP_NAMES: &[&str] = &[
     "shots founder hub dev",
     "shots founder hub staging",
     "shots founder hub nightly",
+    "shots-founder-hub",
+    "shots-founder-hub-dev",
+    "shots-founder-hub-staging",
+    "shots-founder-hub-nightly",
     "anarlog",
     "anarlog staging",
     "anarlog nightly",
@@ -125,10 +129,11 @@ mod tests {
             ("pid:42", "Shots Founder Hub", true),
             ("pid:45", "Shots Founder Hub Dev", true),
             (
-                "/Applications/Shots Founder Hub.app/Contents/MacOS/anarlog",
+                "/Applications/Shots Founder Hub.app/Contents/MacOS/shots-founder-hub",
                 "Unknown",
                 true,
             ),
+            ("pid:46", "shots-founder-hub-staging", true),
             ("pid:43", "Char Nightly", true),
             ("pid:44", "Hyprnote Staging", true),
             (

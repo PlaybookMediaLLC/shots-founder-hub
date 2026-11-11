@@ -340,7 +340,8 @@ mod tests {
 
     #[test]
     fn current_bundle_path_from_executable_uses_bundle_root() {
-        let executable = Path::new("/Applications/Shots Founder Hub.app/Contents/MacOS/anarlog");
+        let executable =
+            Path::new("/Applications/Shots Founder Hub.app/Contents/MacOS/shots-founder-hub");
 
         let bundle = current_app_bundle_path_from_executable(executable).unwrap();
 
