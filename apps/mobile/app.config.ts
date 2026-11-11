@@ -65,6 +65,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       infoPlist: {
         ...config.ios?.infoPlist,
         ITSAppUsesNonExemptEncryption: false,
+        NSSpeechRecognitionUsageDescription:
+          "Anarlog uses speech recognition on this device to transcribe your recordings. Audio is not sent to Apple.",
       },
     },
     android: {
