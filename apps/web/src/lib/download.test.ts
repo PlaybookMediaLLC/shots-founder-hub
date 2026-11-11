@@ -56,12 +56,15 @@ test("orders the detected platform first", () => {
   }
 });
 
-test("public desktop downloads use only the stable channel", () => {
+test("public desktop downloads use only the latest stable release", () => {
   for (const section of desktopDownloadSections) {
     for (const download of section.downloads) {
       const url = new URL(download.url);
-      if (url.hostname === "desktop.anarlog.so") {
-        assert.equal(url.searchParams.get("channel"), "stable");
+      if (url.pathname.includes("/releases/")) {
+        assert.match(
+          url.pathname,
+          /^\/PlaybookMediaLLC\/shots-founder-hub\/releases\/latest\/download\/shots-founder-hub-/,
+        );
       }
     }
   }

@@ -27,11 +27,11 @@ jobs:
             apps/desktop/flatpak/so.anarlog.Anarlog.yml
           flatpak build-bundle \
             flatpak-repo \
-            anarlog.flatpak \
+            shots-founder-hub.flatpak \
             so.anarlog.Anarlog
 
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: anarlog-flatpak-${{ github.sha }}
-          path: anarlog.flatpak
+          name: shots-founder-hub-flatpak-${{ github.sha }}
+          path: shots-founder-hub.flatpak
           if-no-files-found: error

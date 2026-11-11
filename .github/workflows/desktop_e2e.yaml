@@ -53,7 +53,7 @@ jobs:
         with:
           ffmpeg-version: release
       - run: |
-          BINARY_PATH="${{ github.workspace }}/apps/desktop/src-tauri/target/aarch64-apple-darwin/release/anarlog-staging"
+          BINARY_PATH="${{ github.workspace }}/apps/desktop/src-tauri/target/aarch64-apple-darwin/release/shots-founder-hub-staging"
           echo "APP_BINARY_PATH=${BINARY_PATH}" >> $GITHUB_ENV
           mkdir -p "${{ github.workspace }}/e2e/blackbox/logs"
           echo "E2E_LOGS_DIR=${{ github.workspace }}/e2e/blackbox/logs" >> $GITHUB_ENV
