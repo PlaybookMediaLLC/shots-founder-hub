@@ -204,6 +204,10 @@ function harness({ shots = fakeShots(), queued = [], ...overrides } = {}) {
     remove: async (sessionId) => {
       notes = notes.filter((item) => item.sessionId !== sessionId);
     },
+    // An unexpected error fails the test unless the test expects one.
+    report: (error) => {
+      throw error;
+    },
     appVersion: "0.1.9",
     uploadAudio: true,
     now: () => clock.now,
@@ -651,4 +655,48 @@ test("a note deleted on the phone whose replayed create Shots refuses is forgott
   });
   await runVoicePass(deps);
   assert.deepEqual(notes(), []);
+});
+
+test("a note whose local data cannot be read is parked and the notes after it still sync", async () => {
+  const reported = [];
+  const { deps, shots, clock, note } = harness({
+    queued: [
+      recording("s1", { audioUploadConsent: false }),
+      recording("s2", { audioUploadConsent: false }),
+    ],
+    report: (error) => reported.push(error),
+  });
+  const transcriptVersion = deps.transcriptVersion;
+  deps.transcriptVersion = async (sessionId, ids) => {
+    if (sessionId === "s1") throw new SyntaxError("Unexpected token in JSON");
+    return transcriptVersion(sessionId, ids);
+  };
+  assert.equal((await runVoicePass(deps)).status, "idle");
+  assert.equal(shots.notes.get("s2").revisions.size, 1);
+  assert.equal(shots.notes.get("s1").revisions.size, 0);
+  assert.equal(reported.length, 1);
+  assert.equal(note("s1").nextAttemptAt, clock.now + 30_000);
+  assert.ok(note("s1").lastError);
+  assert.ok(note("s1").remoteId);
+});
+
+test("a pass stops as soon as the queue's account or workspace stops being active", async () => {
+  const { deps, shots, transcribed } = harness({
+    queued: [recording("s1"), recording("s2")],
+  });
+  let active = true;
+  deps.isActive = () => active;
+  const request = deps.request;
+  deps.request = async (workspaceId, call) => {
+    const response = await request(workspaceId, call);
+    // Sign-out lands while the first note's create is in flight.
+    if (call.suffix === "notes") active = false;
+    return response;
+  };
+  assert.equal((await runVoicePass(deps)).status, "inactive");
+  assert.deepEqual(transcribed, []);
+  assert.deepEqual(
+    shots.requests.map((call) => `${call.method} ${call.suffix}`),
+    ["GET settings", "POST notes"],
+  );
 });

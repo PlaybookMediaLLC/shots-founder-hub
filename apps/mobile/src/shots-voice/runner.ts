@@ -10,7 +10,7 @@ import {
   SESSION_TRANSCRIPTS_SQL,
   type TranscriptRow,
 } from "@/data/transcript-model";
-import { renderTranscript } from "@/data/transcripts";
+import { mapTranscripts } from "@/data/transcripts";
 import { execute } from "@/db";
 import { env } from "@/lib/env";
 import { captureOperationalError } from "@/lib/error-reporting";
@@ -340,8 +340,7 @@ function engineDeps(
         SESSION_SPEAKERS_SQL,
         [sessionId],
       );
-      return rows
-        .flatMap((row) => renderTranscript(row, humans))
+      return mapTranscripts(rows, humans)
         .map((segment) => segment.text)
         .join("\n");
     },
@@ -360,6 +359,11 @@ function engineDeps(
     save: (note) => saveShotsVoiceNote(accountId, workspaceId, note),
     remove: (sessionId) =>
       removeShotsVoiceNote(accountId, workspaceId, sessionId),
+    report: (error) =>
+      captureOperationalError(error, {
+        operation: "shots_voice_note",
+        level: "warning",
+      }),
     appVersion: Constants.expoConfig?.version ?? "0.0.0",
     uploadAudio,
     now: Date.now,

@@ -237,3 +237,33 @@ test("a note with no transcript and nothing running is transcribed on device", a
   assert.equal(transcriptRequests()[0].body.origin, "on_device");
   assert.equal(transcriptRequests()[0].body.text, "Shots, post this.");
 });
+
+test("a transcript row that cannot be read is left out of the text sent", async () => {
+  fixture.db
+    .exec(`INSERT INTO transcripts (id, session_id, source, provider, content_version, started_at_ms, words_json)
+    VALUES ('broken', 'note', 'live_capture', 'anarlog', 'v1', 1, '[{"text":'),
+      ('good', 'note', 'batch_transcription', 'deepgram', 'v1', 2, '[{"text":"Readable"}]')`);
+  await sendToShots();
+  assert.equal(transcriptRequests()[0].body.text, "Readable");
+  assert.equal(fixture.errors.length, 1);
+});
+
+test("a stored queue with malformed notes loads the readable ones", async () => {
+  fixture.storage.set(
+    "anarlog:shots-voice:account-a:ws-1",
+    JSON.stringify({
+      notes: [
+        { sessionId: "kept", remoteId: "n1", sent: "garbage", attempts: "x" },
+        { remoteId: "no-session" },
+        "text",
+      ],
+    }),
+  );
+  await activateShotsVoice("account-a");
+  const [note, ...rest] = getShotsVoice().notes;
+  assert.deepEqual(rest, []);
+  assert.equal(note.sessionId, "kept");
+  assert.equal(note.remoteId, "n1");
+  assert.equal(note.sent, null);
+  assert.equal(note.attempts, 0);
+});

@@ -42,7 +42,8 @@ export function renderTranscript(
   );
 }
 
-function mapTranscripts(
+/** Renders the rows, skipping (and reporting once) a row that cannot be read. */
+export function mapTranscripts(
   rows: TranscriptRow[],
   humans: { id: string; name: string }[],
 ) {

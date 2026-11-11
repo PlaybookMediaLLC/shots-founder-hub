@@ -79,6 +79,8 @@ export type VoiceEngineDeps = {
   notes: () => VoiceNoteState[];
   save: (note: VoiceNoteState) => Promise<void>;
   remove: (sessionId: string) => Promise<void>;
+  /** Reports a note that failed in an unexpected way; the pass goes on. */
+  report: (error: unknown) => void;
   appVersion: string;
   uploadAudio: boolean;
   now: () => number;
@@ -123,13 +125,17 @@ export async function runVoicePass(
   deps: VoiceEngineDeps,
 ): Promise<VoicePassResult> {
   const now = deps.now();
-  const call = async (request: VoiceRequest): Promise<Reply> => {
+  // Sign-out or a workspace switch ends the pass before its next step.
+  const stopIfInactive = () => {
     if (!deps.isActive(deps.accountId, deps.workspaceId))
       throw new Stop({
         status: "inactive",
         message: null,
         nextAttemptAt: null,
       });
+  };
+  const call = async (request: VoiceRequest): Promise<Reply> => {
+    stopIfInactive();
     try {
       const response = await deps.request(deps.workspaceId, request);
       return {
@@ -257,6 +263,7 @@ export async function runVoicePass(
             await save({ ...note, onDevice: "done", lastError: null }),
           );
         let result: Awaited<ReturnType<VoiceEngineDeps["transcribe"]>>;
+        stopIfInactive();
         try {
           result = await deps.transcribe(note.sessionId);
         } catch {
@@ -557,22 +564,44 @@ export async function runVoicePass(
         });
 
     for (const initial of deps.notes()) {
+      stopIfInactive();
       let note: VoiceNoteState | null = initial;
-      // shortcut: edits are looked for only in the last 30 days of notes, so a
-      // pass stays a few queries per recent note; batch the reads if edits of
-      // older notes matter.
-      if (
-        !note.pending &&
-        note.onDevice === "done" &&
-        !note.localDeleted &&
-        !note.deletedRemote &&
-        (!note.sent || now - Date.parse(note.recordedAt) < EDIT_WINDOW_MS)
-      )
-        note = await discover(note);
-      for (let step = 0; note && step < MAX_STEPS_PER_NOTE; step += 1) {
-        const op = nextVoiceOp(note, { now, audioAllowed });
-        if (!op) break;
-        note = await run(op, note, settings.limits);
+      try {
+        // shortcut: edits are looked for only in the last 30 days of notes, so a
+        // pass stays a few queries per recent note; batch the reads if edits of
+        // older notes matter.
+        if (
+          !note.pending &&
+          note.onDevice === "done" &&
+          !note.localDeleted &&
+          !note.deletedRemote &&
+          !note.failed &&
+          note.nextAttemptAt <= now &&
+          (!note.sent || now - Date.parse(note.recordedAt) < EDIT_WINDOW_MS)
+        )
+          note = await discover(note);
+        for (let step = 0; note && step < MAX_STEPS_PER_NOTE; step += 1) {
+          const op = nextVoiceOp(note, { now, audioAllowed });
+          if (!op) break;
+          note = await run(op, note, settings.limits);
+        }
+      } catch (error) {
+        if (error instanceof Stop) throw error;
+        // One note's broken data must not hold the notes after it.
+        deps.report(error);
+        const latest = deps
+          .notes()
+          .find((item) => item.sessionId === initial.sessionId);
+        if (latest) {
+          const attempts = latest.attempts + 1;
+          await save({
+            ...latest,
+            attempts,
+            nextAttemptAt: now + retryDelayMs(attempts),
+            lastError:
+              "This note could not be prepared. It will be tried again.",
+          });
+        }
       }
     }
 

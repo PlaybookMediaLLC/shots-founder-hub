@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { captureOperationalError } from "@/lib/error-reporting";
 
 import type { VoicePassResult } from "./engine";
-import { newVoiceNote, type VoiceNoteState } from "./model";
+import { parseStoredVoiceNote, type VoiceNoteState } from "./model";
 
 // App-local Shots voice state on this device only, never in the canonical
 // SQLite schema or CloudSync: the account's choices, and one queue per
@@ -104,18 +104,8 @@ async function readQueue(accountId: string, workspaceId: string | null) {
   } | null;
   if (!Array.isArray(value?.notes)) return [];
   return value.notes.flatMap((note: unknown) => {
-    if (!note || typeof note !== "object") return [];
-    const stored = note as Partial<VoiceNoteState>;
-    if (typeof stored.sessionId !== "string") return [];
-    const defaults = newVoiceNote({
-      sessionId: stored.sessionId,
-      recordedAt: "",
-      recordedTimeZone: "UTC",
-      locale: null,
-      durationMs: null,
-      audioUploadConsent: false,
-    });
-    return [{ ...defaults, ...stored }];
+    const parsed = parseStoredVoiceNote(note);
+    return parsed ? [parsed] : [];
   });
 }
 

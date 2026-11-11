@@ -7,6 +7,7 @@ import {
   isAppVersionSupported,
   newVoiceNote,
   nextVoiceOp,
+  parseStoredVoiceNote,
   parseVoiceSettings,
   retryDelayMs,
   transcriptRevisionFor,
@@ -193,4 +194,31 @@ test("settings carry the note limits the phone applies, and settings without the
     }),
     null,
   );
+});
+
+test("a stored note keeps its valid fields and defaults the malformed ones", () => {
+  const stored = {
+    ...note("a", { remoteId: "n1", onDevice: "done", attempts: 2 }),
+    sent: { id: "rev-1", sourceIds: "t1", versionKey: "t1:v1" },
+    pending: { origin: "machine", text: "hi" },
+    audio: "lost",
+    nextAttemptAt: "soon",
+    command: { status: "proposed" },
+    upload: { url: "https://storage.test/run", headers: {}, expiresAt: "x" },
+  };
+  const parsed = parseStoredVoiceNote(stored);
+  assert.equal(parsed.remoteId, "n1");
+  assert.equal(parsed.onDevice, "done");
+  assert.equal(parsed.attempts, 2);
+  assert.equal(parsed.recordedTimeZone, "America/New_York");
+  assert.equal(parsed.sent, null);
+  assert.equal(parsed.pending, null);
+  assert.equal(parsed.audio, "todo");
+  assert.equal(parsed.nextAttemptAt, 0);
+  assert.equal(parsed.command, null);
+  assert.deepEqual(parsed.upload, stored.upload);
+  assert.equal(parsed.audioFailures, 0);
+  assert.equal(parseStoredVoiceNote({ remoteId: "n1" }), null);
+  assert.equal(parseStoredVoiceNote("a"), null);
+  assert.deepEqual(parseStoredVoiceNote(note("b")), note("b"));
 });

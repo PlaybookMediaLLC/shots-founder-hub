@@ -441,3 +441,89 @@ export function parseVoiceUpload(value: unknown): VoiceNoteState["upload"] {
     expiresAt: value.expiresAt as string,
   };
 }
+
+const isText = (value: unknown): value is string => typeof value === "string";
+const isNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value);
+const isBoolean = (value: unknown) => typeof value === "boolean";
+const orNull =
+  (check: (value: unknown) => boolean) =>
+  (value: unknown): boolean =>
+    value === null || check(value);
+const isTexts = (value: unknown) => Array.isArray(value) && value.every(isText);
+const STORED_FIELDS: {
+  [K in Exclude<keyof VoiceNoteState, "upload" | "command">]: (
+    value: unknown,
+  ) => boolean;
+} = {
+  sessionId: isText,
+  recordedAt: isText,
+  recordedTimeZone: isText,
+  locale: orNull(isText),
+  durationMs: orNull(isNumber),
+  audioUploadConsent: isBoolean,
+  remoteId: orNull(isText),
+  remoteRevision: orNull(isNumber),
+  createSent: isBoolean,
+  onDevice: (value) => value === "todo" || value === "done",
+  onDeviceFailures: isNumber,
+  pending: orNull(
+    (value) =>
+      isRecord(value) &&
+      ["on_device", "remote", "user_edit"].includes(value.origin as string) &&
+      isText(value.clientRevisionId) &&
+      orNull(isText)(value.parentId) &&
+      isText(value.text) &&
+      orNull(isText)(value.engine) &&
+      orNull(isText)(value.locale) &&
+      Array.isArray(value.segments) &&
+      value.segments.every(
+        (segment) =>
+          isRecord(segment) &&
+          isNumber(segment.startMs) &&
+          isNumber(segment.endMs) &&
+          isText(segment.text),
+      ) &&
+      isTexts(value.sourceIds) &&
+      isText(value.versionKey),
+  ),
+  sent: orNull(
+    (value) =>
+      isRecord(value) &&
+      orNull(isText)(value.id) &&
+      isTexts(value.sourceIds) &&
+      isText(value.versionKey),
+  ),
+  audio: (value) =>
+    ["todo", "uploaded", "done", "unavailable", "conflict"].includes(
+      value as string,
+    ),
+  audioFailures: isNumber,
+  localDeleted: isBoolean,
+  deletedRemote: isBoolean,
+  blocked: orNull(isText),
+  failed: orNull(isText),
+  attempts: isNumber,
+  nextAttemptAt: isNumber,
+  lastError: orNull(isText),
+};
+
+/** A queued note read back from storage, null without a session id; a field of the wrong shape takes its default. */
+export function parseStoredVoiceNote(value: unknown): VoiceNoteState | null {
+  if (!isRecord(value) || !isText(value.sessionId)) return null;
+  const note: Record<string, unknown> = {
+    ...newVoiceNote({
+      sessionId: value.sessionId,
+      recordedAt: "",
+      recordedTimeZone: "UTC",
+      locale: null,
+      durationMs: null,
+      audioUploadConsent: false,
+    }),
+    upload: parseVoiceUpload(value.upload),
+    command: parseVoiceCommand(value.command),
+  };
+  for (const [key, valid] of Object.entries(STORED_FIELDS))
+    if (valid(value[key])) note[key] = value[key];
+  return note as VoiceNoteState;
+}
