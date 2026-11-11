@@ -104,7 +104,7 @@ mod tests {
     use crate::adapter::RealtimeSttAdapter;
     use crate::test_utils::{UrlTestCase, run_url_test_cases};
 
-    const API_BASE: &str = "https://api.anarlog.so/stt";
+    const API_BASE: &str = "https://api.shots.playbookmedia.io/stt";
 
     #[test]
     fn test_url_structure() {
@@ -116,7 +116,12 @@ mod tests {
                     name: "single_language",
                     model: Some("nova-3"),
                     languages: &[ISO639::En],
-                    contains: &["anarlog.so", "listen", "model=nova-3", "language=en"],
+                    contains: &[
+                        "api.shots.playbookmedia.io",
+                        "listen",
+                        "model=nova-3",
+                        "language=en",
+                    ],
                     not_contains: &[],
                 },
                 UrlTestCase {
@@ -194,7 +199,7 @@ mod tests {
         assert!(url.as_str().contains("language=de"));
 
         let url = adapter.build_ws_url(
-            "https://api.anarlog.so/stt?provider=anarlog",
+            "https://api.shots.playbookmedia.io/stt?provider=anarlog",
             &owhisper_interface::ListenParams {
                 model: Some("cloud".to_string()),
                 languages: vec![ISO639::En.into()],
@@ -230,7 +235,7 @@ mod tests {
         let url = adapter.build_ws_url("http://localhost:8787/stt", &params, 1);
         assert!(url.scheme() == "ws");
 
-        let url = adapter.build_ws_url("https://api.anarlog.so/stt", &params, 1);
+        let url = adapter.build_ws_url("https://api.shots.playbookmedia.io/stt", &params, 1);
         assert!(url.scheme() == "wss");
     }
 

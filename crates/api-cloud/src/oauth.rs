@@ -5,7 +5,7 @@ use crate::state::AppState;
 
 pub(crate) const OAUTH_SCOPES: &[&str] = &[];
 pub(crate) const SHOTS_SCOPES: &[&str] = &["founder-hub:meetings:read", "offline_access"];
-pub(crate) const MCP_RESOURCE: &str = "https://api.anarlog.so/mcp";
+pub(crate) const MCP_RESOURCE: &str = "https://api.shots.playbookmedia.io/mcp";
 const OPENAI_APPS_CHALLENGE: &str = "Rueo1ui7LUWfrc8duM53jXRiYcaxExDbCNrsLp2VdvU";
 
 #[derive(Clone)]
@@ -163,7 +163,10 @@ mod tests {
                 .await
                 .unwrap();
             let metadata: Value = serde_json::from_slice(&body).unwrap();
-            assert_eq!(metadata["resource"], "https://api.anarlog.so/mcp");
+            assert_eq!(
+                metadata["resource"],
+                "https://api.shots.playbookmedia.io/mcp"
+            );
             assert_eq!(
                 metadata["authorization_servers"][0],
                 "https://auth.example.com/auth/v1"
@@ -195,13 +198,15 @@ mod tests {
 
     #[test]
     fn challenge_points_to_path_specific_metadata() {
-        let oauth =
-            OAuthResourceConfig::new("https://api.anarlog.so/mcp", "https://auth.example.com")
-                .unwrap();
+        let oauth = OAuthResourceConfig::new(
+            "https://api.shots.playbookmedia.io/mcp",
+            "https://auth.example.com",
+        )
+        .unwrap();
 
         assert_eq!(
             oauth.challenge(Some(("invalid_token", "Access token is invalid"))),
-            "Bearer resource_metadata=\"https://api.anarlog.so/.well-known/oauth-protected-resource/mcp\", error=\"invalid_token\", error_description=\"Access token is invalid\""
+            "Bearer resource_metadata=\"https://api.shots.playbookmedia.io/.well-known/oauth-protected-resource/mcp\", error=\"invalid_token\", error_description=\"Access token is invalid\""
         );
     }
 

@@ -12,7 +12,7 @@ Install the [Shots Founder Hub CLI](https://shots.playbookmedia.io/docs) and ope
 2. Open **Settings → Developers → Cloud API & Connectors**, review the disclosure, and enable it.
 3. Wait for your meeting snapshots to upload.
 
-Use the host's connection control to sign in and approve OAuth. Some MCP hosts prompt on first cloud tool use. The host discovers Shots Founder Hub's authorization server from `https://api.anarlog.so/mcp`; no cloud API key is required.
+Use the host's connection control to sign in and approve OAuth. Some MCP hosts prompt on first cloud tool use. The host discovers Shots Founder Hub's authorization server from `https://api.shots.playbookmedia.io/mcp`; no cloud API key is required.
 
 The CLI can also read hosted snapshots with `sfh meetings --source cloud ...` after login. `--source auto` prefers the local database and uses Cloud only when it is absent; it does not check freshness or hide database errors.
 
@@ -30,7 +30,7 @@ claude plugin install sfh@playbook
 Or add the remote server directly. Claude discovers OAuth from the MCP endpoint:
 
 ```bash
-claude mcp add --transport http sfh https://api.anarlog.so/mcp
+claude mcp add --transport http sfh https://api.shots.playbookmedia.io/mcp
 ```
 
 ### GitHub Copilot CLI
@@ -64,7 +64,7 @@ Clients that do not install plugins can add the hosted server:
 {
   "mcpServers": {
     "sfh": {
-      "url": "https://api.anarlog.so/mcp"
+      "url": "https://api.shots.playbookmedia.io/mcp"
     }
   }
 }

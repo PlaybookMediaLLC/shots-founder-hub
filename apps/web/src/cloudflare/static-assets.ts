@@ -15,7 +15,7 @@ function movedAsset(pathname: string) {
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    if (url.hostname !== "static.anarlog.so") {
+    if (url.hostname !== "static.shots.playbookmedia.io") {
       return new Response("Not found", { status: 404 });
     }
     if (url.protocol !== "https:") {
@@ -28,7 +28,7 @@ export default {
       return new Response(null, {
         status: 301,
         headers: {
-          location: `https://static.anarlog.so/${moved}`,
+          location: `https://static.shots.playbookmedia.io/${moved}`,
           "access-control-allow-origin": "*",
           "cache-control": "public, max-age=86400",
         },
@@ -38,7 +38,9 @@ export default {
       /^\/og\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(url.pathname) &&
       (request.method === "GET" || request.method === "HEAD")
     ) {
-      const origin = new URL(`https://anarlog.so/api${url.pathname}`);
+      const origin = new URL(
+        `https://shots.playbookmedia.io/api${url.pathname}`,
+      );
       let upstream: Response;
       try {
         upstream = await fetch(origin, { redirect: "manual" });

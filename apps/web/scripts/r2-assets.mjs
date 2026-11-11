@@ -2,16 +2,19 @@ import { AwsClient } from "aws4fetch";
 import { createHash } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 
-// Anarlog's public images live under anarlog/ in the shared fastrepl R2 bucket and
-// are served at https://static.anarlog.so/<path> (alias of static.fastrepl.com/anarlog/<path>).
-export const BUCKET = "fastrepl-static-assets";
+// Public images live under anarlog/ in the static-assets R2 bucket and are served
+// at https://static.shots.playbookmedia.io/<path>. STATIC_ASSETS_BUCKET overrides
+// the bucket name.
+export const BUCKET =
+  process.env.STATIC_ASSETS_BUCKET || "shots-founder-hub-static";
 export const PREFIX = "anarlog";
 
 export const sha256 = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
 
 const encode = (path) => path.split("/").map(encodeURIComponent).join("/");
-export const publicUrl = (path) => `https://static.anarlog.so/${encode(path)}`;
+export const publicUrl = (path) =>
+  `https://static.shots.playbookmedia.io/${encode(path)}`;
 
 // False when nothing is published at the path; throws when different bytes are.
 export async function isPublished(path, { sha, contentType }, fetchImpl) {

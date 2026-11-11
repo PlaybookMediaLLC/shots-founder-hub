@@ -82,8 +82,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.anarlog.so/listen?provider=fireworks",
-                "wss://api.anarlog.so/listen",
+                "https://api.shots.playbookmedia.io/listen?provider=fireworks",
+                "wss://api.shots.playbookmedia.io/listen",
                 vec![("provider", "fireworks")],
             ),
             (

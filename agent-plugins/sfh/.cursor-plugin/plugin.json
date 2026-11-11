@@ -14,7 +14,7 @@
   "skills": "./skills/",
   "mcpServers": {
     "sfh": {
-      "url": "https://api.anarlog.so/mcp"
+      "url": "https://api.shots.playbookmedia.io/mcp"
     }
   }
 }

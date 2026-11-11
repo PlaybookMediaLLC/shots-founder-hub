@@ -9,18 +9,21 @@ test("routes local and static-host assets through the image cdn", () => {
     "/_vercel/image?url=%2Fimages%2Fhero.webp&w=30&q=75",
   );
   assert.equal(
-    getResizedImageUrl("https://static.anarlog.so/team/john.png", {
+    getResizedImageUrl("https://static.shots.playbookmedia.io/team/john.png", {
       width: 30,
     }),
-    "/_vercel/image?url=https%3A%2F%2Fstatic.anarlog.so%2Fteam%2Fjohn.png&w=30&q=75",
+    "/_vercel/image?url=https%3A%2F%2Fstatic.shots.playbookmedia.io%2Fteam%2Fjohn.png&w=30&q=75",
   );
 });
 
 test("uses width-based optimization when the element supplies a crop height", () => {
-  const url = getResizedImageUrl("https://static.anarlog.so/team/john.png", {
-    width: 30,
-    height: 30,
-  });
+  const url = getResizedImageUrl(
+    "https://static.shots.playbookmedia.io/team/john.png",
+    {
+      width: 30,
+      height: 30,
+    },
+  );
 
   assert.match(url, /w=30/);
   assert.doesNotMatch(url, /[?&]h=/);
@@ -42,8 +45,8 @@ test("passes through urls the cdn must not transform", () => {
     "/logo.svg",
     "/demo.gif?v=1",
     "//example.com/image.png",
-    "https://static.anarlog.so.example.com/a.png",
-    "https://static.anarlog.so/brand/logo.svg",
+    "https://static.shots.playbookmedia.io.example.com/a.png",
+    "https://static.shots.playbookmedia.io/brand/logo.svg",
   ]) {
     assert.equal(getResizedImageUrl(src, { width: 30 }), src);
     assert.equal(getResizedImageSrcSet(src, 30), undefined);
@@ -52,7 +55,7 @@ test("passes through urls the cdn must not transform", () => {
 
 test("builds a 1x/2x srcset", () => {
   const srcSet = getResizedImageSrcSet(
-    "https://static.anarlog.so/team/john.png",
+    "https://static.shots.playbookmedia.io/team/john.png",
     30,
   );
 
@@ -68,9 +71,10 @@ test("snaps image widths to the CDN allowlist", () => {
 });
 
 test("resizes shared-bucket testimonial avatars at both pixel densities", () => {
-  const src = "https://static.fastrepl.com/anarlog/blog/testimonials/tobi.jpg";
+  const src =
+    "https://static.shots.playbookmedia.io/anarlog/blog/testimonials/tobi.jpg";
   const prefix =
-    "/_vercel/image?url=https%3A%2F%2Fstatic.fastrepl.com%2Fanarlog%2Fblog%2Ftestimonials%2Ftobi.jpg";
+    "/_vercel/image?url=https%3A%2F%2Fstatic.shots.playbookmedia.io%2Fanarlog%2Fblog%2Ftestimonials%2Ftobi.jpg";
   assert.equal(getResizedImageUrl(src, { width: 48 }), `${prefix}&w=48&q=75`);
   assert.equal(
     getResizedImageSrcSet(src, 48),

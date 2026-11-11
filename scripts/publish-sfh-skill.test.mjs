@@ -83,7 +83,7 @@ test("the sfh plugin connects Cloud MCP over HTTP", async () => {
   const native = await readJson(`${PLUGIN_ROOT}/.mcp.json`);
   const expectedServer = {
     type: "http",
-    url: "https://api.anarlog.so/mcp",
+    url: "https://api.shots.playbookmedia.io/mcp",
   };
 
   assert.deepEqual(portable.mcpServers.sfh, {
@@ -94,7 +94,7 @@ test("the sfh plugin connects Cloud MCP over HTTP", async () => {
 
   const cursor = await readJson(`${PLUGIN_ROOT}/.cursor-plugin/plugin.json`);
   assert.deepEqual(cursor.mcpServers.sfh, {
-    url: "https://api.anarlog.so/mcp",
+    url: "https://api.shots.playbookmedia.io/mcp",
   });
 
   const claude = await readJson(`${PLUGIN_ROOT}/.claude-plugin/plugin.json`);

@@ -2,7 +2,7 @@
   "mcpServers": {
     "sfh": {
       "type": "http",
-      "url": "https://api.anarlog.so/mcp"
+      "url": "https://api.shots.playbookmedia.io/mcp"
     }
   }
 }

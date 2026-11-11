@@ -45,7 +45,7 @@ export const env = createEnv({
       : z.string().min(1),
     VITE_API_URL: isDev
       ? z.string().default("http://localhost:3001")
-      : z.string().default("https://api.anarlog.so"),
+      : z.string().default("https://api.shots.playbookmedia.io"),
     VITE_SUPABASE_URL: requiredWithoutShots(z.string().min(1)),
     VITE_SUPABASE_ANON_KEY: requiredWithoutShots(z.string().min(1)),
     VITE_POSTHOG_API_KEY: requiredInProd(z.string().min(1)),

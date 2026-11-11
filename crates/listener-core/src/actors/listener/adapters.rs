@@ -744,7 +744,7 @@ mod tests {
             ),
             (
                 "anarlog proxy",
-                "https://api.anarlog.so/stt",
+                "https://api.shots.playbookmedia.io/stt",
                 "cloud",
                 vec!["self", "remote-a", "remote-b"],
                 Some("self"),
@@ -847,7 +847,10 @@ mod tests {
             retry_after_secs: Some(7),
         };
 
-        let error = ws_connect_error(&listener_args("https://api.anarlog.so/stt", "cloud"), error);
+        let error = ws_connect_error(
+            &listener_args("https://api.shots.playbookmedia.io/stt", "cloud"),
+            error,
+        );
         let error = error
             .downcast_ref::<super::super::ListenerInitError>()
             .expect("listener init error");

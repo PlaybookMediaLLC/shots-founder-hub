@@ -10,7 +10,7 @@ const read = (key: string, fallback = ""): string => {
 };
 
 const shotsUrl = read("shotsUrl");
-const apiUrl = read("apiUrl", "https://api.anarlog.so");
+const apiUrl = read("apiUrl", "https://api.shots.playbookmedia.io");
 
 export const env = {
   appVariant: read("appVariant", __DEV__ ? "dev" : "stable"),

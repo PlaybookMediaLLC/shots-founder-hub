@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn injects_or_rewrites_provider_param_for_anarlog_proxy() {
         let client = BatchClient::<AnarlogAdapter>::builder()
-            .api_base("https://api.anarlog.so/stt")
+            .api_base("https://api.shots.playbookmedia.io/stt")
             .api_key("test")
             .build();
         assert!(client.api_base.contains("provider=hyprnote"));
@@ -150,13 +150,13 @@ mod tests {
         assert_eq!(client.api_base, "https://api.openai.com/v1");
 
         let client = BatchClient::<DeepgramAdapter>::builder()
-            .api_base("https://api.anarlog.so/stt")
+            .api_base("https://api.shots.playbookmedia.io/stt")
             .api_key("test")
             .build();
         assert!(client.api_base.contains("provider=deepgram"));
 
         let client = BatchClient::<OpenAIAdapter>::builder()
-            .api_base("https://api.anarlog.so/stt?provider=anarlog&model=whisper-1")
+            .api_base("https://api.shots.playbookmedia.io/stt?provider=anarlog&model=whisper-1")
             .api_key("test")
             .build();
         assert!(client.api_base.contains("provider=openai"));

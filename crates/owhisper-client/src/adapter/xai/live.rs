@@ -206,14 +206,18 @@ mod tests {
 
         let adapter = XaiAdapter::default();
         let direct = adapter.build_ws_url("https://api.x.ai/v1", &params, 2);
-        let proxy = adapter.build_ws_url("https://api.anarlog.so/stt?provider=xai", &params, 1);
+        let proxy = adapter.build_ws_url(
+            "https://api.shots.playbookmedia.io/stt?provider=xai",
+            &params,
+            1,
+        );
 
         assert_eq!(direct.scheme(), "wss");
         assert_eq!(direct.path(), "/v1/stt");
         assert!(direct.query().unwrap().contains("multichannel=true"));
         assert_eq!(
             proxy.as_str().split('?').next().unwrap(),
-            "wss://api.anarlog.so/stt/listen"
+            "wss://api.shots.playbookmedia.io/stt/listen"
         );
         assert!(proxy.query().unwrap().contains("provider=xai"));
     }

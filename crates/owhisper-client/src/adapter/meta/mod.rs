@@ -105,8 +105,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.anarlog.so?provider=meta",
-                "wss://api.anarlog.so/listen",
+                "https://api.shots.playbookmedia.io?provider=meta",
+                "wss://api.shots.playbookmedia.io/listen",
                 vec![("provider", "meta")],
             ),
         ] {

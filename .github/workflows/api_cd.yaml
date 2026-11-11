@@ -29,7 +29,7 @@ on:
 env:
   INFISICAL_ENV: prod
   SERVICE: ${{ inputs.service || 'gateway' }}
-  FLY_ORG: fastrepl
+  FLY_ORG: ${{ vars.FLY_ORG }}
 
 permissions:
   contents: read
@@ -70,11 +70,11 @@ jobs:
       - run: |
           set -euo pipefail
           case "$SERVICE" in
-            ai) app=anarlog-inference; config=apps/api/fly.ai.toml; health=/health/ready/ai ;;
-            sync) app=anarlog-sync; config=apps/api/fly.sync.toml; health=/health/ready/sync ;;
-            core) app=anarlog-core; config=apps/api/fly.core.toml; health=/health/ready/core ;;
-            billing) app=anarlog-billing-api; config=apps/api/fly.billing.toml; health=/health/ready/billing-unified ;;
-            gateway) app=anarlog-gateway; config=apps/api/fly.gateway.toml; health=/health/ready/api ;;
+            ai) app=shots-founder-hub-inference; config=apps/api/fly.ai.toml; health=/health/ready/ai ;;
+            sync) app=shots-founder-hub-sync; config=apps/api/fly.sync.toml; health=/health/ready/sync ;;
+            core) app=shots-founder-hub-core; config=apps/api/fly.core.toml; health=/health/ready/core ;;
+            billing) app=shots-founder-hub-billing-api; config=apps/api/fly.billing.toml; health=/health/ready/billing-unified ;;
+            gateway) app=shots-founder-hub-gateway; config=apps/api/fly.gateway.toml; health=/health/ready/api ;;
             *) exit 1 ;;
           esac
           echo "FLY_APP=$app" >> "$GITHUB_ENV"
@@ -176,7 +176,7 @@ jobs:
       - if: inputs.service == 'gateway'
         run: |
           set -euo pipefail
-          for entry in anarlog-inference:ai anarlog-sync:sync anarlog-core:core anarlog-billing-api:billing-api; do
+          for entry in shots-founder-hub-inference:ai shots-founder-hub-sync:sync shots-founder-hub-core:core shots-founder-hub-billing-api:billing-api; do
             app="${entry%%:*}"
             role="${entry#*:}"
             curl --fail --silent --show-error --retry 3 "https://${app}.fly.dev/health/ready/${role}"
@@ -198,7 +198,7 @@ jobs:
             python3 -m venv "$RUNNER_TEMP/continuity-venv"
             "$RUNNER_TEMP/continuity-venv/bin/pip" install httpx==0.28.1 websockets==15.0.1
             qa_args=()
-            if [ "$SERVICE" = gateway ]; then qa_args+=(--base-url https://api.anarlog.so); fi
+            if [ "$SERVICE" = gateway ]; then qa_args+=(--base-url https://api.shots.playbookmedia.io); fi
             if [ "$ISOLATED_DRAIN_ONLY" = true ]; then qa_args+=(--isolated-drain-only); fi
             if [ -n "$CONTINUITY_ROLLBACK_IMAGE" ]; then qa_args+=(--rollback-image "$CONTINUITY_ROLLBACK_IMAGE"); fi
             if [ -n "$ADOPT_DRAIN_IMAGE" ]; then qa_args+=(--verified-image-digest "$ADOPT_DRAIN_IMAGE"); fi

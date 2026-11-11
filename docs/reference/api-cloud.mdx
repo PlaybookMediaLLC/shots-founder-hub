@@ -23,12 +23,12 @@ Keys start with `anl_` and are stored hashed. Revoke a key from the same setting
 
 ## REST API
 
-The base URL is `https://api.anarlog.so/v1`. Send your cloud key as a bearer token:
+The base URL is `https://api.shots.playbookmedia.io/v1`. Send your cloud key as a bearer token:
 
 ```bash
 curl \
   -H "Authorization: Bearer anl_..." \
-  https://api.anarlog.so/v1/meetings
+  https://api.shots.playbookmedia.io/v1/meetings
 ```
 
 The read endpoints are:
@@ -41,7 +41,7 @@ The read endpoints are:
 | `GET /v1/meetings/{meeting_id}/history` | Meetings in the same recurring series, newest first. Accepts `limit` and `offset`. |
 | `GET /v1/meetings/{meeting_id}/export` | Full export including transcripts. `format=json` (default) or `format=markdown`. |
 
-List responses carry a `pagination` object with `offset`, `limit`, `returned`, `total`, and `next_offset`; a missing `next_offset` means the page reached the end. See the [OpenAPI document](https://api.anarlog.so/openapi.json) for the complete hosted schema.
+List responses carry a `pagination` object with `offset`, `limit`, `returned`, `total`, and `next_offset`; a missing `next_offset` means the page reached the end. See the [OpenAPI document](https://api.shots.playbookmedia.io/openapi.json) for the complete hosted schema.
 
 Errors use this envelope:
 
@@ -66,7 +66,7 @@ The request limit allows a burst of 10 requests per account, then refills one re
 The Streamable HTTP endpoint is:
 
 ```text
-https://api.anarlog.so/mcp
+https://api.shots.playbookmedia.io/mcp
 ```
 
 It exposes the same five meeting-read tools as the local MCP server:
@@ -84,10 +84,10 @@ Shots Founder Hub does not use identity scopes as meeting permissions. Meeting a
 Shots Founder Hub publishes OAuth protected-resource metadata at:
 
 ```text
-https://api.anarlog.so/.well-known/oauth-protected-resource/mcp
+https://api.shots.playbookmedia.io/.well-known/oauth-protected-resource/mcp
 ```
 
-The metadata points the host to Shots Founder Hub's existing Supabase authorization server. That server uses dynamic client registration and PKCE with SHA-256. The host sends the MCP `resource` value during authorization and token exchange; Shots Founder Hub binds issued OAuth tokens to `https://api.anarlog.so/mcp` and rejects tokens minted for another resource.
+The metadata points the host to Shots Founder Hub's existing Supabase authorization server. That server uses dynamic client registration and PKCE with SHA-256. The host sends the MCP `resource` value during authorization and token exchange; Shots Founder Hub binds issued OAuth tokens to `https://api.shots.playbookmedia.io/mcp` and rejects tokens minted for another resource.
 
 <Note>
   OAuth does not bypass Shots Founder Hub's product controls. The account must have Pro access through a personal plan or an active paid Pro workspace membership, and **Cloud API & Connectors** must remain enabled. Disabling the feature deletes the uploaded snapshots and makes existing connector tokens unusable for meeting access.
@@ -105,7 +105,7 @@ claude plugin install sfh@playbook
 Or add the remote server directly. Claude discovers OAuth from the MCP endpoint:
 
 ```bash
-claude mcp add --transport http sfh https://api.anarlog.so/mcp
+claude mcp add --transport http sfh https://api.shots.playbookmedia.io/mcp
 ```
 
 ### Cursor
@@ -116,7 +116,7 @@ Import `https://github.com/PlaybookMediaLLC/shots-founder-hub` as a team marketp
 {
   "mcpServers": {
     "sfh": {
-      "url": "https://api.anarlog.so/mcp"
+      "url": "https://api.shots.playbookmedia.io/mcp"
     }
   }
 }
@@ -146,18 +146,18 @@ Public listing in a host's plugin directory is a separate review step. Installin
 Grok Bot has no settings form for custom MCP servers. Add Shots Founder Hub from a Bot conversation:
 
 ```text
-Add this custom MCP server: https://api.anarlog.so/mcp
+Add this custom MCP server: https://api.shots.playbookmedia.io/mcp
 ```
 
 Confirm the server details when the bot asks, then finish the Shots Founder Hub sign-in and consent flow in your browser. The Shots Founder Hub tools are available from your next message. Grok Bot runs in the cloud, so it can only reach the hosted endpoint, not local MCP.
 
 ### Instinct
 
-Add `https://api.anarlog.so/mcp` as an MCP connection in your Instinct account and name it **Shots Founder Hub**. Complete the Shots Founder Hub sign-in and consent flow with the account that has Cloud API & Connectors enabled. If Instinct asks for a token instead of opening a sign-in page, create a personal cloud API key and paste it as the bearer token.
+Add `https://api.shots.playbookmedia.io/mcp` as an MCP connection in your Instinct account and name it **Shots Founder Hub**. Complete the Shots Founder Hub sign-in and consent flow with the account that has Cloud API & Connectors enabled. If Instinct asks for a token instead of opening a sign-in page, create a personal cloud API key and paste it as the bearer token.
 
 ### Other OAuth MCP clients
 
-Choose Streamable HTTP and use `https://api.anarlog.so/mcp` as the server URL. Do not paste an API key. The client must follow MCP OAuth 2.1 protected-resource discovery.
+Choose Streamable HTTP and use `https://api.shots.playbookmedia.io/mcp` as the server URL. Do not paste an API key. The client must follow MCP OAuth 2.1 protected-resource discovery.
 
 ## API-key clients
 
@@ -166,7 +166,7 @@ Use a static bearer header only when the host cannot complete MCP OAuth. Create 
 ### Claude Code
 
 ```bash
-claude mcp add --transport http sfh https://api.anarlog.so/mcp \
+claude mcp add --transport http sfh https://api.shots.playbookmedia.io/mcp \
   --header "Authorization: Bearer anl_..."
 ```
 
@@ -182,7 +182,7 @@ const response = await client.responses.create({
     {
       type: "mcp",
       server_label: "sfh",
-      server_url: "https://api.anarlog.so/mcp",
+      server_url: "https://api.shots.playbookmedia.io/mcp",
       headers: {
         Authorization: "Bearer anl_...",
       },
@@ -198,8 +198,8 @@ Meta Muse does not accept MCP servers. Instead, ask Muse to build a **Custom Con
 
 ```text
 Create a custom connector for Shots Founder Hub, my meeting notes. The base URL is
-https://api.anarlog.so and the OpenAPI document is
-https://api.anarlog.so/openapi.json. Only use the /v1/meetings operations.
+https://api.shots.playbookmedia.io and the OpenAPI document is
+https://api.shots.playbookmedia.io/openapi.json. Only use the /v1/meetings operations.
 Authenticate every request with the header "Authorization: Bearer <my key>".
 It is read-only: list meetings, read a meeting, read its transcript, and
 export it.
@@ -219,7 +219,7 @@ Poke does not complete MCP OAuth. Create a personal cloud API key in Shots Found
 
 ### Other MCP clients
 
-Choose Streamable HTTP, use `https://api.anarlog.so/mcp` as the server URL, and add:
+Choose Streamable HTTP, use `https://api.shots.playbookmedia.io/mcp` as the server URL, and add:
 
 ```text
 Authorization: Bearer anl_...

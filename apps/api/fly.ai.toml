@@ -1,4 +1,4 @@
-app = 'anarlog-inference'
+app = 'shots-founder-hub-inference'
 primary_region = 'sjc'
 kill_signal = 'SIGTERM'
 # Fly caps this at 300s. Meeting streams can last longer, so api_cd uses

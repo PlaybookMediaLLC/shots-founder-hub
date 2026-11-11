@@ -5,8 +5,9 @@ diagrams, decision trees, comparisons, and abstract explainers. Never use it
 to fabricate product UI.
 
 Generated Napkin URLs expire after 30 minutes, so accepted figures are uploaded
-immediately to the Cloudflare R2 bucket `fastrepl-static-assets` (account
-johntopia) at `anarlog/blog/articles/<slug>/<filename>`. Uploads use bucket-scoped
+immediately to the Cloudflare R2 bucket named by `STATIC_ASSETS_BUCKET`
+(default `shots-founder-hub-static`) at
+`anarlog/blog/articles/<slug>/<filename>`. Uploads use bucket-scoped
 R2 S3 credentials from Infisical production `/anarlog/web` through
 `ANARLOG_R2_ACCOUNT_ID`, `ANARLOG_R2_ACCESS_KEY_ID`, and
 `ANARLOG_R2_SECRET_ACCESS_KEY`. Use the Infisical commands below; never pass
@@ -17,7 +18,7 @@ replaced: regenerate under a new filename.
 
 Use the branded serving URL in posts:
 
-`https://static.anarlog.so/blog/articles/<slug>/<filename>`
+`https://static.shots.playbookmedia.io/blog/articles/<slug>/<filename>`
 
 ## Batch usage
 
@@ -41,7 +42,7 @@ pnpm -F @anlg/web media:figures:check
 ```
 
 The check needs no credentials. It validates the manifest, checks each declared
-figure and every `https://static.anarlog.so/blog/...` reference with a public
+figure and every `https://static.shots.playbookmedia.io/blog/...` reference with a public
 HEAD request, and rejects direct Supabase, local, and legacy proxy image URLs.
 
 ## Single-figure usage
@@ -62,5 +63,5 @@ infisical run --silent \
 ```
 
 The script prints the Napkin request ID, generated file metadata, storage path,
-and the `https://static.anarlog.so/blog/...` URL to use in MDX. It never
+and the `https://static.shots.playbookmedia.io/blog/...` URL to use in MDX. It never
 overwrites an existing object.

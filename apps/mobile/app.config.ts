@@ -113,7 +113,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         "",
       apiUrl:
         process.env.EXPO_PUBLIC_API_URL ??
-        (isDev ? "http://localhost:3001" : "https://api.anarlog.so"),
+        (isDev
+          ? "http://localhost:3001"
+          : "https://api.shots.playbookmedia.io"),
       appUrl:
         process.env.EXPO_PUBLIC_APP_URL ??
         (isDev ? "http://localhost:3000" : "https://shots.playbookmedia.io"),

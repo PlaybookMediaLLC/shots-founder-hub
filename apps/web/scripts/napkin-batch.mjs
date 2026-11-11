@@ -190,7 +190,14 @@ async function main() {
   }
 
   const missing = [];
-  for (const target of targets) {
+  // ponytail: skippable in --check until static.shots.playbookmedia.io serves the republished figures.
+  const skipRemote =
+    checkOnly && process.env.STATIC_MEDIA_REMOTE_CHECK === "skip";
+  if (skipRemote)
+    console.log(
+      `Skipping remote checks for ${targets.length} figure(s) (STATIC_MEDIA_REMOTE_CHECK=skip).`,
+    );
+  for (const target of skipRemote ? [] : targets) {
     if (!(await existsAt(storagePath(target.slug, target.figure.filename))))
       missing.push(target);
   }

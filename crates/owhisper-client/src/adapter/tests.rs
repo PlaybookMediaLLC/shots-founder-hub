@@ -82,8 +82,8 @@ fn test_documented_language_codes_are_menu_safe() {
 
 #[test]
 fn test_is_anarlog_proxy() {
-    assert!(is_anarlog_proxy("https://api.anarlog.so/stt"));
-    assert!(is_anarlog_proxy("https://api.anarlog.so"));
+    assert!(is_anarlog_proxy("https://api.shots.playbookmedia.io/stt"));
+    assert!(is_anarlog_proxy("https://api.shots.playbookmedia.io"));
     assert!(is_anarlog_proxy("http://localhost:3001/stt"));
     assert!(is_anarlog_proxy("http://127.0.0.1:3001/stt"));
 
@@ -99,7 +99,7 @@ fn test_is_local_argmax() {
     assert!(is_local_argmax("http://localhost:50060/v1"));
     assert!(is_local_argmax("http://127.0.0.1:50060/v1"));
 
-    assert!(!is_local_argmax("https://api.anarlog.so/stt"));
+    assert!(!is_local_argmax("https://api.shots.playbookmedia.io/stt"));
     assert!(!is_local_argmax("http://localhost:3001/stt"));
     assert!(!is_local_argmax("http://localhost:8080/v1"));
     assert!(!is_local_argmax("http://127.0.0.1:8080/listen"));
@@ -113,68 +113,68 @@ fn test_adapter_kind_from_url_and_languages() {
     let cases: &[(&str, &[anlg_language::ISO639], Option<&str>, AdapterKind)] = &[
         // AnarlogCloud - always routes to Anarlog adapter (proxy owns provider selection)
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[En],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[En],
             Some("cloud"),
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[En, Ko],
             Some("cloud"),
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[Zh],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[Ja],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[Ar],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[De],
             None,
             AdapterKind::Anarlog,
         ),
         // AnarlogCloud - multi-language
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[En, Es],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[En, Ko],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[Ko, En],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             &[En, De],
             None,
             AdapterKind::Anarlog,
@@ -296,37 +296,37 @@ fn test_build_proxy_ws_url() {
         ("https://api.fireworks.ai", None),
         ("https://api.assemblyai.com", None),
         (
-            "https://api.anarlog.so/stt?provider=soniox",
+            "https://api.shots.playbookmedia.io/stt?provider=soniox",
             Some((
-                "wss://api.anarlog.so/stt/listen",
+                "wss://api.shots.playbookmedia.io/stt/listen",
                 vec![("provider", "soniox")],
             )),
         ),
         (
-            "https://api.anarlog.so/stt?provider=deepgram",
+            "https://api.shots.playbookmedia.io/stt?provider=deepgram",
             Some((
-                "wss://api.anarlog.so/stt/listen",
+                "wss://api.shots.playbookmedia.io/stt/listen",
                 vec![("provider", "deepgram")],
             )),
         ),
         (
-            "https://api.anarlog.so/stt?provider=anarlog",
+            "https://api.shots.playbookmedia.io/stt?provider=anarlog",
             Some((
-                "wss://api.anarlog.so/stt/listen",
+                "wss://api.shots.playbookmedia.io/stt/listen",
                 vec![("provider", "anarlog")],
             )),
         ),
         (
-            "https://api.anarlog.so/stt/listen?provider=deepgram",
+            "https://api.shots.playbookmedia.io/stt/listen?provider=deepgram",
             Some((
-                "wss://api.anarlog.so/stt/listen",
+                "wss://api.shots.playbookmedia.io/stt/listen",
                 vec![("provider", "deepgram")],
             )),
         ),
         (
-            "https://api.anarlog.so/stt/some/path?provider=fireworks",
+            "https://api.shots.playbookmedia.io/stt/some/path?provider=fireworks",
             Some((
-                "wss://api.anarlog.so/stt/some/path/listen",
+                "wss://api.shots.playbookmedia.io/stt/some/path/listen",
                 vec![("provider", "fireworks")],
             )),
         ),
@@ -384,7 +384,7 @@ fn test_anarlog_proxy_always_selects_anarlog_adapter() {
     use anlg_language::ISO639::*;
 
     let proxy_urls = &[
-        "https://api.anarlog.so/stt",
+        "https://api.shots.playbookmedia.io/stt",
         "http://localhost:3001/stt",
         "http://127.0.0.1:3001/stt",
     ];
@@ -528,7 +528,10 @@ fn test_direct_provider_urls_not_affected() {
 
 #[test]
 fn test_append_provider_param_replaces_existing() {
-    let url = append_provider_param("https://api.anarlog.so/stt?provider=deepgram", "anarlog");
+    let url = append_provider_param(
+        "https://api.shots.playbookmedia.io/stt?provider=deepgram",
+        "anarlog",
+    );
     assert!(
         url.contains("provider=anarlog"),
         "new provider value should be present: {url}"
@@ -547,7 +550,7 @@ fn test_append_provider_param_replaces_existing() {
 #[test]
 fn test_append_provider_param_preserves_other_params() {
     let url = append_provider_param(
-        "https://api.anarlog.so/stt?model=cloud&provider=soniox&language=en",
+        "https://api.shots.playbookmedia.io/stt?model=cloud&provider=soniox&language=en",
         "anarlog",
     );
     assert!(
@@ -564,7 +567,7 @@ fn test_append_provider_param_preserves_other_params() {
 
 #[test]
 fn test_append_provider_param_no_existing_provider() {
-    let url = append_provider_param("https://api.anarlog.so/stt", "anarlog");
+    let url = append_provider_param("https://api.shots.playbookmedia.io/stt", "anarlog");
     assert!(url.contains("provider=anarlog"));
     assert_eq!(url.matches("provider=").count(), 1);
 }

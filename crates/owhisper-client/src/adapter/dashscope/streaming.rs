@@ -397,7 +397,11 @@ mod tests {
         assert_eq!(url.path(), "/api-ws/v1/inference");
         assert_eq!(url.host_str(), Some("dashscope.aliyuncs.com"));
 
-        let url = adapter.build_ws_url("https://api.anarlog.so?provider=dashscope", &params, 1);
+        let url = adapter.build_ws_url(
+            "https://api.shots.playbookmedia.io?provider=dashscope",
+            &params,
+            1,
+        );
         assert_eq!(url.path(), "/listen");
         assert!(url.as_str().contains("provider=dashscope"));
         assert!(

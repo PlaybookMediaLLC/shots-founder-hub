@@ -158,7 +158,7 @@ fn provider_selection_survives_custom_and_loopback_endpoints() {
     }
     assert_eq!(
         AdapterKind::from_url_and_languages(
-            "https://api.anarlog.so/stt?provider=inworld",
+            "https://api.shots.playbookmedia.io/stt?provider=inworld",
             &[],
             None
         ),

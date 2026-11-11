@@ -919,7 +919,7 @@ mod tests {
         assert!(is_local_batch(&params));
         params.base_url = "http://127.0.0.1:50060".to_string();
         assert!(is_local_batch(&params));
-        params.base_url = "https://api.anarlog.so/stt".to_string();
+        params.base_url = "https://api.shots.playbookmedia.io/stt".to_string();
         assert!(!is_local_batch(&params));
     }
 
@@ -938,7 +938,7 @@ mod tests {
             assert!(is_loopback_url(url), "{url}");
         }
         for url in [
-            "https://api.anarlog.so/stt",
+            "https://api.shots.playbookmedia.io/stt",
             "http://10.0.0.1:8080",
             "http://127.0.0.2",
         ] {
