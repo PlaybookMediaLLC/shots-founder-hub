@@ -88,6 +88,12 @@ describe("getScheme", () => {
 
     await expect(getScheme()).resolves.toBe(scheme);
   });
+
+  it("falls back when the app identifier is unavailable", async () => {
+    mocks.getIdentifier.mockResolvedValue(null as unknown as string);
+
+    await expect(getScheme()).resolves.toBe("anarlog");
+  });
 });
 
 describe("development integration return", () => {
