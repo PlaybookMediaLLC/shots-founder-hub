@@ -359,7 +359,7 @@ function Component() {
                     <p className="text-color-muted mt-4 text-sm leading-6">
                       If the window is black on Wayland with NVIDIA, see{" "}
                       <a
-                        href="https://docs.anarlog.so/desktop-installation#appimage"
+                        href="https://shots.playbookmedia.io/docs"
                         className="text-color underline underline-offset-4"
                       >
                         Linux install notes
@@ -437,21 +437,21 @@ function Component() {
           <p className="text-color mt-4 text-sm leading-7">
             Follow the{" "}
             <a
-              href="https://docs.anarlog.so/desktop-installation"
+              href="https://shots.playbookmedia.io/docs"
               className="text-color underline underline-offset-4"
             >
               desktop installation guide
             </a>{" "}
             for package commands and platform requirements, then{" "}
             <a
-              href="https://docs.anarlog.so/quickstart"
+              href="https://shots.playbookmedia.io/docs"
               className="text-color underline underline-offset-4"
             >
               record your first meeting
             </a>
             . For capture or launch problems, use the{" "}
             <a
-              href="https://docs.anarlog.so/troubleshooting"
+              href="https://shots.playbookmedia.io/docs"
               className="text-color underline underline-offset-4"
             >
               troubleshooting guide

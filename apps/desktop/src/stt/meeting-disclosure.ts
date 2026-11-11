@@ -9,7 +9,7 @@ import {
 import { persistDisclosureAttempt } from "./meeting-consent-store";
 
 export const MEETING_DISCLOSURE_MESSAGE =
-  "I'm using Shots Founder Hub to record and transcribe this meeting. https://anarlog.so";
+  "I'm using Shots Founder Hub to record and transcribe this meeting. https://shots.playbookmedia.io";
 
 const MEETING_DISCLOSURE_MAX_ATTEMPTS = 30;
 const MEETING_DISCLOSURE_RETRY_INTERVAL_MS = 1_000;

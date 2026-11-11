@@ -16,7 +16,7 @@ const DEFAULT_MODEL: &str = "openai/gpt-transcribe";
 const TRANSCRIPTION_PATH: &str = "audio/transcriptions";
 
 // App attribution per https://openrouter.ai/docs/app-attribution
-const APP_REFERER: &str = "https://anarlog.so";
+const APP_REFERER: &str = "https://shots.playbookmedia.io";
 const APP_TITLE: &str = "Shots Founder Hub";
 const APP_CATEGORIES: &str = "writing-assistant,personal-agent";
 

@@ -63,7 +63,7 @@ Shots Founder Hub keeps audio transcription separate from the language model use
 | Audio → transcript                          | **Transcription** | The hosted transcription provider and supported fallback routes configured for the request. | Soniqo or Apple Speech when available, or your selected transcription provider and model  |
 | Transcript + memo → summary, title, or chat | **Intelligence**  | The hosted model configured for summaries or chat. Repository support does not establish the active production provider or model.                                           | Your selected API, subscription, OpenAI-compatible server, or eligible Apple Intelligence |
 
-The active provider and model are always visible under **Settings → Transcription** and **Settings → Intelligence**. Read [Models and providers](https://docs.anarlog.so/models-and-providers) for the current routes, local model list, and privacy boundaries.
+The active provider and model are always visible under **Settings → Transcription** and **Settings → Intelligence**. Read [Models and providers](https://shots.playbookmedia.io/docs) for the current routes, local model list, and privacy boundaries.
 
 ## Get started
 
@@ -72,7 +72,7 @@ The active provider and model are always visible under **Settings → Transcript
 3. Generate a note, edit it like a document, and export Markdown when you need it.
 4. Optional: connect an LLM provider or a local model in settings for summaries and chat.
 
-Product docs live at [docs.anarlog.so](https://docs.anarlog.so). To build the desktop app or website from source, follow [Local development](#local-development).
+Product docs live at [shots.playbookmedia.io/docs](https://shots.playbookmedia.io/docs). To build the desktop app or website from source, follow [Local development](#local-development).
 
 ## Repository map
 

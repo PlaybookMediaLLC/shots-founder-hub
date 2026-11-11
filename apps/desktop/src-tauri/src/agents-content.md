@@ -33,6 +33,6 @@ provides a non-default database path; do not crawl the filesystem to find one.
 Never guess a meeting ID. Keep transcript requests bounded and continue from
 `pagination.next_offset` only when more context is needed.
 
-Documentation: https://docs.anarlog.so
+Documentation: https://shots.playbookmedia.io/docs
 
 Agent skill: https://docs.anarlog.so/skill.md

@@ -4,7 +4,7 @@ pkgver=1.4.34
 pkgrel=1
 pkgdesc="AI notepad for meetings — local-first, E2EE desktop note-taking app"
 arch=('x86_64' 'aarch64')
-url="https://anarlog.so"
+url="https://shots.playbookmedia.io"
 license=('MIT')
 depends=(
   'webkit2gtk-4.1'

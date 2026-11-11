@@ -4,7 +4,7 @@ Query Shots Founder Hub meetings with a local-first skill and an optional Cloud 
 
 ## Local access
 
-Install the [Shots Founder Hub CLI](https://docs.anarlog.so/installation) and open the desktop app once to create its database. Use `anarlog-cli` instead of `anarlog` for every command on Flatpak. Run `anarlog --json doctor`, then `anarlog --json meetings --source local list`. Local reads need no Cloud login, Pro subscription, or completed sync. The app can be closed after its database exists.
+Install the [Shots Founder Hub CLI](https://shots.playbookmedia.io/docs) and open the desktop app once to create its database. Use `anarlog-cli` instead of `anarlog` for every command on Flatpak. Run `anarlog --json doctor`, then `anarlog --json meetings --source local list`. Local reads need no Cloud login, Pro subscription, or completed sync. The app can be closed after its database exists.
 
 ## Optional Cloud access
 
@@ -70,8 +70,8 @@ Clients that do not install plugins can add the hosted server:
 }
 ```
 
-For a fully local agent that should not use Cloud, start `anarlog mcp` yourself. See [MCP for agents](https://docs.anarlog.so/agents/mcp). Static remote clients that cannot complete MCP OAuth can follow the [remote MCP setup](https://docs.anarlog.so/reference/api-cloud#remote-mcp) with a cloud API key.
+For a fully local agent that should not use Cloud, start `anarlog mcp` yourself. See [MCP for agents](https://shots.playbookmedia.io/docs). Static remote clients that cannot complete MCP OAuth can follow the [remote MCP setup](https://shots.playbookmedia.io/docs) with a cloud API key.
 
 ## Data access
 
-Cloud MCP is read-only hosted snapshots. Local CLI and optional local MCP read the app database through Shots Founder Hub's compatibility layer. Cloud access uploads a separate server-readable copy only after the user opts in. Encrypted Cloud Sync and connector uploads have independent freshness; neither database availability nor a meeting's `updated_at` proves that all copies are current. See [Data, privacy, and retention](https://docs.anarlog.so/data-and-privacy).
+Cloud MCP is read-only hosted snapshots. Local CLI and optional local MCP read the app database through Shots Founder Hub's compatibility layer. Cloud access uploads a separate server-readable copy only after the user opts in. Encrypted Cloud Sync and connector uploads have independent freshness; neither database availability nor a meeting's `updated_at` proves that all copies are current. See [Data, privacy, and retention](https://shots.playbookmedia.io/docs).

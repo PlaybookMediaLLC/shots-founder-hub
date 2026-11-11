@@ -7,9 +7,9 @@
   "author": {
     "name": "Fastrepl",
     "email": "team@fastrepl.com",
-    "url": "https://anarlog.so"
+    "url": "https://shots.playbookmedia.io"
   },
-  "homepage": "https://docs.anarlog.so/agents/overview",
+  "homepage": "https://shots.playbookmedia.io/docs",
   "repository": "https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/anarlog",
   "license": "MIT",
   "keywords": ["meetings", "notes", "transcripts", "productivity", "mcp", "oauth"],

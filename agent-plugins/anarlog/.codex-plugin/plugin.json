@@ -5,9 +5,9 @@
   "author": {
     "name": "Fastrepl",
     "email": "team@fastrepl.com",
-    "url": "https://anarlog.so"
+    "url": "https://shots.playbookmedia.io"
   },
-  "homepage": "https://docs.anarlog.so/agents/overview",
+  "homepage": "https://shots.playbookmedia.io/docs",
   "repository": "https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/anarlog",
   "license": "MIT",
   "keywords": [
@@ -34,9 +34,9 @@
       "Review recurring meeting history",
       "Export complete meeting records"
     ],
-    "websiteURL": "https://anarlog.so",
-    "privacyPolicyURL": "https://anarlog.so/privacy",
-    "termsOfServiceURL": "https://anarlog.so/terms",
+    "websiteURL": "https://shots.playbookmedia.io",
+    "privacyPolicyURL": "https://shots.playbookmedia.io/privacy-policy",
+    "termsOfServiceURL": "https://shots.playbookmedia.io/terms",
     "defaultPrompt": [
       "Summarize my latest Shots Founder Hub meeting.",
       "What action items came out of my planning meeting?",

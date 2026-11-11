@@ -351,7 +351,7 @@ export function ConnectFlow({ sessionToken }: { sessionToken?: string } = {}) {
           and{" "}
           <a
             className="underline"
-            href="https://docs.anarlog.so/calendar#manage-or-delete-connected-calendar-data"
+            href="https://shots.playbookmedia.io/docs"
           >
             calendar data instructions
           </a>

@@ -22,7 +22,7 @@ export default function HelpSettings() {
       <FieldGroup.Section>
         <SettingsRow
           title="Help center"
-          onPress={() => open.mutate("https://docs.anarlog.so")}
+          onPress={() => open.mutate("https://shots.playbookmedia.io/docs")}
         />
         <SettingsRow
           title="Contact support"
@@ -37,11 +37,11 @@ export default function HelpSettings() {
       <FieldGroup.Section>
         <SettingsRow
           title="Privacy policy"
-          onPress={() => open.mutate("https://anarlog.so/privacy")}
+          onPress={() => open.mutate("https://shots.playbookmedia.io/privacy-policy")}
         />
         <SettingsRow
           title="Terms of service"
-          onPress={() => open.mutate("https://anarlog.so/terms")}
+          onPress={() => open.mutate("https://shots.playbookmedia.io/terms")}
         />
         <SettingsRow
           title="Version"

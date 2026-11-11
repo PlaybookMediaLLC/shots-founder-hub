@@ -119,7 +119,7 @@ export const desktopDownloadSections = [
       {
         name: "APT repository",
         detail: "Debian or Ubuntu · Automatic updates",
-        url: "https://docs.anarlog.so/desktop-installation#apt-repository",
+        url: "https://shots.playbookmedia.io/docs",
         actionLabel: "Install with APT",
         showInMenu: false,
       },

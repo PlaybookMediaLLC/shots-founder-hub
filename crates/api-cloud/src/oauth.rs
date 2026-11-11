@@ -130,7 +130,7 @@ async fn protected_resource_metadata(
         scopes_supported: (!oauth.scopes().is_empty()).then_some(oauth.scopes()),
         bearer_methods_supported: ["header"],
         resource_documentation: (!oauth.shots)
-            .then_some("https://docs.anarlog.so/reference/api-cloud#remote-mcp"),
+            .then_some("https://shots.playbookmedia.io/docs"),
     })
 }
 

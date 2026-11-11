@@ -218,7 +218,7 @@ fn build_cover_page(
     cover.push_str("    #table(columns: (1fr, auto), stroke: none, inset: 0pt,\n");
     cover.push_str("      [#image(\"anarlog-logo.svg\", width: 13mm)],\n");
     cover.push_str(
-        "      [#align(right, text(size: 9pt, fill: subtle)[#link(\"https://anarlog.so\")[anarlog.so]])],\n",
+        "      [#align(right, text(size: 9pt, fill: subtle)[#link(\"https://shots.playbookmedia.io\")[shots.playbookmedia.io]])],\n",
     );
     cover.push_str("    )\n");
     cover.push_str("    #v(14mm)\n");

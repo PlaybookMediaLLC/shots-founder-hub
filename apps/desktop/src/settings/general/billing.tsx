@@ -182,7 +182,7 @@ function useBillingActions(
   const openEnterprise = useCallback(async () => {
     setActionPending(true);
     try {
-      await openerCommands.openUrl("https://anarlog.so/enterprise/", null);
+      await openerCommands.openUrl("https://shots.playbookmedia.io/enterprise", null);
     } finally {
       setActionPending(false);
     }

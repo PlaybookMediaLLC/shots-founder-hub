@@ -7,7 +7,7 @@ Issues, pull requests, bug reports, and documentation fixes are welcome.
 - Search existing issues and pull requests before starting a large change.
 - Keep changes focused. Add tests for behavior that can regress.
 - Never commit credentials, customer configuration, meeting content, or other private data.
-- Use [docs.anarlog.so](https://docs.anarlog.so) for product, CLI, and MCP behavior. Use this file and the repository's `AGENTS.md` files for development guidance.
+- Use [shots.playbookmedia.io/docs](https://shots.playbookmedia.io/docs) for product, CLI, and MCP behavior. Use this file and the repository's `AGENTS.md` files for development guidance.
 
 ## Set up the repository
 

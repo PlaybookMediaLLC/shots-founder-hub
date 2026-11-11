@@ -18,7 +18,7 @@ Shots Founder Hub stores its canonical meeting record in local SQLite. You can k
 
 A cloud transcription service receives audio to turn speech into text. Saving its resulting transcript locally does not undo that upload. Likewise, a local speech model can create a transcript that a cloud language model later receives to generate a summary.
 
-Shots Founder Hub keeps those choices separate in **Settings → Transcription** and **Settings → Intelligence**. Changing one does not change the other. The [models and providers documentation](https://docs.anarlog.so/models-and-providers) explains their inputs and requirements.
+Shots Founder Hub keeps those choices separate in **Settings → Transcription** and **Settings → Intelligence**. Changing one does not change the other. The [models and providers documentation](https://shots.playbookmedia.io/docs) explains their inputs and requirements.
 
 | Setup | Audio processing | Summary processing | What leaves the device for AI processing |
 | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ Using your own API key gives you a choice of provider; it does not make that pro
 
 Shots Founder Hub's built-in on-device transcription options require a supported Apple Silicon Mac. Apple Speech has additional macOS 26 and system-language requirements. An Intel Mac, Windows installer, or Linux installer does not establish that these built-in models are available there.
 
-Language coverage also depends on the selected speech model. The app's overall language support is not a promise that every local model handles the same languages. Check the current [on-device model requirements](https://docs.anarlog.so/models-and-providers#on-device-models) before downloading one.
+Language coverage also depends on the selected speech model. The app's overall language support is not a promise that every local model handles the same languages. Check the current [on-device model requirements](https://shots.playbookmedia.io/docs) before downloading one.
 
 Local and cloud accuracy or speed depend on the model, hardware, language, and recording. A cloud service is not automatically the faster or more accurate choice. Try a representative sample before relying on either setup.
 
@@ -41,7 +41,7 @@ Local and cloud accuracy or speed depend on the model, hardware, language, and r
 
 Choose and download your speech model, then configure a local Intelligence provider and download its language model. A local server must remain available to Shots Founder Hub during summaries and chat.
 
-For the actual setup and a short disconnected test, follow the [offline meeting transcription guide](/blog/offline-meeting-transcription-mac/). It covers audio permissions, model preparation, and checking the transcript and summary separately. The [official offline checklist](https://docs.anarlog.so/offline) explains what can work without a network.
+For the actual setup and a short disconnected test, follow the [offline meeting transcription guide](/blog/offline-meeting-transcription-mac/). It covers audio permissions, model preparation, and checking the transcript and summary separately. The [official offline checklist](https://shots.playbookmedia.io/docs) explains what can work without a network.
 
 ## Check features beyond the models
 
@@ -52,7 +52,7 @@ Local AI selections do not prevent other features from sending data elsewhere:
 - Cloud API & Connectors uploads a separate server-readable copy when enabled.
 - Chat's web search sends the search query to a hosted endpoint, even with local models.
 
-Avoid those features for a meeting that must remain on one device. Review usage analytics and error-reporting preferences separately; they are different from meeting-content processing. The [data and privacy guide](https://docs.anarlog.so/data-and-privacy) describes these boundaries.
+Avoid those features for a meeting that must remain on one device. Review usage analytics and error-reporting preferences separately; they are different from meeting-content processing. The [data and privacy guide](https://shots.playbookmedia.io/docs) describes these boundaries.
 
 ## Can you transcribe without retaining the audio?
 

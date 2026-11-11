@@ -20,7 +20,7 @@
 - Keep headings and sentences concise.
 - Put the result before implementation detail.
 - Use `Anarlog` for the product and `anarlog` for the executable.
-- Use root-relative links between Mintlify pages. Use `https://docs.anarlog.so` in external instructions and agent metadata.
+- Use root-relative links between Mintlify pages. Use `https://shots.playbookmedia.io/docs` in external instructions and agent metadata.
 
 ## Accuracy boundaries
 

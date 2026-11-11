@@ -18,7 +18,7 @@ export const ANARLOG_ROW: ComparisonRow = {
   freeTier: "No app minute cap for local/BYOK; provider charges can apply",
   capture:
     "Bot-free device audio; local SQLite. Transcription and summary providers are independent; hosted AI, sync and sharing have separate data paths.",
-  captureSourceUrl: "https://docs.anarlog.so/models-and-providers",
+  captureSourceUrl: "https://shots.playbookmedia.io/docs",
 };
 
 export const COMPARISON_ROWS: ComparisonRow[] = [
