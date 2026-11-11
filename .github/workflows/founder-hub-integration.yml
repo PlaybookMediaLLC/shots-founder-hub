@@ -149,7 +149,7 @@ jobs:
       - name: Build shared UI
         run: pnpm -F @anlg/ui build
       - name: Build the paired desktop automation binary
-        run: pnpm -F @anlg/desktop tauri build --debug --bundles app --target aarch64-apple-darwin --config '{"identifier":"com.hyprnote.dev.ci"}' --features dev,devtools,automation
+        run: pnpm -F @anlg/desktop tauri build --debug --no-bundle --target aarch64-apple-darwin --config '{"identifier":"com.hyprnote.dev.ci"}' --features dev,devtools,automation
         env:
           CI: "false"
           POSTHOG_API_KEY: phc_e2e
