@@ -83,7 +83,7 @@ function MentionAvatar({
           size={16}
           showInitial={true}
           interactive={false}
-          className="text-stone-950"
+          className="text-neutral-950"
           colorClasses={[bgClass]}
         />
       </span>
