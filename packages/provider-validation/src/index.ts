@@ -41,22 +41,10 @@ export function usesDeferredProviderAuthentication(
   );
 }
 
-export async function verifyProviderCredentials(
-  credential: ProviderCredential,
-  fetcher: CredentialFetch,
-  signal?: AbortSignal,
-): Promise<void> {
-  const apiKey = credential.apiKey.trim();
-  if (
-    (!apiKey &&
-      !(credential.type === "stt" && credential.provider === "nvidia")) ||
-    apiKey.length > 8192 ||
-    /[\r\n]/.test(apiKey)
-  )
-    throw new ProviderCredentialError("Enter a valid API key.");
+export function validateProviderBaseUrl(baseUrl: string): void {
   let base: URL;
   try {
-    base = new URL(credential.baseUrl);
+    base = new URL(baseUrl);
   } catch {
     throw new ProviderCredentialError("Enter a valid base URL.");
   }
@@ -72,6 +60,22 @@ export async function verifyProviderCredentials(
     )
   )
     throw new ProviderCredentialError("Use HTTPS for provider credentials.");
+}
+
+export async function verifyProviderCredentials(
+  credential: ProviderCredential,
+  fetcher: CredentialFetch,
+  signal?: AbortSignal,
+): Promise<void> {
+  const apiKey = credential.apiKey.trim();
+  if (
+    (!apiKey &&
+      !(credential.type === "stt" && credential.provider === "nvidia")) ||
+    apiKey.length > 8192 ||
+    /[\r\n]/.test(apiKey)
+  )
+    throw new ProviderCredentialError("Enter a valid API key.");
+  validateProviderBaseUrl(credential.baseUrl);
 
   signal?.throwIfAborted();
   // These providers have no shared read-only credential probe.

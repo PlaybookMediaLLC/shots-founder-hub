@@ -27,6 +27,7 @@ const liveTicketSchema = z
     capability: liveCapabilitySchema,
     contentRevision: z.number().int().nonnegative().safe(),
     expiresInSeconds: z.number().int().positive().safe(),
+    requiresAuth: z.boolean().default(false),
   })
   .strict();
 export type SharedNoteLiveTicket = z.infer<typeof liveTicketSchema>;
@@ -132,7 +133,7 @@ export type SharedNoteLiveStatus =
   | { kind: "closed" };
 
 export type SharedNoteLiveConnection =
-  | { status: "ready"; socket: LiveSocket }
+  | { status: "ready"; socket: LiveSocket; accessToken?: string }
   | { status: "forbidden" }
   | { status: "error" };
 
@@ -268,6 +269,9 @@ export class SharedNoteLiveClient {
     this.socket = socket;
     socket.binaryType = "arraybuffer";
     socket.onopen = () => {
+      if (connection.accessToken) {
+        socket.send(JSON.stringify({ accessToken: connection.accessToken }));
+      }
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_SYNC);
       syncProtocol.writeSyncStep1(encoder, this.doc);

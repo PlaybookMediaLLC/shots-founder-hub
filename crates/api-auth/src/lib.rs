@@ -7,9 +7,14 @@ use axum::{
 };
 
 pub use anlg_supabase_auth::Claims;
+mod shots;
+mod shots_storage;
+pub use shots::{ShotsAuth, ShotsSession, ShotsUser, ShotsWorkspace};
+pub use shots_storage::ShotsStorage;
 
 #[derive(Clone)]
 pub struct AuthContext {
+    pub shots: Option<ShotsSession>,
     pub token: String,
     pub claims: Claims,
 }
@@ -17,6 +22,7 @@ pub struct AuthContext {
 #[derive(Clone)]
 pub struct AuthState {
     inner: SupabaseAuth,
+    shots: Option<ShotsAuth>,
     required_entitlements: Option<Vec<String>>,
 }
 
@@ -24,8 +30,18 @@ impl AuthState {
     pub fn new(supabase_url: &str) -> Self {
         Self {
             inner: SupabaseAuth::new(supabase_url),
+            shots: None,
             required_entitlements: None,
         }
+    }
+
+    pub fn with_shots(mut self, shots: Option<ShotsAuth>) -> Self {
+        self.shots = shots;
+        self
+    }
+
+    pub fn shots(&self) -> Option<&ShotsAuth> {
+        self.shots.as_ref()
     }
 
     pub fn with_required_entitlement(mut self, entitlement: impl Into<String>) -> Self {
@@ -43,7 +59,25 @@ impl AuthState {
     }
 
     pub async fn verify_token(&self, token: &str) -> Result<Claims, AuthError> {
+        if let Some(shots) = &self.shots {
+            return shots
+                .session(token)
+                .await
+                .map(|session| session.claims())
+                .map_err(AuthError);
+        }
         self.inner.verify_token(token).await.map_err(AuthError)
+    }
+
+    pub async fn authenticate(&self, token: &str) -> Result<AuthContext, AuthError> {
+        if let Some(shots) = &self.shots {
+            return shots.authenticate(token).await.map_err(AuthError);
+        }
+        Ok(AuthContext {
+            token: token.to_owned(),
+            claims: self.verify_token(token).await?,
+            shots: None,
+        })
     }
 
     pub async fn verify_oauth_token(
@@ -52,6 +86,9 @@ impl AuthState {
         resource: &str,
         required_scopes: &[&str],
     ) -> Result<Claims, OAuthTokenError> {
+        if self.shots.is_some() {
+            return Err(OAuthTokenError::Invalid);
+        }
         self.inner
             .verify_oauth_token(token, resource, required_scopes)
             .await
@@ -114,17 +151,17 @@ pub async fn require_auth(
         .ok_or(SupabaseAuthError::InvalidAuthHeader)?
         .to_owned();
 
-    let claims = match &state.required_entitlements {
-        Some(entitlements) => {
-            let refs: Vec<&str> = entitlements.iter().map(|s| s.as_str()).collect();
-            state.inner.require_any_entitlement(&token, &refs).await?
+    let auth = state.authenticate(&token).await?;
+    if let Some(entitlements) = &state.required_entitlements {
+        if !entitlements
+            .iter()
+            .any(|entitlement| auth.claims.has_entitlement(entitlement))
+        {
+            return Err(SupabaseAuthError::MissingEntitlement(entitlements.join(",")).into());
         }
-        None => state.inner.verify_token(&token).await?,
-    };
+    }
 
-    request
-        .extensions_mut()
-        .insert(AuthContext { token, claims });
+    request.extensions_mut().insert(auth);
 
     Ok(next.run(request).await)
 }
@@ -141,10 +178,8 @@ pub async fn optional_auth(
         && let Some(token) = SupabaseAuth::extract_token(auth_header)
     {
         let token = token.to_owned();
-        if let Ok(claims) = state.inner.verify_token(&token).await {
-            request
-                .extensions_mut()
-                .insert(AuthContext { token, claims });
+        if let Ok(auth) = state.authenticate(&token).await {
+            request.extensions_mut().insert(auth);
         }
     }
     next.run(request).await

@@ -115,6 +115,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     })),
   });
   const canShowPersonalTrialDialogs =
+    !env.VITE_SHOTS_URL &&
     !!auth.session &&
     isReady &&
     claimsAreCurrent &&

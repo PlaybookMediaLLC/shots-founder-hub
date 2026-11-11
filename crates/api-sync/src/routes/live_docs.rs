@@ -16,8 +16,8 @@ use uuid::Uuid;
 
 use crate::error::{Result, SyncError};
 use crate::live_docs::{
-    ControlMessage, LIVE_TICKET_TTL, LiveCapability, MAX_LIVE_UPDATE_BYTES, Outbound,
-    PEER_OUTBOUND_CAPACITY, control_frame, issue_ticket, resolve_access, verify_ticket,
+    ControlMessage, LIVE_TICKET_TTL, LiveAccess, LiveCapability, LiveTicket, MAX_LIVE_UPDATE_BYTES,
+    Outbound, PEER_OUTBOUND_CAPACITY, control_frame, issue_ticket, resolve_access, verify_ticket,
 };
 use crate::state::AppState;
 
@@ -28,6 +28,8 @@ pub(super) struct LiveTicketResponse {
     capability: LiveCapability,
     content_revision: i64,
     expires_in_seconds: u64,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    requires_auth: bool,
 }
 
 #[derive(Deserialize)]
@@ -71,8 +73,8 @@ fn now_unix() -> i64 {
 
 /// Issues a short-lived, HMAC-signed ticket that authorizes one WebSocket
 /// connection to a shared note's live document. Browsers cannot attach a bearer
-/// header to a WebSocket upgrade, so the ticket carries the resolved capability
-/// instead and the socket route verifies it without touching Supabase.
+/// header to a WebSocket upgrade. Central sessions authenticate in the first
+/// socket frame, keeping the bearer credential out of URLs and access logs.
 #[utoipa::path(
     post,
     path = "/shares/{share_id}/live/ticket",
@@ -97,12 +99,16 @@ async fn create_live_ticket(
         &auth.claims.sub,
         &access,
         now_unix(),
+        auth.shots
+            .as_ref()
+            .map(|session| session.session_id.as_str()),
     );
     Ok(Json(LiveTicketResponse {
         ticket,
         capability: access.capability,
         content_revision: access.content_revision,
         expires_in_seconds: LIVE_TICKET_TTL.as_secs(),
+        requires_auth: auth.shots.is_some(),
     }))
 }
 
@@ -119,30 +125,71 @@ async fn live_socket(
         now_unix(),
     )
     .filter(|ticket| ticket.share_id == share_id)
+    .filter(|ticket| ticket.shots_session_id.is_some() == state.replica.shots.is_some())
     .ok_or(SyncError::SnapshotPublicationForbidden)?;
     Ok(ws
         .max_message_size(MAX_LIVE_UPDATE_BYTES + 1024)
         .max_frame_size(MAX_LIVE_UPDATE_BYTES + 1024)
-        .on_upgrade(move |socket| {
-            run_socket(
-                state,
-                socket,
-                share_id,
-                ticket.user_id,
-                ticket.capability,
-                ticket.content_revision,
-            )
-        }))
+        .on_upgrade(move |socket| run_socket(state, socket, ticket)))
 }
 
-async fn run_socket(
-    state: AppState,
-    socket: WebSocket,
-    share_id: String,
-    user_id: String,
-    capability: LiveCapability,
-    content_revision: i64,
-) {
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct LiveAuthentication {
+    access_token: String,
+}
+
+async fn resolve_connection_access(
+    state: &AppState,
+    ticket: &LiveTicket,
+    access_token: Option<&str>,
+) -> Result<LiveAccess> {
+    if let Some(shots) = &state.replica.shots {
+        let auth = shots
+            .authenticate(access_token.ok_or(SyncError::SnapshotPublicationForbidden)?)
+            .await
+            .map_err(|_| SyncError::SnapshotPublicationForbidden)?;
+        if auth.claims.sub != ticket.user_id
+            || auth.shots.as_ref().map(|session| &session.session_id)
+                != ticket.shots_session_id.as_ref()
+        {
+            return Err(SyncError::SnapshotPublicationForbidden);
+        }
+    }
+    let access = resolve_access(state, &ticket.share_id, &ticket.user_id).await?;
+    if access.capability != ticket.capability {
+        return Err(SyncError::SnapshotPublicationForbidden);
+    }
+    Ok(access)
+}
+
+async fn run_socket(state: AppState, mut socket: WebSocket, ticket: LiveTicket) {
+    let access_token = if state.replica.shots.is_some() {
+        let message = tokio::time::timeout(std::time::Duration::from_secs(5), socket.recv()).await;
+        let auth = match message {
+            Ok(Some(Ok(WsMessage::Text(text)))) if text.len() <= 8192 => {
+                serde_json::from_str::<LiveAuthentication>(&text).ok()
+            }
+            _ => None,
+        };
+        let Some(auth) = auth else {
+            let _ = socket.send(WsMessage::Close(None)).await;
+            return;
+        };
+        Some(auth.access_token)
+    } else {
+        None
+    };
+    if resolve_connection_access(&state, &ticket, access_token.as_deref())
+        .await
+        .is_err()
+    {
+        let _ = socket.send(WsMessage::Close(None)).await;
+        return;
+    }
+    let share_id = &ticket.share_id;
+    let user_id = &ticket.user_id;
+    let capability = ticket.capability;
     let (mut sink, mut stream) = socket.split();
     let (sender, mut outbound) = mpsc::channel::<Outbound>(PEER_OUTBOUND_CAPACITY);
     let docs = state.live_docs.clone();
@@ -158,7 +205,7 @@ async fn run_socket(
 
     let ready = control_frame(&ControlMessage::Ready {
         capability,
-        content_revision,
+        content_revision: ticket.content_revision,
         seed_required: seed_required && capability == LiveCapability::Editor,
     });
     let mut initial = std::collections::VecDeque::from([Outbound::Control(ready)]);
@@ -173,9 +220,11 @@ async fn run_socket(
                 },
             };
             // All content, including queued updates and handshake state, crosses this gate.
-            match resolve_access(&state, &share_id, &user_id).await {
-                Ok(access) if access.capability == capability => {}
-                _ => break,
+            if resolve_connection_access(&state, &ticket, access_token.as_deref())
+                .await
+                .is_err()
+            {
+                break;
             }
             let message = match frame {
                 Outbound::Binary(bytes) => WsMessage::Binary(bytes.into()),
@@ -194,6 +243,12 @@ async fn run_socket(
                 WsMessage::Close(_) => break,
                 WsMessage::Ping(_) | WsMessage::Pong(_) | WsMessage::Text(_) => continue,
             };
+            if resolve_connection_access(&state, &ticket, access_token.as_deref())
+                .await
+                .is_err()
+            {
+                break;
+            }
             match docs
                 .handle_frame(&state, &live, peer_id, &user_id, capability, &frame)
                 .await
@@ -221,9 +276,23 @@ async fn run_socket(
             }
         }
     };
+    let revalidate = async {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+        interval.tick().await;
+        loop {
+            interval.tick().await;
+            if resolve_connection_access(&state, &ticket, access_token.as_deref())
+                .await
+                .is_err()
+            {
+                break;
+            }
+        }
+    };
     tokio::select! {
         _ = writer => {},
         _ = reader => {},
+        _ = revalidate, if state.replica.shots.is_some() => {},
     }
     docs.leave(&live, peer_id).await;
     let _ = tokio::time::timeout(std::time::Duration::from_secs(5), sink.close()).await;

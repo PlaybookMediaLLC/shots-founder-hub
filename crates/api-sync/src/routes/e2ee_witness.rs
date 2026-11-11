@@ -215,7 +215,7 @@ async fn read_e2ee_witness(
     [(header::HeaderName, HeaderValue); 1],
     Json<E2eeWitnessPage>,
 )> {
-    require_witness_workspace(&auth, &workspace_id)?;
+    require_witness_workspace(&auth, &workspace_id, "artifact:read")?;
     let after_sequence = i64::try_from(query.after_sequence)
         .map_err(|_| SyncError::BadRequest("E2EE witness cursor is invalid".to_string()))?;
     let through_sequence = query
@@ -270,7 +270,7 @@ async fn wait_e2ee_witness(
     [(header::HeaderName, HeaderValue); 1],
     Json<E2eeWitnessWaitResponse>,
 )> {
-    require_witness_workspace(&auth, &workspace_id)?;
+    require_witness_workspace(&auth, &workspace_id, "artifact:read")?;
     i64::try_from(query.after_sequence)
         .map_err(|_| SyncError::BadRequest("E2EE witness cursor is invalid".to_string()))?;
     let wake = state.witness_wakes.subscribe(&workspace_id);
@@ -282,6 +282,17 @@ async fn wait_e2ee_witness(
         let head = read_witness_head(&state, &auth.claims.sub, &workspace_id).await?;
         let now = tokio::time::Instant::now();
         if head.head_sequence > query.after_sequence || !head.initialized || now >= deadline {
+            if let Some(shots) = &state.shots {
+                let session = auth.shots.as_ref().ok_or(SyncError::E2eeWitnessForbidden)?;
+                let current = shots
+                    .authenticate(session.access_token())
+                    .await
+                    .map_err(|_| SyncError::E2eeWitnessForbidden)?;
+                require_witness_workspace(&current, &workspace_id, "artifact:read")?;
+                if current.claims.sub != auth.claims.sub {
+                    return Err(SyncError::E2eeWitnessForbidden);
+                }
+            }
             return Ok((
                 [(header::CACHE_CONTROL, HeaderValue::from_static("no-store"))],
                 Json(head),
@@ -443,7 +454,7 @@ async fn publish_e2ee_witness(
     [(header::HeaderName, HeaderValue); 1],
     Json<PublishE2eeWitnessResponse>,
 )> {
-    require_witness_workspace(&auth, &workspace_id)?;
+    require_witness_workspace(&auth, &workspace_id, "artifact:edit")?;
     validate_publish_request(&request)?;
     let _permit = state
         .witness_writes
@@ -507,9 +518,20 @@ async fn publish_e2ee_witness(
     ))
 }
 
-fn require_witness_workspace(auth: &AuthContext, workspace_id: &str) -> Result<()> {
+fn require_witness_workspace(
+    auth: &AuthContext,
+    workspace_id: &str,
+    permission: &str,
+) -> Result<()> {
     if !auth.claims.is_pro() {
         return Err(SyncError::ProPlanRequired);
+    }
+    if auth
+        .shots
+        .as_ref()
+        .is_some_and(|session| !session.allows(workspace_id, permission))
+    {
+        return Err(SyncError::E2eeWitnessForbidden);
     }
     let workspace = Uuid::parse_str(workspace_id)
         .map_err(|_| SyncError::BadRequest("E2EE witness workspace is invalid".to_string()))?;
@@ -714,6 +736,7 @@ mod tests {
 
     fn test_router_with_state(state: ReplicaState, workspace: &str) -> Router {
         router().with_state(state).layer(Extension(AuthContext {
+            shots: None,
             token: "user-token".to_string(),
             claims: Claims {
                 sub: workspace.to_string(),
@@ -1132,6 +1155,67 @@ mod tests {
             assert_eq!(body["initialized"], expected_initialized, "{case}");
             assert_eq!(body["headSequence"], head, "{case}");
         }
+    }
+
+    #[tokio::test]
+    async fn witness_wait_rechecks_central_session_before_returning_a_head() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET")).and(path("/api/founder-hub/session"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "emailVerified": true, "revision": "1", "createdAt": "2026-01-01T00:00:00Z",
+                "user": {"id": "shots-owner", "email": "owner@example.test", "name": "Owner", "image": null},
+                "accountUserId": OWNER, "sessionId": "central-session",
+                "expiresAt": (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339(), "workspaces": []
+            }))).mount(&server).await;
+        Mock::given(method("POST"))
+            .and(path("/rest/v1/rpc/project_shots_authority"))
+            .respond_with(ResponseTemplate::new(204))
+            .mount(&server)
+            .await;
+        let shots = anlg_api_auth::ShotsAuth::new(
+            &server.uri(),
+            "test-shots-service-token-thirty-two-bytes",
+        )
+        .unwrap()
+        .with_storage(
+            anlg_api_auth::ShotsStorage::new(
+                &server.uri(),
+                "service-role-key",
+                "test-signing-key-at-least-thirty-two-bytes",
+            )
+            .unwrap(),
+        );
+        let auth = shots.authenticate("central-token").await.unwrap();
+        Mock::given(method("GET"))
+            .and(path("/api/founder-hub/session"))
+            .respond_with(ResponseTemplate::new(401))
+            .with_priority(1)
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/rest/v1/rpc/read_e2ee_freshness_page_v2"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(json!([witness_row(Some("2026-07-17T00:00:00Z"), 4)])),
+            )
+            .mount(&server)
+            .await;
+        let state = ReplicaState::new(
+            ReplicaConfig::new(server.uri(), "anon-key", "service-role-key").unwrap(),
+        )
+        .with_shots(Some(shots));
+        let response = router()
+            .with_state(state)
+            .layer(Extension(auth))
+            .oneshot(request(
+                Method::GET,
+                &format!("/e2ee/witness/{OWNER}/wait?afterSequence=3"),
+                None,
+            ))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert!(response_json(response).await.get("headSequence").is_none());
     }
 
     #[derive(Clone)]

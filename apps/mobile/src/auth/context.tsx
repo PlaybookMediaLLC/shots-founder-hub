@@ -5,7 +5,12 @@ import {
   type Session,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import { randomUUID } from "expo-crypto";
+import {
+  CryptoDigestAlgorithm,
+  digest,
+  getRandomBytes,
+  randomUUID,
+} from "expo-crypto";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -18,6 +23,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+
+import { createShotsAuthorization } from "@anlg/supabase/shots";
 
 import {
   consumeAuthCallback,
@@ -125,6 +132,7 @@ async function handleAuthCallbackUrl(url: string): Promise<boolean> {
     url,
     scheme: env.appScheme,
     storage: AsyncStorage,
+    shots: env.shotsUrl ? { gatewayUrl: env.supabaseUrl } : undefined,
     installSession: ({ accessToken, refreshToken }) =>
       acceptAuthTokens(accessToken, refreshToken),
   });
@@ -363,17 +371,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         entry_point: "mobile_sign_in",
       });
       try {
-        const state = randomUUID();
+        const pending = env.shotsUrl
+          ? await createShotsAuthorization({
+              shotsUrl: env.shotsUrl,
+              redirectUri: `${env.appScheme}://auth/callback`,
+              crypto: {
+                randomUUID,
+                randomBytes: getRandomBytes,
+                digest: (value) => digest(CryptoDigestAlgorithm.SHA256, value),
+              },
+            })
+          : { state: randomUUID() };
         await AsyncStorage.setItem(
           pendingAuthStorageKey,
-          JSON.stringify({ state, createdAt: Date.now() }),
+          JSON.stringify({ ...pending, createdAt: Date.now() }),
         );
         const result = await WebBrowser.openAuthSessionAsync(
-          buildSignInUrl(env.appUrl, signInMethod, env.appScheme, state),
+          "url" in pending
+            ? pending.url
+            : buildSignInUrl(
+                env.appUrl,
+                signInMethod,
+                env.appScheme,
+                pending.state,
+              ),
           `${env.appScheme}://auth/callback`,
         );
         if (result.type === "success") {
-          await handleCompletedAuthCallback(result.url, signInMethod);
+          if (!(await handleCompletedAuthCallback(result.url, signInMethod)))
+            throw new Error("Could not complete sign-in. Start sign-in again.");
         } else {
           captureAnalytics("auth_failed", {
             method: "browser_handoff",

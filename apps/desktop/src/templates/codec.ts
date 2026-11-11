@@ -185,6 +185,7 @@ export function assertCanonicalTemplateTargets(
 export function parseStoredTemplateSections(
   value: unknown,
   templateId: string,
+  throwOnError = false,
 ): TemplateSection[] {
   const context = `template ${templateId} sections_json`;
   try {
@@ -196,6 +197,7 @@ export function parseStoredTemplateSections(
       allowBlankDrafts: true,
     });
   } catch (error) {
+    if (throwOnError) throw error;
     console.error(
       "[templates] dropping invalid stored template sections",
       error,
@@ -207,6 +209,7 @@ export function parseStoredTemplateSections(
 export function parseStoredTemplateTargets(
   value: unknown,
   templateId: string,
+  throwOnError = false,
 ): string[] | undefined {
   if (value === null || value === undefined) {
     return undefined;
@@ -218,6 +221,7 @@ export function parseStoredTemplateTargets(
       typeof value === "string" ? parseJsonText(value, context) : value;
     return validateTargets(parsed, context, { lenient: true });
   } catch (error) {
+    if (throwOnError) throw error;
     console.error(
       "[templates] dropping invalid stored template targets",
       error,

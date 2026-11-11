@@ -9,10 +9,18 @@ import {
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  shots: undefined as string | undefined,
   signedIn: true,
   getUser: vi.fn(),
   save: vi.fn(),
   mirror: vi.fn(),
+}));
+vi.mock("~/env", () => ({
+  env: {
+    get VITE_SHOTS_URL() {
+      return mocks.shots;
+    },
+  },
 }));
 vi.mock("~/auth", () => ({
   useAuth: () => ({
@@ -79,6 +87,7 @@ function view(
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.signedIn = true;
+  mocks.shots = undefined;
   mocks.getUser.mockResolvedValue({
     data: { user: { id: "account-1", user_metadata: {} } },
     error: null,
@@ -174,6 +183,20 @@ it("keeps guest photo changes local even with a cached signed-in profile", async
   fireEvent.click(screen.getByRole("button", { name: /Change photo/ }));
   await waitFor(() =>
     expect(onSave).toHaveBeenCalledWith("data:image/jpeg;base64,bmV3"),
+  );
+  expect(mocks.save).not.toHaveBeenCalled();
+  expect(mocks.mirror).not.toHaveBeenCalled();
+});
+
+it("keeps Shots contact photos local without changing the central identity", async () => {
+  mocks.shots = "https://shots.example";
+  const { onSave } = view(null, "https://storage.example/cached.jpg");
+  fireEvent.click(screen.getByRole("button", { name: /Change photo/ }));
+  await waitFor(() =>
+    expect(onSave).toHaveBeenCalledWith("data:image/jpeg;base64,bmV3"),
+  );
+  expect(screen.getByRole("img").getAttribute("src")).toBe(
+    "data:image/jpeg;base64,bmV3",
   );
   expect(mocks.save).not.toHaveBeenCalled();
   expect(mocks.mirror).not.toHaveBeenCalled();

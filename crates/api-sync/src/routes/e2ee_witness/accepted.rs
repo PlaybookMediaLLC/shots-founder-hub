@@ -67,7 +67,7 @@ pub(super) async fn read(
     Path(workspace_id): Path<String>,
     Query(query): Query<ReadE2eeWitnessQuery>,
 ) -> Result<([(header::HeaderName, HeaderValue); 1], Json<AcceptedPage>)> {
-    require_witness_workspace(&auth, &workspace_id)?;
+    require_witness_workspace(&auth, &workspace_id, "artifact:read")?;
     let response = state
         .client
         .post(format!(
@@ -134,7 +134,7 @@ pub(super) async fn accept(
     Path(workspace_id): Path<String>,
     Json(request): Json<AcceptRequest>,
 ) -> Result<([(header::HeaderName, HeaderValue); 1], Json<AcceptResponse>)> {
-    require_witness_workspace(&auth, &workspace_id)?;
+    require_witness_workspace(&auth, &workspace_id, "artifact:edit")?;
     if Uuid::parse_str(&request.mutation_id).is_err() {
         return Err(SyncError::BadRequest("Invalid mutation identity".into()));
     }

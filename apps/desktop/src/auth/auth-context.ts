@@ -13,7 +13,9 @@ type AuthActions = {
   signIn: (options?: { switchAccount?: boolean }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<Session | null>;
-  getSessionForRequest: () => Promise<Session | null>;
+  getSessionForRequest: (options?: {
+    requireLibraryAdmission?: boolean;
+  }) => Promise<Session | null>;
 };
 
 type AuthTokenHandlers = {

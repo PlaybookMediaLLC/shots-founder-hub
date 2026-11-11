@@ -65,7 +65,7 @@ shareOpenPendingEvent: "plugin:deeplink2:share-open-pending-event"
 
 /** user-defined types **/
 
-export type AuthCallbackSearch = { access_token: string; refresh_token: string; code: string | null; state: string | null }
+export type AuthCallbackSearch = { access_token?: string; refresh_token?: string; code?: string | null; state?: string | null; raw_url?: string | null }
 export type BillingRefreshSearch = Record<string, never>
 export type DeepLink = { to: "/auth/callback"; search: AuthCallbackSearch } | { to: "/billing/refresh"; search: BillingRefreshSearch } | { to: "/integration/callback"; search: IntegrationCallbackSearch } | { to: "/onboarding-demo/complete"; search: OnboardingDemoCompleteSearch }
 export type DeepLinkEvent = DeepLink

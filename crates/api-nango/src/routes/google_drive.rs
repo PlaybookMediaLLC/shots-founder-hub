@@ -405,6 +405,7 @@ mod tests {
             .await;
         let config = crate::NangoConfig::for_test(&server.uri(), &server.uri());
         let auth = AuthContext {
+            shots: None,
             token: "user-token".into(),
             claims: serde_json::from_value(json!({"sub":"user-1"})).unwrap(),
         };

@@ -10,8 +10,6 @@ use serde::de::DeserializeOwned;
 
 use crate::{Error, Result, commands::auth};
 
-const API_URL: &str = "https://api.anarlog.so";
-
 pub(crate) struct CloudClient {
     base_url: String,
     access_token: String,
@@ -19,14 +17,14 @@ pub(crate) struct CloudClient {
 }
 
 impl CloudClient {
-    pub(crate) fn current() -> Result<Self> {
-        let session = auth::current_session()?.ok_or_else(|| {
+    pub(crate) async fn current() -> Result<Self> {
+        let session = auth::current_session().await?.ok_or_else(|| {
             Error::cloud(
                 "unauthorized",
                 "Sign in with `anarlog auth login` before using --source cloud.",
             )
         })?;
-        Self::from_session(API_URL, session)
+        Self::from_session(&auth::api_url()?, session)
     }
 
     fn from_session(base_url: &str, session: Session) -> Result<Self> {
@@ -45,6 +43,7 @@ impl CloudClient {
     fn new(base_url: &str, access_token: String) -> Result<Self> {
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))
+            .redirect(reqwest::redirect::Policy::none())
             .user_agent(format!("anarlog-cli/{}", crate::VERSION))
             .build()
             .map_err(|error| Error::operation("create Cloud API client", error.to_string()))?;

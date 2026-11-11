@@ -24,6 +24,7 @@ anlg-api-zoom = { workspace = true }
 anlg-linear = { workspace = true }
 anlg-llm-proxy = { workspace = true }
 anlg-observability = { workspace = true }
+anlg-supabase-auth = { workspace = true, features = ["server"] }
 anlg-transcribe-proxy = { workspace = true }
 anlg-user-error = { workspace = true }
 

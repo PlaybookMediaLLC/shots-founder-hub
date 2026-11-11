@@ -238,6 +238,18 @@ function SessionProbe() {
       >
         Get request session
       </button>
+      <button
+        onClick={() => {
+          setRequestAccessToken("pending");
+          void getSessionForRequest({ requireLibraryAdmission: true }).then(
+            (requestSession) => {
+              setRequestAccessToken(requestSession?.access_token ?? "none");
+            },
+          );
+        }}
+      >
+        Get library request session
+      </button>
       <button onClick={() => void signOut().catch(() => {})}>Sign out</button>
     </>
   );
@@ -672,6 +684,48 @@ describe("AuthProvider", () => {
     });
   });
 
+  it("does not return a library token after sign-out while proactive refresh fails", async () => {
+    const currentSession = makeSession("bound-account");
+    currentSession.expires_at = Math.floor(Date.now() / 1000) + 60;
+    const refresh = deferred<{
+      data: { session: null };
+      error: Error;
+    }>();
+    const refreshing = deferred();
+    mocks.refreshSession.mockImplementationOnce(() => {
+      refreshing.resolve();
+      return refresh.promise;
+    });
+    renderAuthProvider();
+    await waitFor(() => expect(mocks.authCallback).not.toBeNull());
+    await act(async () => {
+      mocks.authCallback?.("SIGNED_IN", currentSession);
+    });
+    mocks.getSession.mockResolvedValueOnce({
+      data: { session: currentSession },
+      error: null,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Get library request session" }),
+    );
+    await act(async () => {
+      await refreshing.promise;
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("session").textContent).toBe("none"),
+    );
+    await act(async () => {
+      refresh.resolve({ data: { session: null }, error: new Error("offline") });
+      await refresh.promise;
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("request-access-token").textContent).toBe(
+        "none",
+      ),
+    );
+  });
+
   it("only runs cloudsync from the main window", async () => {
     const currentSession = makeSession("bound-account");
     mocks.currentWebviewWindowLabel = "note-session-id";
@@ -718,6 +772,16 @@ describe("AuthProvider", () => {
     expect(mocks.emitTo).not.toHaveBeenCalled();
     expect(mocks.handleCloudsyncAuthChange).not.toHaveBeenCalled();
     expect(screen.queryByTestId("connect-library")).toBeNull();
+    mocks.getSession.mockResolvedValue({
+      data: { session: foreignSession },
+      error: null,
+    });
+    fireEvent.click(screen.getByText("Get library request session"));
+    await waitFor(() =>
+      expect(screen.getByTestId("request-access-token").textContent).toBe(
+        "none",
+      ),
+    );
   });
 
   it("routes secondary-window sign-out through the main window", async () => {

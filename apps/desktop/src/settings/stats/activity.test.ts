@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { summarizeActivity } from "./activity";
+import { summarizeActivity, summarizeActivityForShots } from "./activity";
 import type { ActivityRecord } from "./queries";
 
 const now = new Date("2026-09-05T12:00:00Z");
@@ -174,5 +174,22 @@ describe("personal activity", () => {
       "UTC",
     );
     expect(stats).toMatchObject({ conversations: 2, hours: 1.5 });
+  });
+
+  it("returns bounded aggregate activity for Shots without local session IDs", () => {
+    const stats = summarizeActivityForShots(
+      [record("private-session-id", "2026-09-05T11:30:00Z")],
+      now,
+      "UTC",
+      0,
+      "all",
+    );
+    expect(stats).toMatchObject({
+      conversations: 1,
+      totalConversations: 1,
+      activeDays: 1,
+    });
+    expect(JSON.stringify(stats)).not.toContain("private-session-id");
+    expect(JSON.stringify(stats)).not.toContain("transcript");
   });
 });

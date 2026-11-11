@@ -39,7 +39,7 @@ export function getTusEndpoint(supabaseUrl: string): string {
     return `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
   }
 
-  return new URL("/storage/v1/upload/resumable", parsed.origin).toString();
+  return `${parsed.toString().replace(/\/$/, "")}/storage/v1/upload/resumable`;
 }
 
 function getSignedTusEndpoint(supabaseUrl: string): string {

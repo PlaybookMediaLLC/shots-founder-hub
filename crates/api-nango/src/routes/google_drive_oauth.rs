@@ -430,6 +430,7 @@ mod tests {
                 },
             );
             let auth = AuthContext {
+                shots: None,
                 token: "user-token".into(),
                 claims: serde_json::from_value(json!({"sub":"user"})).unwrap(),
             };

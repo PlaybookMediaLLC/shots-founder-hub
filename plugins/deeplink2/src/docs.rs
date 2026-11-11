@@ -99,7 +99,7 @@ fn deeplink_from_variant(
         .as_ref()
         .and_then(|ta| type_name_from(&ta.type_ann))?;
 
-    let (description, params) = type_docs
+    let (description, mut params): (_, Vec<ParamField>) = type_docs
         .get(&search_type_name)
         .map(|doc| {
             (
@@ -119,6 +119,8 @@ fn deeplink_from_variant(
             (None, params)
         });
 
+    // The original URL is transport metadata, not a query parameter.
+    params.retain(|param| param.name != "raw_url");
     Some(DeepLinkInfo {
         path,
         description,

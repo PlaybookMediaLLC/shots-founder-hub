@@ -407,6 +407,7 @@ mod tests {
             api_base: server.uri(),
         })
         .layer(Extension(AuthContext {
+            shots: None,
             token: "token".to_string(),
             claims: Claims {
                 sub: user_id.to_string(),

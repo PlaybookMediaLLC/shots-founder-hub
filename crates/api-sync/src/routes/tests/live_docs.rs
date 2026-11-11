@@ -15,9 +15,11 @@ const SHARE_ID: &str = "11111111-1111-4111-8111-111111111111";
 
 fn live_test_state(server: &MockServer) -> AppState {
     AppState::new(SyncConfig {
-        project_url: server.uri(),
-        token_issuer_api_key: "issuer-key".to_string(),
-        database_id: "database-id".to_string(),
+        issuer: Some(crate::config::CloudsyncIssuer {
+            project_url: server.uri(),
+            token_issuer_api_key: "issuer-key".to_string(),
+            database_id: "database-id".to_string(),
+        }),
         legacy_database_id: None,
         protocol_mode: CloudsyncProtocolMode::E2eeEnforced,
         desktop_transport: CloudsyncTransport::SqliteSync,
@@ -171,6 +173,7 @@ fn authed_router(state: AppState, user_id: &str) -> Router {
     web_edit_router(state.clone())
         .merge(live_socket_router(state))
         .layer(Extension(AuthContext {
+            shots: None,
             token: "supabase-token".to_string(),
             claims: Claims {
                 sub: user_id.to_string(),
@@ -701,6 +704,129 @@ async fn revoked_readers_receive_neither_handshake_broadcasts_nor_requested_stat
         assert!(
             matches!(received, None | Some(Ok(WsMessage::Close(_)))),
             "{trigger} must not deliver a frame: {received:?}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn central_live_connections_require_the_ticket_session_and_stop_after_revocation() {
+    const USER_ID: &str = "dd26c713-2b48-4a8a-b3aa-91af23298eed";
+    for trigger in [
+        "handshake",
+        "write",
+        "broadcast",
+        "different_session",
+        "unavailable",
+    ] {
+        let server = MockServer::start().await;
+        let store = FakeStore::default();
+        store.mount(&server).await;
+        mock_access(&server, USER_ID, "editor").await;
+        let session = json!({
+            "emailVerified": true, "revision": "1", "createdAt": "2026-01-01T00:00:00Z",
+            "user": {"id": "shots-user", "email": "person@example.test", "name": "Person", "image": null},
+            "accountUserId": USER_ID, "sessionId": "ticket-session",
+            "expiresAt": (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339(),
+            "workspaces": []
+        });
+        Mock::given(method("GET"))
+            .and(path("/api/founder-hub/session"))
+            .and(header("authorization", "Bearer central-token"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(session.clone()))
+            .mount(&server)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/rest/v1/rpc/project_shots_authority"))
+            .respond_with(ResponseTemplate::new(204))
+            .mount(&server)
+            .await;
+        let shots = anlg_api_auth::ShotsAuth::new(
+            &server.uri(),
+            "test-shots-service-token-thirty-two-bytes",
+        )
+        .unwrap()
+        .with_storage(
+            anlg_api_auth::ShotsStorage::new(
+                &server.uri(),
+                "service-role-key",
+                "test-signing-key-at-least-thirty-two-bytes",
+            )
+            .unwrap(),
+        );
+        let auth = shots.authenticate("central-token").await.unwrap();
+        let state = live_test_state(&server).with_shots(Some(shots));
+        let router = web_edit_router(state.clone())
+            .merge(live_socket_router(state))
+            .layer(Extension(auth));
+        let response = issue_ticket(router.clone()).await;
+        assert_eq!(response["requiresAuth"], true);
+        let ticket = response["ticket"].as_str().unwrap();
+        let payload = base64::Engine::decode(
+            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
+            ticket.split_once('.').unwrap().0,
+        )
+        .unwrap();
+        assert!(
+            !String::from_utf8(payload)
+                .unwrap()
+                .contains("central-token")
+        );
+        let base = serve(router).await;
+        let mut socket = connect(&base, ticket).await;
+        let established = matches!(trigger, "write" | "broadcast" | "unavailable");
+        if established {
+            socket
+                .send(WsMessage::Text(
+                    json!({"accessToken": "central-token"}).to_string().into(),
+                ))
+                .await
+                .unwrap();
+            handshake(&mut socket, &Doc::new()).await;
+        }
+        let response = if trigger == "different_session" {
+            let mut other = session;
+            other["sessionId"] = json!("other-session");
+            ResponseTemplate::new(200).set_body_json(other)
+        } else {
+            ResponseTemplate::new(if trigger == "unavailable" { 503 } else { 401 })
+        };
+        Mock::given(method("GET"))
+            .and(path("/api/founder-hub/session"))
+            .respond_with(response)
+            .with_priority(1)
+            .mount(&server)
+            .await;
+        if !established {
+            socket
+                .send(WsMessage::Text(
+                    json!({"accessToken": "central-token"}).to_string().into(),
+                ))
+                .await
+                .unwrap();
+        } else if trigger == "broadcast" {
+            store
+                .0
+                .lock()
+                .unwrap()
+                .updates
+                .push((1, text_update(&Doc::new(), "private")));
+        } else {
+            socket
+                .send(update_frame(text_update(&Doc::new(), "revoked edit")))
+                .await
+                .unwrap();
+        }
+        let received = tokio::time::timeout(std::time::Duration::from_secs(5), socket.next())
+            .await
+            .expect("central socket closes");
+        assert!(
+            matches!(received, None | Some(Ok(WsMessage::Close(_)))),
+            "{trigger} must not deliver content: {received:?}"
+        );
+        assert_eq!(
+            store.seq(),
+            if trigger == "broadcast" { 1 } else { 0 },
+            "revoked edits are not persisted"
         );
     }
 }

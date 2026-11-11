@@ -75,10 +75,15 @@ where
 }
 
 #[derive(Clone)]
-pub struct SyncConfig {
+pub(crate) struct CloudsyncIssuer {
     pub(crate) project_url: String,
     pub(crate) token_issuer_api_key: String,
     pub(crate) database_id: String,
+}
+
+#[derive(Clone)]
+pub struct SyncConfig {
+    pub(crate) issuer: Option<CloudsyncIssuer>,
     pub(crate) legacy_database_id: Option<String>,
     pub(crate) protocol_mode: CloudsyncProtocolMode,
     pub(crate) desktop_transport: CloudsyncTransport,
@@ -206,9 +211,11 @@ impl SyncConfig {
         }
 
         Ok(Self {
-            project_url: validate_project_url(project_url.into())?,
-            token_issuer_api_key: token_issuer_api_key.into(),
-            database_id: database_id.into(),
+            issuer: Some(CloudsyncIssuer {
+                project_url: validate_project_url(project_url.into())?,
+                token_issuer_api_key: token_issuer_api_key.into(),
+                database_id: database_id.into(),
+            }),
             legacy_database_id: None,
             protocol_mode: CloudsyncProtocolMode::E2eeEnforced,
             desktop_transport: CloudsyncTransport::SqliteSync,
@@ -217,6 +224,19 @@ impl SyncConfig {
             supabase_anon_key,
             supabase_service_role_key,
         })
+    }
+
+    pub fn replica_only(config: ReplicaConfig) -> Self {
+        Self {
+            issuer: None,
+            legacy_database_id: None,
+            protocol_mode: CloudsyncProtocolMode::E2eeEnforced,
+            desktop_transport: CloudsyncTransport::Replica,
+            token_ttl_seconds: DEFAULT_TOKEN_TTL_SECONDS,
+            supabase_url: config.supabase_url,
+            supabase_anon_key: config.supabase_anon_key,
+            supabase_service_role_key: config.supabase_service_role_key,
+        }
     }
 
     pub fn with_token_ttl_seconds(mut self, token_ttl_seconds: u64) -> Result<Self, String> {
@@ -236,7 +256,11 @@ impl SyncConfig {
         legacy_database_id: Option<String>,
     ) -> Result<Self, String> {
         validate_protocol_databases(
-            &self.database_id,
+            &self
+                .issuer
+                .as_ref()
+                .ok_or("CloudSync issuer is not configured")?
+                .database_id,
             legacy_database_id.as_deref(),
             protocol_mode,
         )?;
@@ -446,7 +470,7 @@ mod tests {
         assert_eq!(config.desktop_transport, CloudsyncTransport::SqliteSync);
         assert!(config.legacy_database_id.is_none());
         assert_eq!(
-            config.project_url,
+            config.issuer.as_ref().unwrap().project_url,
             "https://project.region.gateway.sqlite.cloud"
         );
         assert_eq!(config.token_ttl_seconds, DEFAULT_TOKEN_TTL_SECONDS);

@@ -1,9 +1,6 @@
 use super::subscription_aliases;
 use crate::PAID_ENTITLEMENTS;
-use crate::{
-    auth::{self, AuthState},
-    env::RuntimeConfig,
-};
+use crate::{auth, env::RuntimeConfig};
 use axum::{Router, middleware};
 use std::sync::Arc;
 
@@ -11,7 +8,7 @@ pub(crate) fn router(
     env: &RuntimeConfig,
     analytics: Arc<anlg_analytics::AnalyticsClient>,
 ) -> Router {
-    let auth_state = AuthState::new(&env.supabase.supabase_url);
+    let auth_state = env.auth_state();
     let auth_state_paid = auth_state.clone().with_required_entitlements(
         PAID_ENTITLEMENTS
             .iter()

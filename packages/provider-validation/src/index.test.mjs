@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
   ProviderCredentialError,
+  validateProviderBaseUrl,
   verifyProviderCredentials,
   providerCredentialIdentity,
 } from "./index.ts";
@@ -12,6 +13,28 @@ const credential = {
   baseUrl: "https://api.openai.com/v1",
   apiKey: "synthetic-key",
 };
+
+test("base URL validation permits HTTPS and loopback HTTP only", () => {
+  for (const baseUrl of [
+    "https://provider.example/v1",
+    "http://127.0.0.1:8000/v1",
+    "http://localhost:8000/v1",
+    "http://[::1]:8000/v1",
+  ]) {
+    assert.doesNotThrow(() => validateProviderBaseUrl(baseUrl));
+  }
+  for (const baseUrl of [
+    "http://192.168.1.10/v1",
+    "https://provider.example/v1?key=secret",
+    "https://user:password@provider.example/v1",
+    "not-a-url",
+  ]) {
+    assert.throws(
+      () => validateProviderBaseUrl(baseUrl),
+      ProviderCredentialError,
+    );
+  }
+});
 
 test("accepts an authenticated model response, without sending keys in URLs", async () => {
   const requests = [];

@@ -1,8 +1,69 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { createShotsAuthorization } from "@anlg/supabase/shots";
+
 import { consumeAuthCallback, pendingAuthStorageKey } from "./auth-callback.ts";
 import { buildSignInUrl } from "./sign-in.ts";
+
+test("Shots mobile login exchanges only the pending PKCE code and rejects legacy token injection", async () => {
+  const pending = await createShotsAuthorization({
+    shotsUrl: "https://shots.example",
+    redirectUri: "anarlog://auth/callback",
+  });
+  let value = JSON.stringify({ ...pending, createdAt: 1_000 });
+  const storage = {
+    getItem: async () => value,
+    removeItem: async () => {
+      value = null;
+    },
+  };
+  let installed = null;
+  const consume = (url) =>
+    consumeAuthCallback({
+      url,
+      scheme: "anarlog",
+      storage,
+      now: 1_001,
+      shots: {
+        gatewayUrl: "https://hub.example/cloud",
+        fetch: async (url, request) => {
+          assert.equal(
+            url,
+            "https://hub.example/cloud/auth/v1/token?grant_type=authorization_code",
+          );
+          assert.deepEqual(JSON.parse(request.body), {
+            code: "one-time",
+            code_verifier: pending.codeVerifier,
+            redirect_uri: pending.redirectUri,
+          });
+          return Response.json({
+            access_token: "shots-access",
+            refresh_token: "shots-refresh",
+          });
+        },
+      },
+      installSession: async (tokens) => {
+        installed = tokens;
+        return true;
+      },
+    });
+  const callback = `anarlog://auth/callback?code=one-time&state=${pending.state}&iss=${encodeURIComponent(pending.issuer)}`;
+  assert.equal(await consume(callback.replace(pending.state, "other")), null);
+  assert.equal(
+    await consume(
+      `anarlog://auth/callback?access_token=foreign&refresh_token=foreign&state=${pending.state}`,
+    ),
+    null,
+  );
+  assert.equal(installed, null);
+  const results = await Promise.all([consume(callback), consume(callback)]);
+  assert.deepEqual(results, [
+    { accessToken: "shots-access", refreshToken: "shots-refresh" },
+    null,
+  ]);
+  assert.deepEqual(installed, results[0]);
+});
 
 test("mobile accepts only the pending login once, including duplicate delivery and expired callbacks", async () => {
   const state = "8d58e770-3a95-41ba-bfa1-ec03633a3a55";

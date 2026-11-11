@@ -39,7 +39,10 @@ fn worker(server: &MockServer) -> CleanupWorker {
         )
         .with_cloudsync_cleanup(crate::CloudsyncCleanupConfig::for_test(&server.uri())),
     );
-    worker.stripe = stripe::ClientBuilder::new("sk_test_fake")
+    let CleanupBackend::Cloudsync { stripe, .. } = &mut worker.backend else {
+        unreachable!()
+    };
+    *stripe = stripe::ClientBuilder::new("sk_test_fake")
         .url(format!("{}/", server.uri()))
         .build()
         .unwrap();
@@ -51,6 +54,65 @@ fn request_lease(request: &Request) -> String {
         .as_str()
         .unwrap()
         .to_string()
+}
+
+#[tokio::test]
+async fn shots_cleanup_purges_the_replica_without_deleting_shared_billing_or_auth() {
+    let server = MockServer::start().await;
+    for rpc in [
+        "purge_shots_account_replica",
+        "finish_shots_account_deletion",
+    ] {
+        Mock::given(method("POST"))
+            .and(path(format!("/rest/v1/rpc/{rpc}")))
+            .respond_with(ResponseTemplate::new(200).set_body_json(true))
+            .mount(&server)
+            .await;
+    }
+    let worker = CleanupWorker::for_shots(&SupabaseEnv {
+        supabase_url: server.uri(),
+        supabase_anon_key: "anon-key".to_string(),
+        supabase_service_role_key: "service-role-key".to_string(),
+    });
+    let mut row = AccountLeaseRow {
+        owner_user_id: OWNER.to_string(),
+        final_sweep_not_before: (Utc::now() - TimeDelta::minutes(1)).to_rfc3339(),
+        stripe_customer_id: Some(CUSTOMER.to_string()),
+        stripe_deleted: false,
+        cleanup_ready: true,
+        prefix_swept: true,
+        e2ee_workspace_ids: vec![OWNER.to_string()],
+        e2ee_purged: false,
+        lease_id: Uuid::now_v7().to_string(),
+        lease_expires_at: (Utc::now() + TimeDelta::minutes(15)).to_rfc3339(),
+    };
+    assert!(
+        worker
+            .delete_account(row.clone(), &CancellationToken::new())
+            .await
+            .is_err()
+    );
+    assert!(server.received_requests().await.unwrap().is_empty());
+    row.stripe_customer_id = None;
+    row.stripe_deleted = true;
+    worker
+        .delete_account(row, &CancellationToken::new())
+        .await
+        .unwrap();
+    let paths = server
+        .received_requests()
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|request| request.url.path().to_string())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        paths,
+        [
+            "/rest/v1/rpc/purge_shots_account_replica",
+            "/rest/v1/rpc/finish_shots_account_deletion"
+        ]
+    );
 }
 
 async fn mount_attachment_claim(server: &MockServer, invalid_key: bool) {
