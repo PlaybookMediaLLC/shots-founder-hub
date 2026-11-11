@@ -27,7 +27,7 @@ test("routes a workspace hostname to the canonical web origin with its original 
   assert.notEqual(originRequest, null);
   assert.equal(
     originRequest?.url,
-    "https://anarlog.so/share/public/note/?view=compact",
+    "https://shots.playbookmedia.io/share/public/note/?view=compact",
   );
   assert.equal(
     originRequest?.headers.get("x-forwarded-host"),
@@ -37,8 +37,8 @@ test("routes a workspace hostname to the canonical web origin with its original 
   assert.equal(originRequest?.redirect, "manual");
 
   const originHeaders = new Headers(originRequest?.headers);
-  originHeaders.set("host", "anarlog.so");
-  originHeaders.set("x-forwarded-host", "anarlog.so");
+  originHeaders.set("host", "shots.playbookmedia.io");
+  originHeaders.set("x-forwarded-host", "shots.playbookmedia.io");
   assert.equal(
     getWorkspaceShareSlugFromHeaders(originHeaders, "test-secret"),
     "fastrepl",
@@ -71,7 +71,7 @@ test("keeps double-slash paths on the configured origin", () => {
   );
   assert.equal(
     request?.url,
-    "https://anarlog.so//example.com/private?view=compact",
+    "https://shots.playbookmedia.io//example.com/private?view=compact",
   );
 });
 
@@ -113,7 +113,7 @@ test("removes workspace proxy headers when passing through platform hosts", asyn
 
 for (const [location, expected] of [
   [
-    "https://anarlog.so/app/?view=compact#notes",
+    "https://shots.playbookmedia.io/app/?view=compact#notes",
     "https://fastrepl.anarlog.so/app/?view=compact#notes",
   ],
   ["/auth/?flow=web", "https://fastrepl.anarlog.so/auth/?flow=web"],

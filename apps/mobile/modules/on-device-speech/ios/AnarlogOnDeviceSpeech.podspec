@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Transcribes saved Anarlog recordings on the device.'
   s.description    = 'Uses SpeechAnalyzer on iOS 26 and on-device SFSpeechRecognizer before it; never a network recognizer.'
   s.author         = 'Anarlog'
-  s.homepage       = 'https://anarlog.so'
+  s.homepage       = 'https://shots.playbookmedia.io'
   s.platform       = :ios, '16.4'
   s.source         = { git: '' }
   s.static_framework = true

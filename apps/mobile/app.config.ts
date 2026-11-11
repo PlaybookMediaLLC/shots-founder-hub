@@ -116,7 +116,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         (isDev ? "http://localhost:3001" : "https://api.anarlog.so"),
       appUrl:
         process.env.EXPO_PUBLIC_APP_URL ??
-        (isDev ? "http://localhost:3000" : "https://anarlog.so"),
+        (isDev ? "http://localhost:3000" : "https://shots.playbookmedia.io"),
       posthogApiKey:
         process.env.EXPO_PUBLIC_POSTHOG_API_KEY ??
         process.env.POSTHOG_API_KEY ??

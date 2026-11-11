@@ -70,7 +70,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ vars.ANARLOG_VERCEL_PROJECT_ID }}
           NITRO_PRESET: vercel
           SENTRY_BUILD_SOURCEMAPS: "1"
-          VITE_APP_URL: https://anarlog.so
+          VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - run: |

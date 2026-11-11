@@ -28,7 +28,7 @@ const config = defineConfig(async ({ command }): Promise<UserConfig> => {
       tailwindcss(),
       tanstackStart({
         sitemap: {
-          host: "https://anarlog.so",
+          host: "https://shots.playbookmedia.io",
         },
         prerender: {
           enabled: true,

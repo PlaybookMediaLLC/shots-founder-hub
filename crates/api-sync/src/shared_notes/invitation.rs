@@ -159,7 +159,7 @@ pub(super) async fn send_workspace_invitation_email(
         &input.from_name
     };
     let invitation_url = format!(
-        "https://anarlog.so/team/invite/{invitation_id}/#token={}",
+        "https://shots.playbookmedia.io/team/invite/{invitation_id}/#token={}",
         input.invite_token
     );
     let email_delivery = state
@@ -498,7 +498,7 @@ struct SessionShareWorkspaceSlugRow {
 
 fn workspace_share_origin(slug: Option<&str>) -> Result<String> {
     let Some(slug) = slug else {
-        return Ok("https://anarlog.so".to_string());
+        return Ok("https://shots.playbookmedia.io".to_string());
     };
     let reserved = [
         "admin", "api", "app", "assets", "auth", "cdn", "dev", "docs", "mail", "staging", "static",

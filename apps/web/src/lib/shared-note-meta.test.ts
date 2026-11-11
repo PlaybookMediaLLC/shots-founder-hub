@@ -63,7 +63,7 @@ test("authorized link previews receive note-specific social metadata", () => {
         "property" in meta &&
         meta.property === "og:image" &&
         meta.content ===
-          `https://anarlog.so/api/og/share/link/${shareId}?preview=${previewToken}`,
+          `https://shots.playbookmedia.io/api/og/share/link/${shareId}?preview=${previewToken}`,
     ),
   );
   assert.ok(
@@ -96,7 +96,8 @@ test("short links receive note-specific social metadata without a query token", 
       (meta) =>
         "property" in meta &&
         meta.property === "og:image" &&
-        meta.content === `https://anarlog.so/api/og/share/t/${linkId}`,
+        meta.content ===
+          `https://shots.playbookmedia.io/api/og/share/t/${linkId}`,
     ),
   );
   assert.ok(
@@ -135,7 +136,8 @@ test("stable links keep private social previews out of search indexes", () => {
       (meta) =>
         "property" in meta &&
         meta.property === "og:image" &&
-        meta.content === `https://anarlog.so/api/og/share/link/${shareId}`,
+        meta.content ===
+          `https://shots.playbookmedia.io/api/og/share/link/${shareId}`,
     ),
   );
   assert.ok(
@@ -183,7 +185,7 @@ test("available public notes receive canonical indexable metadata", () => {
   assert.deepEqual(head.links, [
     {
       rel: "canonical",
-      href: `https://anarlog.so/share/${shareId}/`,
+      href: `https://shots.playbookmedia.io/share/${shareId}/`,
     },
   ]);
   assert.ok(
@@ -203,7 +205,7 @@ test("available public notes receive canonical indexable metadata", () => {
       (meta) =>
         meta.property === "og:image" &&
         meta.content ===
-          "https://anarlog.so/api/og/share/public/s_0123456789abcdef0123456789abcdef",
+          "https://shots.playbookmedia.io/api/og/share/public/s_0123456789abcdef0123456789abcdef",
     ),
   );
   assert.ok(

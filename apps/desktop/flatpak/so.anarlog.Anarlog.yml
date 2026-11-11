@@ -40,7 +40,7 @@ build-options:
     npm_config_offline: "true"
     XDG_CACHE_HOME: /run/build/anarlog/cache
     VITE_API_URL: https://api.anarlog.so
-    VITE_APP_URL: https://anarlog.so
+    VITE_APP_URL: https://shots.playbookmedia.io
 
 modules:
   - name: anarlog
