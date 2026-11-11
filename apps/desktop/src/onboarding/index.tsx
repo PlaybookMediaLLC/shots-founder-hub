@@ -1,26 +1,35 @@
-import { Trans } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import { useQueryClient } from "@tanstack/react-query";
 import { platform } from "@tauri-apps/plugin-os";
-import { motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 
-import { commands as sfxCommands } from "@anlg/plugin-sfx";
-import { SpeakerHigh, SpeakerX } from "@anlg/ui/components/icons";
-import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
-import { cn } from "@anlg/utils";
+import {
+  CalendarBlank,
+  ClockCounterClockwise,
+  Microphone,
+  User,
+} from "@anlg/ui/components/icons";
 
 import { LoginSection } from "./account";
 import { CalendarSection } from "./calendar";
 import {
   getInitialStep,
   getNextStep,
+  getOnboardingSteps,
   getPrevStep,
-  getStepStatus,
+  type OnboardingStep,
 } from "./config";
-import { FinalDescription, FinalSection, finishOnboarding } from "./final";
+import { FinalDescription, FinalSection } from "./final";
 import { ImportSection } from "./imports";
 import { PermissionsSection } from "./permissions";
-import { OnboardingSection } from "./shared";
+import {
+  OnboardingStepBars,
+  OnboardingStepList,
+  OnboardingStepPanel,
+  OnboardingSuccessMark,
+  type StepListItem,
+} from "./shared";
 
 import { trackAnalyticsEvent } from "~/analytics";
 import { useAuth } from "~/auth";
@@ -41,21 +50,7 @@ export function TabContentOnboarding({
     [openCurrent],
   );
 
-  return <OnboardingScreen onFinish={handleFinish} />;
-}
-
-function OnboardingScreen({
-  onFinish,
-}: {
-  onFinish: (sessionId: string) => void;
-}) {
-  return (
-    <OnboardingScreenContent
-      onFinish={onFinish}
-      headerClassName="px-12 pt-4 pb-8"
-      headerDragRegion
-    />
-  );
+  return <OnboardingScreenContent onFinish={handleFinish} />;
 }
 
 export function StandaloneOnboardingScreen({
@@ -65,49 +60,66 @@ export function StandaloneOnboardingScreen({
 }) {
   return (
     <StandaloneWindowShell>
-      <OnboardingScreenContent
-        onFinish={onFinish}
-        headerClassName="px-12 pt-4 pb-8"
-        headerDragRegion
-      />
+      <OnboardingScreenContent onFinish={onFinish} />
     </StandaloneWindowShell>
   );
 }
 
+type StepView = {
+  icon: ReactNode;
+  iconTile?: boolean;
+  title: ReactNode;
+  lead?: ReactNode;
+  skippable: boolean;
+  body: ReactNode;
+};
+
+// Mirrors the Shots onboarding shell: the step list on the window, the current
+// step in a card panel beside it.
 function OnboardingScreenContent({
   onFinish,
-  headerClassName,
-  headerDragRegion = false,
 }: {
   onFinish: (sessionId: string) => void;
-  headerClassName: string;
-  headerDragRegion?: boolean;
 }) {
+  const { t } = useLingui();
   const queryClient = useQueryClient();
   const auth = useAuth();
-  const [isMuted, setIsMuted] = useState(false);
   const [currentStep, setCurrentStep] = useState(getInitialStep);
-  const [didSkipLogin, setDidSkipLogin] = useState(false);
-  const onboardingVideoRef = useRef<HTMLVideoElement>(null);
+  const [skipped, setSkipped] = useState<ReadonlySet<OnboardingStep>>(
+    () => new Set(),
+  );
   const currentPlatform = platform();
+  const steps = getOnboardingSteps();
+
+  const leaveStep = useCallback((from: OnboardingStep, wasSkipped: boolean) => {
+    setSkipped((prev) => {
+      const next = new Set(prev);
+      if (wasSkipped) next.add(from);
+      else next.delete(from);
+      return next;
+    });
+    const next = getNextStep(from);
+    if (next) setCurrentStep(next);
+  }, []);
 
   const goNext = useCallback(() => {
     trackAnalyticsEvent("onboarding_step_completed", {
       step: currentStep,
       platform: currentPlatform,
     });
-    const next = getNextStep(currentStep);
-    if (next) setCurrentStep(next);
-  }, [currentPlatform, currentStep]);
+    leaveStep(currentStep, false);
+  }, [currentPlatform, currentStep, leaveStep]);
 
   const skipCurrentStep = useCallback(() => {
+    if (currentStep === "login") {
+      trackAnalyticsEvent("onboarding_login_skipped");
+    }
     trackAnalyticsEvent("onboarding_step_skipped", {
       step: currentStep,
       platform: currentPlatform,
     });
-    const next = getNextStep(currentStep);
-    if (next) setCurrentStep(next);
-  }, [currentPlatform, currentStep]);
+    leaveStep(currentStep, true);
+  }, [currentPlatform, currentStep, leaveStep]);
 
   const goBack = useCallback(() => {
     const prev = getPrevStep(currentStep);
@@ -126,23 +138,6 @@ function OnboardingScreenContent({
     });
   }, [currentPlatform, currentStep]);
 
-  useMountEffect(() => {
-    sfxCommands.play("BGM").catch(console.error);
-    return () => {
-      sfxCommands.stop("BGM").catch(console.error);
-    };
-  });
-
-  useEffect(() => {
-    sfxCommands.setVolume("BGM", isMuted ? 0 : 0.2).catch(console.error);
-  }, [isMuted]);
-
-  useMountEffect(() => {
-    if (onboardingVideoRef.current) {
-      onboardingVideoRef.current.playbackRate = 0.65;
-    }
-  });
-
   const handleFinish = useCallback(
     (sessionId: string) => {
       trackAnalyticsEvent("onboarding_step_completed", {
@@ -155,173 +150,166 @@ function OnboardingScreenContent({
     [currentPlatform, onFinish, queryClient],
   );
 
-  return (
-    <div className="bg-card relative flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute inset-0"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 2, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
-        >
-          <video
-            ref={onboardingVideoRef}
-            className="absolute inset-0 h-full w-full object-cover object-bottom opacity-28"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            aria-hidden="true"
-          >
-            <source src="/assets/onboarding-video.mp4" type="video/mp4" />
-          </video>
-          <div className="from-background/8 via-background/18 absolute inset-0 bg-linear-to-t to-transparent" />
-        </motion.div>
-        <div className="absolute inset-x-0 top-0 h-[80%] [mask-image:linear-gradient(to_bottom,black,black_18%,rgba(0,0,0,0.9)_36%,rgba(0,0,0,0.6)_58%,transparent)] backdrop-blur-[32px]" />
-        <div className="absolute inset-x-0 top-0 h-[92%] [mask-image:linear-gradient(to_bottom,black,rgba(0,0,0,0.8)_34%,rgba(0,0,0,0.35)_62%,transparent)] backdrop-blur-[12px]" />
-        <div className="from-background via-background/82 via-background/97 to-background/0 absolute inset-x-0 top-0 h-[84%] bg-linear-to-b via-18% via-42%" />
-        <motion.div
-          className="bg-background absolute inset-0"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 1.0, ease: "easeOut", delay: 0.1 }}
-        />
-      </div>
+  const currentIndex = steps.indexOf(currentStep);
+  const stepList: StepListItem[] = steps.map((step, index) => {
+    const state =
+      index === currentIndex
+        ? "active"
+        : index > currentIndex
+          ? "upcoming"
+          : skipped.has(step) && !(step === "login" && auth.session)
+            ? "skipped"
+            : "done";
+    const label = {
+      permissions: {
+        title: t`Allow access`,
+        description: t`Microphone and system audio`,
+      },
+      login: {
+        title: t`Create your account`,
+        description: auth.session
+          ? t`Signed in`
+          : t`Free Pro with a work email`,
+      },
+      calendar: {
+        title: t`Connect your calendar`,
+        description: t`Reminders before meetings`,
+      },
+      imports: {
+        title: t`Import meeting history`,
+        description: t`From apps you already use`,
+      },
+      final: {
+        title: t`All set`,
+        description: t`Open your first note`,
+      },
+    }[step];
+    return {
+      id: step,
+      title: label.title,
+      description: state === "skipped" ? t`Skipped` : label.description,
+      state,
+    };
+  });
 
-      <div
-        data-tauri-drag-region={headerDragRegion || undefined}
-        className="relative z-30 flex h-12 shrink-0 items-center justify-end pr-3 pl-12"
-      >
-        <button
-          onClick={() => setIsMuted((prev) => !prev)}
-          data-tauri-drag-region="false"
-          className="hover:bg-accent rounded-full p-1.5 transition-colors"
-          aria-label={isMuted ? "Unmute" : "Mute"}
-        >
-          {isMuted ? (
-            <SpeakerX size={16} className="text-muted-foreground" />
-          ) : (
-            <SpeakerHigh size={16} className="text-muted-foreground" />
-          )}
-        </button>
-      </div>
-
-      <div
-        data-tauri-drag-region={headerDragRegion || undefined}
-        className={cn([
-          "relative z-10 flex shrink-0 items-center",
-          headerClassName,
-        ])}
-      >
-        <h1 className="text-foreground text-3xl leading-none font-medium tracking-[-0.02em]">
-          <Trans>Welcome to Shots Founder Hub</Trans>
-        </h1>
-      </div>
-
-      <div className="scroll-fade-y relative z-10 flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-4 px-12 pb-16">
-          <OnboardingSection
-            title={<Trans>Start with permissions</Trans>}
-            completedTitle={<Trans>Permissions granted</Trans>}
-            description={
-              currentPlatform === "macos" ? (
-                <Trans>
-                  Shots Founder Hub needs microphone and system audio to
-                  transcribe your meetings, plus Accessibility to read meeting
-                  controls, visible chat.
-                </Trans>
-              ) : (
-                <Trans>
-                  Shots Founder Hub needs access to your microphone and system
-                  audio to record and transcribe your meetings
-                </Trans>
-              )
-            }
-            status={getStepStatus("permissions", currentStep)}
-            skippable={false}
-            onBack={goBack}
-            onNext={goNext}
-          >
-            <PermissionsSection onContinue={goNext} />
-          </OnboardingSection>
-
-          <OnboardingSection
-            title={<Trans>Create account</Trans>}
-            completedTitle={
-              auth.session ? (
-                <Trans>Signed in</Trans>
-              ) : didSkipLogin ? (
-                <Trans>Skipped</Trans>
-              ) : (
-                <Trans>Account</Trans>
-              )
-            }
-            status={getStepStatus("login", currentStep)}
-            onBack={goBack}
-            onNext={goNext}
-            onSkip={() => {
-              setDidSkipLogin(true);
-              trackAnalyticsEvent("onboarding_login_skipped");
-              trackAnalyticsEvent("onboarding_step_skipped", {
-                step: "login",
-                platform: currentPlatform,
-              });
-              const next = getNextStep("login");
-              if (next) setCurrentStep(next);
-            }}
-          >
-            <LoginSection onContinue={goNext} />
-          </OnboardingSection>
-
-          <OnboardingSection
-            title={<Trans>Connect calendar</Trans>}
-            description={
-              <Trans>
-                Shots Founder Hub will sync your calendar to get meeting
-                reminders
-              </Trans>
-            }
-            completedTitle={<Trans>Calendar connected</Trans>}
-            status={getStepStatus("calendar", currentStep)}
-            onBack={goBack}
-            onNext={goNext}
-            onSkip={skipCurrentStep}
-          >
-            <CalendarSection
-              onContinue={goNext}
-              onSignIn={handleCalendarSignIn}
-            />
-          </OnboardingSection>
-
-          <OnboardingSection
-            title={<Trans>Bring your meeting history</Trans>}
-            description={
-              <Trans>
-                Import notes and transcripts from the meeting apps you already
-                use.
-              </Trans>
-            }
-            completedTitle={<Trans>Meeting history imported</Trans>}
-            status={getStepStatus("imports", currentStep)}
-            onBack={goBack}
-            onNext={goNext}
-            onSkip={skipCurrentStep}
-          >
-            <ImportSection onContinue={goNext} onSkip={skipCurrentStep} />
-          </OnboardingSection>
-
-          <OnboardingSection
-            title={<Trans>Ready to go</Trans>}
-            description={<FinalDescription />}
-            status={getStepStatus("final", currentStep)}
-            skippable={false}
-            onBack={goBack}
-            onNext={() => void finishOnboarding(handleFinish)}
-          >
-            <FinalSection onContinue={handleFinish} />
-          </OnboardingSection>
+  const views: Record<OnboardingStep, StepView> = {
+    permissions: {
+      icon: <Microphone className="size-5" />,
+      title: <Trans>Allow access</Trans>,
+      lead: (
+        <Trans>
+          Shots Founder Hub uses your microphone and system audio to transcribe
+          meetings, and Accessibility to read meeting controls and visible chat.
+        </Trans>
+      ),
+      // Production requires these; dev builds can step past them for testing.
+      skippable: import.meta.env.DEV,
+      body: <PermissionsSection onContinue={goNext} />,
+    },
+    login: {
+      icon: <User className="size-5" />,
+      title: <Trans>Create your account</Trans>,
+      lead: (
+        <Trans>
+          Sign in with your Shots account. A work email unlocks a free Pro
+          trial.
+        </Trans>
+      ),
+      skippable: true,
+      body: <LoginSection onContinue={goNext} />,
+    },
+    calendar: {
+      icon: <CalendarBlank className="size-5" />,
+      title: <Trans>Connect your calendar</Trans>,
+      lead: (
+        <Trans>Sync your calendar to get a reminder before each meeting.</Trans>
+      ),
+      skippable: true,
+      body: (
+        <CalendarSection onContinue={goNext} onSignIn={handleCalendarSignIn} />
+      ),
+    },
+    imports: {
+      icon: <ClockCounterClockwise className="size-5" />,
+      title: <Trans>Bring your meeting history</Trans>,
+      lead: (
+        <Trans>
+          Import notes and transcripts from the meeting apps you already use.
+        </Trans>
+      ),
+      skippable: true,
+      body: <ImportSection onContinue={goNext} onSkip={skipCurrentStep} />,
+    },
+    final: {
+      icon: <OnboardingSuccessMark />,
+      iconTile: false,
+      title: <Trans>You're all set</Trans>,
+      lead: <Trans>Open Shots Founder Hub to see your welcome note.</Trans>,
+      skippable: false,
+      body: (
+        <div className="flex flex-col gap-6">
+          <FinalSection onContinue={handleFinish} />
+          <div className="text-muted-foreground text-sm">
+            <FinalDescription />
+          </div>
         </div>
+      ),
+    },
+  };
+  const view = views[currentStep];
+
+  const email = auth.session?.user.email;
+
+  // Below lg the frame fills the window; on large screens it floats at a
+  // comfortable size, as the Shots onboarding frame does in a browser.
+  return (
+    <div className="bg-background text-foreground flex h-full min-h-0 items-center justify-center lg:p-6">
+      <div className="bg-popover lg:border-border flex size-full min-h-0 overflow-hidden lg:max-h-[760px] lg:max-w-[1120px] lg:rounded-2xl lg:border lg:p-2 lg:shadow-2xl">
+        <aside
+          data-tauri-drag-region
+          className="hidden w-64 shrink-0 flex-col justify-between px-5 pt-14 pb-5 md:flex lg:pt-8"
+        >
+          <div className="flex flex-col gap-10">
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/assets/anarlog-icon.png"
+                alt=""
+                className="size-7 rounded-lg"
+              />
+              <span className="text-sm font-semibold tracking-tight">
+                Shots Founder Hub
+              </span>
+            </div>
+            <OnboardingStepList steps={stepList} />
+          </div>
+          {email ? (
+            <div className="text-muted-foreground truncate text-xs">
+              <Trans>
+                Signed in as <span className="text-foreground/80">{email}</span>
+              </Trans>
+            </div>
+          ) : null}
+        </aside>
+        <section className="bg-card border-border relative m-2 flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border md:ml-0 lg:m-0">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(55%_100%_at_50%_0%,hsl(var(--foreground)/0.06),transparent_70%)]"
+          />
+          <OnboardingStepBars steps={stepList} className="md:hidden" />
+          <AnimatePresence mode="wait" initial={false}>
+            <OnboardingStepPanel
+              key={currentStep}
+              icon={view.icon}
+              iconTile={view.iconTile}
+              title={view.title}
+              lead={view.lead}
+              onBack={currentIndex > 0 ? goBack : undefined}
+              onSkip={view.skippable ? skipCurrentStep : undefined}
+            >
+              {view.body}
+            </OnboardingStepPanel>
+          </AnimatePresence>
+        </section>
       </div>
     </div>
   );

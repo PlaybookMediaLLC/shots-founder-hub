@@ -13,6 +13,18 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/onboarding/shared.tsx
+msgid " (current step)"
+msgstr " (current step)"
+
+#: src/onboarding/shared.tsx
+msgid " (done)"
+msgstr " (done)"
+
+#: src/onboarding/shared.tsx
+msgid " (skipped)"
+msgstr " (skipped)"
+
 #: src/services/enhancer/summary-notification.ts
 msgid "\"{title}\" is ready to read."
 msgstr "\"{title}\" is ready to read."
@@ -288,7 +300,6 @@ msgstr "Access updated."
 msgid "Accessibility"
 msgstr "Accessibility"
 
-#: src/onboarding/index.tsx
 #: src/settings/general/account.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Account"
@@ -532,6 +543,10 @@ msgstr "All events"
 msgid "All Notes"
 msgstr "All Notes"
 
+#: src/onboarding/index.tsx
+msgid "All set"
+msgstr "All set"
+
 #: src/settings/stats/badge-collection.tsx
 msgid "All Set"
 msgstr "All Set"
@@ -539,6 +554,10 @@ msgstr "All Set"
 #: src/settings/stats/date-range.tsx
 msgid "All time"
 msgstr "All time"
+
+#: src/onboarding/index.tsx
+msgid "Allow access"
+msgstr "Allow access"
 
 #: src/settings/team/index.tsx
 msgid "Allow anyone-with-the-link sharing"
@@ -768,6 +787,7 @@ msgstr "Average across the capture days counted above."
 #: src/calendar/components/apple/permission.tsx
 #: src/calendar/components/event-chip.tsx
 #: src/instruction/index.tsx
+#: src/onboarding/shared.tsx
 #: src/session-sharing/delivery-panel.tsx
 #: src/settings/general/e2ee-setup.tsx
 #: src/sidebar/custom-sidebar-header.tsx
@@ -844,10 +864,6 @@ msgstr "Busy"
 #: src/sidebar/settings-nav-groups.ts
 msgid "Calendar"
 msgstr "Calendar"
-
-#: src/onboarding/index.tsx
-msgid "Calendar connected"
-msgstr "Calendar connected"
 
 #: src/settings/team/index.tsx
 msgid "Calendar-scheduled capture jobs. Canceling stops the bot from joining."
@@ -1440,7 +1456,6 @@ msgid "Connect a CRM to look up your contacts from Shots Founder Hub. Connection
 msgstr "Connect a CRM to look up your contacts from Shots Founder Hub. Connections are managed through your Shots Founder Hub account."
 
 #: src/onboarding/calendar.tsx
-#: src/onboarding/index.tsx
 msgid "Connect calendar"
 msgstr "Connect calendar"
 
@@ -1485,6 +1500,10 @@ msgstr "Connect Slack"
 #: src/session-sharing/delivery-panel.tsx
 msgid "Connect Slack to choose a channel for this recap."
 msgstr "Connect Slack to choose a channel for this recap."
+
+#: src/onboarding/index.tsx
+msgid "Connect your calendar"
+msgstr "Connect your calendar"
 
 #: src/instruction/index.tsx
 msgid "Connect your integration"
@@ -1880,10 +1899,6 @@ msgstr "Create a shared workspace"
 msgid "Create a Team to share a library"
 msgstr "Create a Team to share a library"
 
-#: src/onboarding/index.tsx
-msgid "Create account"
-msgstr "Create account"
-
 #: src/settings/developers/cloud-api.tsx
 msgid "Create key"
 msgstr "Create key"
@@ -1904,6 +1919,7 @@ msgstr "Create new speaker"
 msgid "Create template"
 msgstr "Create template"
 
+#: src/onboarding/index.tsx
 #: src/settings/stats/badge-collection.tsx
 msgid "Create your account"
 msgstr "Create your account"
@@ -2610,12 +2626,17 @@ msgid "Free months earned"
 msgstr "Free months earned"
 
 #: src/onboarding/account/before-login.tsx
+#: src/onboarding/index.tsx
 msgid "Free Pro with a work email"
 msgstr "Free Pro with a work email"
 
 #: src/templates/template-icon-picker.tsx
 msgid "Frequently used"
 msgstr "Frequently used"
+
+#: src/onboarding/index.tsx
+msgid "From apps you already use"
+msgstr "From apps you already use"
 
 #: src/session-sharing/draft-panel.tsx
 #: src/session-sharing/management-panel.tsx
@@ -2691,14 +2712,6 @@ msgstr "Go to"
 #: src/shared/control.tsx
 msgid "Go to Home"
 msgstr "Go to Home"
-
-#: src/onboarding/shared.tsx
-msgid "Go to next section"
-msgstr "Go to next section"
-
-#: src/onboarding/shared.tsx
-msgid "Go to previous section"
-msgstr "Go to previous section"
 
 #: src/chat/components/body/index.tsx
 msgid "Go to recent"
@@ -2862,6 +2875,10 @@ msgstr "If Shots Founder Hub stays closed, paste the link in the sign-in window.
 #: src/settings/referrals.tsx
 msgid "If your friend signed up through your link and started their free trial, but your free month hasn't appeared, email us and we'll help."
 msgstr "If your friend signed up through your link and started their free trial, but your free month hasn't appeared, email us and we'll help."
+
+#: src/onboarding/index.tsx
+msgid "Import meeting history"
+msgstr "Import meeting history"
 
 #: src/onboarding/index.tsx
 msgid "Import notes and transcripts from the meeting apps you already use."
@@ -3490,10 +3507,6 @@ msgstr "Meeting ends"
 msgid "Meeting exports"
 msgstr "Meeting exports"
 
-#: src/onboarding/index.tsx
-msgid "Meeting history imported"
-msgstr "Meeting history imported"
-
 #: src/session/components/outer-header/overflow/index.tsx
 msgid "Meeting info"
 msgstr "Meeting info"
@@ -3580,6 +3593,10 @@ msgstr "Microphone"
 #: src/onboarding/permissions.tsx
 msgid "Microphone access turned on"
 msgstr "Microphone access turned on"
+
+#: src/onboarding/index.tsx
+msgid "Microphone and system audio"
+msgstr "Microphone and system audio"
 
 #: src/settings/general/notification.tsx
 msgid "Microphone detection"
@@ -4135,6 +4152,10 @@ msgstr "Open Shots Founder Hub from the menu bar."
 msgid "Open Shots Founder Hub on an existing synced device signed in to the same account. This device will connect automatically."
 msgstr "Open Shots Founder Hub on an existing synced device signed in to the same account. This device will connect automatically."
 
+#: src/onboarding/index.tsx
+msgid "Open Shots Founder Hub to see your welcome note."
+msgstr "Open Shots Founder Hub to see your welcome note."
+
 #: src/settings/shots.tsx
 msgid "Open Shots settings"
 msgstr "Open Shots settings"
@@ -4151,6 +4172,10 @@ msgstr "Open the meeting link when a scheduled meeting begins."
 #: src/session-sharing/management-panel.tsx
 msgid "Open web copy"
 msgstr "Open web copy"
+
+#: src/onboarding/index.tsx
+msgid "Open your first note"
+msgstr "Open your first note"
 
 #: src/settings/ai/llm/subscriptions/connect.tsx
 msgid "Opening sign-in…"
@@ -4308,10 +4333,6 @@ msgstr "Permissions"
 #: src/settings/team/index.tsx
 msgid "Permissions for {0}"
 msgstr "Permissions for {0}"
-
-#: src/onboarding/index.tsx
-msgid "Permissions granted"
-msgstr "Permissions granted"
 
 #: src/onboarding/account/after-login.tsx
 msgid "Personal email"
@@ -4499,10 +4520,6 @@ msgstr "Ready"
 msgid "Ready to dictate"
 msgstr "Ready to dictate"
 
-#: src/onboarding/index.tsx
-msgid "Ready to go"
-msgstr "Ready to go"
-
 #: src/settings/ai/llm/select.tsx
 msgid "Reasoning effort"
 msgstr "Reasoning effort"
@@ -4638,6 +4655,10 @@ msgstr "Remember speakers"
 #: src/settings/todo/provider-content.tsx
 msgid "Reminders"
 msgstr "Reminders"
+
+#: src/onboarding/index.tsx
+msgid "Reminders before meetings"
+msgstr "Reminders before meetings"
 
 #: src/settings/developers/cloud-api.tsx
 msgid "Remote MCP"
@@ -5412,14 +5433,6 @@ msgstr "Shots Founder Hub is Locked"
 msgid "Shots Founder Hub member"
 msgstr "Shots Founder Hub member"
 
-#: src/onboarding/index.tsx
-msgid "Shots Founder Hub needs access to your microphone and system audio to record and transcribe your meetings"
-msgstr "Shots Founder Hub needs access to your microphone and system audio to record and transcribe your meetings"
-
-#: src/onboarding/index.tsx
-msgid "Shots Founder Hub needs microphone and system audio to transcribe your meetings, plus Accessibility to read meeting controls, visible chat."
-msgstr "Shots Founder Hub needs microphone and system audio to transcribe your meetings, plus Accessibility to read meeting controls, visible chat."
-
 #: src/settings/general/primary-recording-device.tsx
 msgid "Shots Founder Hub Pro coordinates recording across your devices."
 msgstr "Shots Founder Hub Pro coordinates recording across your devices."
@@ -5438,6 +5451,10 @@ msgstr "Shots Founder Hub skill added to {0} agents"
 msgid "Shots Founder Hub user"
 msgstr "Shots Founder Hub user"
 
+#: src/onboarding/index.tsx
+msgid "Shots Founder Hub uses your microphone and system audio to transcribe meetings, and Accessibility to read meeting controls and visible chat."
+msgstr "Shots Founder Hub uses your microphone and system audio to transcribe meetings, and Accessibility to read meeting controls and visible chat."
+
 #: src/settings/sync/index.tsx
 msgid "Shots Founder Hub will keep retrying."
 msgstr "Shots Founder Hub will keep retrying."
@@ -5449,10 +5466,6 @@ msgstr "Shots Founder Hub will retry automatically."
 #: src/settings/general/storage/legacy-cleanup.tsx
 msgid "Shots Founder Hub will retry automatically. This does not affect your notes."
 msgstr "Shots Founder Hub will retry automatically. This does not affect your notes."
-
-#: src/onboarding/index.tsx
-msgid "Shots Founder Hub will sync your calendar to get meeting reminders"
-msgstr "Shots Founder Hub will sync your calendar to get meeting reminders"
 
 #: src/sidebar/timeline/item.tsx
 msgid "Show All Recurring Events"
@@ -5674,6 +5687,10 @@ msgstr "Sign in with SuperGrok or X Premium+ and enter the code below."
 msgid "Sign in with your Claude account. After you authorize, copy the code and we'll finish connecting."
 msgstr "Sign in with your Claude account. After you authorize, copy the code and we'll finish connecting."
 
+#: src/onboarding/index.tsx
+msgid "Sign in with your Shots account. A work email unlocks a free Pro trial."
+msgstr "Sign in with your Shots account. A work email unlocks a free Pro trial."
+
 #: src/settings/general/account.tsx
 msgid "Sign out"
 msgstr "Sign out"
@@ -5692,6 +5709,10 @@ msgstr "Sign out of Shots Founder Hub?"
 msgid "Signed in"
 msgstr "Signed in"
 
+#: src/onboarding/index.tsx
+msgid "Signed in as <0>{email}</0>"
+msgstr "Signed in as <0>{email}</0>"
+
 #: src/settings/general/account.tsx
 msgid "Signing out..."
 msgstr "Signing out..."
@@ -5709,10 +5730,6 @@ msgid "Skill installed"
 msgstr "Skill installed"
 
 #: src/onboarding/shared.tsx
-msgid "Skip"
-msgstr "Skip"
-
-#: src/onboarding/imports.tsx
 msgid "Skip for now"
 msgstr "Skip for now"
 
@@ -5837,10 +5854,6 @@ msgstr "Start when meeting begins"
 #: src/session/components/note-input/raw.tsx
 msgid "Start with a favorite template"
 msgstr "Start with a favorite template"
-
-#: src/onboarding/index.tsx
-msgid "Start with permissions"
-msgstr "Start with permissions"
 
 #: src/session/components/note-input/raw.tsx
 msgid "Start writing..."
@@ -6035,6 +6048,10 @@ msgstr "Sync status unavailable"
 #: src/auth/connect-local-library-dialog.tsx
 msgid "Sync this local library with {email}?"
 msgstr "Sync this local library with {email}?"
+
+#: src/onboarding/index.tsx
+msgid "Sync your calendar to get a reminder before each meeting."
+msgstr "Sync your calendar to get a reminder before each meeting."
 
 #: src/settings/general/account.tsx
 msgid "Sync your changes before signing out."
@@ -6699,10 +6716,6 @@ msgstr "Week starts on"
 msgid "Weekly streak: {0}"
 msgstr "Weekly streak: {0}"
 
-#: src/onboarding/index.tsx
-msgid "Welcome to Shots Founder Hub"
-msgstr "Welcome to Shots Founder Hub"
-
 #: src/chat/components/body/empty.tsx
 msgid "What action items have come up so far in this meeting?"
 msgstr "What action items have come up so far in this meeting?"
@@ -6815,6 +6828,10 @@ msgstr "You will become the Primary owner of {workspaceName}, with control over 
 #: src/settings/general/account.tsx
 msgid "You'll need to sign in again to use cloud sync and account features."
 msgstr "You'll need to sign in again to use cloud sync and account features."
+
+#: src/onboarding/index.tsx
+msgid "You're all set"
+msgstr "You're all set"
 
 #: src/onboarding/account/after-login.tsx
 msgid "You're on a Pro trial"

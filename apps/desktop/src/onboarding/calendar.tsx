@@ -72,7 +72,7 @@ function AppleCalendarList() {
       onRefresh={handleRefresh}
       isLoading={isLoading}
       disableHoverTone
-      className="border-border/45 bg-card/28 rounded-xl border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_24px_-20px_rgba(87,83,78,0.35)] backdrop-blur-md backdrop-saturate-150"
+      className="border-border bg-card rounded-xl border p-4 shadow-xs"
     />
   );
 }
@@ -110,7 +110,7 @@ function AppleCalendarProvider({
             onRequest();
           }}
           disabled={isPending}
-          className="border-border bg-card text-foreground hover:bg-accent flex h-full w-full items-center justify-center gap-3 border px-6 shadow-[0_2px_6px_rgba(87,83,78,0.08),0_10px_18px_-10px_rgba(87,83,78,0.22)] transition-all duration-150"
+          className="border-border bg-card text-foreground hover:bg-accent flex h-12 w-full items-center justify-center gap-3 rounded-xl border px-6 shadow-xs transition-all duration-150"
         >
           <img
             src="/assets/apple-calendar.png"
@@ -183,7 +183,7 @@ function GoogleCalendarConnectedContent({
         onRefresh={handleRefresh}
         isLoading={isLoading}
         disableHoverTone
-        className="border-border/45 bg-card/28 rounded-xl border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_24px_-20px_rgba(87,83,78,0.35)] backdrop-blur-md backdrop-saturate-150"
+        className="border-border bg-card rounded-xl border p-4 shadow-xs"
       />
     </div>
   );
@@ -299,7 +299,7 @@ function OutlookCalendarConnectedContent({
         onRefresh={handleRefresh}
         isLoading={isLoading}
         disableHoverTone
-        className="border-border/45 bg-card/28 rounded-xl border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_8px_24px_-20px_rgba(87,83,78,0.35)] backdrop-blur-md backdrop-saturate-150"
+        className="border-border bg-card rounded-xl border p-4 shadow-xs"
       />
     </div>
   );
@@ -339,8 +339,8 @@ function OAuthCalendarProviderAction({
         disabled={isOpening || (isSignedIn && (isPending || !isReady))}
         className={
           isSignedIn
-            ? "border-border bg-card text-foreground hover:bg-accent disabled:hover:bg-card flex h-full w-full items-center justify-center gap-3 border shadow-[0_2px_6px_rgba(87,83,78,0.08),0_10px_18px_-10px_rgba(87,83,78,0.22)] disabled:cursor-not-allowed disabled:opacity-60"
-            : "border-border bg-muted text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:border-primary focus-visible:bg-primary focus-visible:text-primary-foreground h-full w-full border-1 shadow-[0_2px_6px_rgba(87,83,78,0.01),0_10px_18px_-10px_rgba(87,83,78,0.1)] transition-all duration-150"
+            ? "border-border bg-card text-foreground hover:bg-accent disabled:hover:bg-card flex h-12 w-full items-center justify-center gap-3 rounded-xl border shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
+            : "border-border bg-muted text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:border-primary focus-visible:bg-primary focus-visible:text-primary-foreground h-12 w-full rounded-xl border-1 shadow-xs transition-all duration-150"
         }
       >
         {!isSignedIn ? (

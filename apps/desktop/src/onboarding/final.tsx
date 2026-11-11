@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 
 import { commands as analyticsCommands } from "@anlg/plugin-analytics";
 import { commands as openerCommands } from "@anlg/plugin-opener2";
-import { commands as sfxCommands } from "@anlg/plugin-sfx";
 import {
   CircleNotch,
   DiscordLogo,
@@ -129,7 +128,6 @@ export async function finishOnboarding(
   onContinue?: (sessionId: string) => void,
   welcomeSessionRef?: { current: string | null },
 ) {
-  await sfxCommands.stop("BGM").catch(console.error);
   const welcomeSessionId =
     welcomeSessionRef?.current ??
     (await getOrCreateWelcomeSession().catch((error) => {
