@@ -174,12 +174,12 @@ Cloud project. Existing connections with broader scopes must be reauthorized.
 
 To test hosted transcription and summaries while keeping Drive requests local,
 set `VITE_API_URL=http://localhost:3001` and
-`VITE_AI_API_URL=https://api.anarlog.so` in `apps/desktop/.env`, then restart the
-desktop dev process. This requires an account and Pro entitlement accepted by
-the hosted service. The local API can remain `ANARLOG_SERVICE=core`. Omitting
-`VITE_AI_API_URL` keeps AI requests on `VITE_API_URL`. Explicit provider base URL
-settings still take precedence. Audio and summary requests use the hosted service
-and its normal usage limits.
+`VITE_AI_API_URL=https://api.shots.playbookmedia.io` in `apps/desktop/.env`, then
+restart the desktop dev process. This requires an account and Pro entitlement
+accepted by the hosted service. The local API can remain `ANARLOG_SERVICE=core`.
+Omitting `VITE_AI_API_URL` keeps AI requests on `VITE_API_URL`. Explicit
+provider base URL settings still take precedence. Audio and summary requests use
+the hosted service and its normal usage limits.
 
 Set `GOOGLE_DRIVE_PICKER_REDIRECT_URI` in `apps/api/.env` to
 `http://localhost:3000/app/google-drive-picker` for local development. Register

@@ -343,7 +343,7 @@ mod tests {
                 .unwrap()[0]
                 .as_str()
                 .unwrap()
-                .contains("resource_metadata=\"https://api.anarlog.so/.well-known/oauth-protected-resource/mcp\"")
+                .contains("resource_metadata=\"https://api.shots.playbookmedia.io/.well-known/oauth-protected-resource/mcp\"")
         );
     }
 }

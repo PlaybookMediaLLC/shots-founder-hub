@@ -24,7 +24,8 @@ maps from the final deployment artifact.
 Copy the web environment to the new Vercel project using the variable names in
 `src/env.ts`, including the existing Supabase, Stripe, Loops, analytics, and
 workspace-sharing settings. Set `VITE_APP_URL=https://shots.playbookmedia.io` and
-`VITE_API_URL=https://api.anarlog.so`. Configure `SENTRY_DSN` for server errors.
+`VITE_API_URL=https://api.shots.playbookmedia.io`. Configure `SENTRY_DSN` for
+server errors.
 `APP_VERSION` is added to the server artifact from the release build version.
 Use separate non-production service credentials for previews.
 

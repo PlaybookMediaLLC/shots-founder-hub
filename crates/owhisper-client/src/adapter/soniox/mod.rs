@@ -168,13 +168,13 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.anarlog.so?provider=soniox",
-                "wss://api.anarlog.so/listen",
+                "https://api.shots.playbookmedia.io?provider=soniox",
+                "wss://api.shots.playbookmedia.io/listen",
                 vec![("provider", "soniox")],
             ),
             (
-                "https://api.anarlog.so/listen?provider=soniox",
-                "wss://api.anarlog.so/listen",
+                "https://api.shots.playbookmedia.io/listen?provider=soniox",
+                "wss://api.shots.playbookmedia.io/listen",
                 vec![("provider", "soniox")],
             ),
             (

@@ -51,7 +51,7 @@ concurrency:
   group: ${{ inputs.channel == 'stable' && 'desktop-stable-release' || format('{0}-{1}-{2}', github.workflow, github.ref, inputs.channel) }}
   cancel-in-progress: ${{ inputs.channel != 'stable' }}
 env:
-  CN_APPLICATION: "fastrepl/hyprnote2"
+  CN_APPLICATION: ${{ vars.CN_APPLICATION }}
   RELEASE_CHANNEL: ${{ inputs.channel }}
   TAURI_CONF_PATH: ./src-tauri/tauri.conf.${{ inputs.channel }}.json
   APP_BINARY: ${{ inputs.channel == 'stable' && 'shots-founder-hub' || format('shots-founder-hub-{0}', inputs.channel) }}
@@ -241,7 +241,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_APP_URL: "https://shots.playbookmedia.io"
-          VITE_API_URL: "https://api.anarlog.so"
+          VITE_API_URL: "https://api.shots.playbookmedia.io"
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - if: ${{ inputs.channel != 'staging' }}
@@ -276,6 +276,7 @@ jobs:
         env:
           INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_SENTRY_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
         run: |
           response=$(
             curl --fail --silent --show-error --get \
@@ -293,7 +294,7 @@ jobs:
           export SENTRY_AUTH_TOKEN
 
           sentry-cli debug-files upload \
-            --org fastrepl \
+            --org "$SENTRY_ORG" \
             --project anarlog \
             --include-sources \
             "${{ steps.macos-symbols.outputs.path }}"
@@ -440,7 +441,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_APP_URL: https://shots.playbookmedia.io
-          VITE_API_URL: https://api.anarlog.so
+          VITE_API_URL: https://api.shots.playbookmedia.io
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - run: node scripts/repack-linux-appimage.mjs "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage"
@@ -455,6 +456,7 @@ jobs:
         env:
           INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_SENTRY_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
         run: |
           binary="apps/desktop/src-tauri/target/${{ matrix.target }}/release/$APP_BINARY"
           sentry-cli debug-files check "$binary"
@@ -475,7 +477,7 @@ jobs:
           export SENTRY_AUTH_TOKEN
 
           sentry-cli debug-files upload \
-            --org fastrepl \
+            --org "$SENTRY_ORG" \
             --project anarlog \
             --include-sources \
             "$binary"
@@ -652,7 +654,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_APP_URL: https://shots.playbookmedia.io
-          VITE_API_URL: https://api.anarlog.so
+          VITE_API_URL: https://api.shots.playbookmedia.io
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - if: ${{ inputs.channel != 'staging' }}
@@ -663,6 +665,7 @@ jobs:
         env:
           INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_SENTRY_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
         run: |
           release_dir="apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release"
           # Tauri renames the exe to mainBinaryName (shots-founder-hub.exe) but the PDB
@@ -695,7 +698,7 @@ jobs:
           export SENTRY_AUTH_TOKEN
 
           sentry-cli debug-files upload \
-            --org fastrepl \
+            --org "$SENTRY_ORG" \
             --project anarlog \
             --include-sources \
             "$release_dir/$APP_BINARY.exe" \

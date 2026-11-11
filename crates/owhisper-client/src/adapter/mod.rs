@@ -355,7 +355,7 @@ pub(crate) fn host_matches(base_url: &str, predicate: impl Fn(&str) -> bool) -> 
         .unwrap_or(false)
 }
 
-const ANARLOG_PROXY_HOST: &str = "api.anarlog.so";
+const ANARLOG_PROXY_HOST: &str = "api.shots.playbookmedia.io";
 
 fn is_anarlog_cloud_host(host: &str) -> bool {
     host == ANARLOG_PROXY_HOST

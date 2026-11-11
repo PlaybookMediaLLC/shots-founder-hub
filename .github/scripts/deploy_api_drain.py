@@ -773,7 +773,7 @@ def deploy(
 ) -> None:
     if image_override:
         if not re.fullmatch(
-            r"registry\.fly\.io/(anarlog-gateway|anarlog-ai|anarlog-inference|anarlog-sync|anarlog-core|anarlog-billing-api|hyprnote-ai|hyprnote-stripe)@sha256:[0-9a-f]{64}",
+            r"registry\.fly\.io/(shots-founder-hub-gateway|shots-founder-hub-ai|shots-founder-hub-inference|shots-founder-hub-sync|shots-founder-hub-core|shots-founder-hub-billing-api|hyprnote-ai|hyprnote-stripe)@sha256:[0-9a-f]{64}",
             image_override,
         ):
             raise DeployError(

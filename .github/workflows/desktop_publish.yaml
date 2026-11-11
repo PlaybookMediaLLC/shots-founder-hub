@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  CN_APPLICATION: "fastrepl/hyprnote2"
+  CN_APPLICATION: ${{ vars.CN_APPLICATION }}
 
 jobs:
   parse:

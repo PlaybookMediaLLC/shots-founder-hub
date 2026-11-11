@@ -353,10 +353,10 @@ async def verify_isolated_drain(args, token, audio, *, stop_timeout=90):
 
 
 async def run(args):
-    if args.app not in {"anarlog-inference", "anarlog-gateway", "anarlog-ai"}:
+    if args.app not in {"shots-founder-hub-inference", "shots-founder-hub-gateway", "shots-founder-hub-ai"}:
         raise RuntimeError("Continuity QA supports the AI runtime and Anarlog gateway")
     if not re.fullmatch(
-        r"registry\.fly\.io/(anarlog-gateway|anarlog-ai|anarlog-inference|anarlog-core|anarlog-sync|anarlog-billing-api|hyprnote-ai)@sha256:[0-9a-f]{64}",
+        r"registry\.fly\.io/(shots-founder-hub-gateway|shots-founder-hub-ai|shots-founder-hub-inference|shots-founder-hub-core|shots-founder-hub-sync|shots-founder-hub-billing-api|hyprnote-ai)@sha256:[0-9a-f]{64}",
         args.image,
     ):
         raise RuntimeError("Continuity QA requires an immutable API image")
@@ -408,7 +408,7 @@ async def run(args):
     rollback_file = tempfile.NamedTemporaryFile(mode="w", suffix=".toml")
     rollback_file.write(deploy.rollback_health_config(args.config, originals[0]))
     rollback_file.flush()
-    gateway = args.app in {"anarlog-gateway", "anarlog-ai"}
+    gateway = args.app in {"shots-founder-hub-gateway", "shots-founder-hub-ai"}
     base = getattr(args, "base_url", None) or f"https://{args.app}.fly.dev"
     traffic = Traffic(base, token, audio, gateway=gateway)
     monitor = asyncio.create_task(traffic.requests())
@@ -513,10 +513,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--base-url",
         choices=[
-            "https://api.anarlog.so",
-            "https://anarlog-gateway.fly.dev",
-            "https://anarlog-ai.fly.dev",
-            "https://anarlog-inference.fly.dev",
+            "https://api.shots.playbookmedia.io",
+            "https://shots-founder-hub-gateway.fly.dev",
+            "https://shots-founder-hub-ai.fly.dev",
+            "https://shots-founder-hub-inference.fly.dev",
         ],
         help="Traffic origin; defaults to the selected app before custom-domain cutover",
     )

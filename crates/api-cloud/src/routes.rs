@@ -665,7 +665,7 @@ kHmPRiazukxPLb6ilpRAewjW8nihRANCAATDskChT+Altkm9X7MI69T3IUmrQU0L\n\
             &serde_json::json!({
                 "sub": "00000000-0000-0000-0000-000000000001",
                 "iss": issuer,
-                "aud": ["https://api.anarlog.so/mcp"],
+                "aud": ["https://api.shots.playbookmedia.io/mcp"],
                 "exp": expires_at,
                 "client_id": "chatgpt-client",
                 "scope": scope,
@@ -748,9 +748,9 @@ kHmPRiazukxPLb6ilpRAewjW8nihRANCAATDskChT+Altkm9X7MI69T3IUmrQU0L\n\
     #[tokio::test]
     async fn mcp_supports_stateless_tool_discovery_on_every_public_host() {
         for host in [
-            "api.anarlog.so",
-            "anarlog-gateway.fly.dev",
-            "anarlog-sync.fly.dev",
+            "api.shots.playbookmedia.io",
+            "shots-founder-hub-gateway.fly.dev",
+            "shots-founder-hub-sync.fly.dev",
         ] {
             assert_mcp_tool_discovery(host).await;
         }
@@ -923,7 +923,7 @@ kHmPRiazukxPLb6ilpRAewjW8nihRANCAATDskChT+Altkm9X7MI69T3IUmrQU0L\n\
         let response = app
             .oneshot(
                 Request::post("/mcp")
-                    .header("host", "api.anarlog.so")
+                    .header("host", "api.shots.playbookmedia.io")
                     .header("authorization", format!("Bearer {key}"))
                     .header("content-type", "application/json")
                     .header("accept", "application/json, text/event-stream")
@@ -978,7 +978,7 @@ kHmPRiazukxPLb6ilpRAewjW8nihRANCAATDskChT+Altkm9X7MI69T3IUmrQU0L\n\
                 .unwrap()
                 .to_str()
                 .unwrap(),
-            "Bearer resource_metadata=\"https://api.anarlog.so/.well-known/oauth-protected-resource/mcp\""
+            "Bearer resource_metadata=\"https://api.shots.playbookmedia.io/.well-known/oauth-protected-resource/mcp\""
         );
         let body = to_bytes(unauthorized.into_body(), usize::MAX)
             .await

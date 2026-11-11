@@ -19,7 +19,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/health
+    url: https://api.shots.playbookmedia.io/health
   retry: 3
   timeout: 45000
 "11027":
@@ -89,7 +89,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/health/sync
+    url: https://api.shots.playbookmedia.io/health/sync
   retry: 3
   timeout: 45000
 "11510":
@@ -115,7 +115,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/health/transcription
+    url: https://api.shots.playbookmedia.io/health/transcription
   retry: 3
   timeout: 45000
 "11511":
@@ -141,7 +141,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/health/llm
+    url: https://api.shots.playbookmedia.io/health/llm
   retry: 3
   timeout: 45000
 "11515":
@@ -152,7 +152,7 @@
       target: 200
     - compare: contains
       kind: textBody
-      target: https://api.anarlog.so/mcp
+      target: https://api.shots.playbookmedia.io/mcp
   description: Verifies Cloud API and MCP OAuth discovery metadata.
   frequency: 1m
   kind: http
@@ -167,33 +167,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/.well-known/oauth-protected-resource/mcp
-  retry: 3
-  timeout: 45000
-"11518":
-  active: true
-  assertions:
-    - compare: eq
-      kind: statusCode
-      target: 200
-    - compare: contains
-      kind: textBody
-      target: '"ready":true'
-  description: Verifies the production Stripe webhook and billing service.
-  frequency: 1m
-  kind: http
-  name: Shots Founder Hub Billing
-  openTelemetry: {}
-  regions:
-    - iad
-    - arn
-    - sin
-    - syd
-    - gru
-    - jnb
-  request:
-    method: GET
-    url: https://anarlog-billing-api.fly.dev/health/ready/billing-unified
+    url: https://api.shots.playbookmedia.io/.well-known/oauth-protected-resource/mcp
   retry: 3
   timeout: 45000
 "11519":
@@ -219,7 +193,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/sync/devices
+    url: https://api.shots.playbookmedia.io/sync/devices
   retry: 3
   timeout: 45000
 "11514":
@@ -245,7 +219,7 @@
     - jnb
   request:
     method: GET
-    url: https://api.anarlog.so/stt/status/openstatus-probe
+    url: https://api.shots.playbookmedia.io/stt/status/openstatus-probe
   retry: 3
   timeout: 45000
 "11512":
@@ -274,6 +248,6 @@
     headers:
       Content-Type: application/json
     method: POST
-    url: https://api.anarlog.so/llm/chat/completions
+    url: https://api.shots.playbookmedia.io/llm/chat/completions
   retry: 3
   timeout: 45000

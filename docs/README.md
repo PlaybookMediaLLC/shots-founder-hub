@@ -1,10 +1,10 @@
 # Shots Founder Hub documentation
 
-This Mintlify project is published at [docs.anarlog.so](https://docs.anarlog.so).
+This Mintlify project is published at [docs.shots.playbookmedia.io](https://docs.shots.playbookmedia.io).
 
 ## Deployment
 
-Configure the Mintlify project with `docs/` as its documentation directory and `docs.anarlog.so` as its custom domain. In Mintlify's domain setup:
+Configure the Mintlify project with `docs/` as its documentation directory and `docs.shots.playbookmedia.io` as its custom domain. In Mintlify's domain setup:
 
 1. Add the verification records shown in the dashboard.
 2. Wait for both records and TLS provisioning to verify.

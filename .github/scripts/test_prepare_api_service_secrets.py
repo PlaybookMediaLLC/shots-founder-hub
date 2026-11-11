@@ -38,7 +38,7 @@ class ServiceSecretsTests(unittest.TestCase):
     def test_callback_origin_belongs_to_ai_service(self):
         self.assertEqual(
             select("ai", self.api, [])["API_BASE_URL"],
-            "https://anarlog-inference.fly.dev",
+            "https://shots-founder-hub-inference.fly.dev",
         )
         self.assertEqual(select("all", self.api, [])["API_BASE_URL"], "test-value")
 

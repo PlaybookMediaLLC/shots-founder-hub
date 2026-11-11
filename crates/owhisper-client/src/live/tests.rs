@@ -95,7 +95,7 @@ async fn malformed_direct_endpoint_returns_provider_configuration_error() {
 async fn valid_proxy_and_direct_endpoints_still_build() {
     for api_base in [
         "https://api.deepgram.com/v1",
-        "https://api.anarlog.so/stt?provider=deepgram",
+        "https://api.shots.playbookmedia.io/stt?provider=deepgram",
     ] {
         ListenClient::builder()
             .adapter::<DeepgramAdapter>()

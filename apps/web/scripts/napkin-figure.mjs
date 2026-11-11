@@ -54,7 +54,7 @@ function usage() {
     --context "Shots Founder Hub blog figure for private, bot-free meeting notes"
 
 Required:
-  --slug           Blog article slug. Publishes https://static.anarlog.so/blog/articles/<slug>/<filename>.
+  --slug           Blog article slug. Publishes https://static.shots.playbookmedia.io/blog/articles/<slug>/<filename>.
   --filename       Output filename. Extension should match --format.
   --content        Text to visualize, or use --content-file.
   --content-file   File containing text to visualize.

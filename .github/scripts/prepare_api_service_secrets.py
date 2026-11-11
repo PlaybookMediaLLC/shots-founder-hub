@@ -137,7 +137,7 @@ def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
     if missing:
         raise ValueError("Missing required service secrets: " + ", ".join(missing))
     if service == "ai":
-        values["API_BASE_URL"] = "https://anarlog-inference.fly.dev"
+        values["API_BASE_URL"] = "https://shots-founder-hub-inference.fly.dev"
     return values
 
 

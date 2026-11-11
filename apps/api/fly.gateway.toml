@@ -1,4 +1,4 @@
-app = 'anarlog-gateway'
+app = 'shots-founder-hub-gateway'
 primary_region = 'sjc'
 kill_signal = 'SIGTERM'
 # Fly caps this at 300s. Meeting streams can last longer, so api_cd uses
@@ -12,10 +12,10 @@ processes = ["app"]
 
 [env]
 ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED = "false"
-ANARLOG_AI_ORIGIN = "https://anarlog-inference.fly.dev"
-ANARLOG_SYNC_ORIGIN = "https://anarlog-sync.fly.dev"
-ANARLOG_CORE_ORIGIN = "https://anarlog-core.fly.dev"
-ANARLOG_BILLING_ORIGIN = "https://anarlog-billing-api.fly.dev"
+ANARLOG_AI_ORIGIN = "https://shots-founder-hub-inference.fly.dev"
+ANARLOG_SYNC_ORIGIN = "https://shots-founder-hub-sync.fly.dev"
+ANARLOG_CORE_ORIGIN = "https://shots-founder-hub-core.fly.dev"
+ANARLOG_BILLING_ORIGIN = "https://shots-founder-hub-billing-api.fly.dev"
 PORT = "3001"
 
 [http_service]

@@ -17,7 +17,7 @@ use self::shots::Shots;
 use self::storage::{AuthStore, Backend};
 
 const WEB_APP_URL: &str = "https://shots.playbookmedia.io";
-const API_URL: &str = "https://api.anarlog.so";
+const API_URL: &str = "https://api.shots.playbookmedia.io";
 const MAX_CALLBACK_BYTES: usize = 32 * 1024;
 
 pub async fn run(command: &AuthCommand, json: bool) -> Result<()> {

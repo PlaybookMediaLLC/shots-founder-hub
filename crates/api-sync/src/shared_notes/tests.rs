@@ -103,7 +103,7 @@ async fn verifies_and_sends_a_resend_shared_note_invitation_email() {
         .and(header("authorization", "Bearer resend-key"))
         .and(header("idempotency-key", INVITATION_ID))
         .and(body_partial_json(json!({
-            "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
+            "from": "Owner via Shots Founder Hub <notes@send.shots.playbookmedia.io>",
             "to": "invitee@example.com",
             "reply_to": "owner@example.com",
             "subject": "Owner invited you to Planning",
@@ -115,7 +115,7 @@ async fn verifies_and_sends_a_resend_shared_note_invitation_email() {
         .await;
     let config = SharedNotesConfig::new(server.uri(), "service-role-key")
         .unwrap()
-        .with_resend_email("resend-key", "notes@send.anarlog.so")
+        .with_resend_email("resend-key", "notes@send.shots.playbookmedia.io")
         .unwrap()
         .with_resend_api_base(reqwest::Url::parse(&format!("{}/", server.uri())).unwrap());
     let app = authenticated_router(SharedNotesState::new(config)).layer(Extension(AuthContext {
@@ -176,7 +176,7 @@ async fn verifies_and_sends_a_workspace_invitation_email() {
         .and(header("authorization", "Bearer resend-key"))
         .and(header("idempotency-key", INVITATION_ID))
         .and(body_partial_json(json!({
-            "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
+            "from": "Owner via Shots Founder Hub <notes@send.shots.playbookmedia.io>",
             "to": "invitee@example.com",
             "reply_to": "owner@example.com",
             "subject": "You're invited to join the \"Fastrepl\" team in Shots Founder Hub",
@@ -188,7 +188,7 @@ async fn verifies_and_sends_a_workspace_invitation_email() {
         .await;
     let config = SharedNotesConfig::new(server.uri(), "service-role-key")
         .unwrap()
-        .with_resend_email("resend-key", "notes@send.anarlog.so")
+        .with_resend_email("resend-key", "notes@send.shots.playbookmedia.io")
         .unwrap()
         .with_resend_api_base(reqwest::Url::parse(&format!("{}/", server.uri())).unwrap());
     let app = authenticated_router(SharedNotesState::new(config)).layer(Extension(AuthContext {
@@ -244,14 +244,14 @@ async fn authorizes_and_sends_a_meeting_recap_to_each_recipient() {
         .and(header("idempotency-key", INVITATION_ID))
         .and(body_json(json!([
             {
-                "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
+                "from": "Owner via Shots Founder Hub <notes@send.shots.playbookmedia.io>",
                 "to": "one@example.com",
                 "reply_to": "owner@example.com",
                 "subject": "Meeting notes: Planning",
                 "text": "Planning\n\n## Decisions\n\nShip it.\n\nSent by Owner via Shots Founder Hub. Reply to this email to contact them."
             },
             {
-                "from": "Owner via Shots Founder Hub <notes@send.anarlog.so>",
+                "from": "Owner via Shots Founder Hub <notes@send.shots.playbookmedia.io>",
                 "to": "two@example.com",
                 "reply_to": "owner@example.com",
                 "subject": "Meeting notes: Planning",
@@ -264,7 +264,7 @@ async fn authorizes_and_sends_a_meeting_recap_to_each_recipient() {
         .await;
     let config = SharedNotesConfig::new(server.uri(), "service-role-key")
         .unwrap()
-        .with_resend_email("resend-key", "notes@send.anarlog.so")
+        .with_resend_email("resend-key", "notes@send.shots.playbookmedia.io")
         .unwrap()
         .with_resend_api_base(reqwest::Url::parse(&format!("{}/", server.uri())).unwrap());
     let app = authenticated_router(SharedNotesState::new(config)).layer(Extension(AuthContext {

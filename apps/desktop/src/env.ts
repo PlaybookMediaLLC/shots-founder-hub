@@ -12,7 +12,7 @@ export const env = createEnv({
     VITE_STATIC_ASSETS_URL: z
       .string()
       .url()
-      .default("https://static.anarlog.so"),
+      .default("https://static.shots.playbookmedia.io"),
     VITE_AI_API_URL: z.string().url().optional(),
     VITE_ENTERPRISE_API_URL: z.string().url().optional(),
     VITE_SUPABASE_URL: z.string().min(1).optional(),

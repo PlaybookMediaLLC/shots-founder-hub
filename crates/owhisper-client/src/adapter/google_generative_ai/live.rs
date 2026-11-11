@@ -304,7 +304,7 @@ mod tests {
             Some("test-key"),
         );
         let proxy = adapter.build_ws_url(
-            "https://api.anarlog.so/stt?provider=google_generative_ai",
+            "https://api.shots.playbookmedia.io/stt?provider=google_generative_ai",
             &params,
             1,
         );
@@ -315,7 +315,7 @@ mod tests {
         assert!(keyed.query().unwrap().contains("key=test-key"));
         assert_eq!(
             proxy.as_str().split('?').next().unwrap(),
-            "wss://api.anarlog.so/stt/listen"
+            "wss://api.shots.playbookmedia.io/stt/listen"
         );
         assert!(
             proxy

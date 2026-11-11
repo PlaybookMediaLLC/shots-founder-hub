@@ -71,7 +71,7 @@ jobs:
           NITRO_PRESET: vercel
           SENTRY_BUILD_SOURCEMAPS: "1"
           VITE_APP_URL: https://shots.playbookmedia.io
-          VITE_API_URL: https://api.anarlog.so
+          VITE_API_URL: https://api.shots.playbookmedia.io
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - run: |
           response=$(
@@ -91,7 +91,7 @@ jobs:
 
           pnpm -F @anlg/web exec sentry-cli sourcemaps inject ../../.vercel/output
           pnpm -F @anlg/web exec sentry-cli sourcemaps upload \
-            --org fastrepl \
+            --org "$SENTRY_ORG" \
             --project anarlog \
             --release "$SENTRY_RELEASE" \
             ../../.vercel/output
@@ -99,6 +99,7 @@ jobs:
         env:
           INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_SENTRY_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_RELEASE: anarlog-web@${{ needs.compute-version.outputs.version }}
       - run: pnpm dlx vercel@59.11.7 deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
         env:

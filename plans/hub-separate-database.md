@@ -347,7 +347,7 @@ Polling the change feed is enough at launch. For lower latency later, add a plat
 4. **Build the apps against it:**
    - desktop, web and mobile set `VITE_SHOTS_URL` and `VITE_API_URL`;
    - desktop sets `VITE_STORAGE_ORIGIN`;
-   - add these to `desktop_cd.yaml` (today it hard-codes `VITE_API_URL: https://api.anarlog.so`).
+   - add these to `desktop_cd.yaml` (today it hard-codes `VITE_API_URL: https://api.shots.playbookmedia.io`).
 5. **Remove the old setup** from Shots (Shots repo):
    - delete `server/founderhubmigrations/`, `dev/import-founder-hub-schema.py`, `server/cmd/founder-hub-storage/` and the `--founder-hub` flag in `platform-migrate`;
    - delete the CI steps at `.github/workflows/ci.yml:324-341`;

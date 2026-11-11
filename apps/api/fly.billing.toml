@@ -1,4 +1,4 @@
-app = 'anarlog-billing-api'
+app = 'shots-founder-hub-billing-api'
 primary_region = 'sjc'
 kill_signal = 'SIGTERM'
 # Fly caps this at 300s. Accepted billing work can last longer, so api_cd uses
