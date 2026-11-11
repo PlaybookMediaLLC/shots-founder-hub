@@ -456,3 +456,19 @@ test("an interrupted run is sent whole again, an expired URL is replaced, and a 
     3,
   );
 });
+
+test("audio refused at complete stops the audio only; the note stays sent", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/complete")
+      ? {
+          status: 403,
+          body: { message: "Voice audio upload is off in this workspace." },
+        }
+      : undefined;
+  const { deps, note } = harness({ shots, queued: [recording("s1")] });
+  assert.equal((await runVoicePass(deps)).status, "idle");
+  assert.equal(note("s1").audio, "unavailable");
+  assert.equal(note("s1").blocked, null);
+  assert.ok(note("s1").remoteId);
+});

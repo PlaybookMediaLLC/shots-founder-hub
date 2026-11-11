@@ -231,13 +231,17 @@ export function NoteScreen({
 
   const handleSendToShots = async () => {
     try {
-      const queued = await queueSessionForShots(id, { explicit: true });
+      const result = await queueSessionForShots(id, { explicit: true });
       showToast({
         id: `shots-send-${id}`,
-        title: queued ? "Sending to Shots" : "Couldn’t send to Shots",
-        description: queued
-          ? `This note goes to ${shotsWorkspace ?? "your Shots workspace"} when Shots can be reached.`
-          : "Choose a Shots workspace in Settings first.",
+        title:
+          result === "queued" ? "Sending to Shots" : "Couldn’t send to Shots",
+        description:
+          result === "queued"
+            ? `This note goes to ${shotsWorkspace ?? "your Shots workspace"} when Shots can be reached.`
+            : result === "deleted_in_shots"
+              ? "This note was deleted in Shots, so it is not sent again. It stays on your phone."
+              : "Choose a Shots workspace in Settings first.",
       });
     } catch (error) {
       captureOperationalError(error, { operation: "shots_voice_send" });

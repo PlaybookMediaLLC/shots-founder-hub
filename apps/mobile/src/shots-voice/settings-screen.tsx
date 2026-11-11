@@ -105,7 +105,16 @@ export function ShotsVoiceSettings() {
             >
               {[
                 ...(workspaceId
-                  ? []
+                  ? workspaces.data.some((item) => item.id === workspaceId)
+                    ? []
+                    : // Removed from it: keep it selectable so its queue stays visible (S10).
+                      [
+                        {
+                          id: workspaceId,
+                          name:
+                            voice.prefs.workspaceName ?? "Previous workspace",
+                        },
+                      ]
                   : [{ id: "", name: "Choose a workspace" }]),
                 ...workspaces.data,
               ].map((workspace) => (

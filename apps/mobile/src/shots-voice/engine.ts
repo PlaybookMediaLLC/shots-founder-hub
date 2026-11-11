@@ -103,6 +103,7 @@ const SIGNED_OUT: VoicePassResult = {
   nextAttemptAt: null,
 };
 const MAX_STEPS_PER_NOTE = 8;
+const EDIT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 class Stop {
   readonly result: VoicePassResult;
@@ -387,6 +388,14 @@ export async function runVoicePass(
           return save(succeeded({ ...note, audio: "done", upload: null }));
         if (reply.kind === "conflict")
           return save({ ...note, audio: "conflict" });
+        // Audio upload was turned off since the URL was signed; the note itself is in Shots.
+        if (reply.kind === "blocked")
+          return save({
+            ...note,
+            audio: "unavailable",
+            upload: null,
+            lastError: reply.message,
+          });
         if (reply.kind === "invalid" || reply.kind === "not_found") {
           // S4: the stored object is missing or bad; send the run again.
           const attempts = note.attempts + 1;
@@ -495,11 +504,15 @@ export async function runVoicePass(
 
     for (const initial of deps.notes()) {
       let note: VoiceNoteState | null = initial;
+      // shortcut: edits are looked for only in the last 30 days of notes, so a
+      // pass stays a few queries per recent note; batch the reads if edits of
+      // older notes matter.
       if (
         !note.pending &&
         note.onDevice === "done" &&
         !note.localDeleted &&
-        !note.deletedRemote
+        !note.deletedRemote &&
+        (!note.sent || now - Date.parse(note.recordedAt) < EDIT_WINDOW_MS)
       )
         note = await discover(note);
       for (let step = 0; note && step < MAX_STEPS_PER_NOTE; step += 1) {

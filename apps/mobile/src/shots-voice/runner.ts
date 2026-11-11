@@ -147,18 +147,19 @@ const deviceTimeZone = () => {
 
 /**
  * Queues a saved recording for Shots: always for an explicit "Send to Shots",
- * otherwise only when "Send new recordings to Shots" is on. Returns whether it
- * is queued.
+ * otherwise only when "Send new recordings to Shots" is on.
  */
 export async function queueSessionForShots(
   sessionId: string,
   options: { explicit: boolean; durationMs?: number },
-): Promise<boolean> {
+): Promise<"queued" | "off" | "no_workspace" | "deleted_in_shots"> {
   await whenShotsVoiceReady();
   const { accountId, prefs, notes } = getShotsVoice();
-  if (!env.shotsUrl || !accountId || !prefs.workspaceId) return false;
-  if (!options.explicit && !prefs.sendNew) return false;
+  if (!env.shotsUrl || !accountId || !prefs.workspaceId) return "no_workspace";
+  if (!options.explicit && !prefs.sendNew) return "off";
   const existing = notes.find((note) => note.sessionId === sessionId);
+  // S7: a note deleted in Shots is never recreated.
+  if (existing?.deletedRemote) return "deleted_in_shots";
   if (existing) {
     if (options.explicit && (existing.failed || existing.blocked))
       await saveShotsVoiceNote(accountId, prefs.workspaceId, {
@@ -169,7 +170,7 @@ export async function queueSessionForShots(
         nextAttemptAt: 0,
       });
     requestShotsVoiceSync();
-    return true;
+    return "queued";
   }
   const [session] = await execute<{
     created_at: string;
@@ -178,7 +179,7 @@ export async function queueSessionForShots(
     "SELECT created_at, json_extract(metadata_json, '$.mobile_capture_started_at_ms') AS started_ms FROM sessions WHERE id = ? AND deleted_at IS NULL",
     [sessionId],
   );
-  if (!session) return false;
+  if (!session) return "off";
   const preferences = await readPreferences();
   await saveShotsVoiceNote(
     accountId,
@@ -200,7 +201,7 @@ export async function queueSessionForShots(
     }),
   );
   requestShotsVoiceSync();
-  return true;
+  return "queued";
 }
 
 /** Recorder hook: never throws into the recording save path. */
@@ -214,6 +215,8 @@ export function queueRecordingForShots(sessionId: string, durationMs: number) {
     },
   );
 }
+
+const TRANSCRIBE_TIMEOUT_MS = 10 * 60_000;
 
 const TRANSCRIPT_VERSIONS_SQL = `
 SELECT transcript.id, transcript.content_version, transcript.provider, transcript.model
@@ -286,10 +289,20 @@ function engineDeps(
     },
     transcribe: async (sessionId) => {
       const preferences = await readPreferences();
-      return transcribeSessionOnDevice(sessionId, {
-        locale: preferences.ai_language,
-        vocabulary: preferences.personalization_dictionary_terms,
-      });
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      // A stuck engine must not hold every later note; the engine retries it.
+      return Promise.race([
+        transcribeSessionOnDevice(sessionId, {
+          locale: preferences.ai_language,
+          vocabulary: preferences.personalization_dictionary_terms,
+        }),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(
+            () => reject(new Error("On-device transcription timed out.")),
+            TRANSCRIBE_TIMEOUT_MS,
+          );
+        }),
+      ]).finally(() => clearTimeout(timeout));
     },
     transcriptVersion: async (sessionId, ids) => {
       const rows = (
