@@ -119,6 +119,32 @@ export function confirmIssue(input: {
   return null;
 }
 
+export type ConfirmBody =
+  | { text: string }
+  | {
+      text: string;
+      channelConnectionId: string;
+      localTime: string;
+      timeZone: string;
+    };
+
+/** What Confirm sends: the text alone saves a draft; a schedule sends the account, time and zone too (Shots refuses a partial set). */
+export function confirmBody(input: {
+  action: string;
+  text: string;
+  channelConnectionId: string;
+  localTime: string | null;
+  timeZone: string;
+}): ConfirmBody {
+  if (input.action !== "schedule_post") return { text: input.text };
+  return {
+    text: input.text,
+    channelConnectionId: input.channelConnectionId,
+    localTime: input.localTime ?? "",
+    timeZone: input.timeZone,
+  };
+}
+
 /** A wall-clock time from the card's fields, or null when they are not a valid date and time. */
 export function wallTime(date: string, time: string): string | null {
   const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());

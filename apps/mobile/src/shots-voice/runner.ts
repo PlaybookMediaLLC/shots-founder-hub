@@ -19,6 +19,7 @@ import { captureOperationalError } from "@/lib/error-reporting";
 import { readPreferences } from "@/settings/preferences";
 
 import { voiceFetch } from "./api";
+import type { ConfirmBody } from "./card-model";
 import {
   runVoicePass,
   type VoiceEngineDeps,
@@ -109,12 +110,7 @@ export const updateShotsVoiceMember = (
 /** Confirms a proposal once; Shots replays a repeated confirm (K11). */
 export async function confirmShotsVoiceCommand(
   sessionId: string,
-  body: {
-    text: string;
-    channelConnectionId: string;
-    localTime: string;
-    timeZone: string;
-  },
+  body: ConfirmBody,
 ): Promise<VoiceCommand> {
   const { accountId, prefs, notes } = getShotsVoice();
   const remoteId = notes.find((note) => note.sessionId === sessionId)?.remoteId;

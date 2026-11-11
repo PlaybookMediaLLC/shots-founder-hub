@@ -87,6 +87,8 @@ test("response classes follow the voice API status semantics", () => {
 
 test("sync stops only when Shots needs a newer app than this one", () => {
   assert.equal(isAppVersionSupported("0.1.9", "0.1.9"), true);
+  // Shots' default minimum when none is set.
+  assert.equal(isAppVersionSupported("0.0.0", "0.1.9"), true);
   assert.equal(isAppVersionSupported("0.1.10", "0.1.9"), false);
   assert.equal(isAppVersionSupported("1.0.0", "0.1.9"), false);
   assert.equal(isAppVersionSupported("0.1.2", "0.10.0"), true);

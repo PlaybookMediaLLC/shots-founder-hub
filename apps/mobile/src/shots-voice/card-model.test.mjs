@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   cardQuestions,
   commandStatusText,
+  confirmBody,
   confirmIssue,
   formatProposalTime,
   highlightAddedWords,
@@ -200,4 +201,22 @@ test("closed proposals say what happened and nothing more", () => {
     ),
     "Only text posts.",
   );
+});
+
+test("Confirm sends the text alone for a draft and all four fields for a schedule", () => {
+  const values = {
+    text: "Ship it",
+    channelConnectionId: "conn-1",
+    localTime: "2026-11-12T10:00",
+    timeZone: "Europe/Paris",
+  };
+  assert.deepEqual(confirmBody({ action: "draft_post", ...values }), {
+    text: "Ship it",
+  });
+  assert.deepEqual(confirmBody({ action: "schedule_post", ...values }), {
+    text: "Ship it",
+    channelConnectionId: "conn-1",
+    localTime: "2026-11-12T10:00",
+    timeZone: "Europe/Paris",
+  });
 });

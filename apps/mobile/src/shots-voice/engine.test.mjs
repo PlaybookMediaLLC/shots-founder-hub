@@ -814,3 +814,134 @@ test("sent notes past the edit window are forgotten unless a proposal is open", 
   assert.ok(!looked.includes("old"));
   assert.equal(shots.notes.get("unsent").revisions.size, 1);
 });
+
+test("a run Shots refuses at complete as over 31 minutes stops the audio only, with Shots' reason", async () => {
+  const shots = fakeShots();
+  const message =
+    "This run would make the note's audio longer than 31 minutes. Start a new note.";
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/complete")
+      ? { status: 409, body: { message } }
+      : undefined;
+  const { deps, puts, note } = harness({ shots, queued: [recording("s1")] });
+  assert.equal((await runVoicePass(deps)).status, "idle");
+  assert.equal(puts.length, 1);
+  assert.equal(note("s1").deletedRemote, false);
+  assert.equal(note("s1").audio, "unavailable");
+  assert.equal(voiceNoteStatusText(note("s1")), `Sent to Shots. ${message}`);
+  await runVoicePass(deps);
+  assert.equal(puts.length, 1);
+});
+
+test("only WAV recordings are uploaded; other audio leaves the note sent with its transcript", async () => {
+  const { deps, puts, shots, note } = harness({
+    queued: [recording("s1")],
+    audio: async () => ({
+      contentType: "audio/mp4",
+      bytes: 128_044,
+      sha256: "a".repeat(64),
+      relativePath: "audio.m4a",
+    }),
+  });
+  await runVoicePass(deps);
+  assert.equal(puts.length, 0);
+  assert.ok(shots.requests.every((call) => !call.suffix.includes("/runs/")));
+  assert.equal(note("s1").audio, "unavailable");
+  assert.match(voiceNoteStatusText(note("s1")), /WAV recordings only/);
+});
+
+test("a note at Shots' revision limit keeps its later edits on the phone and is not marked deleted", async () => {
+  const shots = fakeShots();
+  const message =
+    "This note has 50 transcript revisions, the most a note may hold.";
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/transcripts") && shots.full
+      ? { status: 409, body: { message } }
+      : undefined;
+  const { deps, local, note } = harness({
+    shots,
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  shots.full = true;
+  local.set("s1", { ...local.get("s1"), versionKey: "t-s1:v2" });
+  await runVoicePass(deps);
+  assert.equal(note("s1").deletedRemote, false);
+  assert.equal(note("s1").pending, null);
+  assert.equal(voiceNoteStatusText(note("s1")), `Sent to Shots. ${message}`);
+  const sent = () =>
+    shots.requests.filter((call) => call.suffix.endsWith("/transcripts"))
+      .length;
+  const before = sent();
+  local.set("s1", { ...local.get("s1"), versionKey: "t-s1:v3" });
+  await runVoicePass(deps);
+  assert.equal(sent(), before);
+});
+
+test("a transcript 409 for a note deleted in Shots still marks it deleted", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/transcripts")
+      ? { status: 409, body: { message: "This voice note was deleted." } }
+      : undefined;
+  const { deps, note } = harness({
+    shots,
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  assert.equal(note("s1").deletedRemote, true);
+});
+
+test("a delete Shots cannot record (503) keeps the note and retries it with backoff", async () => {
+  const shots = fakeShots();
+  shots.override = (method) =>
+    method === "DELETE" && shots.ledgerDown
+      ? {
+          status: 503,
+          body: {
+            code: "upstream_unavailable",
+            message: "A required dependency is unavailable.",
+          },
+        }
+      : undefined;
+  const { deps, clock, notes, note } = harness({
+    shots,
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  shots.ledgerDown = true;
+  await deps.save({ ...note("s1"), localDeleted: true });
+  assert.equal((await runVoicePass(deps)).status, "offline");
+  assert.equal(note("s1").remoteId, "note-1");
+  assert.equal(note("s1").nextAttemptAt, clock.now + 30_000);
+  assert.equal(shots.notes.get("s1").deleted, false);
+  // Nothing is sent again before the backoff ends.
+  const deletes = () =>
+    shots.requests.filter((call) => call.method === "DELETE").length;
+  await runVoicePass(deps);
+  assert.equal(deletes(), 1);
+  shots.ledgerDown = false;
+  clock.now += 30_000;
+  await runVoicePass(deps);
+  assert.equal(deletes(), 2);
+  assert.equal(shots.notes.get("s1").deleted, true);
+  assert.deepEqual(notes(), []);
+});
+
+test("NUL characters are removed from the transcript sent", async () => {
+  const { deps, shots } = harness({
+    queued: [recording("s1", { audioUploadConsent: false })],
+    transcribe: async (sessionId) => ({
+      transcriptId: `t-${sessionId}`,
+      text: "Ship\0 it",
+      engine: "apple\0",
+      locale: "en-US",
+      segments: [{ startMs: 0, endMs: 1000, text: "Ship\0 it" }],
+    }),
+  });
+  await runVoicePass(deps);
+  const [revision] = shots.notes.get("s1").revisions.values();
+  assert.equal(revision.text, "Ship it");
+  assert.equal(revision.engine, "apple");
+  assert.equal(revision.segments[0].text, "Ship it");
+});

@@ -114,6 +114,10 @@ const MAX_STEPS_PER_NOTE = 8;
 // The gateway's body limit for voice requests.
 const MAX_VOICE_BODY_BYTES = 1024 * 1024;
 const characters = (text: string) => [...text].length;
+// Shots refuses a NUL anywhere in the text it stores.
+const withoutNul = (text: string) => text.replaceAll("\0", "");
+// Shots' 409s all carry the code "conflict"; this sentence marks a deleted note.
+const NOTE_DELETED = "This voice note was deleted.";
 const EDIT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 class Stop {
@@ -315,9 +319,12 @@ export async function runVoicePass(
           parentId: pending.parentId,
           origin: pending.origin,
           locale: pending.locale,
-          engine: pending.engine,
-          text: pending.text,
-          segments: pending.segments,
+          engine: pending.engine && withoutNul(pending.engine),
+          text: withoutNul(pending.text),
+          segments: pending.segments.map((segment) => ({
+            ...segment,
+            text: withoutNul(segment.text),
+          })),
         };
         const sent = (id: string | null) => ({
           id,
@@ -325,16 +332,20 @@ export async function runVoicePass(
           versionKey: pending.versionKey,
         });
         // Never resend a revision Shots rejected; a later edit is a new revision.
-        const rejected = (reason: string) =>
+        const rejected = (
+          reason: string,
+          patch: Partial<VoiceNoteState> = {},
+        ) =>
           save({
             ...note,
             pending: null,
             sent: sent(note.sent?.id ?? null),
             rejected: reason,
+            ...patch,
           });
         if (
-          characters(pending.text) > limits.maxTranscriptChars ||
-          pending.segments.reduce(
+          characters(body.text) > limits.maxTranscriptChars ||
+          body.segments.reduce(
             (total, segment) => total + characters(segment.text),
             0,
           ) > limits.maxTranscriptChars ||
@@ -349,8 +360,12 @@ export async function runVoicePass(
           suffix: `notes/${note.remoteId}/transcripts`,
           body,
         });
-        if (reply.kind === "conflict")
-          return save({ ...note, deletedRemote: true, pending: null });
+        if (reply.kind === "conflict") {
+          if (reply.message === null || reply.message === NOTE_DELETED)
+            return save({ ...note, deletedRemote: true, pending: null });
+          // The note holds every revision Shots allows; later edits stay on the phone.
+          return rejected(reply.message, { revisionsFull: true });
+        }
         if (reply.kind === "not_found") return lost(note);
         if (reply.kind === "invalid")
           return rejected(
@@ -397,8 +412,15 @@ export async function runVoicePass(
               "The recording is longer or shorter than Shots accepts, so only the transcript was sent.",
           });
         const audio = await deps.audio(note.sessionId);
-        if (!audio || !["audio/wav", "audio/aac"].includes(audio.contentType))
-          return save({ ...note, audio: "unavailable" });
+        if (!audio) return save({ ...note, audio: "unavailable" });
+        // Shots stores WAV runs only.
+        if (audio.contentType !== "audio/wav")
+          return save({
+            ...note,
+            audio: "unavailable",
+            lastError:
+              "Shots accepts WAV recordings only, so only the transcript was sent.",
+          });
         let upload = note.upload;
         if (!upload || Date.parse(upload.expiresAt) - 60_000 <= now) {
           const reply = await call({
@@ -459,10 +481,10 @@ export async function runVoicePass(
         });
         if (reply.kind === "ok")
           return save(succeeded({ ...note, audio: "done", upload: null }));
-        if (reply.kind === "conflict")
-          return save({ ...note, audio: "conflict" });
-        // Audio upload was turned off since the URL was signed; the note itself is in Shots.
-        if (reply.kind === "blocked")
+        // Final for this run (its audio was deleted, or it would pass 31
+        // minutes) or audio upload was turned off since the URL was signed;
+        // the note itself is in Shots.
+        if (reply.kind === "conflict" || reply.kind === "blocked")
           return save({
             ...note,
             audio: "unavailable",
@@ -512,6 +534,7 @@ export async function runVoicePass(
   // Finds a transcript the note has not sent: the session's when nothing was
   // sent yet or the sent rows are gone, or an edit of the rows already sent.
   async function discover(note: VoiceNoteState) {
+    if (note.revisionsFull) return note;
     const version =
       (note.sent &&
         (await deps.transcriptVersion(note.sessionId, note.sent.sourceIds))) ||

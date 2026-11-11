@@ -18,6 +18,7 @@ import { createStyleHook, useColors } from "@/settings/theme-provider";
 import {
   cardQuestions,
   commandStatusText,
+  confirmBody,
   confirmIssue,
   formatProposalTime,
   highlightAddedWords,
@@ -256,14 +257,15 @@ function CommandCard({
                   // Same-frame double taps send one confirm (K11).
                   if (confirming.current || issue !== null) return;
                   confirming.current = true;
-                  confirm.mutate({
-                    text: values.text,
-                    channelConnectionId: schedule
-                      ? values.channelConnectionId
-                      : "",
-                    localTime: localTime ?? "",
-                    timeZone: command.timeZone,
-                  });
+                  confirm.mutate(
+                    confirmBody({
+                      action: command.action,
+                      text: values.text,
+                      channelConnectionId: values.channelConnectionId,
+                      localTime,
+                      timeZone: command.timeZone,
+                    }),
+                  );
                 }}
               />
             </>

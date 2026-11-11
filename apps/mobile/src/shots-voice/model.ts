@@ -103,6 +103,8 @@ export type VoiceNoteState = {
   failed: string | null;
   /** Why Shots did not take the latest transcript; the note itself is in Shots. */
   rejected: string | null;
+  /** Shots holds the most revisions a note may have; no more are sent. */
+  revisionsFull: boolean;
   attempts: number;
   nextAttemptAt: number;
   lastError: string | null;
@@ -156,6 +158,7 @@ export function newVoiceNote(input: {
     blocked: null,
     failed: null,
     rejected: null,
+    revisionsFull: false,
     attempts: 0,
     nextAttemptAt: 0,
     lastError: null,
@@ -537,6 +540,7 @@ const STORED_FIELDS: {
   blocked: orNull(isText),
   failed: orNull(isText),
   rejected: orNull(isText),
+  revisionsFull: isBoolean,
   attempts: isNumber,
   nextAttemptAt: isNumber,
   lastError: orNull(isText),
