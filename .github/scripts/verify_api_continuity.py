@@ -353,7 +353,11 @@ async def verify_isolated_drain(args, token, audio, *, stop_timeout=90):
 
 
 async def run(args):
-    if args.app not in {"shots-founder-hub-inference", "shots-founder-hub-gateway", "shots-founder-hub-ai"}:
+    if args.app not in {
+        "shots-founder-hub-inference",
+        "shots-founder-hub-gateway",
+        "shots-founder-hub-ai",
+    }:
         raise RuntimeError("Continuity QA supports the AI runtime and Anarlog gateway")
     if not re.fullmatch(
         r"registry\.fly\.io/(shots-founder-hub-gateway|shots-founder-hub-ai|shots-founder-hub-inference|shots-founder-hub-core|shots-founder-hub-sync|shots-founder-hub-billing-api|hyprnote-ai)@sha256:[0-9a-f]{64}",

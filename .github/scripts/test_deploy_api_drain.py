@@ -365,7 +365,9 @@ def test_cut_over_never_signals_an_unverified_replacement():
         patch.object(deploy_api_drain, "destroy_machine") as destroy,
     ):
         try:
-            cut_over("shots-founder-hub-gateway", ["old"], ["new"], propagation_seconds=0)
+            cut_over(
+                "shots-founder-hub-gateway", ["old"], ["new"], propagation_seconds=0
+            )
         except DeployError:
             pass
         else:
@@ -617,7 +619,9 @@ def test_drain_rejects_unexpected_machine_states():
     ):
         with patch.object(deploy_api_drain, "get_machine", return_value=machine):
             try:
-                deploy_api_drain.drain_old_machines("shots-founder-hub-gateway", ["old"])
+                deploy_api_drain.drain_old_machines(
+                    "shots-founder-hub-gateway", ["old"]
+                )
             except DeployError as error:
                 assert f"old is {machine['state']}" in str(error)
             else:
@@ -846,12 +850,16 @@ def test_replacement_digest_is_checked_for_immutable_deploys():
         deploy_api_drain, "get_machine", return_value={"image_ref": {"digest": digest}}
     ):
         deploy_api_drain.verify_replacement_image(
-            "shots-founder-hub-core", "new", "registry.fly.io/shots-founder-hub-core@" + digest
+            "shots-founder-hub-core",
+            "new",
+            "registry.fly.io/shots-founder-hub-core@" + digest,
         )
         for wrong in ["sha256:" + "b" * 64, "invalid"]:
             try:
                 deploy_api_drain.verify_replacement_image(
-                    "shots-founder-hub-core", "new", "registry.fly.io/shots-founder-hub-core@" + wrong
+                    "shots-founder-hub-core",
+                    "new",
+                    "registry.fly.io/shots-founder-hub-core@" + wrong,
                 )
             except DeployError:
                 pass
@@ -1079,7 +1087,9 @@ def test_idle_legacy_api_retirement_sends_only_graceful_signal():
         ]
         api.reset_mock()
         try:
-            deploy_api_drain.retire_idle_legacy_machine("shots-founder-hub-inference", "old")
+            deploy_api_drain.retire_idle_legacy_machine(
+                "shots-founder-hub-inference", "old"
+            )
         except DeployError:
             pass
         else:
@@ -1094,7 +1104,9 @@ def test_adoption_of_a_verified_candidate_requires_the_exact_digest():
         patch.object(deploy_api_drain, "mark_drain_supported") as mark,
     ):
         deploy_api_drain.adopt_drain_image(
-            "shots-founder-hub-gateway", digest, "registry.fly.io/shots-founder-hub-core@" + digest
+            "shots-founder-hub-gateway",
+            digest,
+            "registry.fly.io/shots-founder-hub-core@" + digest,
         )
         mark.assert_not_called()
         try:

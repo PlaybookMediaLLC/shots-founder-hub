@@ -114,13 +114,21 @@ if (localDirExists) {
   }
 }
 
-console.log(
-  `Checking ${assetUrls.size} referenced public blog asset URL(s)...`,
-);
+// ponytail: skippable until static.shots.playbookmedia.io serves the republished assets; drop the env in web_ci.yaml then.
+const skipRemote = process.env.STATIC_MEDIA_REMOTE_CHECK === "skip";
+if (skipRemote) {
+  console.log(
+    `Skipping remote checks for ${assetUrls.size} blog asset URL(s) (STATIC_MEDIA_REMOTE_CHECK=skip).`,
+  );
+} else {
+  console.log(
+    `Checking ${assetUrls.size} referenced public blog asset URL(s)...`,
+  );
+}
 const missing = [];
 const urlList = [...assetUrls];
 const results = [];
-for (let index = 0; index < urlList.length; index += 8) {
+for (let index = 0; !skipRemote && index < urlList.length; index += 8) {
   results.push(
     ...(await Promise.allSettled(
       urlList.slice(index, index + 8).map(async (url) => {
@@ -155,7 +163,7 @@ if (missing.length > 0) {
   process.exitCode = 1;
 }
 
-if (!process.exitCode) {
+if (!process.exitCode && !skipRemote) {
   console.log(
     `All ${assetUrls.size} referenced blog asset(s) resolve through their public serving URLs; ` +
       "no direct Supabase, local, or legacy-proxy image references remain in posts.",
