@@ -63,15 +63,17 @@ jobs:
       run:
         working-directory: shots-founder-hub-central-auth
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           path: shots-founder-hub-central-auth
-      - uses: actions/checkout@v4
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: PlaybookMediaLLC/shots
           ref: ${{ inputs.counterpart_ref || 'fix/founder-hub-auth' }}
           path: shots-founder-hub-backend
-      - uses: actions/setup-go@v5
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
         with:
           go-version-file: shots-founder-hub-backend/server/go.mod
           cache-dependency-path: shots-founder-hub-backend/server/go.sum
@@ -81,10 +83,10 @@ jobs:
           version=$(cat .node-version 2>/dev/null || sed -n 's/.*>=\([0-9.]*\).*/\1/p' package.json)
           test -n "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: ${{ steps.node-version.outputs.version }}
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
         with:
           version: 11.1.1
       - name: Install central-auth dependencies
@@ -124,13 +126,14 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           submodules: recursive
           lfs: true
+          persist-credentials: false
       - uses: ./.github/actions/pnpm_install
       - name: Use the pinned local-stack Node version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version-file: .node-version
       - name: Test native settings persistence and command construction
@@ -182,7 +185,7 @@ jobs:
         run: echo "Native WebDriver E2E is skipped because CN_API_KEY_WEBDRIVER is not configured."
       - name: Upload native desktop logs on failure
         if: steps.desktop-e2e.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: founder-hub-native-settings-e2e
           path: |
