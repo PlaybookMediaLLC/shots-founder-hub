@@ -61,6 +61,11 @@ export function transcribeSessionOnDevice(
   return task;
 }
 
+/** True while this note is being transcribed on device. */
+export function isOnDeviceTranscriptionRunning(sessionId: string): boolean {
+  return inflight.has(sessionId);
+}
+
 async function run(sessionId: string): Promise<OnDeviceTranscript | null> {
   if (!OnDeviceSpeech) return null;
   const [audio] = await execute<{

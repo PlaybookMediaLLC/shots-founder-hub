@@ -21,6 +21,7 @@ const fixture = (globalThis.transcriptionRetryFixture = {
   requestError: null,
   onDevice: [],
   onDeviceResult: null,
+  onDeviceRunning: new Set(),
 });
 const mocks = {
   "./summarize": `export function generateSummaryAfterTranscription(sessionId) { globalThis.transcriptionRetryFixture.summaries.push(sessionId); }`,
@@ -44,7 +45,8 @@ const mocks = {
   "@/lib/error-reporting": `export function captureOperationalError(error) { globalThis.transcriptionRetryFixture.failures.push(error); }`,
   "./on-device-transcription": `export async function transcribeSessionOnDevice(sessionId) {
     const f = globalThis.transcriptionRetryFixture; f.onDevice.push(sessionId); return f.onDeviceResult;
-  }`,
+  }
+  export const isOnDeviceTranscriptionRunning = (sessionId) => globalThis.transcriptionRetryFixture.onDeviceRunning.has(sessionId);`,
   "./provider-transcription": `export async function requestProviderTranscription() {
     const f = globalThis.transcriptionRetryFixture; f.requests++;
     if (f.requestError) throw f.requestError;
@@ -146,4 +148,23 @@ test("Apple on-device transcription never uploads and stops automatic retries wh
   assert.deepEqual(fixture.onDevice, [fixture.sessionId, fixture.sessionId]);
   assert.equal(fixture.failures.length, failures + 1);
   assert.equal(fixture.requests, requests);
+});
+
+test("automatic retries skip a recording the Shots sync is transcribing on device", async () => {
+  fixture.sessionId = "shots-on-device";
+  fixture.provider = {
+    provider: "openai",
+    model: "whisper-1",
+    apiKey: "synthetic-key",
+  };
+  fixture.pending = true;
+  fixture.onDeviceRunning.add(fixture.sessionId);
+  const requests = fixture.requests;
+  await retryPendingTranscriptions();
+  assert.equal(fixture.requests, requests);
+  assert.equal(fixture.pending, true);
+
+  fixture.onDeviceRunning.clear();
+  await retryPendingTranscriptions();
+  assert.equal(fixture.requests, requests + 1);
 });

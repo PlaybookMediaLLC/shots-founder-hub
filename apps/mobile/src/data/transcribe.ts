@@ -21,7 +21,10 @@ import {
 } from "@/settings/providers-model";
 import { batchTranscriptionModel } from "@/settings/transcription-mode";
 
-import { transcribeSessionOnDevice } from "./on-device-transcription";
+import {
+  isOnDeviceTranscriptionRunning,
+  transcribeSessionOnDevice,
+} from "./on-device-transcription";
 import { requestProviderTranscription } from "./provider-transcription";
 import { generateSummaryAfterTranscription } from "./summarize";
 import { pendingSummaryStatement } from "./summary-job";
@@ -562,7 +565,10 @@ export function retryPendingTranscriptions(): Promise<void> {
           .map((row) => row.session_id)
           .filter(
             (sessionId) =>
-              !automaticRetryBlocked.has(sessionId) && !inflight.has(sessionId),
+              !automaticRetryBlocked.has(sessionId) &&
+              !inflight.has(sessionId) &&
+              // The Shots sync is transcribing it on device; never race it.
+              !isOnDeviceTranscriptionRunning(sessionId),
           )
           .map((sessionId) => transcribeSession(sessionId)),
       ),
