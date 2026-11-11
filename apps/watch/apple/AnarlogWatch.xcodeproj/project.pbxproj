@@ -157,7 +157,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = so.anarlog.mobile.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = io.playbookmedia.shotsfounderhub.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = NO;
@@ -183,7 +183,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = so.anarlog.mobile.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = io.playbookmedia.shotsfounderhub.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = NO;

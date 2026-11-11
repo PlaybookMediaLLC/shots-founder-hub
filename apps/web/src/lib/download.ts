@@ -27,7 +27,9 @@ export const platformIcons = {
   Android: "simple-icons:android",
 } as const;
 
-export const mobileLaunchLabel = "Coming October";
+export const mobileLaunchLabel = "Coming soon";
+
+// Set each url when that store listing exists; unavailable sections never render it.
 
 export const mobileDownloadSections = [
   {
@@ -35,13 +37,13 @@ export const mobileDownloadSections = [
     name: "iOS",
     status: mobileLaunchLabel,
     available: false,
-    description: "The iPhone and iPad app launches in October.",
+    description: "The iPhone and iPad app is coming soon.",
     downloads: [
       {
-        name: "TestFlight",
-        detail: "iPhone and iPad · Public beta",
-        url: "https://testflight.apple.com/join/y7WJCXvG",
-        actionLabel: "Join TestFlight",
+        name: "App Store",
+        detail: "iPhone and iPad",
+        url: "",
+        actionLabel: "Get the app",
         showInMenu: true,
       },
     ],
@@ -51,13 +53,13 @@ export const mobileDownloadSections = [
     name: "Android",
     status: mobileLaunchLabel,
     available: false,
-    description: "The Android app launches in October on Google Play.",
+    description: "The Android app is coming soon to Google Play.",
     downloads: [
       {
         name: "Google Play",
-        detail: "Android · Open beta",
-        url: "https://play.google.com/apps/testing/so.anarlog.mobile",
-        actionLabel: "Join open beta",
+        detail: "Android",
+        url: "",
+        actionLabel: "Get the app",
         showInMenu: true,
       },
     ],
