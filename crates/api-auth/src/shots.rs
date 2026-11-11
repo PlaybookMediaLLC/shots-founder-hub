@@ -168,23 +168,26 @@ impl ShotsAuth {
         &self.origin
     }
 
-    pub async fn settings(
+    /// Forwards a gateway request to `/api/founder-hub/{path}` with the service credential.
+    /// `headers` must not carry `authorization` or the service header.
+    pub async fn forward(
         &self,
         token: &str,
         path: &str,
         query: Option<&str>,
         method: reqwest::Method,
+        headers: reqwest::header::HeaderMap,
         body: Vec<u8>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let mut url = self
             .origin
             .join(&format!("/api/founder-hub/{path}"))
-            .expect("validated settings path");
+            .expect("validated Founder Hub path");
         url.set_query(query);
         self.client
             .request(method, url)
+            .headers(headers)
             .header("x-shots-founder-hub-service", &self.service_token)
-            .header("content-type", "application/json")
             .bearer_auth(token)
             .body(body)
             .send()
