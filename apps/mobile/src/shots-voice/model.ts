@@ -175,6 +175,31 @@ export function nextVoiceOp(
   return null;
 }
 
+/** Work that has not reached Shots yet (shown before sign-out and workspace switches, S12, S13). */
+export function isVoiceNoteUnsent(note: VoiceNoteState): boolean {
+  return (
+    !note.deletedRemote &&
+    (note.localDeleted ||
+      !note.remoteId ||
+      note.onDevice === "todo" ||
+      note.pending !== null ||
+      note.audio === "uploaded")
+  );
+}
+
+/** The note's Shots state in one line. */
+export function voiceNoteStatusText(note: VoiceNoteState): string {
+  if (note.deletedRemote)
+    return "Deleted in Shots. This note stays on your phone and is no longer sent.";
+  if (note.failed) return `Not sent to Shots: ${note.failed}`;
+  if (note.blocked) return note.blocked;
+  if (isVoiceNoteUnsent(note))
+    return note.lastError
+      ? `Waiting to send to Shots. ${note.lastError}`
+      : "Waiting to send to Shots.";
+  return "Sent to Shots.";
+}
+
 /** Section 4 status semantics: 401 expired session, 403 not allowed, 404, 409 deleted or checksum conflict, 400 invalid. */
 export function classifyVoiceStatus(status: number): VoiceOutcome {
   if (status >= 200 && status < 300) return "ok";

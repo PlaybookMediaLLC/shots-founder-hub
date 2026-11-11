@@ -26,10 +26,15 @@ import {
 } from "@/data/transcripts";
 import { captureAnalytics } from "@/lib/analytics";
 import { confirmDestructive } from "@/lib/confirm";
+import { env } from "@/lib/env";
 import { captureOperationalError } from "@/lib/error-reporting";
+import { showToast } from "@/lib/toast";
 import { useKeyboardVisible } from "@/lib/use-keyboard-visible";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createStyleHook, useColors } from "@/settings/theme-provider";
+import { ShotsVoiceNotePanel } from "@/shots-voice/note-panel";
+import { queueSessionForShots } from "@/shots-voice/runner";
+import { useShotsVoice } from "@/shots-voice/store";
 
 import { BodyEditor } from "./body-editor";
 import { NoteFiles } from "./note-files";
@@ -71,6 +76,9 @@ export function NoteScreen({
     setSheet((current) => (current === name ? null : current));
   const keyboardVisible = useKeyboardVisible();
   const recorder = useSessionRecorder(id, listening);
+  const shots = useShotsVoice();
+  const shotsWorkspace =
+    env.shotsUrl && shots.accountId ? shots.prefs.workspaceName : null;
   const hasRecordingHistory =
     Boolean(audio.data) || transcriptState.data === true;
   const active = listening && recorder.phase !== "saved";
@@ -221,6 +229,21 @@ export function NoteScreen({
     }
   };
 
+  const handleSendToShots = async () => {
+    try {
+      const queued = await queueSessionForShots(id, { explicit: true });
+      showToast({
+        id: `shots-send-${id}`,
+        title: queued ? "Sending to Shots" : "Couldn’t send to Shots",
+        description: queued
+          ? `This note goes to ${shotsWorkspace ?? "your Shots workspace"} when Shots can be reached.`
+          : "Choose a Shots workspace in Settings first.",
+      });
+    } catch (error) {
+      captureOperationalError(error, { operation: "shots_voice_send" });
+    }
+  };
+
   const handleMoreActions = () => {
     if (!data) return;
     Keyboard.dismiss();
@@ -290,6 +313,7 @@ export function NoteScreen({
               />
             </View>
           )}
+          <ShotsVoiceNotePanel sessionId={id} />
           <NoteSummary
             sessionId={id}
             active={active}
@@ -375,6 +399,11 @@ export function NoteScreen({
         onExport={() => void handleExport()}
         onSelectFolder={() => setSheet("folders")}
         onImportRecording={audio.importRecording}
+        onSendToShots={
+          shotsWorkspace && hasRecordingHistory && !active
+            ? () => void handleSendToShots()
+            : undefined
+        }
         onToggleListening={handleListeningAction}
         onVersionHistory={() => setSheet("versions")}
         visible={sheet === "actions"}
@@ -400,6 +429,11 @@ export function NoteScreen({
           failure={recorder.failure}
           amplitude={recorder.amplitude}
           durationMs={recorder.durationMs}
+          destination={
+            shotsWorkspace && shots.prefs.sendNew
+              ? `Sending to Shots · ${shotsWorkspace}`
+              : null
+          }
           onStop={() => void handleStop()}
           onRetry={() => void handleRetryRecording()}
           onOpenSettings={() => void handleOpenSettings()}

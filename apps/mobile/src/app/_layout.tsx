@@ -21,6 +21,7 @@ import { ToastHost } from "@/components/toast-host";
 import { Button } from "@/components/ui/button";
 import { Spacing, Typography } from "@/constants/theme";
 import { initializeAnalytics, screenAnalytics } from "@/lib/analytics";
+import { env } from "@/lib/env";
 import {
   addNavigationBreadcrumb,
   captureOperationalError,
@@ -32,6 +33,7 @@ import { QuickActionLifecycle } from "@/quick-actions/quick-action-lifecycle";
 import { AppLock } from "@/settings/app-lock";
 import { createStyleHook, useColors } from "@/settings/theme-provider";
 import { ThemeProvider, useAppColorScheme } from "@/settings/theme-provider";
+import { ShotsVoiceLifecycle } from "@/shots-voice/lifecycle";
 import { MobileSyncLifecycle } from "@/sync/mobile-sync-lifecycle";
 import { useCloudSyncOptIn } from "@/sync/opt-in";
 import { initializeWatchConnectivity } from "@/watch-connectivity";
@@ -138,6 +140,12 @@ function Gate() {
           accessToken={session.access_token}
           accountUserId={session.user.id}
           syncEnabled={cloudSyncEnabled}
+        />
+      )}
+      {session && env.shotsUrl && (
+        <ShotsVoiceLifecycle
+          key={session.user.id}
+          accountUserId={session.user.id}
         />
       )}
       <Screens accountUserId={session?.user.id ?? null} />

@@ -33,6 +33,7 @@ export function NoteActionsSheet({
   onExport,
   onImportRecording,
   onSelectFolder,
+  onSendToShots,
   onToggleListening,
   onVersionHistory,
   visible,
@@ -48,6 +49,15 @@ export function NoteActionsSheet({
       icon: "clock.arrow.circlepath",
       onPress: onVersionHistory,
     },
+    ...(onSendToShots
+      ? [
+          {
+            label: "Send to Shots",
+            icon: "paperplane" as const,
+            onPress: onSendToShots,
+          },
+        ]
+      : []),
     ...(!listening && !hasRecordingHistory
       ? [
           {

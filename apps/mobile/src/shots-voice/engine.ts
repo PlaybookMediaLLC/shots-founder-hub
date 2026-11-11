@@ -23,7 +23,7 @@ import {
 // note index and pull what changed. Every effect goes through `deps`.
 
 export type VoiceRequest = {
-  method: "GET" | "POST" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   suffix: string;
   body?: unknown;
 };

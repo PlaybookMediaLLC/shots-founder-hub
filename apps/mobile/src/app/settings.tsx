@@ -1,11 +1,14 @@
 import { Icon } from "@expo/ui";
 import { useRouter } from "expo-router";
 
+import { useAuth } from "@/auth/context";
+import { env } from "@/lib/env";
 import { SettingsPage } from "@/settings/components";
 import { SettingsMenuGroup, SettingsMenuLink } from "@/settings/menu";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const auth = useAuth();
   return (
     <SettingsPage title="Settings" layout="menu">
       <SettingsMenuGroup>
@@ -37,6 +40,16 @@ export default function SettingsScreen() {
           })}
           onPress={() => router.push("/settings/recording")}
         />
+        {env.shotsUrl && !auth.bypass && auth.session && (
+          <SettingsMenuLink
+            title="Shots"
+            icon={Icon.select({
+              ios: "paperplane",
+              android: import("@expo/material-symbols/send.xml"),
+            })}
+            onPress={() => router.push("/settings/shots")}
+          />
+        )}
         <SettingsMenuLink
           title="Transcription & summaries"
           icon={Icon.select({

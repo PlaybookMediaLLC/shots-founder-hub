@@ -47,6 +47,7 @@ export function ListeningSheet({
   failure,
   amplitude,
   durationMs,
+  destination,
   onStop,
   onRetry,
   onOpenSettings,
@@ -55,6 +56,7 @@ export function ListeningSheet({
   failure: RecorderFailure | null;
   amplitude: number;
   durationMs: number;
+  destination?: string | null;
   onStop: () => void;
   onRetry: () => void;
   onOpenSettings: () => void;
@@ -93,7 +95,14 @@ export function ListeningSheet({
         ) : phase === "saving" || phase === "starting" ? (
           <ActivityIndicator color={Colors.muted} size="small" />
         ) : null}
-        <Text style={styles.statusText}>{label}</Text>
+        <View style={styles.statusLines}>
+          <Text style={styles.statusText}>{label}</Text>
+          {destination ? (
+            <Text numberOfLines={1} style={styles.statusText}>
+              {destination}
+            </Text>
+          ) : null}
+        </View>
       </View>
       <Pressable
         accessibilityRole="button"
@@ -132,6 +141,7 @@ const useStyles = createStyleHook((Colors) => ({
     alignItems: "center",
     gap: Spacing.sm,
   },
+  statusLines: { flexShrink: 1 },
   statusText: {
     flexShrink: 1,
     ...Typography.caption,
