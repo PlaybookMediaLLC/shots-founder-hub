@@ -59,7 +59,8 @@ const inflight = new Map<string, Promise<OnDeviceTranscript | null>>();
  * session's transcripts with the result (desktop batch semantics), whatever
  * transcript the session had before. Resolves null, writing nothing, when the
  * locale has no on-device engine, speech permission is not granted, or no
- * speech was recognized. Audio never leaves the device; like every completed
+ * speech was recognized. A call while one runs for the same note joins it.
+ * Audio never leaves the device; like every completed
  * transcription, the app's automatic summary then runs with the user's
  * summary provider.
  */

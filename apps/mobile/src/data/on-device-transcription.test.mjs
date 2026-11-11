@@ -16,7 +16,7 @@ const mocks = {
     export default {
       async getCapability(locale) { f.calls.push(['getCapability', locale]); return f.native.capability; },
       async requestPermission() { f.calls.push(['requestPermission']); return f.native.requested; },
-      async transcribeFile(...args) { f.calls.push(['transcribeFile', ...args]); return f.native.result; },
+      async transcribeFile(...args) { f.calls.push(['transcribeFile', ...args]); f.native.onTranscribe?.(); return f.native.result; },
     };`,
   "expo-file-system": `export const Paths = {document: 'file:///documents'};
     export class File { constructor(...parts) { this.uri = parts.join('/'); this.exists = true; } }`,
@@ -245,4 +245,12 @@ test("a recording missing from this device fails instead of returning an empty n
     code: "audio_missing",
   });
   assert.deepEqual(fixture.calls, []);
+});
+
+test("a note deleted during transcription gets no transcript or summary", async () => {
+  fixture.native.onTranscribe = () =>
+    fixture.db.exec("UPDATE sessions SET deleted_at = 'now'");
+  assert.equal(await transcribeSessionOnDevice("note"), null);
+  assert.deepEqual(liveTranscripts(), []);
+  assert.deepEqual(fixture.summaries, []);
 });
