@@ -7,7 +7,7 @@ Issues, pull requests, bug reports, and documentation fixes are welcome.
 - Search existing issues and pull requests before starting a large change.
 - Keep changes focused. Add tests for behavior that can regress.
 - Never commit credentials, customer configuration, meeting content, or other private data.
-- Use [docs.anarlog.so](https://docs.anarlog.so) for product, CLI, and MCP behavior. Use this file and the repository's `AGENTS.md` files for development guidance.
+- Use [shots.playbookmedia.io/docs](https://shots.playbookmedia.io/docs) for product, CLI, and MCP behavior. Use this file and the repository's `AGENTS.md` files for development guidance.
 
 ## Set up the repository
 
@@ -131,10 +131,10 @@ Disable legacy billing webhooks and `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` in
 central deployments; these Stripe-based workers must not manage Shots accounts.
 
 The CLI uses `ANARLOG_SHOTS_URL` and `ANARLOG_API_URL` (or the corresponding
-`VITE_` values embedded at build time). `anarlog auth login` prints a PKCE
+`VITE_` values embedded at build time). `sfh auth login` prints a PKCE
 sign-in URL and receives the callback on loopback. It creates a separate Shots
 session in `auth.shots-cli.json`, refreshes it automatically, and revokes it on
-`anarlog auth logout`. `ANARLOG_AUTH_PATH` overrides that file for isolated tests;
+`sfh auth logout`. `ANARLOG_AUTH_PATH` overrides that file for isolated tests;
 do not point it at the desktop session file.
 
 Set the same `FOUNDER_HUB_MCP_URL` on the Shots web server and Founder Hub sync API
@@ -221,7 +221,7 @@ build that exposes the action.
 | `packages/*`     | Shared TypeScript packages                              |
 | `crates/db-app`  | SQLite schema and migrations                            |
 | `supabase`       | Hosted database schema, functions, and tests            |
-| `skills/anarlog` | Published CLI and MCP agent skill                       |
+| `skills/sfh`     | Published CLI and MCP agent skill                       |
 | `enterprise`     | Commercially licensed capture and deployment components |
 | `docs`           | Mintlify product and reference documentation            |
 

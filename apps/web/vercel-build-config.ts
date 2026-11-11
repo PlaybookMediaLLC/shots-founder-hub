@@ -18,7 +18,7 @@ const routes = [
     continue: true,
   },
   {
-    src: "^/apt/anarlog\\-archive\\-keyring\\.asc$",
+    src: "^/apt/shots\\-founder\\-hub\\-archive\\-keyring\\.asc$",
     headers: {
       "Cache-Control": "public, max-age=31536000, immutable",
       "X-Content-Type-Options": "nosniff",
@@ -33,19 +33,19 @@ const routes = [
     },
   },
   {
-    src: "^/apt/pool/([^/]+)/amd64/anarlog\\.deb$",
+    src: "^/apt/pool/([^/]+)/amd64/shots\\-founder\\-hub\\.deb$",
     status: 302,
     headers: {
       Location:
-        "https://github.com/fastrepl/anarlog/releases/download/$1/anarlog-linux-x86_64.deb",
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/$1/shots-founder-hub-linux-x86_64.deb",
     },
   },
   {
-    src: "^/apt/pool/([^/]+)/arm64/anarlog\\.deb$",
+    src: "^/apt/pool/([^/]+)/arm64/shots\\-founder\\-hub\\.deb$",
     status: 302,
     headers: {
       Location:
-        "https://github.com/fastrepl/anarlog/releases/download/$1/anarlog-linux-aarch64.deb",
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/$1/shots-founder-hub-linux-aarch64.deb",
     },
   },
   {
@@ -125,7 +125,7 @@ const routes = [
     src: "^/skills/?$",
     status: 301,
     headers: {
-      Location: "https://docs.anarlog.so/agents/skills",
+      Location: "https://shots.playbookmedia.io/docs",
     },
   },
   {
@@ -174,14 +174,14 @@ const routes = [
     src: "^/docs/?$",
     status: 301,
     headers: {
-      Location: "https://docs.anarlog.so",
+      Location: "https://shots.playbookmedia.io/docs",
     },
   },
   {
     src: "^/docs/(.*)$",
     status: 301,
     headers: {
-      Location: "https://docs.anarlog.so/$1",
+      Location: "https://shots.playbookmedia.io/docs",
     },
   },
   {

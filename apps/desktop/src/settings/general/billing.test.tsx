@@ -310,7 +310,7 @@ describe("SettingsBilling", () => {
 
     await waitFor(() =>
       expect(mocks.openUrl).toHaveBeenCalledWith(
-        "https://anarlog.so/enterprise/",
+        "https://shots.playbookmedia.io/enterprise",
         null,
       ),
     );

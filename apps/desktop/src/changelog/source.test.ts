@@ -5,7 +5,7 @@ import { changelogUrl } from "./source";
 describe("changelog sources", () => {
   it("loads Nightly's immutable release notes independently of stable", () => {
     expect(changelogUrl("1.4.24-nightly.123")).toBe(
-      "https://api.github.com/repos/fastrepl/anarlog/releases/tags/desktop_nightly_v1.4.24-nightly.123",
+      "https://api.github.com/repos/PlaybookMediaLLC/shots-founder-hub/releases/tags/desktop_nightly_v1.4.24-nightly.123",
     );
     expect(changelogUrl("1.4.24")).toContain("/content/desktop/1.4.24.md");
   });

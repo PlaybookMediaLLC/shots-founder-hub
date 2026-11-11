@@ -30,12 +30,12 @@ test("APT redirects retain the release and architecture", () => {
     ["arm64", "aarch64"],
   ]) {
     const route = routeFor(
-      `https://anarlog.so/apt/pool/desktop_v1.4.22/${arch}/anarlog.deb`,
+      `https://anarlog.so/apt/pool/desktop_v1.4.22/${arch}/shots-founder-hub.deb`,
     );
     assert.equal(route.status, 302);
     assert.equal(
       route.destination,
-      `https://github.com/fastrepl/anarlog/releases/download/desktop_v1.4.22/anarlog-linux-${asset}.deb`,
+      `https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/desktop_v1.4.22/shots-founder-hub-linux-${asset}.deb`,
     );
   }
 });
@@ -55,7 +55,7 @@ test("desktop updater redirects are restricted to the desktop hostname", () => {
 test("agent discovery proxies retain paths and their required origin header", () => {
   for (const path of [
     "/skill.md",
-    "/.well-known/skills/anarlog/SKILL.md",
+    "/.well-known/skills/sfh/SKILL.md",
     "/.well-known/agent-skills/index.json",
     "/.well-known/vercel/flags",
   ]) {
@@ -91,8 +91,8 @@ test("exact page redirects accept canonical trailing slashes", () => {
     ["anarlog.so", "/faq", "/"],
     ["anarlog.so", "/roadmap", "/changelog/"],
     ["anarlog.so", "/skill", "/skill.md"],
-    ["anarlog.so", "/skills", "https://docs.anarlog.so/agents/skills"],
-    ["anarlog.so", "/docs", "https://docs.anarlog.so"],
+    ["anarlog.so", "/skills", "https://shots.playbookmedia.io/docs"],
+    ["anarlog.so", "/docs", "https://shots.playbookmedia.io/docs"],
     ["anarlog.so", "/blog/filesystem-is-coretex", "/blog/"],
     ["hyprnote.com", "/auth", "https://char.com/auth"],
     ["hyprnote.com", "/download", "https://char.com/download"],

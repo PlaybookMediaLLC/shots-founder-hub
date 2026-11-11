@@ -19,12 +19,12 @@ Prefer the Shots Founder Hub MCP tools when they are available:
 If MCP is unavailable, use the Shots Founder Hub CLI with `--json`:
 
 ```sh
-anarlog --json meetings list --query "planning"
-anarlog --json meetings folders
-anarlog --json meetings list --folder "Projects/Launch"
-anarlog --json meetings get MEETING_ID
-anarlog --json meetings transcript MEETING_ID --limit 200 --offset 0
-anarlog --json meetings history MEETING_ID
+sfh --json meetings list --query "planning"
+sfh --json meetings folders
+sfh --json meetings list --folder "Projects/Launch"
+sfh --json meetings get MEETING_ID
+sfh --json meetings transcript MEETING_ID --limit 200 --offset 0
+sfh --json meetings history MEETING_ID
 ```
 
 The CLI discovers Shots Founder Hub's database from the platform application-data
@@ -33,6 +33,6 @@ provides a non-default database path; do not crawl the filesystem to find one.
 Never guess a meeting ID. Keep transcript requests bounded and continue from
 `pagination.next_offset` only when more context is needed.
 
-Documentation: https://docs.anarlog.so
+Documentation: https://shots.playbookmedia.io/docs
 
 Agent skill: https://docs.anarlog.so/skill.md

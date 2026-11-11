@@ -41,7 +41,7 @@ export const whoUsesAnarlog = [
 
 export const originStory = [
   "Shots Founder Hub is developed by Playbook Media Interactive LLC. Our core promise is to help you build your personal brand from the work you already do, with your own ideas at the center of the content and visuals you create with Shots.",
-  "The application builds on Anarlog’s open-source foundation. Upstream copyright notices, contributor credits, and applicable software licenses are retained. Shots Founder Hub is a separate fork; upstream customers, testimonials, founders, and investors are not claims about this company.",
+  "The application builds on open-source software. Upstream copyright notices, contributor credits, and applicable software licenses are retained. Shots Founder Hub is a separate fork; upstream customers, testimonials, founders, and investors are not claims about this company.",
 ] as const;
 
 export const howAnarlogWorks = [
@@ -75,7 +75,7 @@ export const keyFacts = [
   {
     term: "Software foundation",
     detail:
-      "Anarlog, with upstream attribution and component licenses preserved",
+      "Open-source upstream software, with attribution and component licenses preserved",
   },
 ] as const;
 
@@ -83,7 +83,7 @@ export const faqs = [
   {
     question: "Who makes Shots Founder Hub?",
     answer:
-      "Playbook Media Interactive LLC develops Shots Founder Hub as a separate fork built on Anarlog’s open-source foundation.",
+      "Playbook Media Interactive LLC develops Shots Founder Hub as a separate fork built on open-source software.",
   },
   {
     question: "Who is it for?",

@@ -119,7 +119,7 @@ export const desktopDownloadSections = [
       {
         name: "APT repository",
         detail: "Debian or Ubuntu · Automatic updates",
-        url: "https://docs.anarlog.so/desktop-installation#apt-repository",
+        url: "https://shots.playbookmedia.io/docs",
         actionLabel: "Install with APT",
         showInMenu: false,
       },
@@ -150,7 +150,7 @@ export const desktopDownloadSections = [
       {
         name: "Arch Linux",
         detail: "Arch-based distros · PKGBUILD",
-        url: "https://github.com/fastrepl/anarlog/tree/main/packaging/aur/anarlog-bin",
+        url: "https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/packaging/aur/shots-founder-hub-bin",
         actionLabel: "View PKGBUILD",
         showInMenu: false,
       },

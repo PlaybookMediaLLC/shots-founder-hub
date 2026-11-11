@@ -3,7 +3,7 @@ set -euo pipefail
 
 deb_path="$1"
 binary_path="$2"
-package_name="${binary_path##*/}"
+package_name="$3"
 actual_name=$(dpkg-deb --field "$deb_path" Package)
 if [[ "$actual_name" != "$package_name" ]]; then
   echo "Expected Debian package $package_name, got $actual_name" >&2

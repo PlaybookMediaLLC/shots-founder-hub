@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Exposes Anarlog actions to iOS Shortcuts.'
   s.description    = 'Adds the Start or Stop Listening App Shortcut for the iPhone Action Button.'
   s.author         = 'Anarlog'
-  s.homepage       = 'https://anarlog.so'
+  s.homepage       = 'https://shots.playbookmedia.io'
   s.platform       = :ios, '16.4'
   s.source         = { git: '' }
   s.static_framework = true

@@ -63,7 +63,7 @@ Shots Founder Hub keeps audio transcription separate from the language model use
 | Audio → transcript                          | **Transcription** | The hosted transcription provider and supported fallback routes configured for the request. | Soniqo or Apple Speech when available, or your selected transcription provider and model  |
 | Transcript + memo → summary, title, or chat | **Intelligence**  | The hosted model configured for summaries or chat. Repository support does not establish the active production provider or model.                                           | Your selected API, subscription, OpenAI-compatible server, or eligible Apple Intelligence |
 
-The active provider and model are always visible under **Settings → Transcription** and **Settings → Intelligence**. Read [Models and providers](https://docs.anarlog.so/models-and-providers) for the current routes, local model list, and privacy boundaries.
+The active provider and model are always visible under **Settings → Transcription** and **Settings → Intelligence**. Read [Models and providers](https://shots.playbookmedia.io/docs) for the current routes, local model list, and privacy boundaries.
 
 ## Get started
 
@@ -72,7 +72,7 @@ The active provider and model are always visible under **Settings → Transcript
 3. Generate a note, edit it like a document, and export Markdown when you need it.
 4. Optional: connect an LLM provider or a local model in settings for summaries and chat.
 
-Product docs live at [docs.anarlog.so](https://docs.anarlog.so). To build the desktop app or website from source, follow [Local development](#local-development).
+Product docs live at [shots.playbookmedia.io/docs](https://shots.playbookmedia.io/docs). To build the desktop app or website from source, follow [Local development](#local-development).
 
 ## Repository map
 
@@ -89,7 +89,7 @@ Product docs live at [docs.anarlog.so](https://docs.anarlog.so). To build the de
 | `crates/*`         | Rust libraries for audio capture, transcription, diarization, storage, and services        |
 | `packages/*`       | Shared TypeScript packages for the editor, database, UI, and plugin SDK                    |
 | `supabase/`        | Hosted authentication, sharing, sync, billing, and Cloud API data                          |
-| `skills/anarlog`   | Published agent skill for the CLI and MCP server                                           |
+| `skills/sfh`       | Published agent skill for the CLI and MCP server                                           |
 | `enterprise/`      | Source-visible enterprise components, commercially licensed                                |
 
 ## Local development
@@ -113,7 +113,7 @@ pnpm dev:web
 
 Process Compose builds shared UI first, manages the app processes, and saves logs under `.process-compose/`. Use `pnpm dev` for the combined desktop, web, API, and local Supabase stack after configuring the optional backend.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/fastrepl/anarlog) for a code-indexed explanation of a subsystem.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/PlaybookMediaLLC/shots-founder-hub) for a code-indexed explanation of a subsystem.
 
 ### Test the Shots integration
 

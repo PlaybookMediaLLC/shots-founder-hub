@@ -30,13 +30,13 @@ Free software still needs hardware, storage, maintenance, and downloaded models.
 
 ## Local desktop apps for meeting notes
 
-### 1. Anarlog: notes, transcript, and summary in one workspace
+### 1. Shots Founder Hub: notes, transcript, and summary in one workspace
 
 ![Shots Founder Hub meeting summary with recent meetings in the local sidebar](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
 
 [Shots Founder Hub](/download/) captures microphone and system audio without a meeting bot. You can write during the call, then combine your notes and transcript in a templated summary. Canonical meeting data lives in local SQLite, with recordings and attachments stored separately and portable exports when needed.
 
-**Setup:** choose the installer for your platform, then configure transcription and Intelligence separately. The [models and providers guide](https://docs.anarlog.so/models-and-providers) documents each path. Built-in Parakeet Streaming/Batch and whisper.cpp `.bin` transcription require supported Apple Silicon. Apple Speech also requires compatible macOS 26 system assets. Windows, Linux, and Intel Macs can use a Deepgram-compatible local server or a configured hosted provider.
+**Setup:** choose the installer for your platform, then configure transcription and Intelligence separately. The [models and providers guide](https://shots.playbookmedia.io/docs) documents each path. Built-in Parakeet Streaming/Batch and whisper.cpp `.bin` transcription require supported Apple Silicon. Apple Speech also requires compatible macOS 26 system assets. Windows, Linux, and Intel Macs can use a Deepgram-compatible local server or a configured hosted provider.
 
 For local summaries, prepare an Ollama or LM Studio model and select it under Intelligence. A local speech model with a cloud summary model is a mixed data path. The [offline Mac setup](/blog/offline-meeting-transcription-mac/) walks through testing both stages.
 

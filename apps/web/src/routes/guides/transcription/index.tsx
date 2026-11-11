@@ -161,7 +161,7 @@ function TranscriptionGuides() {
               Try Shots Founder Hub
             </Link>
             <a
-              href="https://docs.anarlog.so/desktop-installation"
+              href="https://shots.playbookmedia.io/docs"
               className="text-sm underline"
             >
               Check platform requirements

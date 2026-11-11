@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 const FILES = [
-  "anarlog-archive-keyring.asc",
+  "shots-founder-hub-archive-keyring.asc",
   "dists/stable/Release",
   "dists/stable/InRelease",
   "dists/stable/Release.gpg",

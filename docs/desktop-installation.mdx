@@ -41,20 +41,20 @@ On Debian, Ubuntu, or a compatible distribution, add Shots Founder Hub's signed 
 
 ```bash
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://anarlog.so/apt/anarlog-archive-keyring.asc \
-  | sudo tee /etc/apt/keyrings/anarlog.asc > /dev/null
-sudo chmod a+r /etc/apt/keyrings/anarlog.asc
+curl -fsSL https://anarlog.so/apt/shots-founder-hub-archive-keyring.asc \
+  | sudo tee /etc/apt/keyrings/shots-founder-hub.asc > /dev/null
+sudo chmod a+r /etc/apt/keyrings/shots-founder-hub.asc
 
-sudo tee /etc/apt/sources.list.d/anarlog.sources > /dev/null <<'EOF'
+sudo tee /etc/apt/sources.list.d/shots-founder-hub.sources > /dev/null <<'EOF'
 Types: deb
 URIs: https://anarlog.so/apt
 Suites: stable
 Components: main
-Signed-By: /etc/apt/keyrings/anarlog.asc
+Signed-By: /etc/apt/keyrings/shots-founder-hub.asc
 EOF
 
 sudo apt update
-sudo apt install anarlog
+sudo apt install shots-founder-hub
 ```
 
 APT verifies the repository metadata with the dedicated Shots Founder Hub archive key. New stable releases become available through the normal `apt upgrade` flow.
@@ -64,7 +64,7 @@ APT verifies the repository metadata with the dedicated Shots Founder Hub archiv
 To install a downloaded package directly:
 
 ```bash
-sudo apt install ./anarlog-*.deb
+sudo apt install ./shots-founder-hub-*.deb
 ```
 
 ### AppImage
@@ -72,31 +72,31 @@ sudo apt install ./anarlog-*.deb
 For an AppImage, make it executable and open it:
 
 ```bash
-chmod +x ./anarlog-*.AppImage
-./anarlog-*.AppImage
+chmod +x ./shots-founder-hub-*.AppImage
+./shots-founder-hub-*.AppImage
 ```
 
 On Wayland with an NVIDIA GPU, if the window is black or only audio plays, launch with:
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 ./anarlog-*.AppImage
+WEBKIT_DISABLE_DMABUF_RENDERER=1 ./shots-founder-hub-*.AppImage
 ```
 
 If the window is still black, also disable compositing:
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 ./anarlog-*.AppImage
+WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 ./shots-founder-hub-*.AppImage
 ```
 
 Current builds apply the DMA-BUF workaround automatically. Set the variables yourself only if a black window remains.
 
 ### Arch Linux
 
-Build the maintained `anarlog-bin` package with `makepkg`:
+Build the maintained `shots-founder-hub-bin` package with `makepkg`:
 
 ```bash
-git clone https://github.com/fastrepl/anarlog.git
-cd anarlog/packaging/aur/anarlog-bin
+git clone https://github.com/PlaybookMediaLLC/shots-founder-hub.git
+cd shots-founder-hub/packaging/aur/shots-founder-hub-bin
 makepkg -si
 ```
 
@@ -128,5 +128,5 @@ that change. Your data is not modified by the older app.
   or recovery key to resolve a version mismatch; see [Cloud sync troubleshooting](/sync).
 </Warning>
 
-If you installed the bundled CLI from Nightly, its command is `anarlog-nightly`;
-`anarlog` uses stable.
+If you installed the bundled CLI from Nightly, its command is `sfh-nightly`;
+`sfh` uses stable.

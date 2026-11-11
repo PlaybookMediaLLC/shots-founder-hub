@@ -5849,7 +5849,7 @@ msgstr ""
 
 #: src/settings/general/app-settings.tsx
 msgid "Start Shots Founder Hub at login"
-msgstr "Kirish vaqtida Anarlogni ishga tushiring"
+msgstr "Kirish vaqtida Shots Founder Hubni ishga tushiring"
 
 #: src/chat/components/input/index.tsx
 msgid "Start voice input"

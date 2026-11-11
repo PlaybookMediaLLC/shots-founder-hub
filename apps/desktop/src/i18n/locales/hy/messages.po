@@ -5849,7 +5849,7 @@ msgstr ""
 
 #: src/settings/general/app-settings.tsx
 msgid "Start Shots Founder Hub at login"
-msgstr "Մուտք գործեք Anarlog-ը"
+msgstr "Մուտք գործեք Shots Founder Hub-ը"
 
 #: src/chat/components/input/index.tsx
 msgid "Start voice input"

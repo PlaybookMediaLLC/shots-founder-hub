@@ -5849,7 +5849,7 @@ msgstr ""
 
 #: src/settings/general/app-settings.tsx
 msgid "Start Shots Founder Hub at login"
-msgstr "Qala i-Anarlog ekungeneni ngemvume"
+msgstr "Qala i-Shots Founder Hub ekungeneni ngemvume"
 
 #: src/chat/components/input/index.tsx
 msgid "Start voice input"

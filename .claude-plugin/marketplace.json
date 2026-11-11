@@ -3,7 +3,7 @@
   "owner": {
     "name": "Fastrepl",
     "email": "team@fastrepl.com",
-    "url": "https://anarlog.so"
+    "url": "https://shots.playbookmedia.io"
   },
   "metadata": {
     "description": "Official plugins from Fastrepl",
@@ -11,18 +11,18 @@
   },
   "plugins": [
     {
-      "name": "anarlog",
-      "displayName": "Anarlog",
-      "source": "./agent-plugins/anarlog",
-      "description": "Search local Anarlog meetings or connect to Cloud with OAuth.",
+      "name": "sfh",
+      "displayName": "Shots Founder Hub",
+      "source": "./agent-plugins/sfh",
+      "description": "Search local Shots Founder Hub meetings or connect to Cloud with OAuth.",
       "version": "1.3.5",
       "author": {
         "name": "Fastrepl",
         "email": "team@fastrepl.com",
-        "url": "https://anarlog.so"
+        "url": "https://shots.playbookmedia.io"
       },
-      "homepage": "https://docs.anarlog.so/agents/overview",
-      "repository": "https://github.com/fastrepl/anarlog/tree/main/agent-plugins/anarlog",
+      "homepage": "https://shots.playbookmedia.io/docs",
+      "repository": "https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/sfh",
       "license": "MIT",
       "category": "Productivity",
       "tags": ["meetings", "notes", "transcripts", "mcp", "oauth"]

@@ -80,7 +80,7 @@ Only when the result is exactly `gitbutler/workspace`, use the repository-local 
 - Desktop dev: `pnpm dev:desktop`.
 - Web dev: `pnpm dev:web`.
 - Combined desktop/web/API/local Supabase: `pnpm dev`; backend only: `pnpm dev:api`. Requires Docker, Task, and API configuration. Process Compose 1.122.0+ owns process lifecycle and logs; Turbo owns the shared UI build. See `CONTRIBUTING.md` for control ports and headless use.
-- Dev docs: https://docs.anarlog.so
+- Dev docs: https://shots.playbookmedia.io/docs
 
 ## Pre-commit verification
 
