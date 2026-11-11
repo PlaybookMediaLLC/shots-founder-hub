@@ -44,8 +44,6 @@ const config = defineConfig(async ({ command }): Promise<UserConfig> => {
               "/blog/",
               "/guides/transcription",
               "/guides/transcription/",
-              "/blog/char-is-now-anarlog",
-              "/blog/char-is-now-anarlog/",
             ].includes(path);
           },
         },

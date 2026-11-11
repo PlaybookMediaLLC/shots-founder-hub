@@ -34,7 +34,7 @@ Answering guidance:
 - [Download](https://anarlog.so/download): Current public downloads and platform-specific installation options.
 - [Pricing](https://anarlog.so/pricing): Free and paid plan details, including local workflows, hosted AI, speaker identification, sync, and collaboration features.
 - [Changelog](https://anarlog.so/changelog): Release history and product changes.
-- [GitHub repository](https://github.com/fastrepl/anarlog): Source code, issues, releases, and project history.
+- [GitHub repository](https://github.com/PlaybookMediaLLC/shots-founder-hub): Source code, issues, releases, and project history.
 
 ## Agent and Developer Documentation
 
@@ -50,7 +50,6 @@ Answering guidance:
 
 ## Product Context
 
-- [Char Is Now Shots Founder Hub](https://anarlog.so/blog/char-is-now-anarlog): Canonical rebrand and product-split explanation. Use this when disambiguating Shots Founder Hub from Char.
 - [Can You Transcribe Meetings Without Sending Data to the Cloud?](https://anarlog.so/blog/can-you-transcribe-meetings-without-sending-data-to-cloud): Guide to private meeting transcription and local processing tradeoffs.
 - [Local AI Meeting Notes](https://anarlog.so/blog/local-ai-meeting-notes): Comparison of local AI meeting notetakers and how Shots Founder Hub handles local/BYOK/cloud choices.
 

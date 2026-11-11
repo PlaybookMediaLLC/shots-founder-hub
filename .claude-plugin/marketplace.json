@@ -12,9 +12,9 @@
   "plugins": [
     {
       "name": "anarlog",
-      "displayName": "Anarlog",
+      "displayName": "Shots Founder Hub",
       "source": "./agent-plugins/anarlog",
-      "description": "Search local Anarlog meetings or connect to Cloud with OAuth.",
+      "description": "Search local Shots Founder Hub meetings or connect to Cloud with OAuth.",
       "version": "1.3.5",
       "author": {
         "name": "Fastrepl",
@@ -22,7 +22,7 @@
         "url": "https://anarlog.so"
       },
       "homepage": "https://docs.anarlog.so/agents/overview",
-      "repository": "https://github.com/fastrepl/anarlog/tree/main/agent-plugins/anarlog",
+      "repository": "https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/anarlog",
       "license": "MIT",
       "category": "Productivity",
       "tags": ["meetings", "notes", "transcripts", "mcp", "oauth"]

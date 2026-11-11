@@ -30,7 +30,7 @@ The Mac App Store build does not bundle CLI installation. Build from source inst
 To build from source instead:
 
 ```bash
-git clone https://github.com/fastrepl/anarlog.git
+git clone https://github.com/PlaybookMediaLLC/shots-founder-hub.git
 cd anarlog
 cargo install --locked --path apps/cli
 anarlog --version

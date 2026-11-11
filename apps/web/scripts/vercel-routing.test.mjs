@@ -35,7 +35,7 @@ test("APT redirects retain the release and architecture", () => {
     assert.equal(route.status, 302);
     assert.equal(
       route.destination,
-      `https://github.com/fastrepl/anarlog/releases/download/desktop_v1.4.22/anarlog-linux-${asset}.deb`,
+      `https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/desktop_v1.4.22/anarlog-linux-${asset}.deb`,
     );
   }
 });

@@ -150,7 +150,7 @@ export const desktopDownloadSections = [
       {
         name: "Arch Linux",
         detail: "Arch-based distros · PKGBUILD",
-        url: "https://github.com/fastrepl/anarlog/tree/main/packaging/aur/anarlog-bin",
+        url: "https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/packaging/aur/anarlog-bin",
         actionLabel: "View PKGBUILD",
         showInMenu: false,
       },

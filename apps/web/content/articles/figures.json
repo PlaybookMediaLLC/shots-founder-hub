@@ -76,20 +76,10 @@
       "width": 1200
     }
   ],
-  "char-is-now-anarlog": [
-    {
-      "filename": "name-timeline.png",
-      "content": "Hyprnote\nChar\nAnarlog\nSame local-first meeting notepad",
-      "context": "Simple horizontal timeline for an Shots Founder Hub announcement post showing the product's naming history from Hyprnote to Char to Shots Founder Hub, with the constant being the same local-first meeting notepad.",
-      "visualQuery": "timeline",
-      "orientation": "horizontal",
-      "width": 1200
-    }
-  ],
   "char-vs-meetily": [
     {
       "filename": "anarlog-vs-meetily-axes.png",
-      "content": "Both: local-first and open source\nAnarlog: native app polish, live notepad, AI stack choice\nMeetily: self-hosted focus, community project",
+      "content": "Both: local-first and open source\nShots Founder Hub: native app polish, live notepad, AI stack choice\nMeetily: self-hosted focus, community project",
       "context": "Comparison diagram for an Shots Founder Hub blog post positioning Shots Founder Hub and Meetily. They share local-first open-source foundations but differ in product polish and focus. Honest, not dismissive of Meetily.",
       "visualQuery": "comparison",
       "orientation": "horizontal",
@@ -310,7 +300,7 @@
   "transcription-software-mac": [
     {
       "filename": "mac-transcription-decision.png",
-      "content": "Live meeting transcription with privacy\nAnarlog\nDrag-and-drop file transcription\nMacWhisper\nEdit podcasts by editing text\nDescript\nAutomated meeting bot\nOtter\nHuman-verified accuracy\nRev",
+      "content": "Live meeting transcription with privacy\nShots Founder Hub\nDrag-and-drop file transcription\nMacWhisper\nEdit podcasts by editing text\nDescript\nAutomated meeting bot\nOtter\nHuman-verified accuracy\nRev",
       "context": "Decision-tree diagram for an Shots Founder Hub blog post matching common Mac transcription needs to the right tool. Shots Founder Hub is one branch among several; keep it honest.",
       "visualQuery": "decision tree",
       "orientation": "horizontal",

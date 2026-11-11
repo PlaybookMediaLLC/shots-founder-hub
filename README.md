@@ -113,7 +113,7 @@ pnpm dev:web
 
 Process Compose builds shared UI first, manages the app processes, and saves logs under `.process-compose/`. Use `pnpm dev` for the combined desktop, web, API, and local Supabase stack after configuring the optional backend.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/fastrepl/anarlog) for a code-indexed explanation of a subsystem.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/PlaybookMediaLLC/shots-founder-hub) for a code-indexed explanation of a subsystem.
 
 ### Test the Shots integration
 

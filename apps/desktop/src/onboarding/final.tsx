@@ -31,7 +31,7 @@ const SOCIALS = [
   {
     label: "GitHub",
     icon: GithubLogo,
-    url: "https://github.com/fastrepl/anarlog",
+    url: "https://github.com/PlaybookMediaLLC/shots-founder-hub",
   },
   {
     label: "X",

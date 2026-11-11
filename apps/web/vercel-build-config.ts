@@ -37,7 +37,7 @@ const routes = [
     status: 302,
     headers: {
       Location:
-        "https://github.com/fastrepl/anarlog/releases/download/$1/anarlog-linux-x86_64.deb",
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/$1/anarlog-linux-x86_64.deb",
     },
   },
   {
@@ -45,7 +45,7 @@ const routes = [
     status: 302,
     headers: {
       Location:
-        "https://github.com/fastrepl/anarlog/releases/download/$1/anarlog-linux-aarch64.deb",
+        "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/$1/anarlog-linux-aarch64.deb",
     },
   },
   {

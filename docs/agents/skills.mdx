@@ -14,8 +14,8 @@ The public Shots Founder Hub skill teaches agents a single workflow across Cloud
 ## Sources
 
 - Published skill: `https://docs.anarlog.so/skill.md`
-- Repository package: [`skills/anarlog`](https://github.com/fastrepl/anarlog/tree/main/skills/anarlog)
-- Agent plugin: [`agent-plugins/anarlog`](https://github.com/fastrepl/anarlog/tree/main/agent-plugins/anarlog)
+- Repository package: [`skills/anarlog`](https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/skills/anarlog)
+- Agent plugin: [`agent-plugins/anarlog`](https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/anarlog)
 
 The published file is self-contained. The repository package adds references for setup, CLI commands, MCP tools, and errors.
 
@@ -30,21 +30,21 @@ The `Shots Founder Hub` plugin bundles the skill and an optional hosted Cloud MC
 For Claude Code:
 
 ```bash
-claude plugin marketplace add fastrepl/anarlog
+claude plugin marketplace add PlaybookMediaLLC/shots-founder-hub
 claude plugin install anarlog@fastrepl
 ```
 
 For GitHub Copilot CLI:
 
 ```bash
-copilot plugin marketplace add fastrepl/anarlog
+copilot plugin marketplace add PlaybookMediaLLC/shots-founder-hub
 copilot plugin install anarlog@fastrepl
 ```
 
 For ChatGPT and Codex, add the repository source, restart the ChatGPT desktop app, then install **Shots Founder Hub** from the Fastrepl source in the Plugins Directory:
 
 ```bash
-codex plugin marketplace add fastrepl/anarlog \
+codex plugin marketplace add PlaybookMediaLLC/shots-founder-hub \
   --sparse .agents/plugins \
   --sparse agent-plugins/anarlog
 ```
@@ -53,7 +53,7 @@ Use the host's cloud connection control to sign in and approve OAuth. Some MCP h
 
 The Fastrepl plugin includes an optional **Shots Founder Hub Cloud** App connection for Codex. Leave it disconnected for local CLI access. Public directory listings have a separate review and release process from the repository marketplace.
 
-Cursor Teams and Enterprise administrators can import `https://github.com/fastrepl/anarlog` as a team marketplace, then install **Shots Founder Hub**.
+Cursor Teams and Enterprise administrators can import `https://github.com/PlaybookMediaLLC/shots-founder-hub` as a team marketplace, then install **Shots Founder Hub**.
 
 ## Install in an agent
 

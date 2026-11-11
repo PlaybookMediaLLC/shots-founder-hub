@@ -23,7 +23,7 @@ The repository package is named **Shots Founder Hub**. Its optional hosted conne
 ### Claude Code
 
 ```bash
-claude plugin marketplace add fastrepl/anarlog
+claude plugin marketplace add PlaybookMediaLLC/shots-founder-hub
 claude plugin install anarlog@fastrepl
 ```
 
@@ -36,14 +36,14 @@ claude mcp add --transport http anarlog https://api.anarlog.so/mcp
 ### GitHub Copilot CLI
 
 ```bash
-copilot plugin marketplace add fastrepl/anarlog
+copilot plugin marketplace add PlaybookMediaLLC/shots-founder-hub
 copilot plugin install anarlog@fastrepl
 ```
 
 ### ChatGPT and Codex
 
 ```bash
-codex plugin marketplace add fastrepl/anarlog \
+codex plugin marketplace add PlaybookMediaLLC/shots-founder-hub \
   --sparse .agents/plugins \
   --sparse agent-plugins/anarlog
 ```
@@ -54,7 +54,7 @@ The plugin includes an optional **Shots Founder Hub Cloud** App connection. Conn
 
 ### Cursor
 
-Import `https://github.com/fastrepl/anarlog` as a team marketplace, then install **Shots Founder Hub**. You can also load `agent-plugins/anarlog` as a local plugin while testing.
+Import `https://github.com/PlaybookMediaLLC/shots-founder-hub` as a team marketplace, then install **Shots Founder Hub**. You can also load `agent-plugins/anarlog` as a local plugin while testing.
 
 ## Configure MCP directly
 
