@@ -35,7 +35,7 @@ jobs:
           scripts/desktop-release-provenance.test.mjs
           scripts/workflow-security.test.mjs
           scripts/security-dependencies.test.mjs
-          scripts/publish-anarlog-skill.test.mjs
+          scripts/publish-sfh-skill.test.mjs
           scripts/repack-linux-appimage.test.mjs
           scripts/verify-linux-audio-qa-run.test.mjs
           scripts/verify-linux-audio-qa-evidence.test.mjs

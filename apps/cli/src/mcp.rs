@@ -351,7 +351,7 @@ impl ServerHandler for AnarlogMcpServer {
                 .build(),
         )
         .with_protocol_version(ProtocolVersion::V_2026_07_28)
-        .with_server_info(Implementation::new("anarlog", crate::VERSION))
+        .with_server_info(Implementation::new("sfh", crate::VERSION))
         .with_instructions(
             "Local access to Shots Founder Hub meeting data. Start with list_meetings to resolve a meeting_id; to scope work to a project or client, call list_folders and pass a returned path as folder_path. Then call get_meeting for notes, summaries, participants, and action items. Request transcript pages with get_meeting_transcript and continue with pagination.next_offset; each page is capped at 500 words. Use get_recurring_meeting_history for series context. Use export_meeting only when the task needs the complete record including transcripts. To persist an edit, call propose_summary_edit or propose_memo_edit; the result stays pending until a human applies it in the desktop app. List or inspect staged work with list_proposals and get_proposal. decline_proposal discards a pending proposal without changing the meeting. Never invent meeting titles, dates, or ids. If list_meetings returns no meetings, say so. Never access SQLite directly, or claim a proposal was applied. Documentation: https://docs.anarlog.so",
         )
@@ -734,7 +734,7 @@ mod tests {
             ]
         );
         let mcp_docs = include_str!("../../../docs/reference/mcp.mdx");
-        let mcp_skill = include_str!("../../../skills/anarlog/references/mcp.md");
+        let mcp_skill = include_str!("../../../skills/sfh/references/mcp.md");
         for tool_name in &tool_names {
             assert!(
                 mcp_docs.contains(tool_name),

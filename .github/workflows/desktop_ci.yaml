@@ -236,11 +236,11 @@ jobs:
         run: |
           cargo build --locked --release -p anarlog-cli --target x86_64-pc-windows-msvc
           cp \
-            target/x86_64-pc-windows-msvc/release/anarlog.exe \
-            apps/desktop/src-tauri/resources/cli/anarlog-cli-x86_64-pc-windows-msvc.exe
+            target/x86_64-pc-windows-msvc/release/sfh.exe \
+            apps/desktop/src-tauri/resources/cli/sfh-x86_64-pc-windows-msvc.exe
           ./scripts/sidecar.sh \
             ./apps/desktop/src-tauri/tauri.conf.staging.json \
-            resources/cli/anarlog-cli
+            resources/cli/sfh
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
         run: pnpm -F ui build
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
@@ -472,11 +472,11 @@ jobs:
           TAURI_ENV_TARGET_TRIPLE=${{ matrix.target }} cargo xtask prepare-binaries
           ./scripts/sidecar.sh \
             ./apps/desktop/src-tauri/tauri.conf.staging.json \
-            resources/cli/anarlog-cli
+            resources/cli/sfh
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
         run: pnpm -F ui build
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
-        run: pnpm -F desktop tauri build --ci --bundles appimage,deb --target ${{ matrix.target }} --config ./src-tauri/tauri.conf.staging.json --config ./src-tauri/tauri.conf.staging-linux.json --features devtools --verbose
+        run: pnpm -F desktop tauri build --ci --bundles appimage,deb --target ${{ matrix.target }} --config ./src-tauri/tauri.conf.staging.json --features devtools --verbose
         env:
           POSTHOG_API_KEY: phc_linux_ci
           VITE_POSTHOG_API_KEY: phc_linux_ci
@@ -612,7 +612,7 @@ jobs:
             bash -euxo pipefail -c '
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH"
+              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH" shots-founder-hub-staging
               apt-get install -y dbus-x11 xvfb
               set +e
               timeout --signal=TERM 20s xvfb-run -a dbus-run-session -- "$BINARY_PATH" >/tmp/anarlog.log 2>&1

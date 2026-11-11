@@ -30,8 +30,8 @@ on:
       - crates/e2ee/**
       - crates/tiptap/**
       - docs/**
-      - scripts/publish-anarlog-skill.mjs
-      - scripts/publish-anarlog-skill.test.mjs
+      - scripts/publish-sfh-skill.mjs
+      - scripts/publish-sfh-skill.test.mjs
       - skills/**
       - Cargo.lock
       - Cargo.toml
@@ -64,8 +64,8 @@ on:
       - crates/e2ee/**
       - crates/tiptap/**
       - docs/**
-      - scripts/publish-anarlog-skill.mjs
-      - scripts/publish-anarlog-skill.test.mjs
+      - scripts/publish-sfh-skill.mjs
+      - scripts/publish-sfh-skill.test.mjs
       - skills/**
       - Cargo.lock
       - Cargo.toml
@@ -118,53 +118,53 @@ jobs:
             -D warnings
       - run: cargo build --locked --release -p anarlog-cli
       - run: |
-          target/release/anarlog --help
-          target/release/anarlog --version
-          target/release/anarlog auth --help
-          target/release/anarlog meetings --help
-          target/release/anarlog mcp --help
-          target/release/anarlog proposals --help
-          if doctor_output="$(target/release/anarlog --json --db-path "$RUNNER_TEMP/missing.db" doctor)"; then
+          target/release/sfh --help
+          target/release/sfh --version
+          target/release/sfh auth --help
+          target/release/sfh meetings --help
+          target/release/sfh mcp --help
+          target/release/sfh proposals --help
+          if doctor_output="$(target/release/sfh --json --db-path "$RUNNER_TEMP/missing.db" doctor)"; then
             echo "doctor unexpectedly reported a missing database as ready"
             exit 1
           fi
           grep -q '"ready": false' <<<"$doctor_output"
-          if invalid_output="$(target/release/anarlog --json meetings list --limit 0 2>&1)"; then
+          if invalid_output="$(target/release/sfh --json meetings list --limit 0 2>&1)"; then
             echo "invalid arguments unexpectedly succeeded"
             exit 1
           fi
           grep -q '"code": "invalid_arguments"' <<<"$invalid_output"
           auth_path="$RUNNER_TEMP/anarlog-auth-smoke.json"
-          auth_status="$(ANARLOG_AUTH_PATH="$auth_path" target/release/anarlog --json auth status)"
+          auth_status="$(ANARLOG_AUTH_PATH="$auth_path" target/release/sfh --json auth status)"
           grep -q '"command": "auth.status"' <<<"$auth_status"
           grep -q '"signed_in": false' <<<"$auth_status"
-          auth_logout="$(ANARLOG_AUTH_PATH="$auth_path" target/release/anarlog --json auth logout)"
+          auth_logout="$(ANARLOG_AUTH_PATH="$auth_path" target/release/sfh --json auth logout)"
           grep -q '"command": "auth.logout"' <<<"$auth_logout"
           grep -q '"signed_in": false' <<<"$auth_logout"
-          if auth_error="$(printf '%s\n' 'anarlog://auth/callback?access_token=cli-auth-secret-sentinel' | ANARLOG_AUTH_PATH="$auth_path" target/release/anarlog --json auth login 2>&1)"; then
+          if auth_error="$(printf '%s\n' 'anarlog://auth/callback?access_token=cli-auth-secret-sentinel' | ANARLOG_AUTH_PATH="$auth_path" target/release/sfh --json auth login 2>&1)"; then
             echo "incomplete auth callback unexpectedly succeeded"
             exit 1
           fi
           grep -q '"code": "operation_failed"' <<<"$auth_error"
           ! grep -q 'cli-auth-secret-sentinel' <<<"$auth_error"
           headless_auth_root="$RUNNER_TEMP/anarlog-auth-headless"
-          headless_logout="$(env -u DBUS_SESSION_BUS_ADDRESS XDG_DATA_HOME="$headless_auth_root" target/release/anarlog --json auth logout)"
+          headless_logout="$(env -u DBUS_SESSION_BUS_ADDRESS XDG_DATA_HOME="$headless_auth_root" target/release/sfh --json auth logout)"
           grep -q '"command": "auth.logout"' <<<"$headless_logout"
           headless_fallback="$headless_auth_root/com.hyprnote.stable/auth.cli.json"
           test ! -e "$headless_fallback"
       - run: |
-          test -s skills/anarlog/SKILL.md
-          test "$(sed -n '1p' skills/anarlog/SKILL.md)" = "---"
-          grep -Eq '^name:[[:space:]]+anarlog[[:space:]]*$' skills/anarlog/SKILL.md
-          grep -Eq '^description:[[:space:]]*(>|\||[^[:space:]])' skills/anarlog/SKILL.md
-          awk 'NR > 1 && $0 == "---" { found = 1; exit } END { if (!found) exit 1 }' skills/anarlog/SKILL.md
+          test -s skills/sfh/SKILL.md
+          test "$(sed -n '1p' skills/sfh/SKILL.md)" = "---"
+          grep -Eq '^name:[[:space:]]+sfh[[:space:]]*$' skills/sfh/SKILL.md
+          grep -Eq '^description:[[:space:]]*(>|\||[^[:space:]])' skills/sfh/SKILL.md
+          awk 'NR > 1 && $0 == "---" { found = 1; exit } END { if (!found) exit 1 }' skills/sfh/SKILL.md
           test "$(readlink docs/.mintlify/skills)" = "../../skills"
-          test -f docs/.mintlify/skills/anarlog/SKILL.md
-          node scripts/publish-anarlog-skill.mjs --check
-          node --test scripts/publish-anarlog-skill.test.mjs
+          test -f docs/.mintlify/skills/sfh/SKILL.md
+          node scripts/publish-sfh-skill.mjs --check
+          node --test scripts/publish-sfh-skill.test.mjs
           skill_list="$(npx --yes skills@1.5.16 add . --list)"
           echo "$skill_list"
-          grep -q 'anarlog' <<<"$skill_list"
+          grep -q 'sfh' <<<"$skill_list"
           ! grep -q 'add-plugin' <<<"$skill_list"
       - run: |
           npx --yes mint@4.2.687 validate
@@ -194,29 +194,29 @@ jobs:
         shell: bash
       - run: cargo build --locked --release -p anarlog-cli
       - run: |
-          target/release/anarlog.exe --help
-          target/release/anarlog.exe --version
-          target/release/anarlog.exe auth --help
-          target/release/anarlog.exe meetings --help
-          target/release/anarlog.exe mcp --help
-          if doctor_output="$(target/release/anarlog.exe --json --db-path "$RUNNER_TEMP/missing.db" doctor)"; then
+          target/release/sfh.exe --help
+          target/release/sfh.exe --version
+          target/release/sfh.exe auth --help
+          target/release/sfh.exe meetings --help
+          target/release/sfh.exe mcp --help
+          if doctor_output="$(target/release/sfh.exe --json --db-path "$RUNNER_TEMP/missing.db" doctor)"; then
             echo "doctor unexpectedly reported a missing database as ready"
             exit 1
           fi
           grep -q '"ready": false' <<<"$doctor_output"
-          if invalid_output="$(target/release/anarlog.exe --json meetings list --limit 0 2>&1)"; then
+          if invalid_output="$(target/release/sfh.exe --json meetings list --limit 0 2>&1)"; then
             echo "invalid arguments unexpectedly succeeded"
             exit 1
           fi
           grep -q '"code": "invalid_arguments"' <<<"$invalid_output"
           auth_path="$RUNNER_TEMP/anarlog-auth-smoke.json"
-          auth_status="$(ANARLOG_AUTH_PATH="$auth_path" target/release/anarlog.exe --json auth status)"
+          auth_status="$(ANARLOG_AUTH_PATH="$auth_path" target/release/sfh.exe --json auth status)"
           grep -q '"command": "auth.status"' <<<"$auth_status"
           grep -q '"signed_in": false' <<<"$auth_status"
-          auth_logout="$(ANARLOG_AUTH_PATH="$auth_path" target/release/anarlog.exe --json auth logout)"
+          auth_logout="$(ANARLOG_AUTH_PATH="$auth_path" target/release/sfh.exe --json auth logout)"
           grep -q '"command": "auth.logout"' <<<"$auth_logout"
           grep -q '"signed_in": false' <<<"$auth_logout"
-          if auth_error="$(printf '%s\n' 'anarlog://auth/callback?access_token=cli-auth-secret-sentinel' | ANARLOG_AUTH_PATH="$auth_path" target/release/anarlog.exe --json auth login 2>&1)"; then
+          if auth_error="$(printf '%s\n' 'anarlog://auth/callback?access_token=cli-auth-secret-sentinel' | ANARLOG_AUTH_PATH="$auth_path" target/release/sfh.exe --json auth login 2>&1)"; then
             echo "incomplete auth callback unexpectedly succeeded"
             exit 1
           fi

@@ -89,7 +89,7 @@ Product docs live at [docs.anarlog.so](https://docs.anarlog.so). To build the de
 | `crates/*`         | Rust libraries for audio capture, transcription, diarization, storage, and services        |
 | `packages/*`       | Shared TypeScript packages for the editor, database, UI, and plugin SDK                    |
 | `supabase/`        | Hosted authentication, sharing, sync, billing, and Cloud API data                          |
-| `skills/anarlog`   | Published agent skill for the CLI and MCP server                                           |
+| `skills/sfh`       | Published agent skill for the CLI and MCP server                                           |
 | `enterprise/`      | Source-visible enterprise components, commercially licensed                                |
 
 ## Local development

@@ -5,7 +5,7 @@ description: "Teach a compatible agent when and how to use Shots Founder Hub's M
 
 The public Shots Founder Hub skill teaches agents a single workflow across Cloud MCP and the local CLI:
 
-1. Prefer local MCP or `anarlog --json meetings --source local list` when the agent can access your database.
+1. Prefer local MCP or `sfh --json meetings --source local list` when the agent can access your database.
 2. Use OAuth-connected Cloud MCP when running remotely or when local access is unavailable.
 3. Resolve meeting IDs from search results.
 4. Fetch meeting detail before transcript text.
@@ -14,8 +14,8 @@ The public Shots Founder Hub skill teaches agents a single workflow across Cloud
 ## Sources
 
 - Published skill: `https://docs.anarlog.so/skill.md`
-- Repository package: [`skills/anarlog`](https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/skills/anarlog)
-- Agent plugin: [`agent-plugins/anarlog`](https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/anarlog)
+- Repository package: [`skills/sfh`](https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/skills/sfh)
+- Agent plugin: [`agent-plugins/sfh`](https://github.com/PlaybookMediaLLC/shots-founder-hub/tree/main/agent-plugins/sfh)
 
 The published file is self-contained. The repository package adds references for setup, CLI commands, MCP tools, and errors.
 
@@ -31,14 +31,14 @@ For Claude Code:
 
 ```bash
 claude plugin marketplace add PlaybookMediaLLC/shots-founder-hub
-claude plugin install anarlog@fastrepl
+claude plugin install sfh@fastrepl
 ```
 
 For GitHub Copilot CLI:
 
 ```bash
 copilot plugin marketplace add PlaybookMediaLLC/shots-founder-hub
-copilot plugin install anarlog@fastrepl
+copilot plugin install sfh@fastrepl
 ```
 
 For ChatGPT and Codex, add the repository source, restart the ChatGPT desktop app, then install **Shots Founder Hub** from the Fastrepl source in the Plugins Directory:
@@ -46,7 +46,7 @@ For ChatGPT and Codex, add the repository source, restart the ChatGPT desktop ap
 ```bash
 codex plugin marketplace add PlaybookMediaLLC/shots-founder-hub \
   --sparse .agents/plugins \
-  --sparse agent-plugins/anarlog
+  --sparse agent-plugins/sfh
 ```
 
 Use the host's cloud connection control to sign in and approve OAuth. Some MCP hosts prompt on first cloud tool use. No cloud API key is required for OAuth connections. A skill-only installation does not create an account connection.
@@ -63,7 +63,7 @@ Install it from the documentation site with the skills CLI:
 npx skills add https://docs.anarlog.so
 ```
 
-For a filesystem-based agent, copy the complete `skills/anarlog` directory into that agent's skills directory. Keep the directory name `anarlog` so relative reference links continue to work.
+For a filesystem-based agent, copy the complete `skills/sfh` directory into that agent's skills directory. Keep the directory name `sfh` so relative reference links continue to work.
 
 <Note>
   Agent skill locations and installer commands vary by client. Follow your agent's skill installation instructions rather than copying only `SKILL.md`.

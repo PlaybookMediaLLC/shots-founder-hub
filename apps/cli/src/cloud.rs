@@ -21,7 +21,7 @@ impl CloudClient {
         let session = auth::current_session().await?.ok_or_else(|| {
             Error::cloud(
                 "unauthorized",
-                "Sign in with `anarlog auth login` before using --source cloud.",
+                "Sign in with `sfh auth login` before using --source cloud.",
             )
         })?;
         Self::from_session(&auth::api_url()?, session)
@@ -34,7 +34,7 @@ impl CloudClient {
         {
             return Err(Error::cloud(
                 "unauthorized",
-                "The Shots Founder Hub session has expired; open Shots Founder Hub or run `anarlog auth login` again.",
+                "The Shots Founder Hub session has expired; open Shots Founder Hub or run `sfh auth login` again.",
             ));
         }
         Self::new(base_url, session.access_token)

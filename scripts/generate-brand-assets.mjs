@@ -78,7 +78,7 @@ const pngTargets = [
   "apps/mobile/assets/images/favicon.png",
   "apps/mobile/assets/providers/anarlog.png",
   "apps/desktop/public/assets/anarlog-icon.png",
-  "agent-plugins/anarlog/assets/icon.png",
+  "agent-plugins/sfh/assets/icon.png",
 ];
 async function pngFiles(directory) {
   const files = [];
