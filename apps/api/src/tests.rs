@@ -16,6 +16,62 @@ use super::*;
 const TEST_KEY_ID: &str = "sync-composition-test";
 
 #[tokio::test]
+async fn shots_does_not_expose_legacy_identity_or_billing_mutations() {
+    let config = crate::env::RuntimeConfig::resolve(deserialize_api_env([
+        ("ANARLOG_SERVICE", "all"),
+        ("SHOTS_AUTH_URL", "https://shots.example.com"),
+        (
+            "SHOTS_AUTH_SERVICE_TOKEN",
+            "test-service-secret-at-least-thirty-two-bytes",
+        ),
+        ("SUPABASE_JWT_SECRET", "internal-storage-jwt-signing-secret"),
+        ("FOUNDER_HUB_MCP_URL", "https://hub.example.com/mcp"),
+        ("STRIPE_SECRET_KEY", "sk_test_unused"),
+        ("STRIPE_MONTHLY_PRICE_ID", "price_monthly"),
+        ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
+        ("LOOPS_KEY", "unused"),
+    ]))
+    .unwrap();
+    assert!(config.subscription.is_none());
+    assert!(config.sync.sqlitecloud_project_url.is_none());
+    let app = app_with_env(Box::leak(Box::new(config))).await;
+    for path in [
+        "/subscription/delete-account",
+        "/subscription/start-trial",
+        "/scim/v2/Users",
+    ] {
+        assert_eq!(
+            request_status(&app, Method::POST, path).await,
+            StatusCode::NOT_FOUND
+        );
+    }
+    for path in [
+        "/sync/token",
+        "/sync/shares/11111111-1111-4111-8111-111111111111/live/ticket",
+    ] {
+        assert_eq!(
+            request_status(&app, Method::POST, path).await,
+            StatusCode::UNAUTHORIZED
+        );
+    }
+    for scope in ["global", "others"] {
+        assert_eq!(
+            request_status(
+                &app,
+                Method::POST,
+                &format!("/cloud/auth/v1/logout?scope={scope}")
+            )
+            .await,
+            StatusCode::BAD_REQUEST
+        );
+    }
+    assert_eq!(
+        request_status(&app, Method::POST, "/cloud/auth/v1/logout?scope=local").await,
+        StatusCode::UNAUTHORIZED
+    );
+}
+
+#[tokio::test]
 async fn standalone_services_build_without_other_services_credentials() {
     for role in ["ai", "sync", "core", "billing"] {
         let mut values = vec![

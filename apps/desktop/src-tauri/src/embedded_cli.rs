@@ -223,6 +223,9 @@ fn unavailable_status(command_name: &str, details: &str) -> EmbeddedCliStatus {
 }
 
 fn command_name_from_identifier(identifier: &str) -> &'static str {
+    if identifier.starts_with("com.hyprnote.dev.") {
+        return "anarlog-dev";
+    }
     match identifier {
         STABLE_BUNDLE_ID | LEGACY_STABLE_BUNDLE_ID | FLATPAK_BUNDLE_ID => "anarlog",
         STAGING_BUNDLE_ID => "anarlog-staging",

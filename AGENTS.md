@@ -174,6 +174,92 @@ Naming rules:
 - Prefer `screen.rs` plus a small local state struct for simple browse/select flows
 - Do not add parent-level action/effect translation layers that proxy child workflows through another command's reducer
 
+## Mandatory implementation review
+
+For implementation, bug fixes, and refactors, follow this sequence:
+
+Understand scope → implement → verify → independent review → fix confirmed
+blockers → verify again → report.
+
+Use the repository's existing feature-flow skill when available. The rules
+below also apply when that skill is not installed.
+
+### Before implementation
+
+- Read the affected code and trace callers, contracts, and failure paths.
+- Define verifiable success criteria.
+- Use the smallest complete solution and preserve unrelated work.
+- For complex multi-stage work, use `workflow-orchestrator` when it helps
+  establish ownership, dependencies, and verification gates. The parent
+  agent remains responsible for execution.
+
+### Verification
+
+Run the repository-specific checks appropriate to the change, including
+focused tests, type checks, lint, and integration checks where needed.
+Run Gauntlet if the repository requires it.
+
+Report failed or unavailable checks accurately. Do not treat them as passing.
+
+### Post-implementation review
+
+After required verification passes, the parent agent must explicitly
+delegate independent review before declaring implementation complete.
+
+Reviewer sub-agents are authorized for this phase without another
+permission request, subject to higher-priority instructions.
+
+Use separate `reviewer` instances with these focused perspectives:
+
+- structure: correctness, security, contracts, and module boundaries.
+- perf: performance, resource use, and expensive execution paths.
+- chaos: invalid inputs, failure modes, cleanup, and resilience.
+- qa: test coverage, assertion quality, and missing cases.
+- lean: unnecessary abstractions, dependencies, and speculative code.
+
+Add up to two relevant stack specialists when the change warrants them.
+Run reviews in parallel within available agent limits.
+
+Give each reviewer:
+
+- The task objective and intended behavior.
+- The same change summary and review scope.
+- The task-owned diff and paths of untracked files.
+- Relevant verification results.
+- Its assigned review perspective.
+
+Reviewers must not edit files. Each finding must include severity,
+file/line evidence, a concrete failing condition, and the smallest
+recommended correction. Unsupported concerns must be identified as
+hypotheses. "No findings" is a valid result.
+
+### Resolve and report
+
+The parent agent must:
+
+- Verify significant findings and consolidate duplicates.
+- Fix confirmed blocking findings.
+- Rerun affected checks after fixes.
+- Report should-fix items and nits without expanding scope unless authorized.
+- State which reviewers ran, what was verified, and any remaining risks.
+- Give a Ship or No-ship review verdict with a reason.
+
+A Ship verdict does not authorize a commit, push, pull request, release,
+publication, or deployment.
+
+### Exceptions and limits
+
+For documentation-only changes or a few lines without logic, the parent
+agent may apply the review perspectives itself and disclose that exception.
+
+If sub-agents are unavailable, apply the perspectives sequentially and
+disclose the fallback. Do not claim an independent review occurred.
+
+A directly requested review may run independently of implementation.
+
+These are agent execution instructions. Installing the agent definitions
+does not itself create a watcher, automatic trigger, or CI enforcement.
+
 ## Misc
 
 - Do not create summary docs or example code files unless requested.

@@ -2,6 +2,7 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { env } from "@/env";
 import { getRequestAppOrigin } from "@/functions/app-origin";
 import { rememberLastSignInMethod } from "@/functions/auth-last-used";
 import { mintDesktopSessionForAuthenticatedUser } from "@/functions/auth-session";
@@ -391,6 +392,10 @@ export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
   return {
     id: data.user.id,
     email: data.user.email,
+    shotsUserId:
+      typeof data.user.app_metadata.shots_user_id === "string"
+        ? data.user.app_metadata.shots_user_id
+        : null,
   };
 });
 
@@ -410,6 +415,11 @@ export const signOutFn = createServerFn({ method: "POST" }).handler(
 
 export const signOutEverywhereFn = createServerFn({ method: "POST" }).handler(
   async () => {
+    if (env.VITE_SHOTS_URL)
+      return {
+        success: false,
+        message: "Manage all your sessions in Shots account settings.",
+      };
     const supabase = getSupabaseServerClient();
     const { error } = await supabase.auth.signOut({ scope: "global" });
 

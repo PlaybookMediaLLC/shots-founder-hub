@@ -66,6 +66,90 @@ These commands require Docker and [Task](https://taskfile.dev/installation/) (`b
 
 Provider credentials and service-specific configuration are not required for `pnpm dev:desktop` or `pnpm dev:web`. The underlying `task supabase-start` and `cargo run -p api` commands remain available. Supabase's Docker containers persist when Process Compose exits; stop them explicitly with `task supabase-stop`.
 
+### Shots authentication
+
+For an isolated local stack, use the Clack development CLI:
+
+```sh
+pnpm dev:local setup --shots-path ../shots --install
+pnpm dev:local up
+pnpm dev:local desktop
+```
+
+Run `pnpm dev:local` without arguments for the interactive menu. `doctor` checks
+prerequisites; `status` prints health and URLs; `open shots` and `open web` open
+the local apps; `logs <service>` follows logs; `stop` stops this stack while
+preserving its databases. Setup accepts `--port 4000` as the first port in a
+dedicated range, and optionally `--api-binary /path/to/api` to reuse a local API
+build. Keep the same profile to retain its credentials and data.
+
+The CLI needs the pinned Node/pnpm versions, Go, Rust, Docker Desktop, and
+Process Compose (`brew install f1bonacc1/tap/process-compose` on macOS). Desktop
+packaging also needs Xcode and the Metal toolchain
+(`xcodebuild -downloadComponent MetalToolchain`). First builds and container
+downloads can take several minutes and require substantial free disk space.
+The packaged desktop command currently supports macOS; browser testing works
+on macOS and Linux. Quit any older Anarlog Dev process before opening the new
+bundle so the callback reaches the correct build.
+
+This starts Shots Postgres, Redis, Temporal, PostgREST and Storage over that same
+Shots database, both API servers,
+and both web apps. Credentials and logs live under ignored
+`.local/founder-hub/`; no production credentials are required. Create a local
+Shots account at the displayed Shots URL, then sign in from Founder Hub.
+Email verification is disabled only in this local profile. Paid AI, recording
+providers, and social integrations still need their own provider configuration.
+
+Run the Shots backend and web application. The Shots migration command bootstraps
+the private storage roles, the Storage engine applies its schema, and
+`platform-migrate --founder-hub=apply` applies the Hub schema in the Shots database.
+On the Founder Hub API, set `SHOTS_AUTH_URL` to the Shots web origin,
+`SHOTS_AUTH_SERVICE_TOKEN` to a random secret of at least 32 bytes, and the local
+private REST/Storage gateway URL, anonymous key, service-role key, and JWT secret
+using the existing `SUPABASE_*` transport variables. These credentials use the
+`shots_hub_anon` and `shots_hub_service_role` database roles. There is no separate
+Hub database or GoTrue authentication server. Set the same
+`SHOTS_AUTH_SERVICE_TOKEN` on the Shots web server. This secret is only for the
+private Founder Hub authority endpoint; never put it in a `VITE_` or
+`EXPO_PUBLIC_` variable or reuse the Shots publishing service token.
+
+Set `VITE_SHOTS_URL` and `VITE_API_URL` for desktop and web. Mobile uses
+`EXPO_PUBLIC_SHOTS_URL` and `EXPO_PUBLIC_API_URL`. User requests then use the
+API's `/cloud` gateway, which checks the current Shots session and projects
+its account and workspace permissions into Supabase. Supabase remains the
+note and attachment store. Account, team, and billing changes use Shots settings.
+Shots sync uses the encrypted replica transport and does not require SQLite Cloud
+credentials; older clients without replica support must upgrade.
+
+For browser sign-in, set `VITE_APP_URL` to the Founder Hub web origin and run
+Shots' `platform-migrate` with `FOUNDER_HUB_WEB_ORIGIN` set to that same origin.
+It registers exactly `/callback/shots/`; HTTPS is required outside loopback
+development. Keep the web server's `SUPABASE_URL` and `SUPABASE_ANON_KEY` for
+public shared-note reads. The browser and authenticated server client use the
+gateway automatically. Legacy Stripe credentials are not required in Shots mode.
+Disable legacy billing webhooks and `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` in
+central deployments; these Stripe-based workers must not manage Shots accounts.
+
+The CLI uses `ANARLOG_SHOTS_URL` and `ANARLOG_API_URL` (or the corresponding
+`VITE_` values embedded at build time). `anarlog auth login` prints a PKCE
+sign-in URL and receives the callback on loopback. It creates a separate Shots
+session in `auth.shots-cli.json`, refreshes it automatically, and revokes it on
+`anarlog auth logout`. `ANARLOG_AUTH_PATH` overrides that file for isolated tests;
+do not point it at the desktop session file.
+
+Set the same `FOUNDER_HUB_MCP_URL` on the Shots web server and Founder Hub sync API
+to the public `https://<hub-api>/mcp` URL (loopback HTTP is allowed locally).
+Connectors discover Shots as their OAuth issuer and register public PKCE clients
+with read-only meeting access. Consent, a live Shots session, an active grant,
+a paid workspace, and Cloud API opt-in are required on every connector request.
+Native credentials remain required for snapshot publication and key/settings management.
+Disabling Cloud API access removes uploaded snapshots; enabling it again requires
+republishing them.
+
+Existing Anarlog accounts require an explicit identity/data migration before
+cutover. The authority projector rejects identity collisions instead of linking
+accounts by matching email addresses.
+
 Use the Process Compose TUI to view logs or restart individual processes. Logs are also written under `.process-compose/<target>/`, with rotation; set `PC_LOG_DIR` to override that directory. The launcher disables the TUI automatically without a terminal, or you can set `PC_DISABLE_TUI=1`.
 
 The control ports are 18080 for `pnpm dev`, 18081 for desktop, 18082 for web, and 18083 for API. Set `PC_PORT_NUM` to override a control port; app ports remain 1422 (desktop Vite), 3000 (web), and 3001 (API). Stop other apps using those app ports before starting the same services here.

@@ -39,8 +39,16 @@ fn full_batch_poll_delay(full_batch: bool) -> Option<Duration> {
 pub struct CleanupWorker {
     supabase: SupabaseClient,
     storage: anlg_supabase_storage::SupabaseStorage,
-    stripe: stripe::Client,
-    cloudsync: Option<CloudsyncCleanupClient>,
+    backend: CleanupBackend,
+}
+
+#[derive(Clone)]
+enum CleanupBackend {
+    Shots,
+    Cloudsync {
+        stripe: stripe::Client,
+        cloudsync: Option<CloudsyncCleanupClient>,
+    },
 }
 
 #[derive(Serialize)]
@@ -73,7 +81,7 @@ struct SharedAttachmentLeaseRow {
     gc_lease_expires_at: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct AccountLeaseRow {
     owner_user_id: String,
@@ -125,22 +133,33 @@ struct E2eePurgeRequest<'a> {
 
 impl CleanupWorker {
     pub fn new(config: &SubscriptionConfig) -> Self {
+        Self::with_backend(
+            &config.supabase,
+            CleanupBackend::Cloudsync {
+                stripe: stripe::Client::new(&config.stripe.stripe_secret_key),
+                cloudsync: config
+                    .cloudsync_cleanup
+                    .clone()
+                    .map(CloudsyncCleanupClient::new),
+            },
+        )
+    }
+
+    pub fn for_shots(supabase: &anlg_api_env::SupabaseEnv) -> Self {
+        Self::with_backend(supabase, CleanupBackend::Shots)
+    }
+
+    fn with_backend(config: &anlg_api_env::SupabaseEnv, backend: CleanupBackend) -> Self {
         let supabase = SupabaseClient::new(
-            config.supabase.supabase_url.clone(),
-            config.supabase.supabase_anon_key.clone(),
-            config.supabase.supabase_service_role_key.clone(),
+            config.supabase_url.clone(),
+            config.supabase_anon_key.clone(),
+            config.supabase_service_role_key.clone(),
         );
         let storage = supabase.storage();
-        let stripe = stripe::Client::new(&config.stripe.stripe_secret_key);
-        let cloudsync = config
-            .cloudsync_cleanup
-            .clone()
-            .map(CloudsyncCleanupClient::new);
         Self {
             supabase,
             storage,
-            stripe,
-            cloudsync,
+            backend,
         }
     }
 
@@ -495,24 +514,40 @@ impl CleanupWorker {
             if cancellation.is_cancelled() {
                 return Ok(());
             }
-            let cloudsync = self.cloudsync.as_ref().ok_or_else(|| {
-                SubscriptionError::Internal("CloudSync cleanup is not configured".to_string())
-            })?;
-            cloudsync.purge_and_confirm(&row.e2ee_workspace_ids).await?;
-            if cancellation.is_cancelled() {
-                return Ok(());
-            }
-            let marked: bool = self
-                .supabase
-                .admin_rpc(
-                    "mark_account_deletion_e2ee_purged",
-                    &E2eePurgeRequest {
-                        p_owner_user_id: &row.owner_user_id,
-                        p_lease_id: &row.lease_id,
-                        p_workspace_ids: &row.e2ee_workspace_ids,
-                    },
-                )
-                .await?;
+            let marked: bool = match &self.backend {
+                CleanupBackend::Shots => {
+                    self.supabase
+                        .admin_rpc(
+                            "purge_shots_account_replica",
+                            &AccountLeaseRequest {
+                                p_owner_user_id: &row.owner_user_id,
+                                p_lease_id: &row.lease_id,
+                            },
+                        )
+                        .await?
+                }
+                CleanupBackend::Cloudsync { cloudsync, .. } => {
+                    let cloudsync = cloudsync.as_ref().ok_or_else(|| {
+                        SubscriptionError::Internal(
+                            "CloudSync cleanup is not configured".to_string(),
+                        )
+                    })?;
+                    cloudsync.purge_and_confirm(&row.e2ee_workspace_ids).await?;
+                    if cancellation.is_cancelled() {
+                        return Ok(());
+                    }
+                    self.supabase
+                        .admin_rpc(
+                            "mark_account_deletion_e2ee_purged",
+                            &E2eePurgeRequest {
+                                p_owner_user_id: &row.owner_user_id,
+                                p_lease_id: &row.lease_id,
+                                p_workspace_ids: &row.e2ee_workspace_ids,
+                            },
+                        )
+                        .await?
+                }
+            };
             if !marked {
                 return Err(invalid_upstream("account deletion E2EE checkpoint"));
             }
@@ -522,11 +557,17 @@ impl CleanupWorker {
             return Ok(());
         }
 
-        self.supabase.admin_delete_user(&row.owner_user_id).await?;
+        let finish_rpc = match &self.backend {
+            CleanupBackend::Shots => "finish_shots_account_deletion",
+            CleanupBackend::Cloudsync { .. } => {
+                self.supabase.admin_delete_user(&row.owner_user_id).await?;
+                "finish_account_deletion"
+            }
+        };
         let finished: bool = self
             .supabase
             .admin_rpc(
-                "finish_account_deletion",
+                finish_rpc,
                 &AccountLeaseRequest {
                     p_owner_user_id: &row.owner_user_id,
                     p_lease_id: &row.lease_id,
@@ -540,7 +581,13 @@ impl CleanupWorker {
     }
 
     async fn delete_stripe_customer(&self, owner_user_id: &str, customer_id: &str) -> Result<()> {
-        match RetrieveCustomer::new(customer_id).send(&self.stripe).await {
+        let CleanupBackend::Cloudsync { stripe, .. } = &self.backend else {
+            // Shots workspace customers are shared; a personal cleanup must never delete one.
+            return Err(SubscriptionError::Internal(
+                "Shots billing must settle the legacy personal customer before cleanup".to_string(),
+            ));
+        };
+        match RetrieveCustomer::new(customer_id).send(stripe).await {
             Ok(RetrieveCustomerReturned::Customer(customer)) => {
                 let metadata_owner_ids = customer
                     .metadata
@@ -584,7 +631,7 @@ impl CleanupWorker {
             Err(error) => return Err(SubscriptionError::Stripe(error.to_string())),
         }
 
-        match DeleteCustomer::new(customer_id).send(&self.stripe).await {
+        match DeleteCustomer::new(customer_id).send(stripe).await {
             Ok(_) => {
                 tracing::info!("account_deletion_stripe_customer_deleted");
                 Ok(())

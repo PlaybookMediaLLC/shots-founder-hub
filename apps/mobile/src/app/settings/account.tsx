@@ -2,6 +2,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 
+import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+
 import { accountPlanLabel, fetchWorkspacePlan } from "@/auth/account-plan";
 import { supabase } from "@/auth/client";
 import { useAuth } from "@/auth/context";
@@ -46,13 +48,27 @@ export default function AccountSettings() {
   const manage = useMutation({
     mutationFn: () =>
       WebBrowser.openBrowserAsync(
-        `${env.appUrl.replace(/\/+$/, "")}/app/account`,
+        env.shotsUrl
+          ? getShotsSettingsUrl(
+              env.shotsUrl,
+              auth.session?.user.app_metadata.shots_user_id ?? "",
+              "account",
+            )
+          : `${env.appUrl.replace(/\/+$/, "")}/app/account`,
       ),
   });
   const connectedAccounts = useMutation({
     mutationFn: () => {
       if (!accountId)
         throw new Error("Sign in to manage your sign-in methods.");
+      if (env.shotsUrl)
+        return WebBrowser.openBrowserAsync(
+          getShotsSettingsUrl(
+            env.shotsUrl,
+            auth.session?.user.app_metadata.shots_user_id ?? "",
+            "security",
+          ),
+        );
       const url = new URL(`${env.appUrl.replace(/\/+$/, "")}/app/account`);
       url.searchParams.set("account_user_id", accountId);
       url.searchParams.set("section", "connected-accounts");

@@ -14,6 +14,7 @@ import {
   authSecondaryButtonClassName,
 } from "@/components/auth-shell";
 import { isTurnstileEnabled, Turnstile } from "@/components/turnstile";
+import { env } from "@/env";
 import {
   createDesktopSession,
   doAuth,
@@ -29,6 +30,7 @@ import {
   DEFAULT_DESKTOP_SCHEME,
   type DesktopScheme,
 } from "@/functions/desktop-flow";
+import { beginShotsWebAuth } from "@/functions/shots-auth";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import {
   resolveAuthFlowContext,
@@ -56,6 +58,18 @@ export const Route = createFileRoute("/auth")({
     meta: [{ name: "robots", content: "noindex, nofollow" }],
   }),
   beforeLoad: async ({ search }) => {
+    if (env.VITE_SHOTS_URL) {
+      throw redirect({
+        to: "/",
+        reloadDocument: true,
+        href: await beginShotsWebAuth({
+          data: {
+            returnTo: search.redirect,
+            switchAccount: search.account === "switch",
+          },
+        }),
+      });
+    }
     rememberAuthFlowContext(resolveAuthFlowContext(search));
     const [user, lastSignInMethod] = await Promise.all([
       shouldReuseBrowserSession(search) ? fetchUser() : null,

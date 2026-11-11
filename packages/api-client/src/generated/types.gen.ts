@@ -1164,6 +1164,7 @@ export type LiveTicketResponse = {
     capability: LiveCapability;
     contentRevision: number;
     expiresInSeconds: number;
+    requiresAuth?: boolean;
     ticket: string;
 };
 
@@ -1486,6 +1487,10 @@ export type PublishE2EeWitnessResponse = {
 };
 
 export type PublishSessionShareSnapshotRequest = CasSessionShareSnapshotRequest | LegacySessionShareSnapshotRequest;
+
+export type PublishSnapshotBody = MeetingExport & {
+    source_workspace_id?: string | null;
+};
 
 export type PublishedSessionShareSnapshot = {
     accessVersion: number;
@@ -5927,7 +5932,7 @@ export type DeleteSnapshotResponses = {
 export type DeleteSnapshotResponse = DeleteSnapshotResponses[keyof DeleteSnapshotResponses];
 
 export type PublishSnapshotData = {
-    body: MeetingExport;
+    body: PublishSnapshotBody;
     path: {
         /**
          * Anarlog meeting id

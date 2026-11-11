@@ -37,6 +37,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
             routes::CreatedApiKey,
             routes::CreateApiKeyBody,
             routes::SnapshotReceipt,
+            routes::PublishSnapshotBody,
             error::ErrorEnvelope,
             anlg_agent_access::MeetingListItem,
             anlg_agent_access::MeetingPage,

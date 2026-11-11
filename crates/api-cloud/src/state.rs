@@ -37,6 +37,11 @@ impl CloudApiConfig {
             oauth,
         })
     }
+
+    pub fn with_shots_oauth(mut self, resource: &str, shots_origin: &str) -> Result<Self, String> {
+        self.oauth = OAuthResourceConfig::shots(resource, shots_origin)?;
+        Ok(self)
+    }
 }
 
 #[derive(Clone)]
@@ -70,11 +75,26 @@ pub(crate) struct VerifiedKey {
 }
 
 #[derive(Deserialize)]
+pub(crate) struct ShotsKeyBinding {
+    pub user_id: String,
+    pub shots_user_id: String,
+    pub shots_session_id: String,
+}
+
+#[derive(Deserialize)]
 pub(crate) struct VerifiedUser {
     pub status: String,
 }
 
 impl AppState {
+    pub(crate) fn shots(&self) -> Option<&anlg_api_auth::ShotsAuth> {
+        self.auth.shots()
+    }
+    pub fn with_auth(mut self, auth: anlg_api_auth::AuthState) -> Self {
+        self.auth = auth;
+        self
+    }
+
     pub fn new(config: CloudApiConfig) -> Self {
         let auth = anlg_api_auth::AuthState::new(&config.supabase_url);
         Self {
@@ -91,17 +111,29 @@ impl AppState {
     pub(crate) async fn verify_oauth_token(
         &self,
         token: &str,
-    ) -> Result<anlg_api_auth::Claims, anlg_api_auth::OAuthTokenError> {
-        self.auth
-            .verify_oauth_token(token, self.oauth().resource(), crate::oauth::OAUTH_SCOPES)
-            .await
+    ) -> Result<anlg_api_auth::AuthContext, anlg_api_auth::OAuthTokenError> {
+        if let Some(shots) = self.shots() {
+            return shots
+                .connector_session(token)
+                .await
+                .map_err(|_| anlg_api_auth::OAuthTokenError::Invalid);
+        }
+        let claims = self
+            .auth
+            .verify_oauth_token(token, self.oauth().resource(), self.oauth().scopes())
+            .await?;
+        Ok(anlg_api_auth::AuthContext {
+            claims,
+            token: token.to_owned(),
+            shots: None,
+        })
     }
 
     pub(crate) async fn verify_session_token(
         &self,
         token: &str,
-    ) -> Result<anlg_api_auth::Claims, anlg_api_auth::AuthError> {
-        self.auth.verify_token(token).await
+    ) -> Result<anlg_api_auth::AuthContext, anlg_api_auth::AuthError> {
+        self.auth.authenticate(token).await
     }
 
     async fn rpc<T: DeserializeOwned>(
@@ -173,20 +205,23 @@ impl AppState {
 
     pub(crate) async fn publish_snapshot(
         &self,
-        user_id: &str,
+        auth: &anlg_api_auth::AuthContext,
         session_id: &str,
         content: &MeetingExport,
+        source_workspace_id: Option<&str>,
     ) -> Result<SnapshotReceipt, StoreError> {
-        let mut rows: Vec<SnapshotReceipt> = self
-            .rpc(
-                "publish_cloud_api_snapshot",
-                serde_json::json!({
-                    "p_actor_user_id": user_id,
-                    "p_session_id": session_id,
-                    "p_content_json": content,
-                }),
-            )
-            .await?;
+        let mut body = serde_json::json!({
+            "p_actor_user_id": auth.claims.sub,
+            "p_session_id": session_id,
+            "p_content_json": content,
+        });
+        let function = if auth.shots.is_some() {
+            body["p_source_workspace_id"] = serde_json::json!(source_workspace_id);
+            "publish_shots_cloud_api_snapshot"
+        } else {
+            "publish_cloud_api_snapshot"
+        };
+        let mut rows: Vec<SnapshotReceipt> = self.rpc(function, body).await?;
         rows.pop().ok_or_else(|| {
             StoreError::InvalidResponse(serde_json::Error::io(std::io::Error::other(
                 "snapshot receipt missing",
@@ -251,24 +286,27 @@ impl AppState {
 
     pub(crate) async fn create_key(
         &self,
-        user_id: &str,
+        auth: &anlg_api_auth::AuthContext,
         id: &str,
         name: &str,
         key_hash: &str,
         key_prefix: &str,
     ) -> Result<ApiKeyInfo, StoreError> {
-        let mut rows: Vec<ApiKeyInfo> = self
-            .rpc(
-                "create_cloud_api_key",
-                serde_json::json!({
-                    "p_actor_user_id": user_id,
-                    "p_id": id,
-                    "p_name": name,
-                    "p_key_hash": key_hash,
-                    "p_key_prefix": key_prefix,
-                }),
-            )
-            .await?;
+        let mut body = serde_json::json!({
+            "p_actor_user_id": auth.claims.sub,
+            "p_id": id,
+            "p_name": name,
+            "p_key_hash": key_hash,
+            "p_key_prefix": key_prefix,
+        });
+        let function = if let Some(shots) = &auth.shots {
+            body["p_shots_user_id"] = serde_json::json!(shots.user.id);
+            body["p_shots_session_id"] = serde_json::json!(shots.session_id);
+            "create_shots_cloud_api_key"
+        } else {
+            "create_cloud_api_key"
+        };
+        let mut rows: Vec<ApiKeyInfo> = self.rpc(function, body).await?;
         rows.pop().ok_or_else(|| {
             StoreError::InvalidResponse(serde_json::Error::io(std::io::Error::other(
                 "API key row missing",
@@ -301,7 +339,24 @@ impl AppState {
     ) -> Result<Option<VerifiedKey>, StoreError> {
         let mut rows: Vec<VerifiedKey> = self
             .rpc(
-                "verify_cloud_api_key",
+                if self.shots().is_some() {
+                    "verify_shots_cloud_api_key"
+                } else {
+                    "verify_cloud_api_key"
+                },
+                serde_json::json!({ "p_key_hash": key_hash }),
+            )
+            .await?;
+        Ok(rows.pop())
+    }
+
+    pub(crate) async fn lookup_shots_key(
+        &self,
+        key_hash: &str,
+    ) -> Result<Option<ShotsKeyBinding>, StoreError> {
+        let mut rows: Vec<ShotsKeyBinding> = self
+            .rpc(
+                "lookup_shots_cloud_api_key",
                 serde_json::json!({ "p_key_hash": key_hash }),
             )
             .await?;

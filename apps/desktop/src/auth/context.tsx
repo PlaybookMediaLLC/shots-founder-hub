@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { emit, emitTo, listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { commands as miscCommands } from "@anlg/plugin-misc";
@@ -35,7 +36,11 @@ import {
   prepareCloudsyncSignOut,
   refreshCloudsyncForSession,
 } from "./cloudsync";
-import { installDesktopAuthSession } from "./deeplink";
+import {
+  beginShotsDesktopAuth,
+  installDesktopAuthSession,
+  installShotsDesktopAuthSession,
+} from "./deeplink";
 import { clearAuthStorage } from "./errors";
 import { loadInitialSession } from "./initial-session";
 import {
@@ -53,6 +58,7 @@ import {
 
 import { trackAnalyticsEvent } from "~/analytics";
 import { ConnectLocalLibraryDialog } from "~/auth/connect-local-library-dialog";
+import { env } from "~/env";
 import { useLatestRef } from "~/shared/hooks/useLatestRef";
 import {
   buildWebAppUrl,
@@ -193,6 +199,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthCallback = useCallback(
     async (url: string) => {
+      if (env.VITE_SHOTS_URL) {
+        if (
+          !env.VITE_SUPABASE_URL ||
+          !(await installShotsDesktopAuthSession(
+            url,
+            env.VITE_SUPABASE_URL,
+            tauriFetch,
+            setSessionFromTokens,
+          ))
+        ) {
+          throw new Error(
+            "Invalid or expired sign-in callback. Start sign-in again.",
+          );
+        }
+        return;
+      }
       const parsed = new URL(url);
       const accessToken = parsed.searchParams.get("access_token");
       const refreshToken = parsed.searchParams.get("refresh_token");
@@ -675,10 +697,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: "browser_handoff",
     });
     try {
-      const url = await buildWebAppUrl(
-        "/auth",
-        options?.switchAccount === true ? { account: "switch" } : undefined,
-      );
+      const url = env.VITE_SHOTS_URL
+        ? await beginShotsDesktopAuth(
+            env.VITE_SHOTS_URL,
+            `${await getScheme()}://auth/callback`,
+            options?.switchAccount,
+          )
+        : await buildWebAppUrl(
+            "/auth",
+            options?.switchAccount === true ? { account: "switch" } : undefined,
+          );
       await openUrlWithInstruction(url, "sign-in", (u) =>
         openerCommands.openUrl(u, null),
       );
@@ -1104,8 +1132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [refreshSessionMutation.mutateAsync],
   );
 
-  const getSessionForRequest =
-    useCallback(async (): Promise<Session | null> => {
+  const getSessionForRequest = useCallback(
+    async (options?: {
+      requireLibraryAdmission?: boolean;
+    }): Promise<Session | null> => {
       if (!supabase) {
         return null;
       }
@@ -1125,6 +1155,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!requestSession) {
         return null;
       }
+      if (
+        options?.requireLibraryAdmission &&
+        admittedUserIdRef.current !== requestSession.user.id
+      )
+        return null;
 
       const expiresAt = requestSession.expires_at
         ? requestSession.expires_at * 1000
@@ -1140,11 +1175,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fall back to the current session while it remains valid.
       }
       if (refreshedSession) {
+        if (
+          options?.requireLibraryAdmission &&
+          admittedUserIdRef.current !== refreshedSession.user.id
+        )
+          return null;
         return refreshedSession;
       }
 
+      if (
+        options?.requireLibraryAdmission &&
+        admittedUserIdRef.current !== requestSession.user.id
+      )
+        return null;
       return expiresAt > Date.now() ? requestSession : null;
-    }, [handleRefreshFailure, refreshSession]);
+    },
+    [handleRefreshFailure, refreshSession],
+  );
 
   const getHeaders = useCallback(() => {
     if (!session) {

@@ -9,6 +9,7 @@
     "./profile-avatar": "./src/profile-avatar.ts",
     "./profile": "./src/profile.ts",
     "./storage": "./src/storage.ts",
+    "./shots": "./src/shots.ts",
     "./referrals": "./src/referrals.ts"
   },
   "dependencies": {

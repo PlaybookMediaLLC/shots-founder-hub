@@ -733,8 +733,8 @@ export const grantSharedAttachmentUpload = <ThrowOnError extends boolean = false
 /**
  * Issues a short-lived, HMAC-signed ticket that authorizes one WebSocket
  * connection to a shared note's live document. Browsers cannot attach a bearer
- * header to a WebSocket upgrade, so the ticket carries the resolved capability
- * instead and the socket route verifies it without touching Supabase.
+ * header to a WebSocket upgrade. Central sessions authenticate in the first
+ * socket frame, keeping the bearer credential out of URLs and access logs.
  */
 export const createLiveTicket = <ThrowOnError extends boolean = false>(options: Options<CreateLiveTicketData, ThrowOnError>) => (options.client ?? client).post<CreateLiveTicketResponses, CreateLiveTicketErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

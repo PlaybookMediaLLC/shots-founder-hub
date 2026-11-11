@@ -25,6 +25,8 @@ vi.mock("./useNewNote", () => ({
   useNewNote: () => vi.fn(),
 }));
 
+vi.mock("~/settings/shots-sync", () => ({ ShotsSettingsSync: () => null }));
+
 vi.mock("~/auth", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="auth-provider">{children}</div>

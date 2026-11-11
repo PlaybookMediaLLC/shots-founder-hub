@@ -20,6 +20,7 @@ class FakeRelay {
   readonly doc = new Y.Doc();
   readonly sockets: FakeSocket[] = [];
   seedRequired: boolean;
+  requiredAccessToken?: string;
 
   constructor(seedRequired: boolean) {
     this.seedRequired = seedRequired;
@@ -53,6 +54,7 @@ class FakeSocket implements LiveSocket {
   onerror: ((event: Event) => void) | null = null;
   onmessage: ((event: MessageEvent) => void) | null = null;
   closed = false;
+  private authenticated = false;
   private readonly relay: FakeRelay;
   private readonly capability: "editor" | "viewer";
 
@@ -62,6 +64,14 @@ class FakeSocket implements LiveSocket {
   }
 
   send(data: string | ArrayBufferLike | ArrayBufferView): void {
+    if (this.relay.requiredAccessToken && !this.authenticated) {
+      assert.equal(typeof data, "string");
+      assert.deepEqual(JSON.parse(data as string), {
+        accessToken: this.relay.requiredAccessToken,
+      });
+      this.authenticated = true;
+      return;
+    }
     assert.ok(data instanceof Uint8Array);
     const decoder = decoding.createDecoder(data);
     assert.equal(decoding.readVarUint(decoder), 0);
@@ -202,6 +212,22 @@ test("seeds an empty relay document once and syncs two editors", async () => {
   a.destroy();
   b.destroy();
   assert.equal(a.getStatus().kind, "closed");
+});
+
+test("central live connections authenticate before sending document state", async () => {
+  const relay = new FakeRelay(false);
+  relay.requiredAccessToken = "central-token";
+  const client = new SharedNoteLiveClient({
+    connect: async () => ({
+      status: "ready",
+      socket: relay.open(),
+      accessToken: relay.requiredAccessToken,
+    }),
+    seed: () => assert.fail("existing document must not be seeded"),
+  });
+  await flush();
+  assert.ok(client.isSynced());
+  client.destroy();
 });
 
 test("viewer edits are dropped by the relay and forbidden stops retrying", async () => {

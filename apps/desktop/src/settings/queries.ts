@@ -64,6 +64,7 @@ const LEGACY_DEFAULT_SUMMARY_INSTRUCTION =
 // prefers the synced value when a key exists in both tables.
 const SETTING_ROWS_SQL = `
   SELECT id, value_json, 0 AS source_rank FROM app_settings
+  WHERE id NOT GLOB 'shots_template_cache:*'
   UNION ALL
   SELECT id, value_json, 1 AS source_rank FROM synced_preferences
   ORDER BY id, source_rank
@@ -102,6 +103,46 @@ export function useStoredSettingValue<K extends SettingKey>(
 export async function getStoredSettingValues(): Promise<StoredSettingValues> {
   const rows = await liveQueryClient.execute<AppSettingRow>(SETTING_ROWS_SQL);
   return parseSettingRows(rows);
+}
+
+export function applyShotsSettingsSnapshot(
+  expected: SettingValues,
+  remote: SettingValues,
+  cacheId: string,
+  accountId: string,
+  isCurrentAccount: () => Promise<boolean>,
+): Promise<void> {
+  return enqueueDatabaseWrite("app-settings", async () => {
+    if (!(await isCurrentAccount())) return;
+    const current = await getStoredSettingValues();
+    const managed = new Set(
+      (
+        await liveQueryClient.execute<{ id: string }>(
+          "SELECT id FROM managed_app_settings",
+        )
+      ).map((row) => row.id),
+    );
+    const updates: SettingValues = {};
+    for (const key of Object.keys(SETTING_DEFINITIONS) as SettingKey[]) {
+      if (managed.has(key) || current.values[key] !== expected[key]) continue;
+      const definition = SETTING_DEFINITIONS[key];
+      const value =
+        remote[key] ?? ("default" in definition ? definition.default : "");
+      if (current.values[key] !== value)
+        Object.assign(updates, { [key]: value });
+    }
+    await persistSettingValues(updates);
+    await executeTransaction([
+      {
+        sql: "INSERT INTO app_settings(id,value_json) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET value_json=excluded.value_json",
+        params: [cacheId, JSON.stringify(remote)],
+      },
+      {
+        sql: "INSERT INTO app_settings(id,value_json) VALUES('shots_settings_owner',?) ON CONFLICT(id) DO UPDATE SET value_json=excluded.value_json",
+        params: [JSON.stringify(accountId)],
+      },
+    ]);
+  });
 }
 
 export async function initializeApplicationSettings(): Promise<void> {

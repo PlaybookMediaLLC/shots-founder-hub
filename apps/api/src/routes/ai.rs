@@ -1,8 +1,5 @@
 use crate::{PAID_ENTITLEMENTS, rate_limit};
-use crate::{
-    auth::{self, AuthState},
-    env::RuntimeConfig,
-};
+use crate::{auth, env::RuntimeConfig};
 use axum::{Router, middleware};
 use std::{num::NonZeroU32, sync::Arc, time::Duration};
 
@@ -45,7 +42,7 @@ pub(crate) fn router(
                 .allow_burst(NonZeroU32::new(5).unwrap()),
         )
         .build();
-    let auth_state = AuthState::new(&env.supabase.supabase_url);
+    let auth_state = env.auth_state();
     let auth_state_paid = auth_state.clone().with_required_entitlements(
         PAID_ENTITLEMENTS
             .iter()

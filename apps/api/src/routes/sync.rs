@@ -141,14 +141,25 @@ pub(crate) fn router(env: &RuntimeConfig) -> Router {
         )
         .build();
 
-    let auth_state = AuthState::new(&env.supabase.supabase_url);
-    let sync_config = anlg_api_sync::SyncConfig::from_env(
-        &env.sync,
-        &env.supabase.supabase_url,
-        &env.supabase.supabase_anon_key,
-        &env.supabase.supabase_service_role_key,
-    )
-    .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
+    let auth_state = env.auth_state();
+    let sync_config = if env.shots.is_some() {
+        Some(anlg_api_sync::SyncConfig::replica_only(
+            anlg_api_sync::ReplicaConfig::new(
+                &env.supabase.supabase_url,
+                &env.supabase.supabase_anon_key,
+                &env.supabase.supabase_service_role_key,
+            )
+            .unwrap_or_else(|error| panic!("Failed to load environment: {error}")),
+        ))
+    } else {
+        anlg_api_sync::SyncConfig::from_env(
+            &env.sync,
+            &env.supabase.supabase_url,
+            &env.supabase.supabase_anon_key,
+            &env.supabase.supabase_service_role_key,
+        )
+        .unwrap_or_else(|error| panic!("Failed to load environment: {error}"))
+    };
     let shared_notes_config = anlg_api_sync::SharedNotesConfig::new(
         &env.supabase.supabase_url,
         &env.supabase.supabase_service_role_key,
@@ -165,13 +176,25 @@ pub(crate) fn router(env: &RuntimeConfig) -> Router {
     let shared_notes_config = shared_notes_config
         .with_resend_email(resend_api_key, resend_from_email)
         .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
-    let cloud_api_state = anlg_api_cloud::AppState::new(
-        anlg_api_cloud::CloudApiConfig::new(
-            &env.supabase.supabase_url,
-            &env.supabase.supabase_service_role_key,
-        )
-        .unwrap_or_else(|error| panic!("Failed to load environment: {error}")),
-    );
+    let cloud_api_config = anlg_api_cloud::CloudApiConfig::new(
+        &env.supabase.supabase_url,
+        &env.supabase.supabase_service_role_key,
+    )
+    .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
+    let cloud_api_config = if let Some(shots) = &env.shots {
+        cloud_api_config
+            .with_shots_oauth(
+                env.founder_hub_mcp_url
+                    .as_deref()
+                    .expect("FOUNDER_HUB_MCP_URL is required for Shots sync"),
+                shots.origin().as_str(),
+            )
+            .unwrap_or_else(|error| panic!("Failed to load environment: {error}"))
+    } else {
+        cloud_api_config
+    };
+    let cloud_api_state =
+        anlg_api_cloud::AppState::new(cloud_api_config).with_auth(auth_state.clone());
 
     let replica_state = anlg_api_sync::ReplicaState::new(
         anlg_api_sync::ReplicaConfig::new(
@@ -180,8 +203,10 @@ pub(crate) fn router(env: &RuntimeConfig) -> Router {
             &env.supabase.supabase_service_role_key,
         )
         .unwrap_or_else(|error| panic!("Failed to load environment: {error}")),
-    );
-    let sync_state = sync_config.map(anlg_api_sync::AppState::new);
+    )
+    .with_shots(env.shots.clone());
+    let sync_state = sync_config
+        .map(|config| anlg_api_sync::AppState::new(config).with_shots(env.shots.clone()));
     let sync_routes = build_sync_routes(
         sync_state,
         replica_state,

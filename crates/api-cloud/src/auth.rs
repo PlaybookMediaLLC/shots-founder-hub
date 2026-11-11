@@ -1,4 +1,4 @@
-use anlg_api_auth::{AuthContext, Claims, OAuthTokenError};
+use anlg_api_auth::{AuthContext, OAuthTokenError};
 use axum::{
     extract::{Request, State},
     http::header,
@@ -28,23 +28,35 @@ pub async fn require_cloud_connector_auth(
         return require_api_key(&state, &token, request, next).await;
     }
 
-    let claims = if request.uri().path().starts_with("/mcp") {
+    let auth = if request.uri().path().starts_with("/mcp") {
         verify_oauth_token(&state, &token).await?
     } else {
         match state.verify_session_token(&token).await {
-            Ok(claims) => claims,
+            Ok(auth) => auth,
             Err(_) => verify_oauth_token(&state, &token).await?,
         }
     };
-    enforce_user_status(&state, &claims.sub).await?;
-    request
-        .extensions_mut()
-        .insert(AuthContext { token, claims });
+    if auth.shots.is_some() {
+        if !auth.claims.is_pro() {
+            return Err(CloudApiError::SubscriptionRequired);
+        }
+        if !state
+            .get_settings(&auth.claims.sub)
+            .await
+            .map_err(|e| CloudApiError::Internal(e.to_string()))?
+            .enabled
+        {
+            return Err(CloudApiError::NotEnabled);
+        }
+    } else {
+        enforce_user_status(&state, &auth.claims.sub).await?;
+    }
+    request.extensions_mut().insert(auth);
 
     Ok(next.run(request).await)
 }
 
-async fn verify_oauth_token(state: &AppState, token: &str) -> Result<Claims, CloudApiError> {
+async fn verify_oauth_token(state: &AppState, token: &str) -> Result<AuthContext, CloudApiError> {
     state
         .verify_oauth_token(token)
         .await
@@ -75,6 +87,26 @@ async fn require_api_key(
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect::<String>();
+    let central = if let Some(shots) = state.shots() {
+        let binding = state
+            .lookup_shots_key(&key_hash)
+            .await
+            .map_err(|error| CloudApiError::Internal(error.to_string()))?
+            .ok_or_else(|| unauthorized(state, None))?;
+        let auth = shots
+            .key_session(&binding.shots_user_id, &binding.shots_session_id)
+            .await
+            .map_err(|_| unauthorized(state, None))?;
+        if auth.claims.sub != binding.user_id {
+            return Err(unauthorized(state, None));
+        }
+        if !auth.claims.is_pro() {
+            return Err(CloudApiError::SubscriptionRequired);
+        }
+        Some(auth)
+    } else {
+        None
+    };
     let verified = state
         .verify_key(&key_hash)
         .await
@@ -88,18 +120,27 @@ async fn require_api_key(
         _ => return Err(unauthorized(state, None)),
     }
 
-    request.extensions_mut().insert(AuthContext {
-        token: String::new(),
-        claims: Claims {
-            sub: verified.user_id,
-            email: None,
-            entitlements: vec!["hyprnote_pro".to_string()],
-            subscription_status: None,
-            trial_end: None,
-            has_payment_method: None,
-            referral_extension: None,
-        },
-    });
+    if central
+        .as_ref()
+        .is_some_and(|auth| auth.claims.sub != verified.user_id)
+    {
+        return Err(unauthorized(state, None));
+    }
+    request
+        .extensions_mut()
+        .insert(central.unwrap_or_else(|| AuthContext {
+            shots: None,
+            token: String::new(),
+            claims: anlg_api_auth::Claims {
+                sub: verified.user_id,
+                email: None,
+                entitlements: vec!["hyprnote_pro".to_string()],
+                subscription_status: None,
+                trial_end: None,
+                has_payment_method: None,
+                referral_extension: None,
+            },
+        }));
 
     Ok(next.run(request).await)
 }

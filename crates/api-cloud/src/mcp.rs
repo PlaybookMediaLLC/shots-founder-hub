@@ -193,7 +193,7 @@ impl CloudMcpServer {
     }
 }
 
-#[tool_handler]
+#[tool_handler(router = self.configured_tool_router())]
 impl ServerHandler for CloudMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
@@ -208,17 +208,35 @@ impl ServerHandler for CloudMcpServer {
     }
 }
 
+impl CloudMcpServer {
+    fn configured_tool_router(&self) -> rmcp::handler::server::router::tool::ToolRouter<Self> {
+        let mut router = Self::tool_router();
+        for route in router.map.values_mut() {
+            route.attr.meta = Some(oauth_security_meta_for(self.state.oauth().scopes()));
+        }
+        router
+    }
+}
+
 pub(crate) fn mcp_service(
     state: AppState,
 ) -> rmcp::transport::streamable_http_server::StreamableHttpService<
     CloudMcpServer,
     rmcp::transport::streamable_http_server::session::local::LocalSessionManager,
 > {
-    anlg_mcp::create_stateless_service(move || {
-        Ok(CloudMcpServer {
-            state: state.clone(),
-        })
-    })
+    let resource_host = reqwest::Url::parse(state.oauth().resource())
+        .expect("validated resource")
+        .host_str()
+        .expect("resource host")
+        .to_owned();
+    anlg_mcp::create_stateless_service(
+        move || {
+            Ok(CloudMcpServer {
+                state: state.clone(),
+            })
+        },
+        &resource_host,
+    )
 }
 
 fn user_id(auth: Option<anlg_api_auth::AuthContext>) -> Option<String> {
@@ -226,12 +244,16 @@ fn user_id(auth: Option<anlg_api_auth::AuthContext>) -> Option<String> {
 }
 
 fn oauth_security_meta() -> MetaObject {
+    oauth_security_meta_for(crate::oauth::OAUTH_SCOPES)
+}
+
+fn oauth_security_meta_for(scopes: &[&str]) -> MetaObject {
     let mut meta = MetaObject::new();
     meta.insert(
         "securitySchemes".to_string(),
         serde_json::json!([{
             "type": "oauth2",
-            "scopes": crate::oauth::OAUTH_SCOPES,
+            "scopes": scopes,
         }]),
     );
     meta

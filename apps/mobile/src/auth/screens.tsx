@@ -7,11 +7,14 @@ import { useState } from "react";
 import { Platform, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+
 import type { BillingInfo } from "@/auth/billing";
 import {
   buildMobileBillingReturnUrl,
   parseBillingCallbackUrl,
 } from "@/auth/billing-handoff";
+import { supabase } from "@/auth/client";
 import { isAppleSignInAvailable, type SignInMethod } from "@/auth/sign-in";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -88,8 +91,10 @@ export function SignInScreen({
       </View>
 
       <Button
-        label="Get started"
-        onPress={() => setShowSignInMethods(true)}
+        label={env.shotsUrl ? "Sign in to Shots" : "Get started"}
+        onPress={() =>
+          env.shotsUrl ? onSignIn("shots") : setShowSignInMethods(true)
+        }
         disabled={busy}
         loading={busy}
         size="large"
@@ -252,6 +257,19 @@ export function ProScreen({
         return;
       }
 
+      if (env.shotsUrl) {
+        const current = await supabase?.auth.getSession();
+        if (current?.error) throw current.error;
+        const userId = current?.data.session?.user.app_metadata.shots_user_id;
+        if (typeof userId !== "string")
+          throw new Error("Sign in to Shots to manage your plan.");
+        await WebBrowser.openBrowserAsync(
+          getShotsSettingsUrl(env.shotsUrl, userId, "billing"),
+        );
+        await refreshAccess("unknown");
+        return;
+      }
+
       captureAnalytics("upgrade_clicked", {
         plan: "pro",
         period: "monthly",
@@ -295,16 +313,20 @@ export function ProScreen({
       <IconButton accessibilityLabel="Back" icon="back" onPress={onClose} />
       <View style={styles.body}>
         <View style={styles.titleRow}>
-          <Text style={styles.paywallTitle}>More with Anarlog Pro</Text>
+          <Text style={styles.paywallTitle}>
+            {env.shotsUrl ? "Your Shots plan" : "More with Anarlog Pro"}
+          </Text>
           <View style={styles.accentDot} />
         </View>
         <Text style={styles.copy}>
-          Sync across your devices and use Anarlog models for transcription and
-          summaries. New users get a free two-week trial, shared with desktop.
+          {env.shotsUrl
+            ? "Your Shots workspace plan controls cloud sync, transcription, and summaries. Manage your plan in Shots."
+            : "Sync across your devices and use Anarlog models for transcription and summaries. New users get a free two-week trial, shared with desktop."}
         </Text>
         <Text style={styles.trialLine}>
-          After your trial, your notes and recordings stay on this device.
-          Subscribe to keep sync and Anarlog models, or use your own API keys.
+          {env.shotsUrl
+            ? "Your local notes and recordings stay on this device."
+            : "After your trial, your notes and recordings stay on this device. Subscribe to keep sync and Anarlog models, or use your own API keys."}
         </Text>
         {accessPending && (
           <Text style={styles.pendingCopy}>

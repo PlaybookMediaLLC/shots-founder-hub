@@ -55,9 +55,11 @@ fn test_router_with_transport(
     desktop_transport: CloudsyncTransport,
 ) -> Router {
     let state = AppState::new(SyncConfig {
-        project_url: server.uri(),
-        token_issuer_api_key: api_key.to_string(),
-        database_id: "database-id".to_string(),
+        issuer: Some(crate::config::CloudsyncIssuer {
+            project_url: server.uri(),
+            token_issuer_api_key: api_key.to_string(),
+            database_id: "database-id".to_string(),
+        }),
         legacy_database_id: legacy_database_id.map(ToString::to_string),
         protocol_mode,
         desktop_transport,
@@ -72,6 +74,7 @@ fn test_router_with_transport(
         .merge(session_share_router(state.clone()))
         .merge(web_edit_router(state))
         .layer(Extension(AuthContext {
+            shots: None,
             token: "supabase-token".to_string(),
             claims: Claims {
                 sub: "user-123".to_string(),

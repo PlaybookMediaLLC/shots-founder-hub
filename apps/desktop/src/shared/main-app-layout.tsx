@@ -18,6 +18,7 @@ import { BillingProvider } from "~/auth/billing";
 import { EnterpriseCaptureSync } from "~/enterprise-capture/lifecycle";
 import { MeetingImportSync } from "~/services/meeting-import-sync";
 import { getOrCreateSessionForEventId } from "~/session/queries";
+import { ShotsSettingsSync } from "~/settings/shots-sync";
 import { WorkspaceInvitationToasts } from "~/settings/team/invitation-toast";
 import { useMyWorkspacesWithMirror } from "~/settings/team/mirror";
 import { openFoldersFromNavigation } from "~/shared/folders-navigation";
@@ -51,6 +52,7 @@ function MainAppContent() {
   return (
     <>
       <Outlet />
+      {isMainWindow ? <ShotsSettingsSync /> : null}
       {isMainWindow ? <MeetingImportSync /> : null}
       {isMainWindow ? <EnterpriseCaptureSync /> : null}
       {isMainWindow ? <WorkspaceInvitationToasts /> : null}

@@ -1,3 +1,4 @@
+mod shots;
 mod storage;
 
 use std::io::{IsTerminal, Read};
@@ -12,6 +13,7 @@ use url::Url;
 use crate::cli::AuthCommand;
 use crate::{Error, Result, output};
 
+use self::shots::Shots;
 use self::storage::{AuthStore, Backend};
 
 const WEB_APP_URL: &str = "https://anarlog.so";
@@ -20,41 +22,78 @@ const MAX_CALLBACK_BYTES: usize = 32 * 1024;
 
 pub async fn run(command: &AuthCommand, json: bool) -> Result<()> {
     let environment = Environment::current();
-    let store = AuthStore::new(environment.bundle_id)?;
+    let shots = Shots::from_env()?;
+    let store = AuthStore::new(environment.bundle_id, shots.is_some())?;
 
     match command {
-        AuthCommand::Login => login(&store, environment, json).await,
-        AuthCommand::Status => status(&store, json),
-        AuthCommand::Logout => logout(&store, json),
+        AuthCommand::Login => login(&store, environment, shots.as_ref(), json).await,
+        AuthCommand::Status => {
+            let _lock = shots.as_ref().map(|_| store.lock()).transpose()?;
+            if let Some(shots) = &shots {
+                shots.current_session(&store).await?;
+            }
+            status(&store, json)
+        }
+        AuthCommand::Logout => {
+            let _lock = shots.as_ref().map(|_| store.lock()).transpose()?;
+            if let Some(shots) = &shots
+                && let Some(session) = shots.current_session(&store).await?
+            {
+                shots.logout(&session).await?;
+            }
+            logout(&store, json)
+        }
     }
 }
 
-pub(crate) fn current_session() -> Result<Option<Session>> {
-    let store = AuthStore::new(Environment::current().bundle_id)?;
+pub(crate) async fn current_session() -> Result<Option<Session>> {
+    let shots = Shots::from_env()?;
+    let store = AuthStore::new(Environment::current().bundle_id, shots.is_some())?;
+    if let Some(shots) = shots {
+        let _lock = store.lock()?;
+        return shots.current_session(&store).await;
+    }
     storage::find_session(&store.load()?.data)
 }
 
-async fn login(store: &AuthStore, environment: Environment, json: bool) -> Result<()> {
-    let login_url = login_url(environment.scheme)?;
-    if json {
-        eprintln!("Open this URL in any browser:\n{login_url}\n");
-        eprintln!("After signing in, choose Copy URL and paste the callback link below.");
-    } else {
-        output::emit(&format!(
-            "Open this URL in any browser:\n\n{login_url}\n\nAfter signing in, choose Copy URL and paste the callback link below."
-        ));
-    }
+pub(crate) fn api_url() -> Result<String> {
+    Ok(Shots::from_env()?
+        .map(|shots| shots.api.to_string())
+        .unwrap_or_else(|| API_URL.to_string()))
+}
 
-    let callback = read_callback_url()?;
-    let tokens = CallbackTokens::parse(&callback, environment.scheme)?;
-    let session = verify_and_build_session(tokens).await?;
+async fn login(
+    store: &AuthStore,
+    environment: Environment,
+    shots: Option<&Shots>,
+    json: bool,
+) -> Result<()> {
+    let (session, storage_key) = if let Some(shots) = shots {
+        (shots.login().await?, shots.storage_key())
+    } else {
+        let login_url = login_url(environment.scheme)?;
+        if json {
+            eprintln!("Open this URL in any browser:\n{login_url}\n");
+            eprintln!("After signing in, choose Copy URL and paste the callback link below.");
+        } else {
+            output::emit(&format!(
+                "Open this URL in any browser:\n\n{login_url}\n\nAfter signing in, choose Copy URL and paste the callback link below."
+            ));
+        }
+
+        let callback = read_callback_url()?;
+        let tokens = CallbackTokens::parse(&callback, environment.scheme)?;
+        let session = verify_and_build_session(tokens).await?;
+        let key = storage_key(&session.access_token)?;
+        (session, key)
+    };
     let user_id = session
         .user
         .as_ref()
         .map(|user| user.id.clone())
         .ok_or_else(|| Error::operation("complete login", "account identity is missing"))?;
     let email = session.user.as_ref().and_then(|user| user.email.clone());
-    let storage_key = storage_key(&session.access_token)?;
+    let _lock = shots.map(|_| store.lock()).transpose()?;
     let mut data = store.load()?.data;
     data.retain(|key, _| !key.ends_with("-auth-token"));
     data.insert(
@@ -283,6 +322,8 @@ struct TokenClaims {
     sub: String,
     exp: u64,
     iss: String,
+    #[serde(default)]
+    account_user_id: Option<String>,
     #[serde(default)]
     aud: Value,
     #[serde(default)]
