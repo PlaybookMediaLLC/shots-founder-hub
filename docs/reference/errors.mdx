@@ -15,7 +15,7 @@ Without `--json`, CLI errors are written to standard error as human-readable tex
 
 Invalid arguments use the `invalid_arguments` error code with Clap's nonzero exit code.
 
-Cloud meeting commands preserve hosted error codes: `unauthorized`, `insufficient_scope`, `subscription_required`, `cloud_api_not_enabled`, `invalid_request`, `internal_error`, and `rate_limited`. Re-run `anarlog auth login` for an expired session, enable **Cloud API & Connectors** for `cloud_api_not_enabled`, and follow the retry delay for `rate_limited`.
+Cloud meeting commands preserve hosted error codes: `unauthorized`, `insufficient_scope`, `subscription_required`, `cloud_api_not_enabled`, `invalid_request`, `internal_error`, and `rate_limited`. Re-run `sfh auth login` for an expired session, enable **Cloud API & Connectors** for `cloud_api_not_enabled`, and follow the retry delay for `rate_limited`.
 
 MCP maps missing meetings and proposals to invalid parameters. Validation and conflict failures—such as empty proposal content, multiple summaries without `target_id`, or declining a non-pending proposal—are reported as internal MCP errors. Database and serialization failures are also internal errors.
 

@@ -38,7 +38,7 @@ export function buildMcpConfiguration(command: string) {
   return JSON.stringify(
     {
       mcpServers: {
-        anarlog: {
+        sfh: {
           command,
           args: ["mcp"],
         },
@@ -219,7 +219,7 @@ function CliStatus({
 
 function McpRow({ status }: { status: EmbeddedCliStatus | undefined }) {
   const isInstalled = status?.state === "installed";
-  const commandName = status?.commandName ?? "anarlog";
+  const commandName = status?.commandName ?? "sfh";
   const configuration = buildMcpConfiguration(
     isInstalled ? status.installPath : commandName,
   );

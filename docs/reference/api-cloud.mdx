@@ -99,13 +99,13 @@ Install the **Shots Founder Hub** plugin:
 
 ```bash
 claude plugin marketplace add PlaybookMediaLLC/shots-founder-hub
-claude plugin install anarlog@fastrepl
+claude plugin install sfh@fastrepl
 ```
 
 Or add the remote server directly. Claude discovers OAuth from the MCP endpoint:
 
 ```bash
-claude mcp add --transport http anarlog https://api.anarlog.so/mcp
+claude mcp add --transport http sfh https://api.anarlog.so/mcp
 ```
 
 ### Cursor
@@ -115,7 +115,7 @@ Import `https://github.com/PlaybookMediaLLC/shots-founder-hub` as a team marketp
 ```json
 {
   "mcpServers": {
-    "anarlog": {
+    "sfh": {
       "url": "https://api.anarlog.so/mcp"
     }
   }
@@ -126,7 +126,7 @@ Import `https://github.com/PlaybookMediaLLC/shots-founder-hub` as a team marketp
 
 ```bash
 copilot plugin marketplace add PlaybookMediaLLC/shots-founder-hub
-copilot plugin install anarlog@fastrepl
+copilot plugin install sfh@fastrepl
 ```
 
 ### ChatGPT and Codex
@@ -136,7 +136,7 @@ Add the Fastrepl source, restart the ChatGPT desktop app, then install **Shots F
 ```bash
 codex plugin marketplace add PlaybookMediaLLC/shots-founder-hub \
   --sparse .agents/plugins \
-  --sparse agent-plugins/anarlog
+  --sparse agent-plugins/sfh
 ```
 
 Public listing in a host's plugin directory is a separate review step. Installing from the Fastrepl source does not submit or publish the connector.
@@ -166,7 +166,7 @@ Use a static bearer header only when the host cannot complete MCP OAuth. Create 
 ### Claude Code
 
 ```bash
-claude mcp add --transport http anarlog https://api.anarlog.so/mcp \
+claude mcp add --transport http sfh https://api.anarlog.so/mcp \
   --header "Authorization: Bearer anl_..."
 ```
 
@@ -181,7 +181,7 @@ const response = await client.responses.create({
   tools: [
     {
       type: "mcp",
-      server_label: "anarlog",
+      server_label: "sfh",
       server_url: "https://api.anarlog.so/mcp",
       headers: {
         Authorization: "Bearer anl_...",

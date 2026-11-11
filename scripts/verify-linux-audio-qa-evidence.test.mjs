@@ -153,7 +153,7 @@ async function createFixture() {
     );
     await writeFile(
       path.join(root, "debian-package.txt"),
-      `package=anarlog\nversion=${version}\narchitecture=${architecture.debianArch}\nsource=/candidate.deb\n`,
+      `package=shots-founder-hub\nversion=${version}\narchitecture=${architecture.debianArch}\nsource=/candidate.deb\n`,
     );
     await writeFile(
       path.join(root, "analysis.json"),

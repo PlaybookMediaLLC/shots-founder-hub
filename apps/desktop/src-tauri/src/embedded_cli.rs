@@ -10,7 +10,7 @@ const DEV_BUNDLE_ID: &str = "com.hyprnote.dev";
 const FLATPAK_BUNDLE_ID: &str = "so.anarlog.Anarlog";
 const LEGACY_STABLE_BUNDLE_ID: &str = "com.hyprnote.Hyprnote";
 #[cfg(any(target_os = "macos", target_os = "linux"))]
-const MANAGED_CLI_DIR: &str = ".anarlog-cli";
+const MANAGED_CLI_DIR: &str = ".sfh-cli";
 const STABLE_BUNDLE_ID: &str = "com.hyprnote.stable";
 const STAGING_BUNDLE_ID: &str = "com.hyprnote.staging";
 const NIGHTLY_BUNDLE_ID: &str = "com.hyprnote.nightly";
@@ -228,14 +228,14 @@ fn unavailable_status(command_name: &str, details: &str) -> EmbeddedCliStatus {
 
 fn command_name_from_identifier(identifier: &str) -> &'static str {
     if identifier.starts_with("com.hyprnote.dev.") {
-        return "anarlog-dev";
+        return "sfh-dev";
     }
     match identifier {
-        STABLE_BUNDLE_ID | LEGACY_STABLE_BUNDLE_ID | FLATPAK_BUNDLE_ID => "anarlog",
-        STAGING_BUNDLE_ID => "anarlog-staging",
-        NIGHTLY_BUNDLE_ID => "anarlog-nightly",
-        DEV_BUNDLE_ID => "anarlog-dev",
-        _ => "anarlog",
+        STABLE_BUNDLE_ID | LEGACY_STABLE_BUNDLE_ID | FLATPAK_BUNDLE_ID => "sfh",
+        STAGING_BUNDLE_ID => "sfh-staging",
+        NIGHTLY_BUNDLE_ID => "sfh-nightly",
+        DEV_BUNDLE_ID => "sfh-dev",
+        _ => "sfh",
     }
 }
 
@@ -254,9 +254,8 @@ fn install_path_for_command(command_name: &str) -> Option<PathBuf> {
 
 #[cfg(any(test, target_os = "windows"))]
 fn windows_install_path(data_dir: &Path, command_name: &str) -> PathBuf {
-    // Keep the managed directory already on existing users' PATH.
     data_dir
-        .join("Anarlog")
+        .join("Shots Founder Hub")
         .join("bin")
         .join(format!("{command_name}.exe"))
 }
@@ -297,9 +296,9 @@ fn resolve_resource_path<R: tauri::Runtime, T: tauri::Manager<R>>(manager: &T) -
 #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
 fn sidecar_binary_name() -> &'static str {
     if cfg!(target_os = "windows") {
-        "anarlog-cli.exe"
+        "sfh.exe"
     } else {
-        "anarlog-cli"
+        "sfh"
     }
 }
 
@@ -307,27 +306,27 @@ fn sidecar_binary_name() -> &'static str {
 fn bundled_binary_name() -> Option<&'static str> {
     #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
     {
-        return Some("anarlog-cli-x86_64-pc-windows-msvc.exe");
+        return Some("sfh-x86_64-pc-windows-msvc.exe");
     }
 
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     {
-        return Some("anarlog-cli-aarch64-apple-darwin");
+        return Some("sfh-aarch64-apple-darwin");
     }
 
     #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
     {
-        return Some("anarlog-cli-x86_64-apple-darwin");
+        return Some("sfh-x86_64-apple-darwin");
     }
 
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
-        return Some("anarlog-cli-x86_64-unknown-linux-gnu");
+        return Some("sfh-x86_64-unknown-linux-gnu");
     }
 
     #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
     {
-        return Some("anarlog-cli-aarch64-unknown-linux-gnu");
+        return Some("sfh-aarch64-unknown-linux-gnu");
     }
 
     #[allow(unreachable_code)]

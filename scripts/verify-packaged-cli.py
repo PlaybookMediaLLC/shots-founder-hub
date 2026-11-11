@@ -13,8 +13,8 @@ import threading
 def verify(package_root: Path, version: str):
     binaries = [
         path
-        for path in package_root.rglob("anarlog-cli*")
-        if path.is_file() and path.name in {"anarlog-cli", "anarlog-cli.exe"}
+        for path in package_root.rglob("sfh*")
+        if path.is_file() and path.name in {"sfh", "sfh.exe"}
     ]
     if len(binaries) != 1:
         raise RuntimeError(f"Expected one packaged CLI, found {binaries}")
@@ -38,7 +38,7 @@ def verify(package_root: Path, version: str):
         actual = subprocess.check_output(
             [str(binary), "--version"], text=True, env=env, timeout=30
         ).strip()
-        if actual != f"anarlog {version}":
+        if actual != f"sfh {version}":
             raise RuntimeError(f"Unexpected packaged CLI version: {actual}")
         for command in [[], ["meetings"], ["proposals"], ["mcp"]]:
             subprocess.run(
@@ -106,7 +106,7 @@ def verify(package_root: Path, version: str):
                     raise RuntimeError(
                         "Packaged MCP instructions differ from the contract"
                     )
-                if initialized["serverInfo"] != {"name": "anarlog", "version": version}:
+                if initialized["serverInfo"] != {"name": "sfh", "version": version}:
                     raise RuntimeError(
                         "Packaged MCP server version differs from the CLI"
                     )

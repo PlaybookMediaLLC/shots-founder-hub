@@ -288,7 +288,7 @@ async function verifyArchitecture({
     await readFile(await required("debian-package.txt"), "utf8"),
   );
   invariant(
-    packageFields.package === "anarlog" &&
+    packageFields.package === "shots-founder-hub" &&
       packageFields.version === version &&
       packageFields.architecture === architecture.debianArch,
     `Linux ${architecture.artifactArch} Debian package identity mismatch`,

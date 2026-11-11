@@ -18,7 +18,7 @@ async function fixture(t) {
     ["amd64", "arm64"].map((architecture) => [
       architecture,
       {
-        control: `Package: anarlog\nVersion: 1.4.22\nArchitecture: ${architecture}\n`,
+        control: `Package: shots-founder-hub\nVersion: 1.4.22\nArchitecture: ${architecture}\n`,
         hashes: {
           md5: "a".repeat(32),
           sha1: "a".repeat(40),
@@ -37,7 +37,7 @@ async function fixture(t) {
     }),
   );
   for (const file of [
-    "anarlog-archive-keyring.asc",
+    "shots-founder-hub-archive-keyring.asc",
     "dists/stable/InRelease",
     "dists/stable/Release.gpg",
   ]) {

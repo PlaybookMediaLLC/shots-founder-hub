@@ -19,31 +19,31 @@ const CHECKSUMS = {
   aarch64: ARM_SHA,
 };
 
-const PKGBUILD = `pkgname=anarlog-bin
+const PKGBUILD = `pkgname=shots-founder-hub-bin
 pkgver=1.4.8
 pkgrel=2
 arch=('x86_64' 'aarch64')
 _release="desktop_v\${pkgver}"
-source=("LICENSE-\${pkgver}::https://raw.githubusercontent.com/fastrepl/anarlog/\${_release}/LICENSE")
-source_x86_64=("anarlog-\${pkgver}-x86_64.deb::https://github.com/fastrepl/anarlog/releases/download/\${_release}/anarlog-linux-x86_64.deb")
-source_aarch64=("anarlog-\${pkgver}-aarch64.deb::https://github.com/fastrepl/anarlog/releases/download/\${_release}/anarlog-linux-aarch64.deb")
+source=("LICENSE-\${pkgver}::https://raw.githubusercontent.com/PlaybookMediaLLC/shots-founder-hub/\${_release}/LICENSE")
+source_x86_64=("shots-founder-hub-\${pkgver}-x86_64.deb::https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/\${_release}/shots-founder-hub-linux-x86_64.deb")
+source_aarch64=("shots-founder-hub-\${pkgver}-aarch64.deb::https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/\${_release}/shots-founder-hub-linux-aarch64.deb")
 sha256sums=('0000000000000000000000000000000000000000000000000000000000000001')
 sha256sums_x86_64=('0000000000000000000000000000000000000000000000000000000000000002')
 sha256sums_aarch64=('0000000000000000000000000000000000000000000000000000000000000003')
 `;
 
-const SRCINFO = `pkgbase = anarlog-bin
+const SRCINFO = `pkgbase = shots-founder-hub-bin
 \tpkgver = 1.4.8
 \tpkgrel = 2
 \tarch = x86_64
-\tsource = LICENSE-1.4.8::https://raw.githubusercontent.com/fastrepl/anarlog/desktop_v1.4.8/LICENSE
+\tsource = LICENSE-1.4.8::https://raw.githubusercontent.com/PlaybookMediaLLC/shots-founder-hub/desktop_v1.4.8/LICENSE
 \tsha256sums = 0000000000000000000000000000000000000000000000000000000000000001
-\tsource_x86_64 = anarlog-1.4.8-x86_64.deb::https://github.com/fastrepl/anarlog/releases/download/desktop_v1.4.8/anarlog-linux-x86_64.deb
+\tsource_x86_64 = shots-founder-hub-1.4.8-x86_64.deb::https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/desktop_v1.4.8/shots-founder-hub-linux-x86_64.deb
 \tsha256sums_x86_64 = 0000000000000000000000000000000000000000000000000000000000000002
-\tsource_aarch64 = anarlog-1.4.8-aarch64.deb::https://github.com/fastrepl/anarlog/releases/download/desktop_v1.4.8/anarlog-linux-aarch64.deb
+\tsource_aarch64 = shots-founder-hub-1.4.8-aarch64.deb::https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/desktop_v1.4.8/shots-founder-hub-linux-aarch64.deb
 \tsha256sums_aarch64 = 0000000000000000000000000000000000000000000000000000000000000003
 
-pkgname = anarlog-bin
+pkgname = shots-founder-hub-bin
 `;
 
 test("bumps the PKGBUILD version and checksums, resets pkgrel, and keeps interpolated URLs", () => {
@@ -73,16 +73,16 @@ test("rewrites expanded .SRCINFO source URLs and checksums", () => {
 
   assert.match(next, /^\tpkgver = 1\.5\.0$/m);
   assert.match(next, /^\tpkgrel = 1$/m);
-  assert.ok(next.includes("desktop_v1.5.0/anarlog-linux-x86_64.deb"));
-  assert.ok(next.includes("anarlog-1.5.0-aarch64.deb"));
+  assert.ok(next.includes("desktop_v1.5.0/shots-founder-hub-linux-x86_64.deb"));
+  assert.ok(next.includes("shots-founder-hub-1.5.0-aarch64.deb"));
   assert.ok(next.includes("LICENSE-1.5.0::"));
   assert.ok(!next.includes("1.4.8"));
 });
 
 test("fails when a stale version survives the .SRCINFO rewrite", () => {
   const stale = SRCINFO.replace(
-    "pkgbase = anarlog-bin",
-    "pkgbase = anarlog-bin\n\tpkgdesc = build 1.4.8",
+    "pkgbase = shots-founder-hub-bin",
+    "pkgbase = shots-founder-hub-bin\n\tpkgdesc = build 1.4.8",
   );
 
   assert.throws(

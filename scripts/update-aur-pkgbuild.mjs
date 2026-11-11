@@ -4,11 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
-const REPO = "fastrepl/anarlog";
+const REPO = "PlaybookMediaLLC/shots-founder-hub";
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const DEB_ASSETS = {
-  x86_64: "anarlog-linux-x86_64.deb",
-  aarch64: "anarlog-linux-aarch64.deb",
+  x86_64: "shots-founder-hub-linux-x86_64.deb",
+  aarch64: "shots-founder-hub-linux-aarch64.deb",
 };
 
 function replaceOnce(contents, pattern, replacement, label) {
@@ -174,7 +174,7 @@ export async function resolveChecksums(version, overrides = {}) {
 
 function defaultPackageDirectory() {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  return path.join(here, "..", "packaging", "aur", "anarlog-bin");
+  return path.join(here, "..", "packaging", "aur", "shots-founder-hub-bin");
 }
 
 export async function updatePackage(directory, version, checksums) {
@@ -225,8 +225,8 @@ async function main() {
 
   console.log(
     changed
-      ? `anarlog-bin ${previousVersion} -> ${version}`
-      : `anarlog-bin already at ${version}, refreshed checksums`,
+      ? `shots-founder-hub-bin ${previousVersion} -> ${version}`
+      : `shots-founder-hub-bin already at ${version}, refreshed checksums`,
   );
 }
 

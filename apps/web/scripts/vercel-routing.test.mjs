@@ -30,12 +30,12 @@ test("APT redirects retain the release and architecture", () => {
     ["arm64", "aarch64"],
   ]) {
     const route = routeFor(
-      `https://anarlog.so/apt/pool/desktop_v1.4.22/${arch}/anarlog.deb`,
+      `https://anarlog.so/apt/pool/desktop_v1.4.22/${arch}/shots-founder-hub.deb`,
     );
     assert.equal(route.status, 302);
     assert.equal(
       route.destination,
-      `https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/desktop_v1.4.22/anarlog-linux-${asset}.deb`,
+      `https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/desktop_v1.4.22/shots-founder-hub-linux-${asset}.deb`,
     );
   }
 });
@@ -55,7 +55,7 @@ test("desktop updater redirects are restricted to the desktop hostname", () => {
 test("agent discovery proxies retain paths and their required origin header", () => {
   for (const path of [
     "/skill.md",
-    "/.well-known/skills/anarlog/SKILL.md",
+    "/.well-known/skills/sfh/SKILL.md",
     "/.well-known/agent-skills/index.json",
     "/.well-known/vercel/flags",
   ]) {

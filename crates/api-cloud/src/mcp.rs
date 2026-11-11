@@ -199,7 +199,7 @@ impl ServerHandler for CloudMcpServer {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
             .with_protocol_version(ProtocolVersion::V_2026_07_28)
             .with_server_info(Implementation::new(
-                "anarlog",
+                "sfh",
                 env!("CARGO_PKG_VERSION"),
             ))
             .with_instructions(

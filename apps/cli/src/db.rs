@@ -51,11 +51,11 @@ fn resolve_default_path_for_command(data_dir: &Path, command_name: Option<&OsStr
         .and_then(OsStr::to_str)
         .and_then(|name| Path::new(name).file_stem())
         .and_then(OsStr::to_str);
-    // `anarlog-nightly` falls through: the Nightly desktop app opens the same
+    // `sfh-nightly` falls through: the Nightly desktop app opens the same
     // database as stable.
     let channel_identifier = match command_name {
-        Some("anarlog-dev") => Some("com.hyprnote.dev"),
-        Some("anarlog-staging") => Some("com.hyprnote.staging"),
+        Some("sfh-dev") => Some("com.hyprnote.dev"),
+        Some("sfh-staging") => Some("com.hyprnote.staging"),
         _ => None,
     };
     if let Some(identifier) = channel_identifier {
@@ -92,28 +92,28 @@ mod tests {
         let identifier = dir.path().join("com.hyprnote.stable/app.db");
 
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh"))),
             dir.path().join("anarlog/app.db")
         );
 
         std::fs::create_dir_all(identifier.parent().unwrap()).unwrap();
         std::fs::write(&identifier, "").unwrap();
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh"))),
             identifier
         );
 
         std::fs::create_dir_all(legacy.parent().unwrap()).unwrap();
         std::fs::write(&legacy, "").unwrap();
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh"))),
             legacy
         );
 
         std::fs::create_dir_all(current.parent().unwrap()).unwrap();
         std::fs::write(&current, "").unwrap();
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh"))),
             current
         );
     }
@@ -126,22 +126,22 @@ mod tests {
         std::fs::write(&stable, "").unwrap();
 
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog-dev"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh-dev"))),
             dir.path().join("com.hyprnote.dev/app.db")
         );
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog-staging"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh-staging"))),
             dir.path().join("com.hyprnote.staging/app.db")
         );
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog-dev.exe"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh-dev.exe"))),
             dir.path().join("com.hyprnote.dev/app.db")
         );
         assert_eq!(
-            resolve_default_path_for_command(dir.path(), Some(OsStr::new("anarlog-staging.exe"))),
+            resolve_default_path_for_command(dir.path(), Some(OsStr::new("sfh-staging.exe"))),
             dir.path().join("com.hyprnote.staging/app.db")
         );
-        for command in ["anarlog-nightly", "anarlog-nightly.exe"] {
+        for command in ["sfh-nightly", "sfh-nightly.exe"] {
             assert_eq!(
                 resolve_default_path_for_command(dir.path(), Some(OsStr::new(command))),
                 stable

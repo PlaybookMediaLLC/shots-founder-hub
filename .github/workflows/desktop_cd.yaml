@@ -55,6 +55,8 @@ env:
   RELEASE_CHANNEL: ${{ inputs.channel }}
   TAURI_CONF_PATH: ./src-tauri/tauri.conf.${{ inputs.channel }}.json
   APP_BINARY: ${{ inputs.channel == 'stable' && 'anarlog' || format('anarlog-{0}', inputs.channel) }}
+  # Tauri derives the Debian package name from productName in kebab case.
+  DEB_PACKAGE: ${{ inputs.channel == 'stable' && 'shots-founder-hub' || format('shots-founder-hub-{0}', inputs.channel) }}
   NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
@@ -196,7 +198,7 @@ jobs:
           TAURI_ENV_TARGET_TRIPLE=${{ matrix.target }} cargo xtask prepare-binaries
           ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "binaries/char-chrome-native-host"
           ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "binaries/check-permissions"
-          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/anarlog-cli"
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/sfh"
         env:
           APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - uses: ./.github/actions/apple_cert
@@ -415,7 +417,7 @@ jobs:
       - run: |
           TAURI_ENV_TARGET_TRIPLE=${{ matrix.target }} cargo xtask prepare-binaries
           ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "binaries/char-chrome-native-host"
-          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/anarlog-cli"
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/sfh"
         env:
           APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - run: |
@@ -424,8 +426,6 @@ jobs:
             --bundles appimage,deb
             --target "${{ matrix.target }}"
             --config "$TAURI_CONF_PATH"
-            # Tauri derives the Debian package identity from productName.
-            --config "./src-tauri/tauri.conf.$RELEASE_CHANNEL-linux.json"
             --verbose
           )
           if [[ "$RELEASE_CHANNEL" == "staging" ]]; then
@@ -551,13 +551,14 @@ jobs:
             --volume "$PWD:/workspace:ro" \
             --env DEB_PATH="/workspace/$deb" \
             --env BINARY_PATH="/usr/bin/$binary_name" \
+            --env DEB_PACKAGE \
             --env ANARLOG_DISABLE_SENTRY=1 \
             --env RUST_BACKTRACE=1 \
             ubuntu:24.04 \
             bash -euxo pipefail -c '
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH"
+              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH" "$DEB_PACKAGE"
               apt-get install -y dbus-x11 xvfb
               set +e
               timeout --signal=TERM 20s xvfb-run -a dbus-run-session -- "$BINARY_PATH" >/tmp/anarlog.log 2>&1
@@ -620,11 +621,11 @@ jobs:
         run: |
           cargo build --locked --release -p anarlog-cli --target x86_64-pc-windows-msvc
           cp \
-            target/x86_64-pc-windows-msvc/release/anarlog.exe \
-            apps/desktop/src-tauri/resources/cli/anarlog-cli-x86_64-pc-windows-msvc.exe
+            target/x86_64-pc-windows-msvc/release/sfh.exe \
+            apps/desktop/src-tauri/resources/cli/sfh-x86_64-pc-windows-msvc.exe
           ./scripts/sidecar.sh \
             "./apps/desktop/$TAURI_CONF_PATH" \
-            resources/cli/anarlog-cli
+            resources/cli/sfh
         env:
           APP_VERSION: ${{ needs.compute-version.outputs.version }}
       - name: Build Windows app
@@ -718,7 +719,7 @@ jobs:
           certificate-profile-name: ${{ vars.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE_NAME }}
           files: |
             ${{ github.workspace }}\apps\desktop\src-tauri\target\x86_64-pc-windows-msvc\release\${{ env.APP_BINARY }}.exe
-            ${{ github.workspace }}\apps\desktop\src-tauri\resources\cli\anarlog-cli-x86_64-pc-windows-msvc.exe
+            ${{ github.workspace }}\apps\desktop\src-tauri\resources\cli\sfh-x86_64-pc-windows-msvc.exe
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
@@ -812,7 +813,7 @@ jobs:
             }
 
             $appBinary = "apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/$env:APP_BINARY.exe"
-            $sidecarBinary = "apps/desktop/src-tauri/resources/cli/anarlog-cli-x86_64-pc-windows-msvc.exe"
+            $sidecarBinary = "apps/desktop/src-tauri/resources/cli/sfh-x86_64-pc-windows-msvc.exe"
             foreach ($signedFile in @($appBinary, $sidecarBinary, $installers[0].FullName)) {
               $signature = Get-AuthenticodeSignature $signedFile
               if ($signature.Status -ne "Valid") {

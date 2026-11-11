@@ -503,7 +503,7 @@ mod tests {
 
     #[test]
     fn each_channel_uses_its_own_login_callback_and_token_store() {
-        let environment = Environment::for_executable("anarlog-nightly");
+        let environment = Environment::for_executable("sfh-nightly");
         assert_eq!(environment.scheme, "anarlog-nightly");
         assert_eq!(environment.bundle_id, "com.hyprnote.nightly");
         assert!(
@@ -513,7 +513,7 @@ mod tests {
                 .ends_with("scheme=anarlog-nightly")
         );
         assert_eq!(
-            Environment::for_executable("anarlog").bundle_id,
+            Environment::for_executable("sfh").bundle_id,
             "com.hyprnote.stable"
         );
         assert_eq!(

@@ -93,8 +93,8 @@ modules:
       - cargo build --locked --offline --release -p anarlog-cli
       - pnpm -F desktop tauri build --no-bundle --config src-tauri/tauri.conf.flatpak.json
       - install -Dm755 apps/desktop/src-tauri/target/release/anarlog /app/bin/anarlog
-      - install -Dm755 target/release/anarlog /app/libexec/anarlog-cli
-      - install -Dm755 apps/desktop/flatpak/anarlog-cli /app/bin/anarlog-cli
+      - install -Dm755 target/release/sfh /app/libexec/sfh
+      - install -Dm755 apps/desktop/flatpak/sfh /app/bin/sfh
       - install -Dm644 apps/desktop/flatpak/so.anarlog.Anarlog.desktop /app/share/applications/so.anarlog.Anarlog.desktop
       - install -Dm644 apps/desktop/flatpak/so.anarlog.Anarlog.metainfo.xml /app/share/metainfo/so.anarlog.Anarlog.metainfo.xml
       - install -Dm644 apps/desktop/src-tauri/icons/stable/32x32.png /app/share/icons/hicolor/32x32/apps/so.anarlog.Anarlog.png
