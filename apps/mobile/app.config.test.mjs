@@ -16,19 +16,19 @@ const expectedVariants = {
     name: "Shots Founder Hub Dev",
     icon: "./assets/images/icon-dev.png",
     scheme: "anarlog-dev",
-    bundleIdentifier: "so.anarlog.mobile.dev",
+    bundleIdentifier: "io.playbookmedia.shotsfounderhub.dev",
   },
   staging: {
     name: "Shots Founder Hub Staging",
     icon: "./assets/images/icon-staging.png",
     scheme: "anarlog-staging",
-    bundleIdentifier: "so.anarlog.mobile.staging",
+    bundleIdentifier: "io.playbookmedia.shotsfounderhub.staging",
   },
   stable: {
     name: "Shots Founder Hub",
     icon: "./assets/images/icon.png",
     scheme: "anarlog",
-    bundleIdentifier: "so.anarlog.mobile",
+    bundleIdentifier: "io.playbookmedia.shotsfounderhub",
   },
 };
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>so.anarlog.Anarlog</id>
+  <id>io.playbookmedia.ShotsFounderHub</id>
 
   <name>Shots Founder Hub</name>
   <summary>The AI notepad for private meetings</summary>
@@ -23,7 +23,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">so.anarlog.Anarlog.desktop</launchable>
+  <launchable type="desktop-id">io.playbookmedia.ShotsFounderHub.desktop</launchable>
 
   <url type="homepage">https://shots.playbookmedia.io</url>
   <url type="bugtracker">https://github.com/PlaybookMediaLLC/shots-founder-hub/issues</url>
