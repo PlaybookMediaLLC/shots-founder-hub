@@ -1,6 +1,7 @@
 import { File, FileMode, Paths } from "expo-file-system";
 
 import { recoverableWav, WAV_HEADER_BYTES, wavHeader } from "@/audio/pcm-wav";
+import { ACCOUNT_SESSION_SQL } from "@/data/account-sessions";
 import { catalogSessionAudio } from "@/data/audio-catalog";
 import { transcribeSession } from "@/data/transcribe";
 import { execute } from "@/db";
@@ -12,17 +13,7 @@ const RECOVERY_CANDIDATES_SQL = `
 SELECT session.id
 FROM sessions AS session
 WHERE session.deleted_at IS NULL
-  AND (
-    ? IS NULL
-    OR session.owner_user_id = ?
-    OR session.owner_user_id = (
-      SELECT json_extract(value_json, '$.workspace_id')
-      FROM app_settings
-      WHERE id = 'cloudsync_workspace_binding'
-    )
-    OR session.owner_user_id IS NULL
-    OR session.owner_user_id = '00000000-0000-0000-0000-000000000000'
-  )
+  AND ${ACCOUNT_SESSION_SQL}
   AND NOT EXISTS (
     SELECT 1
     FROM session_attachments AS attachment

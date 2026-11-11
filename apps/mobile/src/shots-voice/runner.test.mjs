@@ -284,3 +284,21 @@ test("a note carries the time zone it was recorded in, or the phone's when that 
     "Europe/Paris",
   );
 });
+
+test("only this account's recordings are queued for Shots", async () => {
+  fixture.db.exec(`
+    INSERT INTO sessions (id, owner_user_id) VALUES ('theirs', 'account-b'), ('synced', 'library-1');
+    INSERT INTO app_settings (id, value_json) VALUES ('cloudsync_workspace_binding', json_object('workspace_id', 'library-1'));
+  `);
+  assert.equal(
+    await queueSessionForShots("theirs", { explicit: true }),
+    "other_account",
+  );
+  assert.deepEqual(getShotsVoice().notes, []);
+  const synced = await sendToShots("synced");
+  assert.equal(synced.sessionId, "synced");
+  assert.deepEqual(
+    getShotsVoice().notes.map((note) => note.sessionId),
+    ["synced"],
+  );
+});

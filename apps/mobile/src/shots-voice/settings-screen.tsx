@@ -161,7 +161,7 @@ export function ShotsVoiceSettings() {
         />
         <FieldGroup.SectionFooter>
           <Text>
-            {`Notes sent to Shots are transcribed on this phone by default. When this phone has no on-device speech recognition for your language, the transcript from the transcription provider you chose in Anarlog is sent instead, or the note is sent without one. Only the transcript is sent unless you turn on audio upload${audioAvailable ? "" : ", which this workspace does not allow"}. You can also send any recorded note from its menu.`}
+            {`Recordings are transcribed by the provider you chose in Transcription & summaries, and that transcript is sent to Shots. If it gives none, this phone transcribes the note on device, and the note is summarized like any other by your summary provider. Only the transcript is sent unless you turn on audio upload${audioAvailable ? "" : ", which this workspace does not allow"}. You can also send any recorded note from its menu.`}
           </Text>
         </FieldGroup.SectionFooter>
         <SettingsError error={prefs.error} />

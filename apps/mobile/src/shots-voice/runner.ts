@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { File, Paths } from "expo-file-system";
 
 import { supabase } from "@/auth/client";
+import { ACCOUNT_SESSION_SQL } from "@/data/account-sessions";
 import { deviceTimeZone } from "@/data/audio-catalog";
 import { transcribeSessionOnDevice } from "@/data/on-device-transcription";
 import { isTranscriptionRunning } from "@/data/transcribe";
@@ -147,7 +148,9 @@ export async function confirmShotsVoiceCommand(
 export async function queueSessionForShots(
   sessionId: string,
   options: { explicit: boolean; durationMs?: number },
-): Promise<"queued" | "off" | "no_workspace" | "deleted_in_shots"> {
+): Promise<
+  "queued" | "off" | "no_workspace" | "deleted_in_shots" | "other_account"
+> {
   await whenShotsVoiceReady();
   const { accountId, prefs, notes } = getShotsVoice();
   if (!env.shotsUrl || !accountId || !prefs.workspaceId) return "no_workspace";
@@ -171,11 +174,18 @@ export async function queueSessionForShots(
     created_at: string;
     started_ms: number | null;
     time_zone: unknown;
+    owned: number;
   }>(
-    "SELECT created_at, json_extract(metadata_json, '$.mobile_capture_started_at_ms') AS started_ms, json_extract(metadata_json, '$.mobile_capture_time_zone') AS time_zone FROM sessions WHERE id = ? AND deleted_at IS NULL",
-    [sessionId],
+    `SELECT session.created_at,
+      json_extract(session.metadata_json, '$.mobile_capture_started_at_ms') AS started_ms,
+      json_extract(session.metadata_json, '$.mobile_capture_time_zone') AS time_zone,
+      ${ACCOUNT_SESSION_SQL} AS owned
+    FROM sessions AS session WHERE session.id = ? AND session.deleted_at IS NULL`,
+    [accountId, accountId, sessionId],
   );
   if (!session) return "off";
+  // Another account's recording on this phone is never sent under this account.
+  if (!session.owned) return "other_account";
   const preferences = await readPreferences();
   await saveShotsVoiceNote(
     accountId,

@@ -241,7 +241,9 @@ export function NoteScreen({
             ? `This note goes to ${shotsWorkspace ?? "your Shots workspace"} when Shots can be reached.`
             : result === "deleted_in_shots"
               ? "This note was deleted in Shots, so it is not sent again. It stays on your phone."
-              : "Choose a Shots workspace in Settings first.",
+              : result === "other_account"
+                ? "This note was recorded by another account, so it is not sent to Shots."
+                : "Choose a Shots workspace in Settings first.",
       });
     } catch (error) {
       captureOperationalError(error, { operation: "shots_voice_send" });
