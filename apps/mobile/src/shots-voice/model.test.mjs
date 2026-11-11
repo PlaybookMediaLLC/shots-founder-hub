@@ -7,6 +7,7 @@ import {
   isAppVersionSupported,
   newVoiceNote,
   nextVoiceOp,
+  parseVoiceSettings,
   retryDelayMs,
   transcriptRevisionFor,
 } from "./model.ts";
@@ -163,4 +164,33 @@ test("each note does create, transcription, transcript, then audio, and local de
   );
   assert.equal(nextVoiceOp(note("a", { localDeleted: true }), ready), "drop");
   assert.equal(nextVoiceOp(note("a", { deletedRemote: true }), ready), null);
+});
+
+test("settings carry the note limits the phone applies, and settings without them are refused", () => {
+  const body = {
+    workspace: { voiceNotes: true, audioUpload: true, voiceCommands: false },
+    member: { remoteTextConsentAt: null, voiceCommands: false },
+    minAppVersion: "0.1.0",
+    limits: {
+      maxNoteMs: 1_800_000,
+      warnAtMs: 1_500_000,
+      minNoteMs: 1_000,
+      maxTranscriptChars: 100_000,
+      maxCommandChars: 2_000,
+    },
+    switches: { notes: true, audioUpload: true, parse: false },
+  };
+  assert.deepEqual(parseVoiceSettings(body).limits, {
+    maxNoteMs: 1_800_000,
+    minNoteMs: 1_000,
+    maxTranscriptChars: 100_000,
+  });
+  assert.equal(parseVoiceSettings({ ...body, limits: undefined }), null);
+  assert.equal(
+    parseVoiceSettings({
+      ...body,
+      limits: { ...body.limits, maxNoteMs: "30m" },
+    }),
+    null,
+  );
 });

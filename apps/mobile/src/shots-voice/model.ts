@@ -45,6 +45,7 @@ export type VoiceSettings = {
   };
   member: { remoteTextConsentAt: string | null; voiceCommands: boolean };
   minAppVersion: string;
+  limits: { maxNoteMs: number; minNoteMs: number; maxTranscriptChars: number };
   switches: { notes: boolean; audioUpload: boolean; parse: boolean };
 };
 
@@ -89,6 +90,8 @@ export type VoiceNoteState = {
   pending: PendingRevision | null;
   sent: { id: string | null; sourceIds: string[]; versionKey: string } | null;
   audio: "todo" | "uploaded" | "done" | "unavailable" | "conflict";
+  /** Uploads Shots could not verify; a successful PUT does not reset it. */
+  audioFailures: number;
   upload: {
     url: string;
     headers: Record<string, string>;
@@ -124,6 +127,7 @@ export type VoiceOutcome =
 
 export const BLOCKED_RETRY_MS = 6 * 60 * 60 * 1000;
 export const MAX_ON_DEVICE_FAILURES = 5;
+export const MAX_AUDIO_FAILURES = 3;
 
 export function newVoiceNote(input: {
   sessionId: string;
@@ -143,6 +147,7 @@ export function newVoiceNote(input: {
     pending: null,
     sent: null,
     audio: "todo",
+    audioFailures: 0,
     upload: null,
     localDeleted: false,
     deletedRemote: false,
@@ -306,6 +311,8 @@ export function voiceErrorMessage(body: unknown): string | null {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+const isCount = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && (value as number) > 0;
 const text = (value: unknown) => (typeof value === "string" ? value : null);
 const texts = (value: unknown) =>
   Array.isArray(value)
@@ -385,10 +392,14 @@ export function parseVoiceSettings(value: unknown): VoiceSettings | null {
     !isRecord(value.workspace) ||
     !isRecord(value.member) ||
     !isRecord(value.switches) ||
-    typeof value.minAppVersion !== "string"
+    typeof value.minAppVersion !== "string" ||
+    !isRecord(value.limits) ||
+    !isCount(value.limits.maxNoteMs) ||
+    !isCount(value.limits.minNoteMs) ||
+    !isCount(value.limits.maxTranscriptChars)
   )
     return null;
-  const { workspace, member, switches } = value;
+  const { workspace, member, switches, limits } = value;
   return {
     workspace: {
       voiceNotes: workspace.voiceNotes === true,
@@ -400,6 +411,11 @@ export function parseVoiceSettings(value: unknown): VoiceSettings | null {
       voiceCommands: member.voiceCommands === true,
     },
     minAppVersion: value.minAppVersion,
+    limits: {
+      maxNoteMs: limits.maxNoteMs as number,
+      minNoteMs: limits.minNoteMs as number,
+      maxTranscriptChars: limits.maxTranscriptChars as number,
+    },
     switches: {
       notes: switches.notes === true,
       audioUpload: switches.audioUpload === true,

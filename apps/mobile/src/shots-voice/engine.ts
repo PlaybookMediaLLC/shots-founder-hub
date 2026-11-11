@@ -1,5 +1,6 @@
 import {
   BLOCKED_RETRY_MS,
+  MAX_AUDIO_FAILURES,
   MAX_ON_DEVICE_FAILURES,
   classifyVoiceStatus,
   diffVoiceIndex,
@@ -16,6 +17,7 @@ import {
   type VoiceOp,
   type VoiceOutcome,
   type VoiceSegment,
+  type VoiceSettings,
 } from "./model.ts";
 
 // One sync pass for one account's queue in one Shots workspace (plan 5.2 "Sync"):
@@ -182,10 +184,21 @@ export async function runVoicePass(
     blocked: null,
     lastError: null,
   });
+  // 404: Shots does not know the id; the create is replayed after a wait to learn it.
+  const lost = (note: VoiceNoteState) => {
+    const attempts = note.attempts + 1;
+    return save({
+      ...note,
+      remoteId: null,
+      attempts,
+      nextAttemptAt: now + retryDelayMs(attempts),
+    });
+  };
 
   const run = async (
     op: VoiceOp,
     note: VoiceNoteState,
+    limits: VoiceSettings["limits"],
   ): Promise<VoiceNoteState | null> => {
     switch (op) {
       case "drop":
@@ -207,6 +220,11 @@ export async function runVoicePass(
         });
         if (reply.kind === "conflict")
           return save({ ...note, deletedRemote: true });
+        // Deleted on the phone and refused by Shots: nothing is left to delete.
+        if (reply.kind === "invalid" && note.localDeleted) {
+          await deps.remove(note.sessionId);
+          return null;
+        }
         const detail =
           reply.kind === "ok" ? parseVoiceNoteDetail(reply.body) : null;
         if (!detail)
@@ -301,8 +319,7 @@ export async function runVoicePass(
         });
         if (reply.kind === "conflict")
           return save({ ...note, deletedRemote: true, pending: null });
-        if (reply.kind === "not_found")
-          return save({ ...note, remoteId: null });
+        if (reply.kind === "not_found") return lost(note);
         if (reply.kind === "invalid")
           // Never resend a revision Shots rejected; a later edit is a new revision.
           return save({
@@ -338,6 +355,18 @@ export async function runVoicePass(
         );
       }
       case "upload": {
+        // Shots refuses a run outside its note length limits; never send one.
+        if (
+          note.durationMs !== null &&
+          (note.durationMs > limits.maxNoteMs ||
+            note.durationMs < limits.minNoteMs)
+        )
+          return save({
+            ...note,
+            audio: "unavailable",
+            lastError:
+              "The recording is longer or shorter than Shots accepts, so only the transcript was sent.",
+          });
         const audio = await deps.audio(note.sessionId);
         if (!audio || !["audio/wav", "audio/aac"].includes(audio.contentType))
           return save({ ...note, audio: "unavailable" });
@@ -356,14 +385,13 @@ export async function runVoicePass(
           });
           if (reply.kind === "conflict")
             return save({ ...note, audio: "conflict" });
-          if (reply.kind === "blocked")
+          if (reply.kind === "blocked" || reply.kind === "invalid")
             return save({
               ...note,
               audio: "unavailable",
-              lastError: reply.message,
+              lastError: reply.message ?? "Shots did not accept the recording.",
             });
-          if (reply.kind === "not_found")
-            return save({ ...note, remoteId: null });
+          if (reply.kind === "not_found") return lost(note);
           upload = reply.kind === "ok" ? parseVoiceUpload(reply.body) : null;
           if (!upload)
             return failed(
@@ -413,11 +441,23 @@ export async function runVoicePass(
             lastError: reply.message,
           });
         if (reply.kind === "invalid" || reply.kind === "not_found") {
-          // S4: the stored object is missing or bad; send the run again.
+          // S4: the stored object is missing or bad; send the run again, a few
+          // times, since a recording Shots cannot decode never improves.
+          const audioFailures = note.audioFailures + 1;
+          if (audioFailures >= MAX_AUDIO_FAILURES)
+            return save({
+              ...note,
+              audio: "unavailable",
+              audioFailures,
+              upload: null,
+              lastError:
+                reply.message ?? "Shots could not accept the recording.",
+            });
           const attempts = note.attempts + 1;
           return save({
             ...note,
             audio: "todo",
+            audioFailures,
             upload: null,
             attempts,
             nextAttemptAt: now + retryDelayMs(attempts),
@@ -532,7 +572,7 @@ export async function runVoicePass(
       for (let step = 0; note && step < MAX_STEPS_PER_NOTE; step += 1) {
         const op = nextVoiceOp(note, { now, audioAllowed });
         if (!op) break;
-        note = await run(op, note);
+        note = await run(op, note, settings.limits);
       }
     }
 

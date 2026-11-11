@@ -14,6 +14,13 @@ const settings = (patch = {}) => ({
   member: { remoteTextConsentAt: null, voiceCommands: false },
   canManage: false,
   minAppVersion: "0.1.0",
+  limits: {
+    maxNoteMs: 1_800_000,
+    warnAtMs: 1_500_000,
+    minNoteMs: 1_000,
+    maxTranscriptChars: 100_000,
+    maxCommandChars: 2_000,
+  },
   switches: {
     notes: true,
     audioUpload: true,
@@ -565,4 +572,83 @@ test("when the sent transcript rows are replaced, the session's new transcript i
   assert.equal(first.origin, "on_device");
   assert.equal(replaced.origin, "remote");
   assert.equal(replaced.parentId, "rev-1");
+});
+
+test("a recording Shots keeps rejecting at complete is uploaded a few times, then left on the phone", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/complete")
+      ? { status: 400, body: { message: "This WAV file is not PCM audio." } }
+      : undefined;
+  const { deps, clock, puts, note } = harness({
+    shots,
+    queued: [recording("s1")],
+  });
+  for (let pass = 0; pass < 6; pass += 1) {
+    await runVoicePass(deps);
+    clock.now += 60 * 60 * 1000;
+  }
+  assert.equal(puts.length, 3);
+  assert.equal(note("s1").audio, "unavailable");
+  assert.equal(note("s1").lastError, "This WAV file is not PCM audio.");
+  assert.equal(note("s1").failed, null);
+  assert.equal(shots.notes.get("s1").revisions.size, 1);
+});
+
+test("a recording outside Shots' note length is never uploaded", async () => {
+  for (const durationMs of [31 * 60_000, 500]) {
+    const { deps, shots, puts, note } = harness({
+      queued: [recording("s1", { durationMs })],
+    });
+    assert.equal((await runVoicePass(deps)).status, "idle");
+    assert.equal(puts.length, 0);
+    assert.ok(shots.requests.every((call) => !call.suffix.includes("/runs/")));
+    assert.equal(note("s1").audio, "unavailable");
+    assert.ok(note("s1").lastError);
+    assert.equal(shots.notes.get("s1").revisions.size, 1);
+  }
+});
+
+test("an upload request Shots refuses as invalid stops the audio only; the note stays sent", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/upload")
+      ? { status: 400, body: { message: "A audio/wav run has 1 to 4 bytes." } }
+      : undefined;
+  const { deps, puts, note } = harness({ shots, queued: [recording("s1")] });
+  assert.equal((await runVoicePass(deps)).status, "idle");
+  assert.equal(puts.length, 0);
+  assert.equal(note("s1").audio, "unavailable");
+  assert.equal(note("s1").lastError, "A audio/wav run has 1 to 4 bytes.");
+  assert.equal(note("s1").failed, null);
+  assert.ok(note("s1").remoteId);
+});
+
+test("a 404 waits before the create is replayed instead of looping in one pass", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/transcripts")
+      ? { status: 404, body: { message: "This voice note was not found." } }
+      : undefined;
+  const { deps, clock, note } = harness({
+    shots,
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  const calls = shots.requests.map((call) => `${call.method} ${call.suffix}`);
+  assert.equal(calls.filter((call) => call === "POST notes").length, 1);
+  assert.equal(calls.filter((call) => call.endsWith("/transcripts")).length, 1);
+  assert.equal(note("s1").nextAttemptAt, clock.now + 30_000);
+});
+
+test("a note deleted on the phone whose replayed create Shots refuses is forgotten", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix === "notes" ? { status: 400, body: null } : undefined;
+  const { deps, notes } = harness({
+    shots,
+    queued: [recording("s1", { localDeleted: true, createSent: true })],
+  });
+  await runVoicePass(deps);
+  assert.deepEqual(notes(), []);
 });
