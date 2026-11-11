@@ -140,22 +140,6 @@ jobs:
         run: pnpm --filter @anlg/desktop exec vitest run src/settings/queries.test.tsx src/settings/shots-private-action.test.ts
       - name: Typecheck desktop settings consumers
         run: pnpm --filter @anlg/desktop typecheck
-      - uses: ./.github/actions/install_desktop_deps
-        with:
-          target: macos
-      - uses: ./.github/actions/rust_install
-        with:
-          platform: macos
-      - name: Build shared UI
-        run: pnpm -F @anlg/ui build
-      - name: Build the paired desktop automation binary
-        run: pnpm -F @anlg/desktop tauri build --debug --no-bundle --target aarch64-apple-darwin --config '{"identifier":"com.hyprnote.dev.ci"}' --features dev,devtools,automation
-        env:
-          CI: "false"
-          POSTHOG_API_KEY: phc_e2e
-          VITE_API_URL: http://localhost:4408
-          VITE_SHOTS_URL: http://localhost:4401
-          VITE_APP_URL: http://localhost:4400
       - name: Check CrabNebula WebDriver credential
         id: webdriver
         run: |
@@ -166,6 +150,24 @@ jobs:
           fi
         env:
           CN_API_KEY_WEBDRIVER: ${{ secrets.CN_API_KEY_WEBDRIVER }}
+      - uses: ./.github/actions/install_desktop_deps
+        with:
+          target: macos
+      - uses: ./.github/actions/rust_install
+        with:
+          platform: macos
+      - name: Build shared UI
+        if: steps.webdriver.outputs.available == 'true'
+        run: pnpm -F @anlg/ui build
+      - name: Build the paired desktop automation binary
+        if: steps.webdriver.outputs.available == 'true'
+        run: pnpm -F @anlg/desktop tauri build --debug --no-bundle --target aarch64-apple-darwin --config '{"identifier":"com.hyprnote.dev.ci"}' --features dev,devtools,automation
+        env:
+          CI: "false"
+          POSTHOG_API_KEY: phc_e2e
+          VITE_API_URL: http://localhost:4408
+          VITE_SHOTS_URL: http://localhost:4401
+          VITE_APP_URL: http://localhost:4400
       - name: Run native desktop settings round-trip
         if: steps.webdriver.outputs.available == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         id: desktop-e2e
