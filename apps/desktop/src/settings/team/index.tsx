@@ -1733,7 +1733,7 @@ function WorkspaceShareDomainForm({
             align="inline-end"
             className="border-input bg-muted h-full shrink-0 border-l px-3 py-0 text-xs font-normal"
           >
-            .anarlog.so
+            .shots.playbookmedia.io
           </InputGroupAddon>
         </InputGroup>
       </div>

@@ -8,12 +8,13 @@ import worker, {
 
 test("routes a workspace hostname to the canonical web origin with its original host", async () => {
   const request = new Request(
-    "https://fastrepl.anarlog.so/share/public/note/?view=compact",
+    "https://fastrepl.shots.playbookmedia.io/share/public/note/?view=compact",
     {
       headers: {
         cookie: "session=secret",
         "x-forwarded-host": "spoofed.example.com",
-        "x-anarlog-workspace-share-host": "another-workspace.anarlog.so",
+        "x-anarlog-workspace-share-host":
+          "another-workspace.shots.playbookmedia.io",
         "x-anarlog-workspace-share-token": "spoofed-token",
       },
     },
@@ -31,7 +32,7 @@ test("routes a workspace hostname to the canonical web origin with its original 
   );
   assert.equal(
     originRequest?.headers.get("x-forwarded-host"),
-    "fastrepl.anarlog.so",
+    "fastrepl.shots.playbookmedia.io",
   );
   assert.equal(originRequest?.headers.get("cookie"), "session=secret");
   assert.equal(originRequest?.redirect, "manual");
@@ -48,14 +49,14 @@ test("routes a workspace hostname to the canonical web origin with its original 
 test("does not route reserved or malformed workspace hostnames", () => {
   assert.equal(
     createWorkspaceShareOriginRequest(
-      new Request("https://models.anarlog.so/model.bin"),
+      new Request("https://models.shots.playbookmedia.io/model.bin"),
       "test-secret",
     ),
     null,
   );
   assert.equal(
     createWorkspaceShareOriginRequest(
-      new Request("https://nested.fastrepl.anarlog.so/share/note"),
+      new Request("https://nested.fastrepl.shots.playbookmedia.io/share/note"),
       "test-secret",
     ),
     null,
@@ -65,7 +66,7 @@ test("does not route reserved or malformed workspace hostnames", () => {
 test("keeps double-slash paths on the configured origin", () => {
   const request = createWorkspaceShareOriginRequest(
     new Request(
-      "https://fastrepl.anarlog.so//example.com/private?view=compact",
+      "https://fastrepl.shots.playbookmedia.io//example.com/private?view=compact",
     ),
     "test-secret",
   );
@@ -77,7 +78,7 @@ test("keeps double-slash paths on the configured origin", () => {
 
 test("rejects workspace requests when the proxy secret is missing", async () => {
   const response = await worker.fetch(
-    new Request("https://fastrepl.anarlog.so/app/"),
+    new Request("https://fastrepl.shots.playbookmedia.io/app/"),
     {},
   );
   assert.equal(response.status, 503);
@@ -98,9 +99,9 @@ test("removes workspace proxy headers when passing through platform hosts", asyn
   );
 
   const response = await worker.fetch(
-    new Request("https://api.anarlog.so/health", {
+    new Request("https://www.shots.playbookmedia.io/health", {
       headers: {
-        "x-anarlog-workspace-share-host": "fastrepl.anarlog.so",
+        "x-anarlog-workspace-share-host": "fastrepl.shots.playbookmedia.io",
         "x-anarlog-workspace-share-token": "spoofed-token",
       },
     }),
@@ -114,9 +115,9 @@ test("removes workspace proxy headers when passing through platform hosts", asyn
 for (const [location, expected] of [
   [
     "https://shots.playbookmedia.io/app/?view=compact#notes",
-    "https://fastrepl.anarlog.so/app/?view=compact#notes",
+    "https://fastrepl.shots.playbookmedia.io/app/?view=compact#notes",
   ],
-  ["/auth/?flow=web", "https://fastrepl.anarlog.so/auth/?flow=web"],
+  ["/auth/?flow=web", "https://fastrepl.shots.playbookmedia.io/auth/?flow=web"],
   ["https://accounts.google.com/auth", "https://accounts.google.com/auth"],
 ]) {
   test(`preserves the browser destination for redirect ${location}`, async (t) => {
@@ -127,7 +128,7 @@ for (const [location, expected] of [
     );
 
     const response = await worker.fetch(
-      new Request("https://fastrepl.anarlog.so/app"),
+      new Request("https://fastrepl.shots.playbookmedia.io/app"),
       { WORKSPACE_SHARE_PROXY_SECRET: "test-secret" },
     );
 

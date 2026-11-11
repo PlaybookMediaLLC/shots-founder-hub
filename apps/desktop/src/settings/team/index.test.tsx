@@ -102,7 +102,7 @@ const mocks = vi.hoisted(() => ({
     setWorkspaceShareSlug: vi.fn(() =>
       Promise.resolve({
         shareSlug: "fastrepl",
-        shareBaseUrl: "https://fastrepl.anarlog.so",
+        shareBaseUrl: "https://fastrepl.shots.playbookmedia.io",
       }),
     ),
     checkWorkspaceShareSlugAvailability: vi.fn(() =>

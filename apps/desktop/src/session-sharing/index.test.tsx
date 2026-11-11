@@ -82,8 +82,8 @@ vi.mock("~/auth/billing-context", () => ({
 
 vi.mock("~/env", () => ({
   env: {
-    VITE_API_URL: "https://api.anarlog.so",
-    VITE_APP_URL: "https://anarlog.so",
+    VITE_API_URL: "https://api.shots.playbookmedia.io",
+    VITE_APP_URL: "https://shots.playbookmedia.io",
   },
 }));
 
@@ -1283,7 +1283,7 @@ describe("SessionShareButton", () => {
 
     await waitFor(() =>
       expect(mocks.clipboardWriteText).toHaveBeenCalledWith(
-        `https://fastrepl.anarlog.so/share/${SHARE_ID}/`,
+        `https://fastrepl.shots.playbookmedia.io/share/${SHARE_ID}/`,
       ),
     );
   });

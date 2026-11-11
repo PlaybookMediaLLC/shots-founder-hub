@@ -18,7 +18,7 @@ const RESERVED_WORKSPACE_SHARE_HOSTS = new Set([
 ]);
 
 export const getWorkspaceShareSlug = (hostname: string) => {
-  const suffix = ".anarlog.so";
+  const suffix = ".shots.playbookmedia.io";
   if (!hostname.endsWith(suffix)) return null;
   const slug = hostname.slice(0, -suffix.length);
   return /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(slug) &&
