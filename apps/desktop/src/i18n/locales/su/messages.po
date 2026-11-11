@@ -3673,6 +3673,10 @@ msgstr ""
 msgid "Move up"
 msgstr ""
 
+#: src/onboarding/index.tsx
+msgid "Mute music"
+msgstr ""
+
 #: src/sidebar/automations.tsx
 msgid "My automations"
 msgstr ""
@@ -4365,6 +4369,10 @@ msgstr ""
 
 #: src/session/components/note-input/transcript/renderer/selection-menu.tsx
 msgid "Play from here"
+msgstr ""
+
+#: src/onboarding/index.tsx
+msgid "Play music"
 msgstr ""
 
 #: src/settings/team/index.tsx

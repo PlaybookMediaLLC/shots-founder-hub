@@ -3673,6 +3673,10 @@ msgstr "Move this note"
 msgid "Move up"
 msgstr "Move up"
 
+#: src/onboarding/index.tsx
+msgid "Mute music"
+msgstr "Mute music"
+
 #: src/sidebar/automations.tsx
 msgid "My automations"
 msgstr "My automations"
@@ -4366,6 +4370,10 @@ msgstr "Play a sound when transcription, summaries, or cloud sync finish."
 #: src/session/components/note-input/transcript/renderer/selection-menu.tsx
 msgid "Play from here"
 msgstr "Play from here"
+
+#: src/onboarding/index.tsx
+msgid "Play music"
+msgstr "Play music"
 
 #: src/settings/team/index.tsx
 msgid "Policies"

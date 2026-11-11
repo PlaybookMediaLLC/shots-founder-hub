@@ -4,12 +4,16 @@ import { platform } from "@tauri-apps/plugin-os";
 import { AnimatePresence } from "motion/react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 
+import { commands as sfxCommands } from "@anlg/plugin-sfx";
 import {
   CalendarBlank,
   ClockCounterClockwise,
   Microphone,
+  SpeakerHigh,
+  SpeakerX,
   User,
 } from "@anlg/ui/components/icons";
+import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
 
 import { LoginSection } from "./account";
 import { CalendarSection } from "./calendar";
@@ -90,6 +94,7 @@ function OnboardingScreenContent({
   );
   const currentPlatform = platform();
   const steps = getOnboardingSteps();
+  const [isMuted, setIsMuted] = useState(false);
 
   const leaveStep = useCallback((from: OnboardingStep, wasSkipped: boolean) => {
     setSkipped((prev) => {
@@ -137,6 +142,17 @@ function OnboardingScreenContent({
       platform: currentPlatform,
     });
   }, [currentPlatform, currentStep]);
+
+  useMountEffect(() => {
+    sfxCommands.play("BGM").catch(console.error);
+    return () => {
+      sfxCommands.stop("BGM").catch(console.error);
+    };
+  });
+
+  useEffect(() => {
+    sfxCommands.setVolume("BGM", isMuted ? 0 : 0.2).catch(console.error);
+  }, [isMuted]);
 
   const handleFinish = useCallback(
     (sessionId: string) => {
@@ -276,9 +292,22 @@ function OnboardingScreenContent({
                 alt=""
                 className="size-7 rounded-lg"
               />
-              <span className="text-sm font-semibold tracking-tight">
+              <span className="flex-1 text-sm font-semibold tracking-tight">
                 Shots Founder Hub
               </span>
+              <button
+                type="button"
+                onClick={() => setIsMuted((prev) => !prev)}
+                data-tauri-drag-region="false"
+                className="text-muted-foreground hover:text-foreground hover:bg-foreground/10 rounded-pill p-1.5 transition-colors"
+                aria-label={isMuted ? t`Play music` : t`Mute music`}
+              >
+                {isMuted ? (
+                  <SpeakerX className="size-4" />
+                ) : (
+                  <SpeakerHigh className="size-4" />
+                )}
+              </button>
             </div>
             <OnboardingStepList steps={stepList} />
           </div>
