@@ -5,6 +5,7 @@ import {
   render,
   screen,
   within,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,6 +22,14 @@ const mocks = vi.hoisted(() => ({
   signIn: vi.fn(async () => {}),
   success: vi.fn(),
   error: vi.fn(),
+  openUrl: vi.fn(() => Promise.resolve({ status: "ok" as const, data: null })),
+  buildWebAppUrl: vi.fn((path: string) =>
+    Promise.resolve(`https://anarlog.so${path}`),
+  ),
+  env: {
+    VITE_APP_URL: "https://anarlog.so",
+    VITE_SHOTS_URL: undefined as string | undefined,
+  },
 }));
 vi.mock("~/auth/auth-context", () => ({
   useAuth: () => ({
@@ -35,7 +44,16 @@ vi.mock("~/auth/auth-context", () => ({
     },
   }),
 }));
-vi.mock("~/env", () => ({ env: { VITE_APP_URL: "https://anarlog.so" } }));
+vi.mock("~/env", () => ({ env: mocks.env }));
+vi.mock("~/auth", () => ({ useAuth: () => ({ session: mocks.session }) }));
+vi.mock("@anlg/plugin-opener2", () => ({
+  commands: { openUrl: mocks.openUrl },
+}));
+vi.mock("~/shared/utils", () => ({ buildWebAppUrl: mocks.buildWebAppUrl }));
+vi.mock("~/store/zustand/tabs", () => ({
+  useTabs: (select: (state: unknown) => unknown) =>
+    select({ openNew: vi.fn() }),
+}));
 vi.mock("@tauri-apps/api/core", () => ({ isTauri: () => true }));
 vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({
   writeText: async (value: string) => {
@@ -104,6 +122,7 @@ beforeEach(() => {
     access_token: "token-a",
   };
   mocks.clipboard = "";
+  mocks.env.VITE_SHOTS_URL = undefined;
   mocks.response.mockReset();
   mocks.response.mockResolvedValue({
     data: summary(),
@@ -112,6 +131,25 @@ beforeEach(() => {
 });
 
 describe("Referral invites", () => {
+  it("opens the signed-in account's Shots referral settings", async () => {
+    mocks.env.VITE_SHOTS_URL = "https://shots.example";
+    mocks.buildWebAppUrl.mockResolvedValueOnce(
+      "https://shots.example/founder-hub/manage?user=user-a&section=referrals",
+    );
+    setup();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Manage referrals" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.buildWebAppUrl).toHaveBeenCalledWith("/app/referrals"),
+    );
+    expect(mocks.openUrl).toHaveBeenCalledWith(
+      "https://shots.example/founder-hub/manage?user=user-a&section=referrals",
+      null,
+    );
+  });
   it("copies one personal link while showing acceptance separately from applied rewards", async () => {
     setup();
     const copy = await screen.findByRole("button", { name: "Copy link" });

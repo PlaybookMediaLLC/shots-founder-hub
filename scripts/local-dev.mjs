@@ -658,6 +658,11 @@ async function doctor(config) {
   const expectedPnpm = hubPackage.packageManager.match(/^pnpm@([^+]+)/)?.[1];
   const expectedGo = shotsGoMod.match(/^go\s+(\S+)/m)?.[1];
   const expectedRust = rustToolchain.match(/^channel\s*=\s*"([^"]+)"/m)?.[1];
+  if (process.versions.node !== expectedNode)
+    throw new Error(
+      `Node ${process.versions.node} does not match .node-version ${expectedNode} (engines: ${hubPackage.engines.node}). Run pnpm dev:local:pinned doctor --profile ${profileName} to use the pinned runtime.`,
+    );
+  prompts.log.success(`node ${process.versions.node}`);
   const checks = [
     ["pnpm", ["--version"], expectedPnpm],
     [
@@ -700,11 +705,6 @@ async function doctor(config) {
       );
     }
   }
-  if (process.versions.node !== expectedNode)
-    throw new Error(
-      `Node ${process.versions.node} does not match .node-version ${expectedNode} (engines: ${hubPackage.engines.node}).`,
-    );
-  prompts.log.success(`node ${process.versions.node}`);
   if (!existsSync(join(config.shotsPath, "clients/node_modules")))
     throw new Error(
       "Shots packages are missing. Run pnpm dev:local setup --install.",

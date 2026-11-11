@@ -9,13 +9,23 @@ import { SettingsPageTitle } from "~/settings/page-title";
 import { buildWebAppUrl } from "~/shared/utils";
 import { useTabs } from "~/store/zustand/tabs";
 
-export function ShotsSettings({ section }: { section: "team" | "billing" }) {
+export function ShotsSettings({
+  section,
+}: {
+  section: "team" | "billing" | "crm" | "referrals";
+}) {
   const auth = useAuth();
   const openNew = useTabs((state) => state.openNew);
   const open = useMutation({
     mutationFn: async () => {
       const url = await buildWebAppUrl(
-        section === "team" ? "/app/team" : "/app/portal",
+        section === "team"
+          ? "/app/team"
+          : section === "crm"
+            ? "/app/crm"
+            : section === "referrals"
+              ? "/app/referrals"
+              : "/app/portal",
       );
       const result = await openerCommands.openUrl(url, null);
       if (result.status === "error") throw new Error(String(result.error));
@@ -26,12 +36,26 @@ export function ShotsSettings({ section }: { section: "team" | "billing" }) {
     <div className="flex flex-col gap-8">
       <SettingsPageTitle
         title={
-          section === "team" ? <Trans>Teams</Trans> : <Trans>Billing</Trans>
+          section === "team" ? (
+            <Trans>Teams</Trans>
+          ) : section === "crm" ? (
+            <Trans>CRM</Trans>
+          ) : section === "referrals" ? (
+            <Trans>Referrals</Trans>
+          ) : (
+            <Trans>Billing</Trans>
+          )
         }
       />
       <p className="text-muted-foreground text-sm">
         {section === "team" ? (
           <Trans>Manage your teams, invitations, and roles in Shots.</Trans>
+        ) : section === "crm" ? (
+          <Trans>
+            Manage CRM connections in Shots so Anarlog can use them.
+          </Trans>
+        ) : section === "referrals" ? (
+          <Trans>Manage referral invitations and rewards in Shots.</Trans>
         ) : (
           <Trans>
             Your Shots workspace plan controls your Founder Hub access. Manage
@@ -49,7 +73,15 @@ export function ShotsSettings({ section }: { section: "team" | "billing" }) {
         }
       >
         {auth.session ? (
-          <Trans>Open Shots settings</Trans>
+          section === "billing" ? (
+            <Trans>Manage billing</Trans>
+          ) : section === "crm" ? (
+            <Trans>Manage CRM</Trans>
+          ) : section === "referrals" ? (
+            <Trans>Manage referrals</Trans>
+          ) : (
+            <Trans>Open Shots settings</Trans>
+          )
         ) : (
           <Trans>Sign in to Shots</Trans>
         )}

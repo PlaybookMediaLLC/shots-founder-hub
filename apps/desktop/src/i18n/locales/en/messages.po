@@ -2026,6 +2026,7 @@ msgid "Creating brief..."
 msgstr "Creating brief..."
 
 #: src/settings/crm/index.tsx
+#: src/settings/shots.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "CRM"
 msgstr "CRM"
@@ -3471,12 +3472,29 @@ msgid "Make the summary shorter."
 msgstr "Make the summary shorter."
 
 #: src/settings/general/billing.tsx
+#: src/settings/shots.tsx
 msgid "Manage billing"
 msgstr "Manage billing"
+
+#: src/settings/shots.tsx
+msgid "Manage CRM"
+msgstr "Manage CRM"
+
+#: src/settings/shots.tsx
+msgid "Manage CRM connections in Shots so Anarlog can use them."
+msgstr "Manage CRM connections in Shots so Anarlog can use them."
 
 #: src/settings/general/billing.tsx
 msgid "Manage or cancel your subscription in the billing portal."
 msgstr "Manage or cancel your subscription in the billing portal."
+
+#: src/settings/shots.tsx
+msgid "Manage referral invitations and rewards in Shots."
+msgstr "Manage referral invitations and rewards in Shots."
+
+#: src/settings/shots.tsx
+msgid "Manage referrals"
+msgstr "Manage referrals"
 
 #: src/settings/general/account.tsx
 msgid "Manage sign-in methods"
@@ -4676,6 +4694,10 @@ msgstr "Redo"
 #: src/settings/referrals.tsx
 msgid "Refer friends, get a month free"
 msgstr "Refer friends, get a month free"
+
+#: src/settings/shots.tsx
+msgid "Referrals"
+msgstr "Referrals"
 
 #: src/settings/referrals.tsx
 msgid "Refresh"

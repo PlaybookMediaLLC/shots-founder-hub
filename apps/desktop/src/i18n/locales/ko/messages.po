@@ -2026,6 +2026,7 @@ msgid "Creating brief..."
 msgstr ""
 
 #: src/settings/crm/index.tsx
+#: src/settings/shots.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "CRM"
 msgstr ""
@@ -3471,11 +3472,28 @@ msgid "Make the summary shorter."
 msgstr ""
 
 #: src/settings/general/billing.tsx
+#: src/settings/shots.tsx
 msgid "Manage billing"
+msgstr ""
+
+#: src/settings/shots.tsx
+msgid "Manage CRM"
+msgstr ""
+
+#: src/settings/shots.tsx
+msgid "Manage CRM connections in Shots so Anarlog can use them."
 msgstr ""
 
 #: src/settings/general/billing.tsx
 msgid "Manage or cancel your subscription in the billing portal."
+msgstr ""
+
+#: src/settings/shots.tsx
+msgid "Manage referral invitations and rewards in Shots."
+msgstr ""
+
+#: src/settings/shots.tsx
+msgid "Manage referrals"
 msgstr ""
 
 #: src/settings/general/account.tsx
@@ -4676,6 +4694,10 @@ msgstr ""
 #: src/settings/referrals.tsx
 msgid "Refer friends, get a month free"
 msgstr "친구를 초대하고 한 달 무료로 이용하세요"
+
+#: src/settings/shots.tsx
+msgid "Referrals"
+msgstr ""
 
 #: src/settings/referrals.tsx
 msgid "Refresh"

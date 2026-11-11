@@ -26,7 +26,7 @@ vi.mock("@anlg/plugin-deeplink2", () => ({
 import { buildWebAppUrl, getScheme } from "./utils";
 
 describe("Shots account management", () => {
-  it("binds account and billing destinations to the native account without leaking credentials", async () => {
+  it("binds account, team, billing, CRM, and referral destinations to the native account without leaking credentials", async () => {
     mocks.env.VITE_SHOTS_URL = "https://shots.example";
     mocks.getSession.mockResolvedValue({
       data: {
@@ -39,6 +39,8 @@ describe("Shots account management", () => {
     try {
       for (const [path, section] of [
         ["/app/account", "account"],
+        ["/app/crm", "crm"],
+        ["/app/referrals", "referrals"],
         ["/app/team", "members"],
         ["/app/checkout", "billing"],
         ["/app/portal", "billing"],

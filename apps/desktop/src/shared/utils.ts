@@ -38,6 +38,8 @@ type DesktopFlowPath =
   | "/app/google-drive-picker"
   | "/auth"
   | "/app/account"
+  | "/app/crm"
+  | "/app/referrals"
   | "/app/team"
   | "/app/integration"
   | "/app/checkout"
@@ -53,6 +55,8 @@ export const buildWebAppUrl = async (
     env.VITE_SHOTS_URL &&
     [
       "/app/account",
+      "/app/crm",
+      "/app/referrals",
       "/app/team",
       "/app/checkout",
       "/app/team-checkout",
@@ -73,7 +77,11 @@ export const buildWebAppUrl = async (
         ? "account"
         : path === "/app/team"
           ? "members"
-          : "billing",
+          : path === "/app/crm"
+            ? "crm"
+            : path === "/app/referrals"
+              ? "referrals"
+              : "billing",
     );
   }
   const scheme = await getScheme();

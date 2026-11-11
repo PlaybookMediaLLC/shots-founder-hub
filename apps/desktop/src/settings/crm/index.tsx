@@ -30,10 +30,20 @@ import {
   nangoConnectionIsReady,
   verifyCrmConnection,
 } from "~/crm/connection";
+import { env } from "~/env";
 import { SettingsPageTitle } from "~/settings/page-title";
+import { ShotsSettings } from "~/settings/shots";
 import { ConnectButtonGroup } from "~/shared/connect-button-group";
 
 export function SettingsCrm() {
+  return env.VITE_SHOTS_URL ? (
+    <ShotsSettings section="crm" />
+  ) : (
+    <LegacySettingsCrm />
+  );
+}
+
+function LegacySettingsCrm() {
   const auth = useAuth();
   const signedIn = Boolean(auth.session);
   const providers = useQuery(crmProvidersQueryOptions());

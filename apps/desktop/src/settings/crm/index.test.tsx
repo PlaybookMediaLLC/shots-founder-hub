@@ -24,6 +24,11 @@ const mocks = vi.hoisted(() => ({
   connectCrm: vi.fn(),
   disconnectCrm: vi.fn(),
   verifyCrmConnection: vi.fn(),
+  openUrl: vi.fn(() => Promise.resolve({ status: "ok" as const, data: null })),
+  buildWebAppUrl: vi.fn((path: string) =>
+    Promise.resolve(`https://anarlog.so${path}`),
+  ),
+  env: { VITE_SHOTS_URL: undefined as string | undefined },
 }));
 
 vi.mock("~/auth", () => ({
@@ -32,6 +37,15 @@ vi.mock("~/auth", () => ({
     getHeaders: () =>
       mocks.signedIn ? { Authorization: "Bearer test" } : null,
   }),
+}));
+vi.mock("~/env", () => ({ env: mocks.env }));
+vi.mock("@anlg/plugin-opener2", () => ({
+  commands: { openUrl: mocks.openUrl },
+}));
+vi.mock("~/shared/utils", () => ({ buildWebAppUrl: mocks.buildWebAppUrl }));
+vi.mock("~/store/zustand/tabs", () => ({
+  useTabs: (select: (state: unknown) => unknown) =>
+    select({ openNew: vi.fn() }),
 }));
 
 vi.mock("~/auth/useConnections", async () => {
@@ -92,6 +106,7 @@ describe("SettingsCrm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.signedIn = true;
+    mocks.env.VITE_SHOTS_URL = undefined;
     mocks.connections = [];
     mocks.providers = [provider];
   });
@@ -104,6 +119,25 @@ describe("SettingsCrm", () => {
     mocks.signedIn = false;
     renderPage();
     expect(await screen.findByText("Sign in to connect a CRM.")).toBeTruthy();
+  });
+
+  it("opens the signed-in account's Shots CRM settings", async () => {
+    mocks.env.VITE_SHOTS_URL = "https://shots.example";
+    mocks.buildWebAppUrl.mockResolvedValueOnce(
+      "https://shots.example/founder-hub/manage?user=user-1&section=crm",
+    );
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Manage CRM" }));
+
+    await waitFor(() =>
+      expect(mocks.buildWebAppUrl).toHaveBeenCalledWith("/app/crm"),
+    );
+    expect(mocks.openUrl).toHaveBeenCalledWith(
+      "https://shots.example/founder-hub/manage?user=user-1&section=crm",
+      null,
+    );
+    expect(screen.queryByText("Not connected")).toBeNull();
   });
 
   it("starts the Nango connect flow", async () => {

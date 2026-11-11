@@ -34,7 +34,7 @@ export function getShotsCloudUrl(apiUrl: string) {
 export function getShotsSettingsUrl(
   shotsUrl: string,
   userId: string,
-  section: "account" | "members" | "billing" | "security",
+  section: "account" | "members" | "billing" | "security" | "crm" | "referrals",
 ) {
   if (typeof userId !== "string" || !userId || userId.length > 160) {
     throw new Error("Sign in to Shots to manage your account.");
