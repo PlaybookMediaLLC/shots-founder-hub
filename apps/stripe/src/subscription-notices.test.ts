@@ -123,7 +123,7 @@ describe("subscription notices", () => {
     );
     expect(sent[0].variables.planName).toBe("Shots Founder Hub Pro");
     expect(sent[0].variables.cancellationUrl).toBe(
-      "https://anarlog.so/app/portal",
+      "https://shots.playbookmedia.io/app/portal",
     );
     expect(sent[0].variables.billingPeriod).toBe("monthly (every month)");
     await sendSubscriptionNotice(subscription.id, "renewal", deps);

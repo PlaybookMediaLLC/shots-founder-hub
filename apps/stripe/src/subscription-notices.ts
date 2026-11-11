@@ -156,7 +156,7 @@ export async function sendSubscriptionNotice(
       cancellationUrl:
         owner.kind === "workspace"
           ? `mailto:team@playbookmedia.io?${`subject=${encodeURIComponent("Cancel my Shots Founder Hub Team subscription")}&body=${encodeURIComponent(`Please cancel automatic renewal of my Shots Founder Hub Team subscription ${id}.`)}`}`
-          : "https://anarlog.so/app/portal",
+          : "https://shots.playbookmedia.io/app/portal",
     },
   );
 }
