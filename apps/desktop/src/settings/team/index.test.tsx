@@ -683,9 +683,11 @@ describe("SettingsTeam", () => {
       name: "Workspace subdomain",
     });
     expect((input as HTMLInputElement).value).toBe("fastrepl");
-    expect(input.parentElement?.contains(screen.getByText(".anarlog.so"))).toBe(
-      true,
-    );
+    expect(
+      input.parentElement?.contains(
+        screen.getByText(".shots.playbookmedia.io"),
+      ),
+    ).toBe(true);
     expect(screen.getByText("Current domain")).toBeTruthy();
     fireEvent.change(input, { target: { value: "Fastrepl-HQ" } });
 
