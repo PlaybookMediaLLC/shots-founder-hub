@@ -55,11 +55,20 @@ ON CONFLICT(attachment_id) DO UPDATE SET
   updated_at = excluded.updated_at
 `;
 
+/** The phone's IANA time zone, UTC when the runtime cannot tell. */
+export function deviceTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
 export async function recordSessionCaptureStart(sessionId: string) {
   await executeTransaction([
     {
-      sql: "UPDATE sessions SET metadata_json = json_set(metadata_json, '$.mobile_capture_started_at_ms', ?), updated_at = ? WHERE id = ? AND deleted_at IS NULL",
-      params: [Date.now(), nowIso(), sessionId],
+      sql: "UPDATE sessions SET metadata_json = json_set(metadata_json, '$.mobile_capture_started_at_ms', ?, '$.mobile_capture_time_zone', ?), updated_at = ? WHERE id = ? AND deleted_at IS NULL",
+      params: [Date.now(), deviceTimeZone(), nowIso(), sessionId],
     },
   ]);
 }

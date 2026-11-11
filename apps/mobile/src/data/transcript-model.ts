@@ -9,6 +9,26 @@ export const SESSION_TRANSCRIPTS_SQL = `SELECT transcript.id, transcript.source,
 
 export const SESSION_SPEAKERS_SQL = `SELECT id, name FROM humans WHERE workspace_id = (SELECT workspace_id FROM sessions WHERE id = ?) AND name <> ''`;
 
+/** The session's primary recording on this device; with ?2 = 1, only while it is not transcribed yet. */
+export const SESSION_AUDIO_SQL = `
+SELECT
+  attachment.content_type,
+  attachment.size_bytes,
+  COALESCE(json_extract(attachment.metadata_json, '$.capture_started_at_ms'),
+    (SELECT MIN(started_at_ms) FROM transcripts WHERE audio_attachment_id = attachment.id),
+    CAST((julianday(attachment.created_at) - 2440587.5) * 86400000 AS INTEGER)) AS capture_started_at_ms,
+  local_state.relative_path AS local_relative_path
+FROM session_attachments AS attachment
+JOIN attachment_local_state AS local_state
+  ON local_state.attachment_id = attachment.id
+ AND local_state.availability = 'present'
+WHERE attachment.session_id = ?1
+  AND attachment.source_type = 'session_audio'
+  AND attachment.deleted_at IS NULL
+  AND (?2 = 0 OR COALESCE(json_extract(attachment.metadata_json, '$.transcript_status'), '') <> 'complete')
+LIMIT 1
+`;
+
 export const SESSION_HAS_TRANSCRIPT_SQL = `SELECT EXISTS (
   SELECT 1 FROM transcripts WHERE session_id = ? AND deleted_at IS NULL
 ) AS has_transcript`;
@@ -32,6 +52,73 @@ export type TranscriptSegment = {
   startMs: number;
   wordCount: number;
 };
+
+// Desktop's createTranscript for batch results: whole-session replace with
+// source batch_transcription, then mark the primary session audio transcribed.
+export function batchTranscriptStatements(
+  sessionId: string,
+  transcript: {
+    id: string;
+    provider: string;
+    model: string;
+    language: string;
+    startedAtMs: number;
+    wordsJson: string;
+    hintsJson: string;
+  },
+  now: string,
+) {
+  return [
+    {
+      sql: `UPDATE transcripts
+SET deleted_at = ?, updated_at = ?
+WHERE session_id = ? AND deleted_at IS NULL`,
+      params: [now, now, sessionId] as unknown[],
+    },
+    {
+      sql: `INSERT INTO transcripts (
+  id, workspace_id, owner_user_id, session_id, source, provider,
+  model, language, started_at_ms, ended_at_ms, audio_attachment_id,
+  memo, words_json, speaker_hints_json, metadata_json, created_at,
+  updated_at, deleted_at
+)
+SELECT ?, session.workspace_id, session.owner_user_id, session.id,
+  'batch_transcription', ?, ?, ?, ?, NULL, '',
+  COALESCE((
+    SELECT note.body FROM session_documents AS note
+    WHERE note.id = session.id AND note.kind = 'note' AND note.deleted_at IS NULL
+  ), ''),
+  ?, ?, '{}', ?, ?, NULL
+FROM sessions AS session
+WHERE session.id = ? AND session.deleted_at IS NULL`,
+      params: [
+        transcript.id,
+        transcript.provider,
+        transcript.model,
+        transcript.language,
+        transcript.startedAtMs,
+        transcript.wordsJson,
+        transcript.hintsJson,
+        now,
+        now,
+        sessionId,
+      ] as unknown[],
+    },
+    {
+      sql: `UPDATE session_attachments
+SET
+  metadata_json = json_set(
+    CASE WHEN json_valid(metadata_json) THEN metadata_json ELSE '{}' END,
+    '$.transcript_status',
+    'complete'
+  ),
+  updated_at = ?
+WHERE id = ? AND session_id = ? AND source_type = 'session_audio'
+  AND source_id = 'primary' AND deleted_at IS NULL`,
+      params: [now, `session-audio:${sessionId}`, sessionId] as unknown[],
+    },
+  ];
+}
 
 export function sharedMicrophoneContextStatement(
   sessionId: string,

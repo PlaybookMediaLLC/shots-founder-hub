@@ -36,6 +36,7 @@ import {
   endMeetingRecordingActivity,
   startMeetingRecordingActivity,
 } from "@/live-activity/meeting-recording-activity";
+import { queueRecordingForShots } from "@/shots-voice/runner";
 
 const STREAM_SAMPLE_RATE = 16_000;
 const STREAM_CHANNELS = 1;
@@ -411,6 +412,7 @@ export function useSessionRecorder(
       } else {
         void transcribeSession(sessionId);
       }
+      queueRecordingForShots(sessionId, durationRef.current);
       if (!completionTrackedRef.current) {
         completionTrackedRef.current = true;
         const properties = {

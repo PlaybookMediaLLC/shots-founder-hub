@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { providersFor, validateProviderConfig } from "./providers-model.ts";
+import {
+  isBuiltInProvider,
+  providersFor,
+  validateProviderConfig,
+} from "./providers-model.ts";
 
 test("incomplete custom endpoints show actionable validation instead of a URL exception", () => {
   for (const kind of ["stt", "llm"]) {
     for (const provider of providersFor(kind).filter(
-      ({ id, baseUrl }) => id !== "anarlog" && !baseUrl,
+      ({ id, baseUrl }) => !isBuiltInProvider(id) && !baseUrl,
     )) {
       for (const baseUrl of ["", "   ", "not-a-url", "https://"]) {
         assert.throws(

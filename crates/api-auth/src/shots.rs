@@ -168,23 +168,31 @@ impl ShotsAuth {
         &self.origin
     }
 
-    pub async fn settings(
+    /// Forwards a gateway request to `/api/founder-hub/{path}` with the service credential,
+    /// waiting up to `timeout` for the whole response. Credentials in `headers` are dropped.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn forward(
         &self,
         token: &str,
         path: &str,
         query: Option<&str>,
         method: reqwest::Method,
+        mut headers: reqwest::header::HeaderMap,
         body: Vec<u8>,
+        timeout: Duration,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let mut url = self
             .origin
             .join(&format!("/api/founder-hub/{path}"))
-            .expect("validated settings path");
+            .expect("validated Founder Hub path");
         url.set_query(query);
+        headers.remove(reqwest::header::AUTHORIZATION);
+        headers.remove("x-shots-founder-hub-service");
         self.client
             .request(method, url)
+            .timeout(timeout)
+            .headers(headers)
             .header("x-shots-founder-hub-service", &self.service_token)
-            .header("content-type", "application/json")
             .bearer_auth(token)
             .body(body)
             .send()
@@ -428,6 +436,71 @@ mod tests {
                 .await
                 .is_err()
         );
+    }
+
+    #[tokio::test]
+    async fn forward_sends_only_its_own_credentials_and_honours_the_timeout() {
+        let server = MockServer::start().await;
+        Mock::given(path("/api/founder-hub/voice/notes"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+        Mock::given(path("/api/founder-hub/voice/slow"))
+            .respond_with(ResponseTemplate::new(200).set_delay(Duration::from_millis(500)))
+            .mount(&server)
+            .await;
+        let shots =
+            ShotsAuth::new(&server.uri(), "test-shots-service-token-thirty-two-bytes").unwrap();
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("authorization", "Bearer forged".parse().unwrap());
+        headers.insert("x-shots-founder-hub-service", "forged".parse().unwrap());
+        headers.insert("x-shots-organization-id", "org-1".parse().unwrap());
+        let response = shots
+            .forward(
+                "native-token",
+                "voice/notes",
+                None,
+                reqwest::Method::POST,
+                headers,
+                b"{}".to_vec(),
+                Duration::from_secs(5),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 200);
+        let received = server.received_requests().await.unwrap();
+        let values = |name: &str| -> Vec<String> {
+            received[0]
+                .headers
+                .get_all(name)
+                .iter()
+                .map(|value| value.to_str().unwrap().to_owned())
+                .collect()
+        };
+        assert_eq!(values("authorization"), ["Bearer native-token"]);
+        assert_eq!(
+            values("x-shots-founder-hub-service"),
+            ["test-shots-service-token-thirty-two-bytes"]
+        );
+        assert_eq!(values("x-shots-organization-id"), ["org-1"]);
+        let forward = |timeout| {
+            shots.forward(
+                "native-token",
+                "voice/slow",
+                None,
+                reqwest::Method::GET,
+                reqwest::header::HeaderMap::new(),
+                Vec::new(),
+                timeout,
+            )
+        };
+        assert!(
+            forward(Duration::from_millis(100))
+                .await
+                .unwrap_err()
+                .is_timeout()
+        );
+        assert!(forward(Duration::from_secs(5)).await.is_ok());
     }
 
     #[test]

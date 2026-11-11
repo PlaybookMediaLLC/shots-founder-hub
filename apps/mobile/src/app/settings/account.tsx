@@ -8,6 +8,7 @@ import { accountPlanLabel, fetchWorkspacePlan } from "@/auth/account-plan";
 import { supabase } from "@/auth/client";
 import { useAuth } from "@/auth/context";
 import { useTrial } from "@/auth/use-trial";
+import { confirmDestructive } from "@/lib/confirm";
 import { env } from "@/lib/env";
 import {
   SettingsError,
@@ -16,6 +17,8 @@ import {
 } from "@/settings/components";
 import { FieldGroup } from "@/settings/field-group";
 import { Text } from "@/settings/fields";
+import { isVoiceNoteUnsent } from "@/shots-voice/model";
+import { getShotsVoice } from "@/shots-voice/store";
 
 export default function AccountSettings() {
   const auth = useAuth();
@@ -44,7 +47,22 @@ export default function AccountSettings() {
       await workspacePlan.refetch({ throwOnError: true });
     },
   });
-  const signOut = useMutation({ mutationFn: auth.signOut });
+  const signOut = useMutation({
+    mutationFn: async () => {
+      // S12: say what stays on the phone before signing out.
+      const unsent = getShotsVoice().notes.filter(isVoiceNoteUnsent).length;
+      if (
+        unsent > 0 &&
+        !(await confirmDestructive(
+          "Sign out with notes not sent to Shots?",
+          "Sign out",
+          `${unsent} ${unsent === 1 ? "note has" : "notes have"} not reached Shots yet. They stay on this phone with their recordings and transcripts, and are sent when you sign in again as this account.`,
+        ))
+      )
+        return;
+      await auth.signOut();
+    },
+  });
   const manage = useMutation({
     mutationFn: () =>
       WebBrowser.openBrowserAsync(
