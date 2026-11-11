@@ -38,6 +38,7 @@ const mocks = {
   "@/lib/env": `export const env = { apiUrl: "https://api.test", shotsUrl: "https://shots.test" };`,
   "@/lib/error-reporting": `export function captureOperationalError(error) { globalThis.shotsVoiceRunnerFixture.errors.push(error); }`,
   "@/settings/preferences": `export async function readPreferences() { return { ai_language: "en" }; }`,
+  "@/data/audio-catalog": `export const deviceTimeZone = () => "Europe/Paris";`,
   "@/data/transcribe": `export const isTranscriptionRunning = (id) => globalThis.shotsVoiceRunnerFixture.running.has(id);`,
   "@/data/on-device-transcription": `export async function transcribeSessionOnDevice(id) {
     const f = globalThis.shotsVoiceRunnerFixture; f.onDevice.push(id); return f.onDeviceResult;
@@ -266,4 +267,20 @@ test("a stored queue with malformed notes loads the readable ones", async () => 
   assert.equal(note.remoteId, "n1");
   assert.equal(note.sent, null);
   assert.equal(note.attempts, 0);
+});
+
+test("a note carries the time zone it was recorded in, or the phone's when that is unknown", async () => {
+  fixture.db.exec(`
+    UPDATE sessions SET metadata_json = json_object('mobile_capture_started_at_ms', 1794390000000, 'mobile_capture_time_zone', 'Asia/Tokyo');
+    INSERT INTO sessions (id, owner_user_id) VALUES ('imported', 'account-a');
+  `);
+  const recorded = await sendToShots();
+  assert.equal(recorded.recordedTimeZone, "Asia/Tokyo");
+  assert.equal(recorded.recordedAt, new Date(1794390000000).toISOString());
+  const create = fixture.requests.find((call) => call.suffix === "notes");
+  assert.equal(create.body.recordedTimeZone, "Asia/Tokyo");
+  assert.equal(
+    (await sendToShots("imported")).recordedTimeZone,
+    "Europe/Paris",
+  );
 });

@@ -110,6 +110,9 @@ const SIGNED_OUT: VoicePassResult = {
   nextAttemptAt: null,
 };
 const MAX_STEPS_PER_NOTE = 8;
+// The gateway's body limit for voice requests.
+const MAX_VOICE_BODY_BYTES = 1024 * 1024;
+const characters = (text: string) => [...text].length;
 const EDIT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 class Stop {
@@ -306,55 +309,73 @@ export async function runVoicePass(
       }
       case "transcript": {
         const pending = note.pending!;
-        const reply = await call({
-          method: "POST",
-          suffix: `notes/${note.remoteId}/transcripts`,
-          body: {
-            clientRevisionId: pending.clientRevisionId,
-            parentId: pending.parentId,
-            origin: pending.origin,
-            locale: pending.locale,
-            engine: pending.engine,
-            text: pending.text,
-            segments: pending.segments,
-          },
-        });
+        const body = {
+          clientRevisionId: pending.clientRevisionId,
+          parentId: pending.parentId,
+          origin: pending.origin,
+          locale: pending.locale,
+          engine: pending.engine,
+          text: pending.text,
+          segments: pending.segments,
+        };
         const sent = (id: string | null) => ({
           id,
           sourceIds: pending.sourceIds,
           versionKey: pending.versionKey,
         });
+        // Never resend a revision Shots rejected; a later edit is a new revision.
+        const rejected = (reason: string) =>
+          save({
+            ...note,
+            pending: null,
+            sent: sent(note.sent?.id ?? null),
+            rejected: reason,
+          });
+        if (
+          characters(pending.text) > limits.maxTranscriptChars ||
+          pending.segments.reduce(
+            (total, segment) => total + characters(segment.text),
+            0,
+          ) > limits.maxTranscriptChars ||
+          new TextEncoder().encode(JSON.stringify(body)).byteLength >
+            MAX_VOICE_BODY_BYTES
+        )
+          return rejected(
+            "The transcript is too long for Shots, so it was not sent.",
+          );
+        const reply = await call({
+          method: "POST",
+          suffix: `notes/${note.remoteId}/transcripts`,
+          body,
+        });
         if (reply.kind === "conflict")
           return save({ ...note, deletedRemote: true, pending: null });
         if (reply.kind === "not_found") return lost(note);
         if (reply.kind === "invalid")
-          // Never resend a revision Shots rejected; a later edit is a new revision.
-          return save({
-            ...note,
-            pending: null,
-            sent: sent(note.sent?.id ?? null),
-            lastError: reply.message,
-          });
-        const body = reply.body as {
+          return rejected(
+            `Shots did not accept the transcript.${reply.message ? ` ${reply.message}` : ""}`,
+          );
+        const result = reply.body as {
           revision?: { id?: unknown };
           note?: { revision?: unknown };
           command?: unknown;
         } | null;
         const id =
-          typeof body?.revision?.id === "string" ? body.revision.id : null;
+          typeof result?.revision?.id === "string" ? result.revision.id : null;
         if (reply.kind !== "ok" || !id)
           return failed(
             note,
             reply.kind === "ok" ? { ...reply, kind: "retry" } : reply,
           );
         const detail = parseVoiceNoteDetail({
-          ...(body?.note ?? {}),
-          command: body?.command,
+          ...(result?.note ?? {}),
+          command: result?.command,
         });
         return save(
           succeeded({
             ...note,
             pending: null,
+            rejected: null,
             sent: sent(id),
             remoteRevision: detail?.revision ?? note.remoteRevision,
             command: detail ? detail.command : note.command,

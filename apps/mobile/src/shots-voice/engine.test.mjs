@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { runVoicePass } from "./engine.ts";
-import { newVoiceNote } from "./model.ts";
+import { newVoiceNote, voiceNoteStatusText } from "./model.ts";
 
 const settings = (patch = {}) => ({
   workspace: {
@@ -698,5 +698,59 @@ test("a pass stops as soon as the queue's account or workspace stops being activ
   assert.deepEqual(
     shots.requests.map((call) => `${call.method} ${call.suffix}`),
     ["GET settings", "POST notes"],
+  );
+});
+
+test("a transcript Shots rejects is shown on the note, and an accepted edit clears it", async () => {
+  const shots = fakeShots();
+  shots.override = (method, suffix) =>
+    suffix.endsWith("/transcripts") && shots.rejectTranscripts
+      ? {
+          status: 400,
+          body: { message: "A transcript has at most 100,000 characters." },
+        }
+      : undefined;
+  shots.rejectTranscripts = true;
+  const { deps, note } = harness({
+    shots,
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  assert.equal(
+    voiceNoteStatusText(note("s1")),
+    "Sent to Shots. Shots did not accept the transcript. A transcript has at most 100,000 characters.",
+  );
+  assert.equal(note("s1").pending, null);
+
+  shots.rejectTranscripts = false;
+  deps.transcriptVersion = async (sessionId, ids) => ({
+    source: "on_device",
+    sourceIds: ids ?? [`t-${sessionId}`],
+    versionKey: `t-${sessionId}:v2`,
+    engine: null,
+  });
+  await runVoicePass(deps);
+  assert.equal(note("s1").rejected, null);
+  assert.equal(voiceNoteStatusText(note("s1")), "Sent to Shots.");
+});
+
+test("a transcript over Shots' limits is never sent and the note says so", async () => {
+  const shots = fakeShots();
+  shots.settings = settings({
+    limits: { maxNoteMs: 1_800_000, minNoteMs: 1_000, maxTranscriptChars: 10 },
+  });
+  const { deps, note } = harness({
+    shots,
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  assert.ok(
+    shots.requests.every((call) => !call.suffix.endsWith("/transcripts")),
+  );
+  assert.match(voiceNoteStatusText(note("s1")), /too long for Shots/);
+  // The rejected version is not offered again on the next pass.
+  await runVoicePass(deps);
+  assert.ok(
+    shots.requests.every((call) => !call.suffix.endsWith("/transcripts")),
   );
 });

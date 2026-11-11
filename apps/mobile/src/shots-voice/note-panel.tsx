@@ -39,7 +39,9 @@ export function ShotsVoiceNotePanel({ sessionId }: { sessionId: string }) {
   return (
     <Card
       style={styles.card}
-      tone={note.deletedRemote || note.failed ? "alert" : "muted"}
+      tone={
+        note.deletedRemote || note.failed || note.rejected ? "alert" : "muted"
+      }
     >
       <Text accessibilityLiveRegion="polite" style={styles.status}>
         {voiceNoteStatusText(note)}

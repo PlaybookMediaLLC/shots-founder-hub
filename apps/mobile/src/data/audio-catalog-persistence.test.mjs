@@ -58,12 +58,14 @@ test("recording recovery preserves the durable capture time while imports ignore
   db.exec("INSERT INTO sessions (id) VALUES ('recorded'), ('imported')");
   for (const sessionId of ["recorded", "imported"])
     await recordSessionCaptureStart(sessionId);
-  const capture = db
+  const { time: capture, zone } = db
     .prepare(
-      "SELECT json_extract(metadata_json, '$.mobile_capture_started_at_ms') AS time FROM sessions WHERE id = 'recorded'",
+      "SELECT json_extract(metadata_json, '$.mobile_capture_started_at_ms') AS time, json_extract(metadata_json, '$.mobile_capture_time_zone') AS zone FROM sessions WHERE id = 'recorded'",
     )
-    .get().time;
+    .get();
   assert.ok(Number.isFinite(capture));
+  // The zone at recording time, for Shots voice commands (plan K24).
+  assert.equal(zone, Intl.DateTimeFormat().resolvedOptions().timeZone);
   await catalogSessionAudio("recorded", {
     source: "recording",
     filename: "audio.wav",

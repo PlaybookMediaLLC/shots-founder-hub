@@ -11,6 +11,8 @@ import {
   parseVoiceSettings,
   retryDelayMs,
   transcriptRevisionFor,
+  voiceErrorMessage,
+  voiceNoteStatusText,
 } from "./model.ts";
 
 const note = (sessionId, patch = {}) => ({
@@ -221,4 +223,41 @@ test("a stored note keeps its valid fields and defaults the malformed ones", () 
   assert.equal(parseStoredVoiceNote({ remoteId: "n1" }), null);
   assert.equal(parseStoredVoiceNote("a"), null);
   assert.deepEqual(parseStoredVoiceNote(note("b")), note("b"));
+});
+
+test("a sent note shows what Shots refused, and gateway codes read as sentences", () => {
+  const sent = {
+    remoteId: "n1",
+    onDevice: "done",
+    audio: "done",
+  };
+  assert.equal(voiceNoteStatusText(note("a", sent)), "Sent to Shots.");
+  assert.equal(
+    voiceNoteStatusText(
+      note("a", { ...sent, rejected: "Shots did not accept the transcript." }),
+    ),
+    "Sent to Shots. Shots did not accept the transcript.",
+  );
+  assert.equal(
+    voiceErrorMessage({
+      code: "shots_voice_unavailable",
+      error_code: "shots_voice_unavailable",
+      msg: "shots_voice_unavailable",
+    }),
+    "Shots could not be reached.",
+  );
+  assert.equal(
+    voiceErrorMessage({
+      code: "other_gateway_code",
+      msg: "other_gateway_code",
+    }),
+    null,
+  );
+  assert.equal(
+    voiceErrorMessage({
+      code: "voice_note_deleted",
+      message: "This voice note was deleted.",
+    }),
+    "This voice note was deleted.",
+  );
 });

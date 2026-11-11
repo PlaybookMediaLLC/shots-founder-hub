@@ -101,6 +101,8 @@ export type VoiceNoteState = {
   deletedRemote: boolean;
   blocked: string | null;
   failed: string | null;
+  /** Why Shots did not take the latest transcript; the note itself is in Shots. */
+  rejected: string | null;
   attempts: number;
   nextAttemptAt: number;
   lastError: string | null;
@@ -153,6 +155,7 @@ export function newVoiceNote(input: {
     deletedRemote: false,
     blocked: null,
     failed: null,
+    rejected: null,
     attempts: 0,
     nextAttemptAt: 0,
     lastError: null,
@@ -202,7 +205,8 @@ export function voiceNoteStatusText(note: VoiceNoteState): string {
     return note.lastError
       ? `Waiting to send to Shots. ${note.lastError}`
       : "Waiting to send to Shots.";
-  return "Sent to Shots.";
+  const problem = note.rejected ?? note.lastError;
+  return problem ? `Sent to Shots. ${problem}` : "Sent to Shots.";
 }
 
 /** Section 4 status semantics: 401 expired session, 403 not allowed, 404, 409 deleted or checksum conflict, 400 invalid. */
@@ -302,11 +306,25 @@ export function transcriptRevisionFor(
   };
 }
 
+// The gateway's own errors carry a code where Shots' carry a sentence.
+const GATEWAY_ERRORS: Record<string, string> = {
+  shots_voice_unavailable: "Shots could not be reached.",
+  invalid_token: "Sign in again to use Shots.",
+  invalid_voice_path: "Update the app to send notes to Shots.",
+  invalid_voice_query: "Update the app to send notes to Shots.",
+};
+
 export function voiceErrorMessage(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
-  const { message, msg } = body as { message?: unknown; msg?: unknown };
+  const { message, msg, code } = body as {
+    message?: unknown;
+    msg?: unknown;
+    code?: unknown;
+  };
   const text = typeof message === "string" ? message : msg;
-  return typeof text === "string" && text.trim() ? text.slice(0, 300) : null;
+  if (typeof text !== "string" || !text.trim()) return null;
+  if (text === code) return GATEWAY_ERRORS[text] ?? null;
+  return text.slice(0, 300);
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -503,6 +521,7 @@ const STORED_FIELDS: {
   deletedRemote: isBoolean,
   blocked: orNull(isText),
   failed: orNull(isText),
+  rejected: orNull(isText),
   attempts: isNumber,
   nextAttemptAt: isNumber,
   lastError: orNull(isText),

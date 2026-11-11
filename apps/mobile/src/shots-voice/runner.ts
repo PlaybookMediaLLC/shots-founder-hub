@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import { File, Paths } from "expo-file-system";
 
 import { supabase } from "@/auth/client";
+import { deviceTimeZone } from "@/data/audio-catalog";
 import { transcribeSessionOnDevice } from "@/data/on-device-transcription";
 import { isTranscriptionRunning } from "@/data/transcribe";
 import {
@@ -139,14 +140,6 @@ export async function confirmShotsVoiceCommand(
   }
 }
 
-const deviceTimeZone = () => {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  } catch {
-    return "UTC";
-  }
-};
-
 /**
  * Queues a saved recording for Shots: always for an explicit "Send to Shots",
  * otherwise only when "Send new recordings to Shots" is on.
@@ -177,8 +170,9 @@ export async function queueSessionForShots(
   const [session] = await execute<{
     created_at: string;
     started_ms: number | null;
+    time_zone: unknown;
   }>(
-    "SELECT created_at, json_extract(metadata_json, '$.mobile_capture_started_at_ms') AS started_ms FROM sessions WHERE id = ? AND deleted_at IS NULL",
+    "SELECT created_at, json_extract(metadata_json, '$.mobile_capture_started_at_ms') AS started_ms, json_extract(metadata_json, '$.mobile_capture_time_zone') AS time_zone FROM sessions WHERE id = ? AND deleted_at IS NULL",
     [sessionId],
   );
   if (!session) return "off";
@@ -192,8 +186,11 @@ export async function queueSessionForShots(
         typeof session.started_ms === "number"
           ? new Date(session.started_ms).toISOString()
           : session.created_at,
-      // The phone's zone at recording time resolves "tomorrow at 10" (K1, K3).
-      recordedTimeZone: deviceTimeZone(),
+      // The phone's zone at recording time resolves "tomorrow at 10" (K1, K3, K24).
+      recordedTimeZone:
+        typeof session.time_zone === "string" && session.time_zone
+          ? session.time_zone
+          : deviceTimeZone(),
       locale: preferences.ai_language || null,
       durationMs:
         options.durationMs && options.durationMs > 0
