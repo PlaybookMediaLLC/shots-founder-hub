@@ -180,7 +180,10 @@ export function WindowsTitleBar({
           <TitleBarMenu label={t`Help`} onPointerDown={rememberEditTarget}>
             <DropdownMenuItem
               onSelect={() =>
-                void openerCommands.openUrl("https://shots.playbookmedia.io/docs", null)
+                void openerCommands.openUrl(
+                  "https://shots.playbookmedia.io/docs",
+                  null,
+                )
               }
             >
               {t`Documentation`}

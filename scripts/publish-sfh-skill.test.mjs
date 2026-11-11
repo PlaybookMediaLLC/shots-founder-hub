@@ -59,7 +59,10 @@ test("repository marketplaces list a single sfh plugin", async () => {
   for (const marketplacePath of marketplacePaths) {
     const marketplace = await readJson(marketplacePath);
     assert.equal(marketplace.name, "fastrepl");
-    assert.deepEqual(marketplace.plugins.map((plugin) => plugin.name), ["sfh"]);
+    assert.deepEqual(
+      marketplace.plugins.map((plugin) => plugin.name),
+      ["sfh"],
+    );
     assert.equal(marketplace.plugins[0].source, `./${PLUGIN_ROOT}`);
     assert.equal(marketplace.plugins[0].version, version);
     assert.equal(marketplace.metadata.version, version);

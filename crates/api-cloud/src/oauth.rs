@@ -129,8 +129,7 @@ async fn protected_resource_metadata(
         authorization_servers: [oauth.authorization_server().to_string()],
         scopes_supported: (!oauth.scopes().is_empty()).then_some(oauth.scopes()),
         bearer_methods_supported: ["header"],
-        resource_documentation: (!oauth.shots)
-            .then_some("https://shots.playbookmedia.io/docs"),
+        resource_documentation: (!oauth.shots).then_some("https://shots.playbookmedia.io/docs"),
     })
 }
 

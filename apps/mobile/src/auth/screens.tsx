@@ -135,7 +135,9 @@ export function SignInScreen({
               <Text
                 accessibilityRole="link"
                 onPress={() =>
-                  void WebBrowser.openBrowserAsync("https://shots.playbookmedia.io/terms")
+                  void WebBrowser.openBrowserAsync(
+                    "https://shots.playbookmedia.io/terms",
+                  )
                 }
                 style={styles.legalLink}
               >
@@ -145,7 +147,9 @@ export function SignInScreen({
               <Text
                 accessibilityRole="link"
                 onPress={() =>
-                  void WebBrowser.openBrowserAsync("https://shots.playbookmedia.io/privacy-policy")
+                  void WebBrowser.openBrowserAsync(
+                    "https://shots.playbookmedia.io/privacy-policy",
+                  )
                 }
                 style={styles.legalLink}
               >

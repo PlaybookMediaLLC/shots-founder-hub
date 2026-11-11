@@ -37,7 +37,9 @@ export default function HelpSettings() {
       <FieldGroup.Section>
         <SettingsRow
           title="Privacy policy"
-          onPress={() => open.mutate("https://shots.playbookmedia.io/privacy-policy")}
+          onPress={() =>
+            open.mutate("https://shots.playbookmedia.io/privacy-policy")
+          }
         />
         <SettingsRow
           title="Terms of service"

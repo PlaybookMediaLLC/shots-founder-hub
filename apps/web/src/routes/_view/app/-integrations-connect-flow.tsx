@@ -349,10 +349,7 @@ export function ConnectFlow({ sessionToken }: { sessionToken?: string } = {}) {
             Privacy Policy
           </a>{" "}
           and{" "}
-          <a
-            className="underline"
-            href="https://shots.playbookmedia.io/docs"
-          >
+          <a className="underline" href="https://shots.playbookmedia.io/docs">
             calendar data instructions
           </a>
           .
