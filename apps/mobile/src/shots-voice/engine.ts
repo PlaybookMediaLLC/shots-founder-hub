@@ -52,6 +52,8 @@ export type VoiceEngineDeps = {
     upload: NonNullable<VoiceNoteState["upload"]>,
   ) => Promise<number>;
   audio: (sessionId: string) => Promise<VoiceAudioInfo | null>;
+  /** True while the user's own transcription of the session is queued or running. */
+  transcriptionRunning: (sessionId: string) => boolean;
   /** On-device transcript, null when the device has no engine; throws on failure. */
   transcribe: (sessionId: string) => Promise<{
     transcriptId: string;
@@ -65,6 +67,7 @@ export type VoiceEngineDeps = {
     sessionId: string,
     ids?: string[],
   ) => Promise<{
+    source: "on_device" | "provider";
     sourceIds: string[];
     versionKey: string;
     engine: string | null;
@@ -222,6 +225,19 @@ export async function runVoicePass(
         );
       }
       case "transcribe": {
+        // The user's own transcript is sent, never replaced or raced (plan 5.1).
+        if (deps.transcriptionRunning(note.sessionId)) {
+          const attempts = note.attempts + 1;
+          return save({
+            ...note,
+            attempts,
+            nextAttemptAt: now + retryDelayMs(attempts),
+          });
+        }
+        if (await deps.transcriptVersion(note.sessionId))
+          return discover(
+            await save({ ...note, onDevice: "done", lastError: null }),
+          );
         let result: Awaited<ReturnType<VoiceEngineDeps["transcribe"]>>;
         try {
           result = await deps.transcribe(note.sessionId);
@@ -424,17 +440,15 @@ export async function runVoicePass(
     }
   };
 
-  // Finds a transcript the note has not sent: the provider's when nothing was
-  // sent yet, or an edit of the rows already sent.
-  const discover = async (note: VoiceNoteState) => {
-    const version = note.sent
-      ? await deps.transcriptVersion(note.sessionId, note.sent.sourceIds)
-      : await deps.transcriptVersion(note.sessionId);
+  // Finds a transcript the note has not sent: the session's when nothing was
+  // sent yet or the sent rows are gone, or an edit of the rows already sent.
+  async function discover(note: VoiceNoteState) {
+    const version =
+      (note.sent &&
+        (await deps.transcriptVersion(note.sessionId, note.sent.sourceIds))) ||
+      (await deps.transcriptVersion(note.sessionId));
     if (!version) return note;
-    const revision = transcriptRevisionFor(
-      { source: "provider", ...version },
-      note.sent,
-    );
+    const revision = transcriptRevisionFor(version, note.sent);
     if (!revision) return note;
     const text = await deps.transcriptText(note.sessionId, version.sourceIds);
     if (!text.trim()) return note;
@@ -450,7 +464,7 @@ export async function runVoicePass(
         segments: [],
       },
     });
-  };
+  }
 
   try {
     const reply = await call({ method: "GET", suffix: "settings" });

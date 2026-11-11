@@ -1,6 +1,6 @@
-// Apple on-device transcription for recordings sent to Shots (Shots voice
-// capture plan, decision 10: on-device by default). The Shots sync calls this
-// before sending a note; it writes a canonical batch_transcription transcript
+// Apple on-device transcription: the "Apple (on device)" provider, and the
+// Shots sync for a note that has no transcript of its own (Shots voice capture
+// plan, decision 10). It writes a canonical batch_transcription transcript
 // exactly like transcribe.ts does and returns it, or null when the device or
 // locale has no on-device engine (the note then syncs without a transcript).
 import { File, Paths } from "expo-file-system";
@@ -55,10 +55,10 @@ LIMIT 1
 const inflight = new Map<string, Promise<OnDeviceTranscript | null>>();
 
 /**
- * Transcribes the session's local recording on this device and replaces the
- * session's transcripts with the result (desktop batch semantics), whatever
- * transcript the session had before. Resolves null, writing nothing, when the
- * locale has no on-device engine, speech permission is not granted, or no
+ * Transcribes the session's local recording on this device, in the app's
+ * language with its dictionary, and replaces the session's transcripts with
+ * the result (desktop batch semantics). Resolves null, writing nothing, when
+ * the locale has no on-device engine, speech permission is not granted, or no
  * speech was recognized. A call while one runs for the same note joins it.
  * Audio never leaves the device; like every completed
  * transcription, the app's automatic summary then runs with the user's
@@ -66,21 +66,15 @@ const inflight = new Map<string, Promise<OnDeviceTranscript | null>>();
  */
 export function transcribeSessionOnDevice(
   sessionId: string,
-  options: { locale?: string; vocabulary?: string[] } = {},
 ): Promise<OnDeviceTranscript | null> {
   const existing = inflight.get(sessionId);
   if (existing) return existing;
-  const task = run(sessionId, options).finally(() =>
-    inflight.delete(sessionId),
-  );
+  const task = run(sessionId).finally(() => inflight.delete(sessionId));
   inflight.set(sessionId, task);
   return task;
 }
 
-async function run(
-  sessionId: string,
-  options: { locale?: string; vocabulary?: string[] },
-): Promise<OnDeviceTranscript | null> {
+async function run(sessionId: string): Promise<OnDeviceTranscript | null> {
   if (!OnDeviceSpeech) return null;
   const [audio] = await execute<{
     local_relative_path: string;
@@ -98,7 +92,7 @@ async function run(
     );
 
   const preferences = await readPreferences();
-  const locale = options.locale ?? preferences.ai_language;
+  const locale = preferences.ai_language;
   const capability = await OnDeviceSpeech.getCapability(locale);
   if (capability.engine === "none") return null;
   const permission =
@@ -110,7 +104,7 @@ async function run(
   const result = await OnDeviceSpeech.transcribeFile(
     file.uri,
     locale,
-    options.vocabulary ?? preferences.personalization_dictionary_terms,
+    preferences.personalization_dictionary_terms,
   );
   const segments = result.segments.flatMap((segment) => {
     const text = segment.text.trim();

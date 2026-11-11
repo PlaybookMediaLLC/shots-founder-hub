@@ -131,6 +131,9 @@ function fakeShots() {
 
 function harness({ shots = fakeShots(), queued = [], ...overrides } = {}) {
   let notes = queued;
+  // The phone's transcripts: sessionId -> the version of its rows.
+  const local = new Map();
+  const transcribed = [];
   const clock = { now: Date.parse("2026-11-11T12:00:00Z") };
   shots.now = () => clock.now;
   const puts = [];
@@ -154,20 +157,35 @@ function harness({ shots = fakeShots(), queued = [], ...overrides } = {}) {
       sha256: "a".repeat(64),
       relativePath: "audio.wav",
     }),
-    transcribe: async (sessionId) => ({
-      transcriptId: `t-${sessionId}`,
-      text: "Shots, post this at ten tomorrow.",
-      engine: "apple-speech-analyzer",
-      locale: "en-US",
-      segments: [
-        { startMs: 0, endMs: 2000, text: "Shots, post this at ten tomorrow." },
-      ],
-    }),
-    transcriptVersion: async (sessionId, ids) => ({
-      sourceIds: ids ?? [`t-${sessionId}`],
-      versionKey: `${(ids ?? [`t-${sessionId}`]).join(",")}:v1`,
-      engine: "deepgram",
-    }),
+    transcriptionRunning: () => false,
+    transcribe: async (sessionId) => {
+      transcribed.push(sessionId);
+      local.set(sessionId, {
+        source: "on_device",
+        sourceIds: [`t-${sessionId}`],
+        versionKey: `t-${sessionId}:v1`,
+        engine: "apple_speech/apple-speech-analyzer",
+      });
+      return {
+        transcriptId: `t-${sessionId}`,
+        text: "Shots, post this at ten tomorrow.",
+        engine: "apple-speech-analyzer",
+        locale: "en-US",
+        segments: [
+          {
+            startMs: 0,
+            endMs: 2000,
+            text: "Shots, post this at ten tomorrow.",
+          },
+        ],
+      };
+    },
+    transcriptVersion: async (sessionId, ids) => {
+      const version = local.get(sessionId);
+      return version && (!ids || ids.join(",") === version.sourceIds.join(","))
+        ? version
+        : null;
+    },
     transcriptText: async () => "Provider transcript.",
     deletedSessions: async () => new Set(),
     notes: () => notes,
@@ -189,6 +207,8 @@ function harness({ shots = fakeShots(), queued = [], ...overrides } = {}) {
     shots,
     clock,
     puts,
+    local,
+    transcribed,
     notes: () => notes,
     note: (id) => notes.find((item) => item.sessionId === id),
   };
@@ -471,4 +491,78 @@ test("audio refused at complete stops the audio only; the note stays sent", asyn
   assert.equal(note("s1").audio, "unavailable");
   assert.equal(note("s1").blocked, null);
   assert.ok(note("s1").remoteId);
+});
+
+test("a note with the user's own transcript sends it and never transcribes on device", async () => {
+  for (const [source, origin] of [
+    ["provider", "remote"],
+    ["on_device", "on_device"],
+  ]) {
+    const { deps, shots, local, transcribed, note } = harness({
+      queued: [recording("s1", { audioUploadConsent: false })],
+    });
+    local.set("s1", {
+      source,
+      sourceIds: ["live-1"],
+      versionKey: "live-1:v3",
+      engine: "anarlog/live",
+    });
+    assert.equal((await runVoicePass(deps)).status, "idle");
+    assert.deepEqual(transcribed, []);
+    const [revision] = shots.notes.get("s1").revisions.values();
+    assert.equal(revision.origin, origin);
+    assert.equal(revision.text, "Provider transcript.");
+    assert.equal(note("s1").onDevice, "done");
+    assert.deepEqual(note("s1").sent.sourceIds, ["live-1"]);
+  }
+});
+
+test("a note whose transcription is still running waits for it instead of transcribing on device", async () => {
+  const { deps, shots, clock, local, transcribed, note } = harness({
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  let running = true;
+  deps.transcriptionRunning = (sessionId) => running && sessionId === "s1";
+  await runVoicePass(deps);
+  assert.deepEqual(transcribed, []);
+  assert.equal(shots.notes.get("s1").revisions.size, 0);
+  assert.equal(note("s1").onDevice, "todo");
+  assert.equal(note("s1").nextAttemptAt, clock.now + 30_000);
+
+  clock.now += 30_000;
+  await runVoicePass(deps);
+  assert.deepEqual(transcribed, []);
+  assert.equal(note("s1").nextAttemptAt, clock.now + 60_000);
+
+  running = false;
+  local.set("s1", {
+    source: "provider",
+    sourceIds: ["batch-1"],
+    versionKey: "batch-1:v1",
+    engine: "deepgram/nova-3",
+  });
+  clock.now += 60_000;
+  await runVoicePass(deps);
+  assert.deepEqual(transcribed, []);
+  const [revision] = shots.notes.get("s1").revisions.values();
+  assert.equal(revision.origin, "remote");
+  assert.equal(note("s1").attempts, 0);
+});
+
+test("when the sent transcript rows are replaced, the session's new transcript is sent", async () => {
+  const { deps, shots, local } = harness({
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  local.set("s1", {
+    source: "provider",
+    sourceIds: ["batch-2"],
+    versionKey: "batch-2:v1",
+    engine: "deepgram/nova-3",
+  });
+  await runVoicePass(deps);
+  const [first, replaced] = shots.notes.get("s1").revisions.values();
+  assert.equal(first.origin, "on_device");
+  assert.equal(replaced.origin, "remote");
+  assert.equal(replaced.parentId, "rev-1");
 });

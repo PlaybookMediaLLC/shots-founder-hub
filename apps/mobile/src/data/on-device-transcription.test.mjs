@@ -111,16 +111,13 @@ const liveTranscripts = () =>
     .all();
 
 test("replaces the session's transcripts with a canonical on-device batch transcript", async () => {
-  const result = await transcribeSessionOnDevice("note", {
-    locale: "en-GB",
-    vocabulary: ["Shots"],
-  });
+  const result = await transcribeSessionOnDevice("note");
 
   assert.deepEqual(fixture.calls.at(-1), [
     "transcribeFile",
     "file:///documents/sessions/note/audio.wav",
-    "en-GB",
-    ["Shots"],
+    "en",
+    ["Anarlog"],
   ]);
   const [row] = liveTranscripts();
   assert.equal(liveTranscripts().length, 1);

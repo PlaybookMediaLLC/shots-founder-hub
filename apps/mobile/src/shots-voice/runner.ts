@@ -3,7 +3,9 @@ import { File, Paths } from "expo-file-system";
 
 import { supabase } from "@/auth/client";
 import { transcribeSessionOnDevice } from "@/data/on-device-transcription";
+import { isTranscriptionRunning } from "@/data/transcribe";
 import {
+  SESSION_HAS_TRANSCRIPT_SQL,
   SESSION_SPEAKERS_SQL,
   SESSION_TRANSCRIPTS_SQL,
   type TranscriptRow,
@@ -287,15 +289,18 @@ function engineDeps(
           }
         : null;
     },
+    transcriptionRunning: isTranscriptionRunning,
     transcribe: async (sessionId) => {
-      const preferences = await readPreferences();
+      // Rows of an unfinished transcription are the user's too; never replace them.
+      const [row] = await execute<{ has_transcript: number }>(
+        SESSION_HAS_TRANSCRIPT_SQL,
+        [sessionId],
+      );
+      if (row?.has_transcript) return null;
       let timeout: ReturnType<typeof setTimeout> | undefined;
       // A stuck engine must not hold every later note; the engine retries it.
       return Promise.race([
-        transcribeSessionOnDevice(sessionId, {
-          locale: preferences.ai_language,
-          vocabulary: preferences.personalization_dictionary_terms,
-        }),
+        transcribeSessionOnDevice(sessionId),
         new Promise<never>((_, reject) => {
           timeout = setTimeout(
             () => reject(new Error("On-device transcription timed out.")),
@@ -315,6 +320,7 @@ function engineDeps(
       ).filter((row) => !ids || ids.includes(row.id));
       if (rows.length === 0 || (ids && rows.length !== ids.length)) return null;
       return {
+        source: rows[0]!.provider === "apple_speech" ? "on_device" : "provider",
         sourceIds: rows.map((row) => row.id),
         versionKey: rows
           .map((row) => `${row.id}:${row.content_version}`)

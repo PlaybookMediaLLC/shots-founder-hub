@@ -499,6 +499,11 @@ async function runTranscription(sessionId: string): Promise<void> {
   generateSummaryAfterTranscription(sessionId);
 }
 
+/** True while this session's transcription is queued or running. */
+export function isTranscriptionRunning(sessionId: string): boolean {
+  return inflight.has(sessionId);
+}
+
 export function transcribeSession(sessionId: string): Promise<void> {
   const existing = inflight.get(sessionId);
   if (existing) return existing;
