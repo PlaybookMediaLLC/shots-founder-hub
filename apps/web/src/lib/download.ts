@@ -16,8 +16,6 @@ export type DownloadPlatform =
 export const appleSiliconDownloadUrl =
   getStableDownloadUrl("macos-aarch64.dmg");
 export const appleIntelDownloadUrl = getStableDownloadUrl("macos-x86_64.dmg");
-export const windowsStoreDownloadUrl =
-  "https://apps.microsoft.com/detail/XPDLN196NKSW10";
 
 export const comingSoonPlatforms = ["Apple Watch", "Galaxy Watch"] as const;
 
@@ -93,19 +91,12 @@ export const desktopDownloadSections = [
     name: "Windows",
     status: null,
     available: true,
-    description: "Choose a direct download or install from Microsoft Store.",
+    description: "Download the signed installer for Windows 10 and 11.",
     downloads: [
       {
         name: "Windows x64",
         detail: "Signed EXE installer",
         url: getStableDownloadUrl("windows-x86_64-setup.exe"),
-        showInMenu: true,
-      },
-      {
-        name: "Microsoft Store",
-        detail: "Windows 10 and 11",
-        url: windowsStoreDownloadUrl,
-        actionLabel: "Get from Store",
         showInMenu: true,
       },
     ],
