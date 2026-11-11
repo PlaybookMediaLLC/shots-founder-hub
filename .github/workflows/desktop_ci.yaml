@@ -251,7 +251,7 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN_HYPRNOTE_2 }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_APP_URL: https://anarlog.so
+          VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
@@ -408,7 +408,7 @@ jobs:
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: anarlog-windows-x64-nsis-${{ github.sha }}
+          name: shots-founder-hub-windows-x64-nsis-${{ github.sha }}
           path: |
             apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
             apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.sha256
@@ -483,7 +483,7 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN_HYPRNOTE_2 }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_APP_URL: https://anarlog.so
+          VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -569,7 +569,8 @@ jobs:
 
           app_pid=""
           for _ in {1..30}; do
-            app_pid=$(pgrep -n -x anarlog-staging || true)
+            # Linux truncates process names to 15 characters, so match the command line.
+            app_pid=$(pgrep -n -f -- shots-founder-hub-staging || true)
             if [[ -n "$app_pid" ]] || ! kill -0 "$smoke_pid" 2>/dev/null; then
               break
             fi
@@ -587,7 +588,7 @@ jobs:
 
           cat "$log"
           if [[ -z "$app_pid" ]]; then
-            echo "AppImage did not start the anarlog-staging process within 30 seconds"
+            echo "AppImage did not start the shots-founder-hub-staging process within 30 seconds"
             exit 1
           fi
           case "$smoke_status" in
@@ -596,7 +597,7 @@ jobs:
               ;;
             *)
               echo "AppImage exited before the smoke timeout with status $smoke_status"
-              ps -ef | grep -E '[a]narlog|[X]vfb|[d]bus' || true
+              ps -ef | grep -E '[s]hots-founder-hub|[X]vfb|[d]bus' || true
               exit 1
               ;;
           esac
@@ -607,7 +608,7 @@ jobs:
             --platform linux/${{ matrix.docker_arch }} \
             --volume "$PWD:/workspace:ro" \
             --env DEB_PATH="/workspace/$deb" \
-            --env BINARY_PATH=/usr/bin/anarlog-staging \
+            --env BINARY_PATH=/usr/bin/shots-founder-hub-staging \
             ubuntu:24.04 \
             bash -euxo pipefail -c '
               export DEBIAN_FRONTEND=noninteractive
@@ -627,7 +628,7 @@ jobs:
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: anarlog-linux-${{ matrix.artifact_name }}-${{ github.sha }}
+          name: shots-founder-hub-linux-${{ matrix.artifact_name }}-${{ github.sha }}
           path: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*

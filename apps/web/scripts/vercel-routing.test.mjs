@@ -44,8 +44,19 @@ test("desktop updater redirects are restricted to the desktop hostname", () => {
   assert.equal(
     routeFor("https://desktop.anarlog.so/update/darwin/aarch64/1.4.22")
       ?.destination,
-    "https://cdn.crabnebula.app/update/fastrepl/hyprnote2/darwin/aarch64/1.4.22",
+    "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest/download/latest.json",
   );
+  for (const url of [
+    "https://desktop.anarlog.so/download/latest/platform/dmg-aarch64?channel=stable",
+    "https://desktop.anarlog.so/",
+    "https://desktop2.hyprnote.com/download/latest/platform/nsis-x86_64",
+  ]) {
+    assert.equal(
+      routeFor(url)?.destination,
+      "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest",
+      url,
+    );
+  }
   assert.equal(
     routeFor("https://anarlog.so/update/darwin/aarch64/1.4.22"),
     undefined,

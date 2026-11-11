@@ -61,16 +61,16 @@ if [[ "${ANARLOG_AUDIO_QA_IN_DBUS:-0}" != "1" ]]; then
 
   mapfile -t package_binaries < <(
     dpkg-query -L "$package_name" \
-      | grep -E '^/usr/bin/anarlog(-staging)?$' \
+      | grep -E '^/usr/bin/shots-founder-hub(-staging)?$' \
       | sort -u
   )
   if [[ ${#package_binaries[@]} -ne 1 ]]; then
-    printf "Expected one Anarlog executable, found: %s\n" \
+    printf "Expected one Shots Founder Hub executable, found: %s\n" \
       "${package_binaries[*]:-none}" >&2
     exit 1
   fi
   if [[ ! -x "${package_binaries[0]}" ]]; then
-    echo "Installed Anarlog executable is not runnable" >&2
+    echo "Installed Shots Founder Hub executable is not runnable" >&2
     exit 1
   fi
 

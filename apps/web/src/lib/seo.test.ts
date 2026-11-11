@@ -10,14 +10,23 @@ import {
 } from "./seo.ts";
 
 test("builds canonical urls with exactly one trailing slash", () => {
-  assert.equal(getCanonicalUrl(), "https://anarlog.so/");
-  assert.equal(getCanonicalUrl("/blog"), "https://anarlog.so/blog/");
+  assert.equal(getCanonicalUrl(), "https://shots.playbookmedia.io/");
+  assert.equal(
+    getCanonicalUrl("/blog"),
+    "https://shots.playbookmedia.io/blog/",
+  );
   assert.equal(
     getCanonicalUrl("/blog/granola-ai-alternatives"),
-    "https://anarlog.so/blog/granola-ai-alternatives/",
+    "https://shots.playbookmedia.io/blog/granola-ai-alternatives/",
   );
-  assert.equal(getCanonicalUrl("/download/"), "https://anarlog.so/download/");
-  assert.equal(getCanonicalUrl("download"), "https://anarlog.so/download/");
+  assert.equal(
+    getCanonicalUrl("/download/"),
+    "https://shots.playbookmedia.io/download/",
+  );
+  assert.equal(
+    getCanonicalUrl("download"),
+    "https://shots.playbookmedia.io/download/",
+  );
 });
 
 test("article links skip canonical redirects without losing queries or anchors", () => {
@@ -26,8 +35,10 @@ test("article links skip canonical redirects without losing queries or anchors",
     "/blog/is-otter-ai-safe/#data-collection",
   );
   assert.equal(
-    getPublicPageLinkHref("https://anarlog.so/download?source=article#desktop"),
-    "https://anarlog.so/download/?source=article#desktop",
+    getPublicPageLinkHref(
+      "https://shots.playbookmedia.io/download?source=article#desktop",
+    ),
+    "https://shots.playbookmedia.io/download/?source=article#desktop",
   );
   for (const href of [
     "/blog/is-otter-ai-safe/",
@@ -52,7 +63,7 @@ test("emits offers when pricing is supplied", () => {
 
   assert.deepEqual(jsonLd.offers, {
     "@type": "AggregateOffer",
-    url: "https://anarlog.so/",
+    url: "https://shots.playbookmedia.io/",
     priceCurrency: "USD",
     lowPrice: 0,
     highPrice: 15,
@@ -83,6 +94,6 @@ test("builds blog posting metadata with typed authors", () => {
   assert.equal(jsonLd.publisher.brand.name, "Shots Founder Hub");
   assert.equal(
     jsonLd.image,
-    "https://static.anarlog.so/og/blog/local-ai-meeting-notes",
+    "https://shots.playbookmedia.io/api/og/blog/local-ai-meeting-notes",
   );
 });

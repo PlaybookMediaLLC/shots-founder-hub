@@ -415,9 +415,8 @@ function Component() {
               Applications.
             </li>
             <li>
-              On Windows, use the x64 installer or Microsoft Store. Run the
-              installer and follow its setup steps. The Store manages
-              installation and updates for its version.
+              On Windows, use the x64 installer. Run it and follow its setup
+              steps.
             </li>
             <li>
               On Linux, match x64 or ARM64 to your machine. AppImage is a

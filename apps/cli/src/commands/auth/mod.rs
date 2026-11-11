@@ -16,7 +16,7 @@ use crate::{Error, Result, output};
 use self::shots::Shots;
 use self::storage::{AuthStore, Backend};
 
-const WEB_APP_URL: &str = "https://anarlog.so";
+const WEB_APP_URL: &str = "https://shots.playbookmedia.io";
 const API_URL: &str = "https://api.anarlog.so";
 const MAX_CALLBACK_BYTES: usize = 32 * 1024;
 
@@ -518,7 +518,7 @@ mod tests {
         );
         assert_eq!(
             login_url("anarlog").unwrap().as_str(),
-            "https://anarlog.so/auth?flow=desktop&scheme=anarlog"
+            "https://shots.playbookmedia.io/auth?flow=desktop&scheme=anarlog"
         );
     }
 

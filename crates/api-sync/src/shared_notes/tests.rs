@@ -180,7 +180,7 @@ async fn verifies_and_sends_a_workspace_invitation_email() {
             "to": "invitee@example.com",
             "reply_to": "owner@example.com",
             "subject": "You're invited to join the \"Fastrepl\" team in Shots Founder Hub",
-            "text": "Owner invited you to join \"Fastrepl\", a team in Shots Founder Hub.\n\nAccept the invitation:\nhttps://anarlog.so/team/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
+            "text": "Owner invited you to join \"Fastrepl\", a team in Shots Founder Hub.\n\nAccept the invitation:\nhttps://shots.playbookmedia.io/team/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "id": "email-id" })))
         .expect(1)

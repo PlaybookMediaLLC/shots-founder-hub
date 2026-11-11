@@ -54,7 +54,7 @@ env:
   CN_APPLICATION: "fastrepl/hyprnote2"
   RELEASE_CHANNEL: ${{ inputs.channel }}
   TAURI_CONF_PATH: ./src-tauri/tauri.conf.${{ inputs.channel }}.json
-  APP_BINARY: ${{ inputs.channel == 'stable' && 'anarlog' || format('anarlog-{0}', inputs.channel) }}
+  APP_BINARY: ${{ inputs.channel == 'stable' && 'shots-founder-hub' || format('shots-founder-hub-{0}', inputs.channel) }}
   # Tauri derives the Debian package name from productName in kebab case.
   DEB_PACKAGE: ${{ inputs.channel == 'stable' && 'shots-founder-hub' || format('shots-founder-hub-{0}', inputs.channel) }}
   NODE_OPTIONS: "--max-old-space-size=4096"
@@ -214,9 +214,6 @@ jobs:
         working-directory: ./apps/desktop
       - run: |
           BUILD_ARGS=(--target "${{ matrix.target }}" --config "$TAURI_CONF_PATH" --verbose)
-          if [[ "$RELEASE_CHANNEL" != "staging" ]]; then
-            BUILD_ARGS+=(--config ./src-tauri/tauri.conf.$RELEASE_CHANNEL-macos.json)
-          fi
           if [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
             BUILD_ARGS+=(--config ./src-tauri/tauri.conf.macos-intel.json)
           fi
@@ -243,7 +240,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_APP_URL: "https://anarlog.so"
+          VITE_APP_URL: "https://shots.playbookmedia.io"
           VITE_API_URL: "https://api.anarlog.so"
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
@@ -442,7 +439,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_APP_URL: https://anarlog.so
+          VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
@@ -577,7 +574,7 @@ jobs:
         working-directory: ./apps/desktop/src-tauri
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: anarlog-${{ inputs.channel }}-linux-${{ matrix.artifact_name }}
+          name: shots-founder-hub-${{ inputs.channel }}-linux-${{ matrix.artifact_name }}
           path: |
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*
             apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*
@@ -654,7 +651,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_APP_URL: https://anarlog.so
+          VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
           VITE_APP_VERSION: ${{ needs.compute-version.outputs.version }}
@@ -668,7 +665,7 @@ jobs:
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_SENTRY_TOKEN }}
         run: |
           release_dir="apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release"
-          # Tauri renames the exe to mainBinaryName (anarlog.exe) but the PDB
+          # Tauri renames the exe to mainBinaryName (shots-founder-hub.exe) but the PDB
           # keeps the cargo target name (desktop.pdb), so glob instead of
           # hardcoding a name that never exists.
           shopt -s nullglob
@@ -881,7 +878,7 @@ jobs:
           Copy-Item "$source/*" $destination
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: anarlog-${{ inputs.channel }}-windows-x64
+          name: shots-founder-hub-${{ inputs.channel }}-windows-x64
           path: apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*
           if-no-files-found: error
           retention-days: 7

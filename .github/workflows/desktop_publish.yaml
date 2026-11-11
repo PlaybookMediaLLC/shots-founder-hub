@@ -130,13 +130,13 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: nsis-x86_64
-          output: anarlog-windows-x86_64-setup.exe
+          output: shots-founder-hub-windows-x86_64-setup.exe
           key: ${{ secrets.CN_API_KEY }}
       - shell: pwsh
         env:
           WINDOWS_SIGNER_ORGANIZATION: ${{ vars.WINDOWS_SIGNER_ORGANIZATION }}
         run: |
-          $signature = Get-AuthenticodeSignature "anarlog-windows-x86_64-setup.exe"
+          $signature = Get-AuthenticodeSignature "shots-founder-hub-windows-x86_64-setup.exe"
           if ($signature.Status -ne "Valid") {
             throw "Invalid Windows Authenticode signature: $($signature.Status)"
           }
@@ -359,7 +359,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: dmg-aarch64
-          output: anarlog-macos-aarch64.dmg
+          output: shots-founder-hub-macos-aarch64.dmg
           key: ${{ secrets.CN_API_KEY }}
       - id: download-macos-x86_64
         uses: ./.github/actions/cn_download
@@ -368,7 +368,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: dmg-x86_64
-          output: anarlog-macos-x86_64.dmg
+          output: shots-founder-hub-macos-x86_64.dmg
           key: ${{ secrets.CN_API_KEY }}
       - id: download-linux-x86_64-appimage
         if: ${{ needs.parse.outputs.include_linux == 'true' }}
@@ -418,7 +418,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: nsis-x86_64
-          output: anarlog-windows-x86_64-setup.exe
+          output: shots-founder-hub-windows-x86_64-setup.exe
           key: ${{ secrets.CN_API_KEY }}
       - name: Verify GitHub release assets against provenance
         env:
@@ -455,8 +455,8 @@ jobs:
             cp "$source" "$ASSET_DIR/$asset_id"
           }
 
-          copy_asset "$MACOS_ARM64_ID" "anarlog-macos-aarch64.dmg"
-          copy_asset "$MACOS_X64_ID" "anarlog-macos-x86_64.dmg"
+          copy_asset "$MACOS_ARM64_ID" "shots-founder-hub-macos-aarch64.dmg"
+          copy_asset "$MACOS_X64_ID" "shots-founder-hub-macos-x86_64.dmg"
           if [[ "$INCLUDE_LINUX" == "true" ]]; then
             copy_asset "$LINUX_X64_APPIMAGE_ID" "shots-founder-hub-linux-x86_64.AppImage"
             copy_asset "$LINUX_X64_DEB_ID" "shots-founder-hub-linux-x86_64.deb"
@@ -464,7 +464,7 @@ jobs:
             copy_asset "$LINUX_ARM64_DEB_ID" "shots-founder-hub-linux-aarch64.deb"
           fi
           if [[ "$INCLUDE_WINDOWS" == "true" ]]; then
-            copy_asset "$WINDOWS_X64_ID" "anarlog-windows-x86_64-setup.exe"
+            copy_asset "$WINDOWS_X64_ID" "shots-founder-hub-windows-x86_64-setup.exe"
           fi
 
           PLATFORM_ASSET_IDS=$(jq -cn \
@@ -505,13 +505,13 @@ jobs:
         uses: ./.github/actions/generate_checksums
         with:
           files: |
-            anarlog-macos-aarch64.dmg
-            anarlog-macos-x86_64.dmg
+            shots-founder-hub-macos-aarch64.dmg
+            shots-founder-hub-macos-x86_64.dmg
             ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-x86_64.AppImage' || '' }}
             ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-x86_64.deb' || '' }}
             ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-aarch64.AppImage' || '' }}
             ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-aarch64.deb' || '' }}
-            ${{ needs.parse.outputs.include_windows == 'true' && 'anarlog-windows-x86_64-setup.exe' || '' }}
+            ${{ needs.parse.outputs.include_windows == 'true' && 'shots-founder-hub-windows-x86_64-setup.exe' || '' }}
       - id: release-assets
         env:
           CHECKSUM_FILES: ${{ steps.checksums.outputs.checksum_files }}
@@ -519,8 +519,8 @@ jobs:
           INCLUDE_WINDOWS: ${{ needs.parse.outputs.include_windows }}
         run: |
           files=(
-            "anarlog-macos-aarch64.dmg"
-            "anarlog-macos-x86_64.dmg"
+            "shots-founder-hub-macos-aarch64.dmg"
+            "shots-founder-hub-macos-x86_64.dmg"
           )
           if [[ "$INCLUDE_LINUX" == "true" ]]; then
             files+=(
@@ -531,7 +531,7 @@ jobs:
             )
           fi
           if [[ "$INCLUDE_WINDOWS" == "true" ]]; then
-            files+=("anarlog-windows-x86_64-setup.exe")
+            files+=("shots-founder-hub-windows-x86_64-setup.exe")
           fi
 
           artifact_files=$(IFS=,; echo "${files[*]}")
@@ -540,7 +540,7 @@ jobs:
         env:
           RELEASE_VERSION: ${{ needs.parse.outputs.version }}
         run: |
-          echo "value=https://anarlog.so/changelog/desktop/$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "value=https://shots.playbookmedia.io/changelog/desktop/$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
       - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         with:
           tag: desktop_v${{ needs.parse.outputs.version }}
@@ -556,8 +556,8 @@ jobs:
         env:
           VERSION: ${{ needs.parse.outputs.version }}
         run: |
-          package_url="https://github.com/$GITHUB_REPOSITORY/releases/download/desktop_v$VERSION/anarlog-windows-x86_64-setup.exe"
-          package_sha256=$(sha256sum anarlog-windows-x86_64-setup.exe | cut -d ' ' -f 1)
+          package_url="https://github.com/$GITHUB_REPOSITORY/releases/download/desktop_v$VERSION/shots-founder-hub-windows-x86_64-setup.exe"
+          package_sha256=$(sha256sum shots-founder-hub-windows-x86_64-setup.exe | cut -d ' ' -f 1)
           {
             echo "## Microsoft Store submission"
             echo "- Package URL: \`$package_url\`"
@@ -578,7 +578,6 @@ jobs:
       submit_to_stores: true
     secrets:
       AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
-      CN_API_KEY: ${{ secrets.CN_API_KEY }}
       SELLER_ID: ${{ secrets.SELLER_ID }}
 
   linux-package-bump:

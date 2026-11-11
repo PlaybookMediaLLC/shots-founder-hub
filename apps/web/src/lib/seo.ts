@@ -1,4 +1,8 @@
-export const ANARLOG_SITE_URL = "https://anarlog.so";
+// The deployment's VITE_APP_URL sets the site origin. Node tests have no
+// import.meta.env, so they get the production origin.
+export const ANARLOG_SITE_URL = (
+  import.meta.env?.VITE_APP_URL || "https://shots.playbookmedia.io"
+).replace(/\/+$/, "");
 export const ANARLOG_SITE_NAME = "Shots Founder Hub";
 export const DEFAULT_OG_IMAGE_URL = `${ANARLOG_SITE_URL}/og.jpg`;
 
@@ -58,7 +62,7 @@ export const ROOT_KEYWORDS =
   "founder personal brand, voice to content, content scheduling, meeting takeaways, notes to content, content creation, brand visuals, founder storytelling, Shots Founder Hub";
 
 export function getBlogOgImageUrl(slug: string) {
-  return `https://static.anarlog.so/og/blog/${encodeURIComponent(slug)}`;
+  return `${ANARLOG_SITE_URL}/api/og/blog/${encodeURIComponent(slug)}`;
 }
 
 export function getPublicSharedNoteOgImageUrl(publicSlug: string) {

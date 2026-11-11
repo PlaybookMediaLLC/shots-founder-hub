@@ -29,10 +29,13 @@ async function createFixture(
   );
   t.after(() => rm(directory, { force: true, recursive: true }));
 
-  const appDirectory = path.join(directory, "Anarlog.AppDir");
+  const appDirectory = path.join(directory, "Shots Founder Hub.AppDir");
   const libraryDirectory = path.join(appDirectory, "usr", "lib");
   const nestedLibraryDirectory = path.join(libraryDirectory, "gtk-3.0");
-  const appImage = path.join(directory, "Anarlog_1.4.5_amd64.AppImage");
+  const appImage = path.join(
+    directory,
+    "Shots Founder Hub_1.4.5_amd64.AppImage",
+  );
   const gtkHook = path.join(
     appDirectory,
     "apprun-hooks",
@@ -290,7 +293,7 @@ for (const [name, prepare, options, error] of [
     "an ambiguous AppImage bundle",
     (fixture) =>
       writeFile(
-        path.join(fixture.directory, "Anarlog_1.4.5_arm64.AppImage"),
+        path.join(fixture.directory, "Shots Founder Hub_1.4.5_arm64.AppImage"),
         "other-appimage",
       ),
     {},

@@ -23,7 +23,7 @@ maps from the final deployment artifact.
 
 Copy the web environment to the new Vercel project using the variable names in
 `src/env.ts`, including the existing Supabase, Stripe, Loops, analytics, and
-workspace-sharing settings. Keep `VITE_APP_URL=https://anarlog.so` and
+workspace-sharing settings. Set `VITE_APP_URL=https://shots.playbookmedia.io` and
 `VITE_API_URL=https://api.anarlog.so`. Configure `SENTRY_DSN` for server errors.
 `APP_VERSION` is added to the server artifact from the release build version.
 Use separate non-production service credentials for previews.
@@ -44,8 +44,9 @@ existing job leases and delivery idempotency remain in place.
    documentation, and model services. Historical domain redirect rules are
    preserved in code; attach only domains intentionally owned by this deployment.
 3. Deploy the Cloudflare workspace-share router after the apex domain serves
-   Vercel. It forwards to `https://anarlog.so` using the existing shared proxy
-   secret, so there is no dependency on a provider-assigned project hostname.
+   Vercel. It forwards to `https://shots.playbookmedia.io` using the existing
+   shared proxy secret, so there is no dependency on a provider-assigned
+   project hostname.
 4. Disable the old Netlify scheduled jobs, then set `CRON_JOBS_ENABLED=true` in
    Vercel and redeploy. Verify each job before retiring the old web deployment.
    After retirement, use a previous Vercel deployment for web rollback.

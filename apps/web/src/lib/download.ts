@@ -1,8 +1,9 @@
+// GitHub only marks stable desktop releases as latest.
 const latestStableDownloadUrl =
-  "https://desktop.anarlog.so/download/latest/platform";
+  "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest/download";
 
-function getStableDownloadUrl(platform: string) {
-  return `${latestStableDownloadUrl}/${platform}?channel=stable`;
+function getStableDownloadUrl(asset: string) {
+  return `${latestStableDownloadUrl}/shots-founder-hub-${asset}`;
 }
 
 export type DownloadPlatform =
@@ -12,10 +13,9 @@ export type DownloadPlatform =
   | "macos"
   | "windows";
 
-export const appleSiliconDownloadUrl = getStableDownloadUrl("dmg-aarch64");
-export const appleIntelDownloadUrl = getStableDownloadUrl("dmg-x86_64");
-export const windowsStoreDownloadUrl =
-  "https://apps.microsoft.com/detail/XPDLN196NKSW10";
+export const appleSiliconDownloadUrl =
+  getStableDownloadUrl("macos-aarch64.dmg");
+export const appleIntelDownloadUrl = getStableDownloadUrl("macos-x86_64.dmg");
 
 export const comingSoonPlatforms = ["Apple Watch", "Galaxy Watch"] as const;
 
@@ -91,19 +91,12 @@ export const desktopDownloadSections = [
     name: "Windows",
     status: null,
     available: true,
-    description: "Choose a direct download or install from Microsoft Store.",
+    description: "Download the signed installer for Windows 10 and 11.",
     downloads: [
       {
         name: "Windows x64",
         detail: "Signed EXE installer",
-        url: getStableDownloadUrl("nsis-x86_64"),
-        showInMenu: true,
-      },
-      {
-        name: "Microsoft Store",
-        detail: "Windows 10 and 11",
-        url: windowsStoreDownloadUrl,
-        actionLabel: "Get from Store",
+        url: getStableDownloadUrl("windows-x86_64-setup.exe"),
         showInMenu: true,
       },
     ],
@@ -126,25 +119,25 @@ export const desktopDownloadSections = [
       {
         name: "AppImage x64",
         detail: "Intel or AMD 64-bit · AppImage",
-        url: getStableDownloadUrl("appimage-x86_64"),
+        url: getStableDownloadUrl("linux-x86_64.AppImage"),
         showInMenu: true,
       },
       {
         name: "Debian x64",
         detail: "Debian or Ubuntu · DEB",
-        url: getStableDownloadUrl("debian-x86_64"),
+        url: getStableDownloadUrl("linux-x86_64.deb"),
         showInMenu: true,
       },
       {
         name: "AppImage ARM64",
         detail: "64-bit ARM · AppImage",
-        url: getStableDownloadUrl("appimage-aarch64"),
+        url: getStableDownloadUrl("linux-aarch64.AppImage"),
         showInMenu: false,
       },
       {
         name: "Debian ARM64",
         detail: "Debian or Ubuntu on 64-bit ARM · DEB",
-        url: getStableDownloadUrl("debian-aarch64"),
+        url: getStableDownloadUrl("linux-aarch64.deb"),
         showInMenu: false,
       },
       {
