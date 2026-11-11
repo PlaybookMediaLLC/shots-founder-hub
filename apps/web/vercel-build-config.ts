@@ -125,7 +125,7 @@ const routes = [
     src: "^/skills/?$",
     status: 301,
     headers: {
-      Location: "https://docs.anarlog.so/agents/skills",
+      Location: "https://shots.playbookmedia.io/docs",
     },
   },
   {
@@ -174,14 +174,14 @@ const routes = [
     src: "^/docs/?$",
     status: 301,
     headers: {
-      Location: "https://docs.anarlog.so",
+      Location: "https://shots.playbookmedia.io/docs",
     },
   },
   {
     src: "^/docs/(.*)$",
     status: 301,
     headers: {
-      Location: "https://docs.anarlog.so/$1",
+      Location: "https://shots.playbookmedia.io/docs",
     },
   },
   {

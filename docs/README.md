@@ -10,7 +10,7 @@ Configure the Mintlify project with `docs/` as its documentation directory and `
 2. Wait for both records and TLS provisioning to verify.
 3. Point the `docs` CNAME to the target shown by Mintlify.
 
-The website redirects the previous `anarlog.so/docs/*` routes to the matching path on the custom domain.
+The website redirects its `/docs` routes to the Shots documentation at `https://shots.playbookmedia.io/docs`.
 
 ## Local preview
 
