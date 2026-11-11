@@ -33,7 +33,7 @@ const mocks = {
   } };`,
   "@/db": `export async function execute() { return []; } export async function executeTransaction(statements) { globalThis.liveAccessFixture.transactions.push(statements); return statements.map(() => 1); }`,
   "@/settings/providers": `export async function readProviderConfig() { globalThis.liveAccessFixture.providerRead?.(); return globalThis.liveAccessFixture.provider ?? { provider: 'anarlog', model: 'cloud' }; } export async function readProviderKey() { return globalThis.liveAccessFixture.apiKey; }`,
-  "@/settings/preferences": `export async function readPreferences() { return { ai_language: "en", spoken_languages: ["ko"], personalization_dictionary_terms: ["Anarlog"] }; }`,
+  "@/settings/preferences": `export async function readPreferences() { return { ai_language: "en", spoken_languages: ["ko"], personalization_dictionary_terms: ["Shots Founder Hub"] }; }`,
   "@/settings/preferences-model": `export const applyTranscriptionPreferences = url => url;`,
   "@/lib/ids": `export const id = () => 'transcript-test'; export const nowIso = () => new Date().toISOString();`,
   "@/lib/env": `export const env = { apiUrl: 'https://api.anarlog.test' };`,
@@ -230,7 +230,7 @@ test("own-key live recording works after trial expiry and persists the selected 
     sample_rate: 16000,
     channels: 1,
     languages: ["en", "ko"],
-    keywords: ["Anarlog"],
+    keywords: ["Shots Founder Hub"],
   });
   assert.deepEqual(native.sent, [pcm]);
   native.listener.onMessage(transcript("Hel", false));

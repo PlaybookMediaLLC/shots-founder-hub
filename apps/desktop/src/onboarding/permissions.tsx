@@ -70,7 +70,7 @@ function PermissionBlock({
         "group flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all",
         isAuthorized
           ? "border-border bg-card border"
-          : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 border shadow-[0_4px_14px_rgba(87,83,78,0.18)] active:scale-[0.98]",
+          : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 border shadow-md active:scale-[0.98]",
         (isPending || isAuthorized) && "cursor-default",
         isPending && "opacity-50",
       ])}
@@ -198,8 +198,8 @@ function PermissionsSectionContent({
 
       <div className="flex flex-col gap-2">
         <PermissionBlock
-          enabledLabel={t`Anarlog can hear your voice`}
-          enableLabel={t`Help Anarlog listen to you`}
+          enabledLabel={t`Shots Founder Hub can hear your voice`}
+          enableLabel={t`Help Shots Founder Hub listen to you`}
           enabledBody={t`Microphone access turned on`}
           enableBody={mic.error ?? t`Use your microphone to capture your voice`}
           Icon={Microphone}
@@ -216,8 +216,8 @@ function PermissionsSectionContent({
         />
 
         <PermissionBlock
-          enabledLabel={t`Anarlog can hear others`}
-          enableLabel={t`Help Anarlog listen to others`}
+          enabledLabel={t`Shots Founder Hub can hear others`}
+          enableLabel={t`Help Shots Founder Hub listen to others`}
           enabledBody={t`System audio enabled`}
           enableBody={
             systemAudio.error ?? t`Use system audio to capture other speakers`
@@ -239,12 +239,12 @@ function PermissionsSectionContent({
 
         {accessibility && (
           <PermissionBlock
-            enabledLabel={t`Anarlog can read meeting details`}
-            enableLabel={t`Help Anarlog read meeting activity`}
+            enabledLabel={t`Shots Founder Hub can read meeting details`}
+            enableLabel={t`Help Shots Founder Hub read meeting activity`}
             enabledBody={t`Meeting details access turned on`}
             enableBody={
               accessibilityGuidance
-                ? t`Opens System Settings and guides you to add Anarlog to the ${accessibilityGuidance.paneTitle ?? "Privacy"} list`
+                ? t`Opens System Settings and guides you to add Shots Founder Hub to the ${accessibilityGuidance.paneTitle ?? "Privacy"} list`
                 : t`Read meeting controls and visible chat`
             }
             Icon={Cursor}

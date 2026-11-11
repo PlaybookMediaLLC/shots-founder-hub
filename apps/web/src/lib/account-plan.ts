@@ -188,6 +188,6 @@ export function getAccountPlanCopy({
 
   return {
     planLabel,
-    planDetail: "Thanks for supporting Anarlog.",
+    planDetail: "Thanks for supporting Shots Founder Hub.",
   };
 }

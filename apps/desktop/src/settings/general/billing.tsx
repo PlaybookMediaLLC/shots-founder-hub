@@ -116,7 +116,7 @@ function LegacySettingsBilling() {
               openNew({ type: "settings", state: { tab: "account" } })
             }
           >
-            <Trans>Sign in to Anarlog</Trans>
+            <Trans>Sign in to Shots Founder Hub</Trans>
           </button>
           <GuestPlanSection />
         </>
@@ -182,7 +182,10 @@ function useBillingActions(
   const openEnterprise = useCallback(async () => {
     setActionPending(true);
     try {
-      await openerCommands.openUrl("https://anarlog.so/enterprise/", null);
+      await openerCommands.openUrl(
+        "https://shots.playbookmedia.io/enterprise",
+        null,
+      );
     } finally {
       setActionPending(false);
     }
@@ -431,7 +434,7 @@ function PlanBillingSection({
           ) : (
             <>
               <p className="font-sans text-base font-medium">
-                {`Anarlog ${planLabel}`}
+                {`Shots Founder Hub ${planLabel}`}
               </p>
               <div className="text-muted-foreground mt-1 flex flex-col gap-0.5 text-sm">
                 {priceText != null && <p>{priceText}</p>}

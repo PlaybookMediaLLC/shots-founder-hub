@@ -1,18 +1,18 @@
 {
-  "name": "fastrepl",
+  "name": "playbook",
   "owner": {
-    "name": "Fastrepl",
-    "email": "team@fastrepl.com"
+    "name": "Playbook Media Interactive LLC",
+    "email": "team@playbookmedia.io"
   },
   "metadata": {
-    "description": "Official plugins from Fastrepl",
+    "description": "Official plugins from Playbook Media",
     "version": "1.3.5"
   },
   "plugins": [
     {
-      "name": "anarlog",
-      "source": "./agent-plugins/anarlog",
-      "description": "Search local Anarlog meetings or connect to Cloud with OAuth.",
+      "name": "sfh",
+      "source": "./agent-plugins/sfh",
+      "description": "Search local Shots Founder Hub meetings or connect to Cloud with OAuth.",
       "version": "1.3.5",
       "category": "Productivity",
       "tags": ["meetings", "notes", "transcripts", "mcp", "oauth"]

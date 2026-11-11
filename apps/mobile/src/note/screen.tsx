@@ -2,7 +2,7 @@ import SegmentedControl from "@expo/ui/community/segmented-control";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Alert, Keyboard, Share, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,10 +26,15 @@ import {
 } from "@/data/transcripts";
 import { captureAnalytics } from "@/lib/analytics";
 import { confirmDestructive } from "@/lib/confirm";
+import { env } from "@/lib/env";
 import { captureOperationalError } from "@/lib/error-reporting";
+import { showToast } from "@/lib/toast";
 import { useKeyboardVisible } from "@/lib/use-keyboard-visible";
 import { useMountEffect } from "@/lib/use-mount-effect";
 import { createStyleHook, useColors } from "@/settings/theme-provider";
+import { ShotsVoiceNotePanel } from "@/shots-voice/note-panel";
+import { queueSessionForShots } from "@/shots-voice/runner";
+import { getShotsVoice, subscribeShotsVoice } from "@/shots-voice/store";
 
 import { BodyEditor } from "./body-editor";
 import { NoteFiles } from "./note-files";
@@ -71,6 +76,17 @@ export function NoteScreen({
     setSheet((current) => (current === name ? null : current));
   const keyboardVisible = useKeyboardVisible();
   const recorder = useSessionRecorder(id, listening);
+  // Stable slices: queue writes during a sync do not re-render the note.
+  const shotsAccountId = useSyncExternalStore(
+    subscribeShotsVoice,
+    () => getShotsVoice().accountId,
+  );
+  const shotsPrefs = useSyncExternalStore(
+    subscribeShotsVoice,
+    () => getShotsVoice().prefs,
+  );
+  const shotsWorkspace =
+    env.shotsUrl && shotsAccountId ? shotsPrefs.workspaceName : null;
   const hasRecordingHistory =
     Boolean(audio.data) || transcriptState.data === true;
   const active = listening && recorder.phase !== "saved";
@@ -221,6 +237,27 @@ export function NoteScreen({
     }
   };
 
+  const handleSendToShots = async () => {
+    try {
+      const result = await queueSessionForShots(id, { explicit: true });
+      showToast({
+        id: `shots-send-${id}`,
+        title:
+          result === "queued" ? "Sending to Shots" : "Couldn’t send to Shots",
+        description:
+          result === "queued"
+            ? `This note goes to ${shotsWorkspace ?? "your Shots workspace"} when Shots can be reached.`
+            : result === "deleted_in_shots"
+              ? "This note was deleted in Shots, so it is not sent again. It stays on your phone."
+              : result === "other_account"
+                ? "This note was recorded by another account, so it is not sent to Shots."
+                : "Choose a Shots workspace in Settings first.",
+      });
+    } catch (error) {
+      captureOperationalError(error, { operation: "shots_voice_send" });
+    }
+  };
+
   const handleMoreActions = () => {
     if (!data) return;
     Keyboard.dismiss();
@@ -290,6 +327,7 @@ export function NoteScreen({
               />
             </View>
           )}
+          <ShotsVoiceNotePanel sessionId={id} />
           <NoteSummary
             sessionId={id}
             active={active}
@@ -375,6 +413,11 @@ export function NoteScreen({
         onExport={() => void handleExport()}
         onSelectFolder={() => setSheet("folders")}
         onImportRecording={audio.importRecording}
+        onSendToShots={
+          shotsWorkspace && hasRecordingHistory && !active
+            ? () => void handleSendToShots()
+            : undefined
+        }
         onToggleListening={handleListeningAction}
         onVersionHistory={() => setSheet("versions")}
         visible={sheet === "actions"}
@@ -400,6 +443,11 @@ export function NoteScreen({
           failure={recorder.failure}
           amplitude={recorder.amplitude}
           durationMs={recorder.durationMs}
+          destination={
+            shotsWorkspace && shotsPrefs.sendNew
+              ? `Sending to Shots · ${shotsWorkspace}`
+              : null
+          }
           onStop={() => void handleStop()}
           onRetry={() => void handleRetryRecording()}
           onOpenSettings={() => void handleOpenSettings()}

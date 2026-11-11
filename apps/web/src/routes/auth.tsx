@@ -175,7 +175,7 @@ function Component() {
   const showEmail = !provider;
 
   return (
-    <AuthShell title="Welcome to Anarlog" showEyebrow={false}>
+    <AuthShell title="Welcome to Shots Founder Hub" showEyebrow={false}>
       {view === "main" && (
         <>
           <TrialOfferCard />
@@ -395,14 +395,14 @@ function LegalText() {
     <p className="mt-6 text-center text-xs leading-5 text-[#8b8174]">
       By signing up, you agree to our{" "}
       <a
-        href="https://anarlog.so/terms"
+        href="https://shots.playbookmedia.io/terms"
         className="underline decoration-[#b9ae9f] underline-offset-2 hover:text-[#181613]"
       >
         Terms of Service
       </a>{" "}
       and{" "}
       <a
-        href="https://anarlog.so/privacy"
+        href="https://shots.playbookmedia.io/privacy-policy"
         className="underline decoration-[#b9ae9f] underline-offset-2 hover:text-[#181613]"
       >
         Privacy Policy

@@ -6,37 +6,15 @@ import { fetchUser } from "@/functions/auth";
 const footerGroups = [
   {
     title: "Product",
-    links: [
-      { label: "Download", to: "/download/" },
-      { label: "Pricing", to: "/pricing/" },
-      { label: "Enterprise", to: "/enterprise/" },
-    ],
+    links: [{ label: "Download", to: "/download/" }],
   },
   {
-    title: "Resources",
-    links: [
-      { label: "About", to: "/about/" },
-      { label: "Blog", to: "/blog/" },
-      { label: "Transcription guides", to: "/guides/transcription/" },
-      { label: "Changelog", to: "/changelog/" },
-      { label: "Docs", href: "https://docs.anarlog.so" },
-      { label: "Status", href: "https://status.anarlog.so" },
-    ],
-  },
-  {
-    title: "Community",
-    links: [
-      { label: "GitHub", href: "https://github.com/fastrepl/anarlog" },
-      { label: "X", href: "https://x.com/anarlogapp" },
-      { label: "LinkedIn", href: "https://www.linkedin.com/company/anarlog/" },
-      { label: "Discord", href: "https://discord.gg/Vk882WS3gF" },
-      { label: "Reddit", href: "https://www.reddit.com/r/anarlog/" },
-    ],
+    title: "Company",
+    links: [{ label: "About", to: "/about/" }],
   },
   {
     title: "Legal",
     links: [
-      { label: "Security", to: "/security/" },
       { label: "Privacy", to: "/privacy/" },
       { label: "Terms", to: "/terms/" },
     ],
@@ -50,62 +28,49 @@ export function SiteFooter() {
   });
 
   return (
-    <footer className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-10 text-xs text-[#4f4940] sm:flex-row sm:justify-between md:px-8">
+    <footer className="text-fg mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-10 text-xs sm:flex-row sm:justify-between md:px-8">
       <div className="flex flex-col gap-2.5 self-start">
+        <Link to="/" className="text-fg text-sm font-medium">
+          Shots Founder Hub
+        </Link>
+        <p className="text-fg-muted max-w-48 text-xs leading-5">
+          © {new Date().getFullYear()} Playbook Media Interactive LLC
+        </p>
         <a
-          href="https://fastrepl.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-[#756b5d] opacity-75 transition-opacity hover:opacity-100"
+          href="mailto:team@playbookmedia.io"
+          className="text-fg-muted hover:text-fg w-fit"
         >
-          <img
-            src="/icons/fastrepl.svg"
-            alt="Fastrepl"
-            width={4261}
-            height={1242}
-            className="h-4 w-auto"
-          />
-          <span>© 2026</span>
+          Contact Playbook
         </a>
         {user ? (
-          <Link to="/app/account/" className="w-fit hover:text-[#181613]">
+          <Link to="/app/account/" className="hover:text-fg w-fit">
             Account
           </Link>
         ) : (
           <Link
             to="/auth/"
             search={{ flow: "web" }}
-            className="w-fit hover:text-[#181613]"
+            className="hover:text-fg w-fit"
           >
             Get started
           </Link>
         )}
       </div>
-      <nav className="grid grid-cols-2 gap-x-12 gap-y-8 sm:grid-cols-4 sm:gap-x-12">
+      <nav className="grid grid-cols-2 gap-x-12 gap-y-8 sm:grid-cols-3 sm:gap-x-12">
         {footerGroups.map((group) => (
           <div key={group.title} className="flex flex-col gap-2.5">
             <span className="tracking-[0.04em] text-[#756b5d]">
               {group.title}
             </span>
-            {group.links.map((link) =>
-              link.to ? (
-                <Link
-                  key={link.label}
-                  to={link.to}
-                  className="w-fit hover:text-[#181613]"
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="w-fit hover:text-[#181613]"
-                >
-                  {link.label}
-                </a>
-              ),
-            )}
+            {group.links.map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="hover:text-fg w-fit"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         ))}
       </nav>

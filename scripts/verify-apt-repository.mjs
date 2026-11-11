@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 const FILES = [
-  "anarlog-archive-keyring.asc",
+  "shots-founder-hub-archive-keyring.asc",
   "dists/stable/Release",
   "dists/stable/InRelease",
   "dists/stable/Release.gpg",
@@ -36,7 +36,7 @@ export async function readExpectedRepository(directory, version) {
 
 export async function verifyRepository(files, fetchFile = fetch) {
   for (const [file, expected] of files) {
-    const url = `https://anarlog.so/apt/${file}`;
+    const url = `https://shots.playbookmedia.io/apt/${file}`;
     const response = await fetchFile(url, {
       signal: AbortSignal.timeout(20_000),
     });

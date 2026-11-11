@@ -4,7 +4,7 @@ import { env } from "@/env";
 import { getRequestHost } from "@/lib/request-workspace-share-host";
 import { isWorkspaceShareHostname } from "@/lib/workspace-share-host";
 
-const PUBLIC_APP_HOSTS = new Set(["anarlog.so", "www.anarlog.so"]);
+const PUBLIC_APP_HOSTS = new Set(["shots.playbookmedia.io"]);
 
 const LOCAL_APP_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 

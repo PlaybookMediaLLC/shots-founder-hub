@@ -3,7 +3,7 @@ source: apps/cli/src/cli.rs
 expression: canonicalize_json(contract)
 ---
 {
-  "about": "Access Anarlog from the command line",
+  "about": "Access Shots Founder Hub from the command line",
   "global_options": [
     {
       "flags": "--base",
@@ -23,7 +23,7 @@ expression: canonicalize_json(contract)
       "required": false
     }
   ],
-  "name": "anarlog",
+  "name": "sfh",
   "options": [
     {
       "flags": "-h, --help",
@@ -40,8 +40,8 @@ expression: canonicalize_json(contract)
   ],
   "subcommands": [
     {
-      "about": "Sign in to an Anarlog account from a browser",
-      "name": "anarlog auth",
+      "about": "Sign in to a Shots Founder Hub account from a browser",
+      "name": "sfh auth",
       "options": [
         {
           "flags": "-h, --help",
@@ -53,7 +53,7 @@ expression: canonicalize_json(contract)
       "subcommands": [
         {
           "about": "Sign in through a browser on this or another device",
-          "name": "anarlog auth login",
+          "name": "sfh auth login",
           "options": [
             {
               "flags": "-h, --help",
@@ -62,11 +62,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog auth login [-h]"
+          "synopsis": "sfh auth login [-h]"
         },
         {
           "about": "Show the locally stored account session",
-          "name": "anarlog auth status",
+          "name": "sfh auth status",
           "options": [
             {
               "flags": "-h, --help",
@@ -75,11 +75,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog auth status [-h]"
+          "synopsis": "sfh auth status [-h]"
         },
         {
           "about": "Remove the locally stored account session",
-          "name": "anarlog auth logout",
+          "name": "sfh auth logout",
           "options": [
             {
               "flags": "-h, --help",
@@ -88,14 +88,14 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog auth logout [-h]"
+          "synopsis": "sfh auth logout [-h]"
         }
       ],
-      "synopsis": "anarlog auth [-h] <command>"
+      "synopsis": "sfh auth [-h] <command>"
     },
     {
       "about": "Check the local CLI and database connection without changing data",
-      "name": "anarlog doctor",
+      "name": "sfh doctor",
       "options": [
         {
           "flags": "-h, --help",
@@ -104,11 +104,11 @@ expression: canonicalize_json(contract)
           "required": false
         }
       ],
-      "synopsis": "anarlog doctor [-h]"
+      "synopsis": "sfh doctor [-h]"
     },
     {
       "about": "Browse and export meetings",
-      "name": "anarlog meetings",
+      "name": "sfh meetings",
       "options": [
         {
           "default": "local",
@@ -139,7 +139,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings import",
+          "name": "sfh meetings import",
           "options": [
             {
               "flags": "--title",
@@ -178,7 +178,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings import [--title] [--folder] [--request-key] [--wait] [--timeout] [-h] <file>"
+          "synopsis": "sfh meetings import [--title] [--folder] [--request-key] [--wait] [--timeout] [-h] <file>"
         },
         {
           "about": "Read durable status for a recording import",
@@ -188,7 +188,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings import-status",
+          "name": "sfh meetings import-status",
           "options": [
             {
               "flags": "-h, --help",
@@ -197,11 +197,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings import-status [-h] <id>"
+          "synopsis": "sfh meetings import-status [-h] <id>"
         },
         {
           "about": "Read local capture intervals without meeting content or identifiers",
-          "name": "anarlog meetings pilot-usage",
+          "name": "sfh meetings pilot-usage",
           "options": [
             {
               "flags": "--from-ms",
@@ -222,11 +222,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings pilot-usage <--from-ms> <--until-ms> [-h]"
+          "synopsis": "sfh meetings pilot-usage <--from-ms> <--until-ms> [-h]"
         },
         {
           "about": "List all persisted local meetings for preservation, including deleted rows",
-          "name": "anarlog meetings hold-list",
+          "name": "sfh meetings hold-list",
           "options": [
             {
               "default": "",
@@ -255,7 +255,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings hold-list [--after] [--limit] [--database-only] [-h]"
+          "synopsis": "sfh meetings hold-list [--after] [--limit] [--database-only] [-h]"
         },
         {
           "about": "Stream raw local meeting history as NDJSON for encrypted preservation",
@@ -265,7 +265,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings hold-export",
+          "name": "sfh meetings hold-export",
           "options": [
             {
               "flags": "--database-only",
@@ -280,11 +280,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings hold-export [--database-only] [-h] <id>"
+          "synopsis": "sfh meetings hold-export [--database-only] [-h] <id>"
         },
         {
           "about": "Describe managed capture capabilities without opening a database",
-          "name": "anarlog meetings capabilities",
+          "name": "sfh meetings capabilities",
           "options": [
             {
               "flags": "-h, --help",
@@ -293,11 +293,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings capabilities [-h]"
+          "synopsis": "sfh meetings capabilities [-h]"
         },
         {
           "about": "Prepare the local database using an existing managed settings policy",
-          "name": "anarlog meetings initialize-managed",
+          "name": "sfh meetings initialize-managed",
           "options": [
             {
               "flags": "-h, --help",
@@ -306,7 +306,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings initialize-managed [-h]"
+          "synopsis": "sfh meetings initialize-managed [-h]"
         },
         {
           "about": "Permanently remove an exact, completed local meeting and its recordings",
@@ -316,7 +316,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings delete",
+          "name": "sfh meetings delete",
           "options": [
             {
               "flags": "--if-export-sha256",
@@ -336,11 +336,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings delete <--if-export-sha256> <--require-transcription-complete> [-h] <id>"
+          "synopsis": "sfh meetings delete <--if-export-sha256> <--require-transcription-complete> [-h] <id>"
         },
         {
           "about": "List meetings, optionally filtered by text, recurring series, or folder",
-          "name": "anarlog meetings list",
+          "name": "sfh meetings list",
           "options": [
             {
               "flags": "-q, --query",
@@ -384,11 +384,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings list [-q] [--series-id] [--folder] [--limit] [--offset] [-h]"
+          "synopsis": "sfh meetings list [-q] [--series-id] [--folder] [--limit] [--offset] [-h]"
         },
         {
           "about": "List meeting folders, including empty and parent folders (local source only)",
-          "name": "anarlog meetings folders",
+          "name": "sfh meetings folders",
           "options": [
             {
               "flags": "-q, --query",
@@ -420,7 +420,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings folders [-q] [--limit] [--offset] [-h]"
+          "synopsis": "sfh meetings folders [-q] [--limit] [--offset] [-h]"
         },
         {
           "about": "Show meeting metadata, notes, summaries, people, and action items",
@@ -430,7 +430,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings get",
+          "name": "sfh meetings get",
           "options": [
             {
               "flags": "-h, --help",
@@ -439,7 +439,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings get [-h] <id>"
+          "synopsis": "sfh meetings get [-h] <id>"
         },
         {
           "about": "Show the note or generated summaries for a meeting",
@@ -449,7 +449,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings note",
+          "name": "sfh meetings note",
           "options": [
             {
               "default": "note",
@@ -470,7 +470,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings note [--kind] [-h] <id>"
+          "synopsis": "sfh meetings note [--kind] [-h] <id>"
         },
         {
           "about": "Show a bounded page of a meeting transcript",
@@ -480,7 +480,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings transcript",
+          "name": "sfh meetings transcript",
           "options": [
             {
               "default": "200",
@@ -505,7 +505,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings transcript [--limit] [--offset] [-h] <id>"
+          "synopsis": "sfh meetings transcript [--limit] [--offset] [-h] <id>"
         },
         {
           "about": "List meetings from the same recurring series",
@@ -515,7 +515,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings history",
+          "name": "sfh meetings history",
           "options": [
             {
               "default": "20",
@@ -540,7 +540,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings history [--limit] [--offset] [-h] <id>"
+          "synopsis": "sfh meetings history [--limit] [--offset] [-h] <id>"
         },
         {
           "about": "Export a meeting to Markdown or JSON",
@@ -550,7 +550,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog meetings export",
+          "name": "sfh meetings export",
           "options": [
             {
               "default": "markdown",
@@ -582,14 +582,14 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog meetings export [--format] [-o] [--force] [-h] <id>"
+          "synopsis": "sfh meetings export [--format] [-o] [--force] [-h] <id>"
         }
       ],
-      "synopsis": "anarlog meetings [--source] [-h] <command>"
+      "synopsis": "sfh meetings [--source] [-h] <command>"
     },
     {
       "about": "Propose meeting edits for desktop review",
-      "name": "anarlog proposals",
+      "name": "sfh proposals",
       "options": [
         {
           "flags": "-h, --help",
@@ -601,7 +601,7 @@ expression: canonicalize_json(contract)
       "subcommands": [
         {
           "about": "Stage a summary or memo replacement for desktop review",
-          "name": "anarlog proposals create",
+          "name": "sfh proposals create",
           "options": [
             {
               "flags": "--meeting",
@@ -644,11 +644,11 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog proposals create <--meeting> <--kind> [--target] [--content] [--content-file] [-h]"
+          "synopsis": "sfh proposals create <--meeting> <--kind> [--target] [--content] [--content-file] [-h]"
         },
         {
           "about": "List staged meeting proposals",
-          "name": "anarlog proposals list",
+          "name": "sfh proposals list",
           "options": [
             {
               "flags": "--meeting",
@@ -685,7 +685,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog proposals list [--meeting] [--status] [--limit] [--offset] [-h]"
+          "synopsis": "sfh proposals list [--meeting] [--status] [--limit] [--offset] [-h]"
         },
         {
           "about": "Show one proposal and its unified diff",
@@ -695,7 +695,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog proposals show",
+          "name": "sfh proposals show",
           "options": [
             {
               "flags": "-h, --help",
@@ -704,7 +704,7 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog proposals show [-h] <id>"
+          "synopsis": "sfh proposals show [-h] <id>"
         },
         {
           "about": "Decline a pending proposal without changing the meeting",
@@ -714,7 +714,7 @@ expression: canonicalize_json(contract)
               "required": true
             }
           ],
-          "name": "anarlog proposals decline",
+          "name": "sfh proposals decline",
           "options": [
             {
               "flags": "-h, --help",
@@ -723,14 +723,14 @@ expression: canonicalize_json(contract)
               "required": false
             }
           ],
-          "synopsis": "anarlog proposals decline [-h] <id>"
+          "synopsis": "sfh proposals decline [-h] <id>"
         }
       ],
-      "synopsis": "anarlog proposals [-h] <command>"
+      "synopsis": "sfh proposals [-h] <command>"
     },
     {
-      "about": "Run the Anarlog MCP server over stdio",
-      "name": "anarlog mcp",
+      "about": "Run the Shots Founder Hub MCP server over stdio",
+      "name": "sfh mcp",
       "options": [
         {
           "flags": "-h, --help",
@@ -739,8 +739,8 @@ expression: canonicalize_json(contract)
           "required": false
         }
       ],
-      "synopsis": "anarlog mcp [-h]"
+      "synopsis": "sfh mcp [-h]"
     }
   ],
-  "synopsis": "anarlog [--base] [--db-path] [--json] [-h] [-V] <command>"
+  "synopsis": "sfh [--base] [--db-path] [--json] [-h] [-V] <command>"
 }

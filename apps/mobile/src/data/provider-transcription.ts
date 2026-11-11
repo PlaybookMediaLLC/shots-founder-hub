@@ -74,7 +74,7 @@ export async function requestProviderTranscription(
   if (!deepgram && file.size > 25 * 1024 * 1024) {
     throw Object.assign(
       new Error(
-        "This provider supports recordings up to 25 MB. Choose Anarlog Pro or Deepgram for longer recordings.",
+        "This provider supports recordings up to 25 MB. Choose Shots Founder Hub Pro or Deepgram for longer recordings.",
       ),
       { code: "audio_too_large", stage: "load_audio" },
     );

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { env } from "../env";
 
-const GITHUB_ORG_REPO = "fastrepl/anarlog";
+const GITHUB_ORG_REPO = "PlaybookMediaLLC/shots-founder-hub";
 const GITHUB_REPO_URL = `https://github.com/${GITHUB_ORG_REPO}`;
 const GITHUB_REPO_API_URL = `https://api.github.com/repos/${GITHUB_ORG_REPO}`;
 const CACHE_TTL = 60 * 60 * 1000;

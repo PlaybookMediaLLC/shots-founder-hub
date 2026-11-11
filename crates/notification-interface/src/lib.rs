@@ -329,7 +329,9 @@ impl Notification {
     }
 
     pub fn default_action_label(&self) -> &str {
-        self.action_label.as_deref().unwrap_or("Open Anarlog")
+        self.action_label
+            .as_deref()
+            .unwrap_or("Open Shots Founder Hub")
     }
 
     pub fn expanded_action_label(&self) -> &str {
@@ -405,7 +407,7 @@ pub fn expanded_schedule_text(remaining: Duration) -> String {
 
 pub fn stop_countdown_text(remaining: Duration) -> String {
     let seconds = remaining.as_secs_f64().ceil() as u64;
-    format!("Anarlog will stop listening in {seconds} seconds.")
+    format!("Shots Founder Hub will stop listening in {seconds} seconds.")
 }
 
 impl NotificationSource {
@@ -766,7 +768,7 @@ mod tests {
     fn stop_countdown_copy_matches_macos() {
         let notification = Notification::builder()
             .title("Did your meeting end?")
-            .message("Anarlog will stop listening soon.")
+            .message("Shots Founder Hub will stop listening soon.")
             .action_label("Stop")
             .action_variant(NotificationActionVariant::Destructive)
             .timeout(Duration::from_secs(30))
@@ -775,7 +777,7 @@ mod tests {
         assert!(notification.shows_stop_countdown());
         assert_eq!(
             notification.compact_message(Some(Duration::from_secs_f64(4.2))),
-            "Anarlog will stop listening in 5 seconds."
+            "Shots Founder Hub will stop listening in 5 seconds."
         );
         assert_eq!(
             compact_schedule_text(Duration::from_secs(90)),

@@ -417,7 +417,7 @@ mod cross_platform {
             WINDOW_LABEL,
             WebviewUrl::App("app/floating-bar".into()),
         )
-        .title("Anarlog")
+        .title("Shots Founder Hub")
         .inner_size(width, height)
         .visible(false)
         .focused(false)

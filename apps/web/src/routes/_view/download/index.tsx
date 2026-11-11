@@ -39,15 +39,15 @@ export const Route = createFileRoute("/_view/download/")({
   head: () => ({
     links: [{ rel: "canonical", href: getCanonicalUrl("/download") }],
     meta: [
-      { title: "Download Anarlog for Mac, Windows & Linux" },
+      { title: "Download Shots Founder Hub for Mac, Windows & Linux" },
       {
         name: "description",
         content:
-          "Download Anarlog for macOS, Windows, or Linux. Choose your chip and installer, check local AI requirements, and follow the desktop setup guide.",
+          "Download Shots Founder Hub for macOS, Windows, or Linux. Choose your chip and installer, check local AI requirements, and follow the desktop setup guide.",
       },
       {
         property: "og:title",
-        content: "Download Anarlog for Mac, Windows & Linux",
+        content: "Download Shots Founder Hub for Mac, Windows & Linux",
       },
       { property: "og:url", content: getCanonicalUrl("/download") },
     ],
@@ -113,8 +113,12 @@ function Component() {
         ])}
       >
         <header>
-          <Link to="/" aria-label="Anarlog home">
-            <img src="/logo.svg" alt="Anarlog" className="h-9 w-auto" />
+          <Link to="/" aria-label="Shots Founder Hub home">
+            <img
+              src="/logo.svg"
+              alt="Shots Founder Hub"
+              className="h-9 w-auto"
+            />
           </Link>
         </header>
 
@@ -124,7 +128,7 @@ function Component() {
           ])}
         >
           <h1 className="font-hand text-color text-6xl leading-[0.98] font-semibold tracking-normal text-balance md:text-8xl">
-            Download Anarlog
+            Download Shots Founder Hub
           </h1>
         </section>
 
@@ -355,7 +359,7 @@ function Component() {
                     <p className="text-color-muted mt-4 text-sm leading-6">
                       If the window is black on Wayland with NVIDIA, see{" "}
                       <a
-                        href="https://docs.anarlog.so/desktop-installation#appimage"
+                        href="https://shots.playbookmedia.io/docs"
                         className="text-color underline underline-offset-4"
                       >
                         Linux install notes
@@ -407,12 +411,12 @@ function Component() {
             <li>
               On macOS 15 or later, choose Apple Silicon for an M-series chip or
               Intel for an Intel-based Mac. Find your chip in Apple menu → About
-              This Mac. Open the DMG, then move Anarlog to Applications.
+              This Mac. Open the DMG, then move Shots Founder Hub to
+              Applications.
             </li>
             <li>
-              On Windows, use the x64 installer or Microsoft Store. Run the
-              installer and follow its setup steps. The Store manages
-              installation and updates for its version.
+              On Windows, use the x64 installer. Run it and follow its setup
+              steps.
             </li>
             <li>
               On Linux, match x64 or ARM64 to your machine. AppImage is a
@@ -432,21 +436,21 @@ function Component() {
           <p className="text-color mt-4 text-sm leading-7">
             Follow the{" "}
             <a
-              href="https://docs.anarlog.so/desktop-installation"
+              href="https://shots.playbookmedia.io/docs"
               className="text-color underline underline-offset-4"
             >
               desktop installation guide
             </a>{" "}
             for package commands and platform requirements, then{" "}
             <a
-              href="https://docs.anarlog.so/quickstart"
+              href="https://shots.playbookmedia.io/docs"
               className="text-color underline underline-offset-4"
             >
               record your first meeting
             </a>
             . For capture or launch problems, use the{" "}
             <a
-              href="https://docs.anarlog.so/troubleshooting"
+              href="https://shots.playbookmedia.io/docs"
               className="text-color underline underline-offset-4"
             >
               troubleshooting guide

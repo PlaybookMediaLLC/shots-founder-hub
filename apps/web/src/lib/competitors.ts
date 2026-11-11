@@ -11,14 +11,14 @@ export type ComparisonRow = {
 };
 
 export const ANARLOG_ROW: ComparisonRow = {
-  name: "Anarlog",
+  name: "Shots Founder Hub",
   icon: "/icon-192x192.png",
   url: "/",
   paidPlan: "Pro $14/person/month or $140/person/year",
   freeTier: "No app minute cap for local/BYOK; provider charges can apply",
   capture:
     "Bot-free device audio; local SQLite. Transcription and summary providers are independent; hosted AI, sync and sharing have separate data paths.",
-  captureSourceUrl: "https://docs.anarlog.so/models-and-providers",
+  captureSourceUrl: "https://shots.playbookmedia.io/docs",
 };
 
 export const COMPARISON_ROWS: ComparisonRow[] = [

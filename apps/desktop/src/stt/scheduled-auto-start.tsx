@@ -150,7 +150,7 @@ function trackMicHolds(
 // True when a meeting app took the mic during another scheduled meeting and
 // has held it since. A hold that began in free time is an early join. When
 // the earlier meeting began shortly before this one, an early join could be
-// for either meeting, so it only counts if Anarlog recorded the earlier one.
+// for either meeting, so it only counts if Shots Founder Hub recorded the earlier one.
 export function isPreviousCallOnMic({
   holds,
   meeting,

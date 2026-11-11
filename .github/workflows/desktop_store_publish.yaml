@@ -22,8 +22,6 @@ on:
     secrets:
       AZURE_AD_APPLICATION_SECRET:
         required: false
-      CN_API_KEY:
-        required: false
       SELLER_ID:
         required: false
   workflow_dispatch:
@@ -129,45 +127,19 @@ jobs:
         with:
           ref: ${{ needs.validate.outputs.candidate_sha }}
           persist-credentials: false
-      - id: crabnebula-release
-        uses: ./.github/actions/cn_release
-        with:
-          raw: >-
-            release show fastrepl/hyprnote2 ${{ needs.validate.outputs.version }}
-            --channel stable
-          key: ${{ secrets.CN_API_KEY }}
       - name: Download and verify stable Windows installer
         shell: pwsh
         env:
-          CRABNEBULA_RELEASE: ${{ steps.crabnebula-release.outputs.raw }}
           VERSION: ${{ needs.validate.outputs.version }}
           WINDOWS_SIGNER_ORGANIZATION: ${{ vars.WINDOWS_SIGNER_ORGANIZATION }}
         run: |
           $ErrorActionPreference = "Stop"
 
-          $release = $env:CRABNEBULA_RELEASE | ConvertFrom-Json
-          if ([string]$release.version -ne $env:VERSION) {
-            throw "Expected CrabNebula release $env:VERSION, got $($release.version)"
-          }
+          # The validate job already confirmed this GitHub release is published.
+          $packageUrl = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/desktop_v$env:VERSION/shots-founder-hub-windows-x86_64-setup.exe"
+          Invoke-WebRequest -Uri $packageUrl -OutFile "shots-founder-hub-windows-x86_64-setup.exe"
 
-          $assets = @(
-            $release.assets | Where-Object {
-              $_.publicPlatform -eq "nsis-x86_64" -and [long]$_.size -gt 0
-            }
-          )
-          if ($assets.Count -ne 1) {
-            throw "Expected exactly one nonempty CrabNebula nsis-x86_64 asset"
-          }
-
-          $assetId = [string]$assets[0].id
-          if ($assetId -notmatch '^[A-Za-z0-9_-]+$') {
-            throw "Invalid CrabNebula asset ID '$assetId'"
-          }
-
-          $packageUrl = "https://cdn.crabnebula.app/asset/$assetId"
-          Invoke-WebRequest -Uri $packageUrl -OutFile "anarlog-windows-x86_64-setup.exe"
-
-          $signature = Get-AuthenticodeSignature "anarlog-windows-x86_64-setup.exe"
+          $signature = Get-AuthenticodeSignature "shots-founder-hub-windows-x86_64-setup.exe"
           if ($signature.Status -ne "Valid") {
             throw "Invalid Windows Authenticode signature: $($signature.Status)"
           }
@@ -199,10 +171,10 @@ jobs:
           $package | ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 "microsoft-store-package.json"
 
           Add-Content -Path $env:GITHUB_ENV -Value "MICROSOFT_STORE_PACKAGE_URL=$packageUrl"
-          Add-Content -Path $env:GITHUB_ENV -Value "MICROSOFT_STORE_PACKAGE_SHA256=$((Get-FileHash 'anarlog-windows-x86_64-setup.exe' -Algorithm SHA256).Hash.ToLowerInvariant())"
+          Add-Content -Path $env:GITHUB_ENV -Value "MICROSOFT_STORE_PACKAGE_SHA256=$((Get-FileHash 'shots-founder-hub-windows-x86_64-setup.exe' -Algorithm SHA256).Hash.ToLowerInvariant())"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: anarlog-microsoft-store-${{ needs.validate.outputs.version }}
+          name: shots-founder-hub-microsoft-store-${{ needs.validate.outputs.version }}
           path: microsoft-store-package.json
           if-no-files-found: error
           retention-days: 14

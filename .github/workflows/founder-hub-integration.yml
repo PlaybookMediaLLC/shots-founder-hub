@@ -176,7 +176,7 @@ jobs:
           pnpm -F e2e-blackbox e2e 2>&1 | tee e2e/blackbox/logs/e2e-test-output.log
           exit ${PIPESTATUS[0]}
         env:
-          APP_BINARY_PATH: ${{ github.workspace }}/apps/desktop/src-tauri/target/aarch64-apple-darwin/debug/anarlog-dev
+          APP_BINARY_PATH: ${{ github.workspace }}/apps/desktop/src-tauri/target/aarch64-apple-darwin/debug/shots-founder-hub-dev
           CN_API_KEY_WEBDRIVER: ${{ secrets.CN_API_KEY_WEBDRIVER }}
         continue-on-error: true
       - name: Explain native E2E skip for fork pull requests

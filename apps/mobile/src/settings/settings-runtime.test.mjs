@@ -18,6 +18,7 @@ import {
   validateProviderConfig,
   normalizeTranscriptionResponse,
   providersFor,
+  isBuiltInProvider,
   isSubscriptionProvider,
 } from "./providers-model.ts";
 
@@ -336,10 +337,13 @@ test("preference writes work offline and sync only supported preferences to the 
       JSON.stringify({ workspace_id: "workspace-a" }),
     );
   await setPreference("sidebar_show_tags", true);
-  await setPreference("personalization_dictionary_terms", ["Anarlog", "John"]);
+  await setPreference("personalization_dictionary_terms", [
+    "Shots Founder Hub",
+    "John",
+  ]);
   assert.equal((await readPreferences()).sidebar_show_tags, true);
   assert.deepEqual((await readPreferences()).personalization_dictionary_terms, [
-    "Anarlog",
+    "Shots Founder Hub",
     "John",
   ]);
   assert.deepEqual(
@@ -375,13 +379,13 @@ test("desktop list encoding and malformed preferences preserve usable defaults",
   assert.equal(preferences.sidebar_show_tags, false);
   assert.deepEqual(
     normalizeDictionary([
-      " Anarlog ",
-      "anarlog",
+      " Shots Founder Hub ",
+      "shots founder hub",
       "Two  words",
       "",
       "x".repeat(101),
     ]),
-    ["Anarlog", "Two words"],
+    ["Shots Founder Hub", "Two words"],
   );
   assert.equal(languageName("ko"), "Korean");
 });
@@ -459,9 +463,12 @@ test("provider keys stay in device-only secure storage, separated by account and
   assert.equal(fixture.requests.length, 0);
 });
 
-test("hosted Anarlog Pro requires a session token", async () => {
+test("hosted Shots Founder Hub Pro requires a session token", async () => {
   fixture.session = null;
-  await assert.rejects(resolveProvider("stt"), /Sign in to use Anarlog Pro/);
+  await assert.rejects(
+    resolveProvider("stt"),
+    /Sign in to use Shots Founder Hub Pro/,
+  );
 });
 
 function chatgptCredential(overrides = {}) {
@@ -481,7 +488,7 @@ function chatgptCredential(overrides = {}) {
   };
 }
 
-test("ChatGPT device credentials discover models and generate a persisted summary without Anarlog Pro", async () => {
+test("ChatGPT device credentials discover models and generate a persisted summary without Shots Founder Hub Pro", async () => {
   signedInWith({ entitlements: [] });
   createNote();
   const credential = chatgptCredential();
@@ -1252,7 +1259,7 @@ test("expired trial users can keep using their own transcription and summary key
 
 test("OpenAI-compatible audio goes directly to the chosen host as multipart, with language and dictionary", async () => {
   Platform.OS = "web";
-  fixture.respond = () => Response.json({ text: "Hello Anarlog" });
+  fixture.respond = () => Response.json({ text: "Hello Shots Founder Hub" });
   const audio = new File(["synthetic audio"], "audio.wav", {
     type: "audio/wav",
   });
@@ -1266,7 +1273,7 @@ test("OpenAI-compatible audio goes directly to the chosen host as multipart, wit
     {
       ...DEFAULT_PREFERENCES,
       ai_language: "ko-KR",
-      personalization_dictionary_terms: ["Anarlog"],
+      personalization_dictionary_terms: ["Shots Founder Hub"],
     },
     new AbortController().signal,
   );
@@ -1275,12 +1282,12 @@ test("OpenAI-compatible audio goes directly to the chosen host as multipart, wit
   assert.equal(options.headers.Authorization, "Bearer synthetic-provider-key");
   assert.equal(options.redirect, "error");
   assert.equal(options.body.get("language"), "ko");
-  assert.equal(options.body.get("prompt"), "Anarlog");
+  assert.equal(options.body.get("prompt"), "Shots Founder Hub");
   assert.equal(options.body.get("file").name, "audio.wav");
   assert.equal(
     normalizeTranscriptionResponse("openai", JSON.parse(response.body)).results
       .channels[0].alternatives[0].transcript,
-    "Hello Anarlog",
+    "Hello Shots Founder Hub",
   );
 });
 
@@ -1295,12 +1302,15 @@ test("Deepgram receives raw audio with its auth scheme and vocabulary options", 
       ...defaultProviderConfig("stt", "deepgram"),
       apiKey: "synthetic-deepgram-key",
     },
-    { ...DEFAULT_PREFERENCES, personalization_dictionary_terms: ["Anarlog"] },
+    {
+      ...DEFAULT_PREFERENCES,
+      personalization_dictionary_terms: ["Shots Founder Hub"],
+    },
     new AbortController().signal,
   );
   const { url, options } = fixture.requests[0];
   assert.equal(new URL(url).origin, "https://api.deepgram.com");
-  assert.equal(new URL(url).searchParams.get("keyterm"), "Anarlog");
+  assert.equal(new URL(url).searchParams.get("keyterm"), "Shots Founder Hub");
   assert.equal(options.headers.Authorization, "Token synthetic-deepgram-key");
   assert.equal(options.body, audio);
 });
@@ -1541,7 +1551,7 @@ test("analytics opt-out aborts in-flight requests and prevents subsequent events
 test("every provider keeps its key on this device and restores its own setup", async () => {
   for (const kind of ["stt", "llm"]) {
     for (const definition of providersFor(kind).filter(
-      ({ id }) => id !== "anarlog" && !isSubscriptionProvider(id),
+      ({ id }) => !isBuiltInProvider(id) && !isSubscriptionProvider(id),
     )) {
       const tag = `${kind}/${definition.id}`;
       fixture.db.exec("DELETE FROM app_settings");
@@ -1608,7 +1618,7 @@ test("every provider keeps its key on this device and restores its own setup", a
       {
         ...DEFAULT_PREFERENCES,
         spoken_languages: ["ko", "en"],
-        personalization_dictionary_terms: ["Anarlog"],
+        personalization_dictionary_terms: ["Shots Founder Hub"],
       },
       controller.signal,
     );
@@ -1624,7 +1634,7 @@ test("every provider keeps its key on this device and restores its own setup", a
       "en",
     ]);
     assert.deepEqual(fixture.nativeRequest.request.params.keywords, [
-      "Anarlog",
+      "Shots Founder Hub",
     ]);
     assert.equal(fixture.requests.length, 0);
     assert.equal(
@@ -2581,4 +2591,25 @@ test("Venice model discovery excludes offline and non-text entries", () => {
     }),
     ["venice-uncensored"],
   );
+});
+
+test("Apple on-device transcription is selectable without a key while the default provider stays Anarlog", async () => {
+  assert.equal((await readProviderConfig(null, "stt")).provider, "anarlog");
+  fixture.verify = async () => {
+    throw Error("On-device transcription must not be verified remotely.");
+  };
+  await saveProviderConfig(
+    null,
+    "stt",
+    defaultProviderConfig("stt", "apple_speech"),
+  );
+  const apple = {
+    provider: "apple_speech",
+    baseUrl: "",
+    model: "apple-speech",
+  };
+  assert.deepEqual(await readProviderConfig(null, "stt"), apple);
+  assert.deepEqual(await resolveProvider("stt"), { ...apple, apiKey: "" });
+  assert.equal(fixture.keys.size, 0);
+  assert.deepEqual(fixture.requests, []);
 });

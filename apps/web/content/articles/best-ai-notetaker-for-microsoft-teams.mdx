@@ -17,7 +17,7 @@ That architecture matters more than another summary-quality score. It determines
 For most people, the shortlist is:
 
 - **Microsoft Facilitator and Intelligent Recap** for organizations already governed through Microsoft 365.
-- **Anarlog** for an open-source, bot-free workflow with a local SQLite meeting record.
+- **Shots Founder Hub** for an open-source, bot-free workflow with a local SQLite meeting record.
 - **Granola** for a polished bot-free notepad with a hosted team workspace.
 - **Tactiq** for Teams web transcription or a documented Mac desktop option to verify before rollout.
 - **Otter** for auto-join and unattended capture.
@@ -28,7 +28,7 @@ For most people, the shortlist is:
 | Workflow | Teams capture path | Visible meeting bot? | Canonical record | Best fit |
 | --- | --- | --- | --- | --- |
 | Microsoft Facilitator, Intelligent Recap, and Copilot | Native Teams audio, recording, and transcription | No external bot | Microsoft 365 | Microsoft-governed organizations |
-| Anarlog | Desktop system audio and microphone | No | Local SQLite | Local-first ownership and AI-provider choice |
+| Shots Founder Hub | Desktop system audio and microphone | No | Local SQLite | Local-first ownership and AI-provider choice |
 | Granola | Desktop audio with calendar detection | No | Granola workspace | Collaborative, bot-free AI notes |
 | Tactiq | Browser/PWA extension; Mac desktop capture documented, with conflicting beta guidance | No | Tactiq workspace | Teams web users or Mac users who verify desktop support |
 | Otter | Auto-join participant, desktop capture, Chrome, or mobile | Optional | Otter workspace | Unattended capture and searchable meeting memory |
@@ -60,7 +60,7 @@ For a scheduled meeting, open its **Options → Copilot and other AI**, allow Co
 
 If the option is missing, check your Copilot license, organizer/presenter role, and whether you are using Teams web or desktop. Facilitator cannot be added to channel meetings, instant meetings, or Teams calls. Enable transcription if you need to prompt it after the meeting ends. These steps follow [Microsoft's Facilitator guide](https://support.microsoft.com/en-us/teams/copilot/facilitator-in-microsoft-teams-meetings), checked September 16, 2026.
 
-If your organization does not enable the native feature, compare an approved alternative below. For Anarlog, check the [offline setup and model requirements](/blog/local-ai-meeting-notes/) before assuming that desktop capture also means local AI processing.
+If your organization does not enable the native feature, compare an approved alternative below. For Shots Founder Hub, check the [offline setup and model requirements](/blog/local-ai-meeting-notes/) before assuming that desktop capture also means local AI processing.
 
 ## 1. Microsoft Facilitator, Intelligent Recap, and Copilot
 
@@ -90,17 +90,17 @@ Microsoft changed parts of its Teams license packaging on April 1, 2026, and gra
 
 Choose Microsoft when your company already treats Teams as the meeting system of record.
 
-## 2. Anarlog
+## 2. Shots Founder Hub
 
 **Best for:** People who want bot-free Teams notes with a local meeting record and no AI-provider lock-in.
 
-[Anarlog](/) is our open-source, local-first AI meeting notetaker. It captures microphone and system audio from your computer, so nothing joins the Teams call. The canonical session, notes, transcript, and meeting metadata stay in local SQLite. Recordings and attachments remain local files, and Markdown is available as an export.
+[Shots Founder Hub](/) is our open-source, local-first AI meeting notetaker. It captures microphone and system audio from your computer, so nothing joins the Teams call. The canonical session, notes, transcript, and meeting metadata stay in local SQLite. Recordings and attachments remain local files, and Markdown is available as an export.
 
 You can use managed AI, bring your own provider key, or run local models through Ollama or LM Studio. The model choice is separate from the meeting record. Switching providers does not require moving your history to another workspace.
 
-![Anarlog Settings → Intelligence with the list of configurable AI providers](anarlog/blog/library/products/anarlog/desktop/2026-09-23-settings-intelligence-providers.png)
+![Shots Founder Hub Settings → Intelligence with the list of configurable AI providers](anarlog/blog/library/products/anarlog/desktop/2026-09-23-settings-intelligence-providers.png)
 
-*Anarlog lets you pick the AI provider in Settings → Intelligence, separate from the meeting record.*
+*Shots Founder Hub lets you pick the AI provider in Settings → Intelligence, separate from the meeting record.*
 
 ### Strengths
 
@@ -119,7 +119,7 @@ You can use managed AI, bring your own provider key, or run local models through
 - Collaboration requires an intentional export, sync, or sharing workflow
 - Cloud AI and sync features have separate data paths when enabled
 
-Anarlog is the strongest fit when ownership means controlling the record itself, not only choosing whether a bot appears in the participant list.
+Shots Founder Hub is the strongest fit when ownership means controlling the record itself, not only choosing whether a bot appears in the participant list.
 
 ## 3. Granola
 
@@ -269,9 +269,9 @@ Start with the constraint that would disqualify a tool.
 
 Use Facilitator, Intelligent Recap, or Copilot when Teams and Microsoft 365 already hold the meeting record and your administrators want one policy surface.
 
-### Choose Anarlog for local ownership
+### Choose Shots Founder Hub for local ownership
 
-Use Anarlog when you want bot-free capture, a local SQLite meeting record, open-source code, and control over which AI provider processes a summary.
+Use Shots Founder Hub when you want bot-free capture, a local SQLite meeting record, open-source code, and control over which AI provider processes a summary.
 
 ### Choose Granola for collaborative bot-free notes
 
@@ -317,11 +317,11 @@ Yes, in "Only during the meeting" mode. Copilot can generate notes and tasks wit
 
 ### Can I take AI meeting notes in Teams without a bot?
 
-Yes. Microsoft native features do not add an external bot. Anarlog and Granola capture desktop audio. Tactiq offers a web extension and documents a Mac capture option, while Otter and Fireflies offer bot-free desktop modes alongside their meeting participants.
+Yes. Microsoft native features do not add an external bot. Shots Founder Hub and Granola capture desktop audio. Tactiq offers a web extension and documents a Mac capture option, while Otter and Fireflies offer bot-free desktop modes alongside their meeting participants.
 
 ### Which options work with the Teams desktop app?
 
-Microsoft's native features, Anarlog, Granola, and desktop capture modes from Otter or Fireflies work with Teams desktop. Tactiq's Mac setup guide also documents Teams desktop support, but its download page still says Zoom-only beta. Confirm availability before rollout; Tactiq's browser extension remains a separate capture path.
+Microsoft's native features, Shots Founder Hub, Granola, and desktop capture modes from Otter or Fireflies work with Teams desktop. Tactiq's Mac setup guide also documents Teams desktop support, but its download page still says Zoom-only beta. Confirm availability before rollout; Tactiq's browser extension remains a separate capture path.
 
 ### Is a bot-free notetaker automatically private?
 
@@ -337,4 +337,4 @@ Use Microsoft's native tools when Teams is already your organization's system of
 
 Use a local-first tool when you want the canonical meeting record to remain yours.
 
-[Download Anarlog](/download) for macOS, Windows, or Linux if you want Microsoft Teams notes without a meeting bot, with local transcription and meeting data stored on your computer.
+[Download Shots Founder Hub](/download) for macOS, Windows, or Linux if you want Microsoft Teams notes without a meeting bot, with local transcription and meeting data stored on your computer.

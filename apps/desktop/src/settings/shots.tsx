@@ -52,7 +52,7 @@ export function ShotsSettings({
           <Trans>Manage your teams, invitations, and roles in Shots.</Trans>
         ) : section === "crm" ? (
           <Trans>
-            Manage CRM connections in Shots so Anarlog can use them.
+            Manage CRM connections in Shots so Shots Founder Hub can use them.
           </Trans>
         ) : section === "referrals" ? (
           <Trans>Manage referral invitations and rewards in Shots.</Trans>

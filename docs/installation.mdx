@@ -1,11 +1,11 @@
 ---
 title: "CLI installation"
-description: "Install the current Anarlog CLI and point it at local meeting data."
+description: "Install the current Shots Founder Hub CLI and point it at local meeting data."
 ---
 
 ## Current availability
 
-The `anarlog` executable includes both the CLI and the local MCP server.
+The `sfh` executable includes both the CLI and the local MCP server.
 
 <Warning>
   Homebrew, standalone release binaries, and Windows package-manager distribution are forthcoming. Do not rely on those channels yet.
@@ -17,11 +17,11 @@ Open **Settings → Developers** and select **Install** (or **Reinstall**). Dire
 
 | Platform | Installed command | Path |
 | --- | --- | --- |
-| macOS | `anarlog` | `~/.local/bin/anarlog` |
-| Linux (DEB / AppImage) | `anarlog` | `~/.local/bin/anarlog` |
-| Windows | `anarlog` | `%LOCALAPPDATA%\Anarlog\bin\anarlog.exe` (added to your user PATH) |
+| macOS | `sfh` | `~/.local/bin/sfh` |
+| Linux (DEB / AppImage) | `sfh` | `~/.local/bin/sfh` |
+| Windows | `sfh` | `%LOCALAPPDATA%\Shots Founder Hub\bin\sfh.exe` (added to your user PATH) |
 
-On macOS and Linux, add `~/.local/bin` to `PATH` if your shell cannot find `anarlog`:
+On macOS and Linux, add `~/.local/bin` to `PATH` if your shell cannot find `sfh`:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
@@ -38,31 +38,31 @@ On Windows, open a new terminal after installing so the PATH update applies.
 To build the CLI yourself instead:
 
 ```bash
-git clone https://github.com/fastrepl/anarlog.git
-cd anarlog
+git clone https://github.com/PlaybookMediaLLC/shots-founder-hub.git
+cd shots-founder-hub
 cargo install --locked --path apps/cli
-anarlog --version
+sfh --version
 ```
 
-`cargo` installs the executable into its configured binary directory, normally `~/.cargo/bin`. Add that directory to `PATH` if your shell cannot find `anarlog`.
+`cargo` installs the executable into its configured binary directory, normally `~/.cargo/bin`. Add that directory to `PATH` if your shell cannot find `sfh`.
 
 ## Connect to local data
 
-By default, the CLI looks for `anarlog/app.db` in your operating system's application-data directory. It also recognizes legacy Anarlog locations.
+By default, the CLI looks for `anarlog/app.db` in your operating system's application-data directory. It also recognizes legacy Shots Founder Hub locations.
 
 Open the desktop app once so it can create the database. After that, the CLI and local MCP server work while the app is closed.
 
 For a custom database location, pass a global option or environment variable:
 
 ```bash
-anarlog --db-path /path/to/app.db --json meetings list
-ANARLOG_DB_PATH=/path/to/app.db anarlog --json meetings list
+sfh --db-path /path/to/app.db --json meetings list
+ANARLOG_DB_PATH=/path/to/app.db sfh --json meetings list
 ```
 
-If you have an Anarlog data directory containing `app.db`, use:
+If you have a Shots Founder Hub data directory containing `app.db`, use:
 
 ```bash
-anarlog --base /path/to/anarlog-data --json meetings list
+sfh --base /path/to/sfh-data --json meetings list
 ```
 
-The CLI opens the database in read-only query mode for meeting reads. Proposal create and decline commands, and `anarlog mcp`, open the same file for writes so they can stage or discard pending edits. They do not create a database or run migrations.
+The CLI opens the database in read-only query mode for meeting reads. Proposal create and decline commands, and `sfh mcp`, open the same file for writes so they can stage or discard pending edits. They do not create a database or run migrations.

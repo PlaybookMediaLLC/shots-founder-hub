@@ -135,9 +135,9 @@ function ProviderContext({ providerId }: { providerId: ProviderId }) {
                                       : providerId === "siliconflow"
                                         ? "Uses SiliconFlow's **OpenAI-compatible API**. The default endpoint is the international service; use `https://api.siliconflowcn/v1` under Advanced for a China-region API key."
                                         : providerId === "azure_openai"
-                                          ? "Enter your **Azure OpenAI endpoint** (e.g. `https://your-resource.openai.azure.com`) as the Base URL and your **API key**. [Report issues](https://anarlog.so/discord)"
+                                          ? "Enter your **Azure OpenAI endpoint** (e.g. `https://your-resource.openai.azure.com`) as the Base URL and your **API key**. [Report issues](https://github.com/PlaybookMediaLLC/shots-founder-hub/issues)"
                                           : providerId === "azure_ai"
-                                            ? "Enter your **Azure AI Foundry endpoint** as the Base URL and your **API key**. Supports Claude and other models deployed via Azure AI Foundry. [Report issues](https://anarlog.so/discord)"
+                                            ? "Enter your **Azure AI Foundry endpoint** as the Base URL and your **API key**. Supports Claude and other models deployed via Azure AI Foundry. [Report issues](https://github.com/PlaybookMediaLLC/shots-founder-hub/issues)"
                                             : providerId ===
                                                 "google_generative_ai"
                                               ? "Visit [AI Studio](https://aistudio.google.com/api-keys) to create an API key."

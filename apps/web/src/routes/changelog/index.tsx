@@ -25,13 +25,13 @@ export const Route = createFileRoute("/changelog/")({
   head: () => ({
     links: [{ rel: "canonical", href: getCanonicalUrl("/changelog") }],
     meta: [
-      { title: "Anarlog Changelog" },
+      { title: "Shots Founder Hub Changelog" },
       {
         name: "description",
         content:
-          "See the latest Anarlog desktop and mobile app updates, fixes, and product changes.",
+          "See the latest Shots Founder Hub desktop and mobile app updates, fixes, and product changes.",
       },
-      { property: "og:title", content: "Anarlog Changelog" },
+      { property: "og:title", content: "Shots Founder Hub Changelog" },
       { property: "og:url", content: getCanonicalUrl("/changelog") },
     ],
   }),
@@ -46,8 +46,12 @@ function Component() {
     <main className="bg-surface text-fg min-h-screen">
       <div className="mx-auto w-full max-w-[860px] px-5 py-8 md:px-8 md:py-12">
         <header className="flex items-center justify-between gap-6">
-          <Link to="/" aria-label="Anarlog home">
-            <img src="/logo.svg" alt="Anarlog" className="h-9 w-auto" />
+          <Link to="/" aria-label="Shots Founder Hub home">
+            <img
+              src="/logo.svg"
+              alt="Shots Founder Hub"
+              className="h-9 w-auto"
+            />
           </Link>
         </header>
 
@@ -56,7 +60,7 @@ function Component() {
             Changelog
           </h1>
           <p className="text-brand-dark mt-6 max-w-2xl text-xl leading-9">
-            Product updates, fixes, and release notes for Anarlog.
+            Product updates, fixes, and release notes for Shots Founder Hub.
           </p>
         </section>
 

@@ -100,8 +100,8 @@ it("sends OpenRouter app-attribution headers for the BYOK openrouter provider", 
     const headers = new Headers(
       init?.headers ?? (input instanceof Request ? input.headers : undefined),
     );
-    expect(headers.get("HTTP-Referer")).toBe("https://anarlog.so");
-    expect(headers.get("X-OpenRouter-Title")).toBe("Anarlog");
+    expect(headers.get("HTTP-Referer")).toBe("https://shots.playbookmedia.io");
+    expect(headers.get("X-OpenRouter-Title")).toBe("Shots Founder Hub");
     expect(headers.get("X-OpenRouter-Categories")).toBe(
       "writing-assistant,personal-agent",
     );

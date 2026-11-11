@@ -38,7 +38,7 @@ export function buildMcpConfiguration(command: string) {
   return JSON.stringify(
     {
       mcpServers: {
-        anarlog: {
+        sfh: {
           command,
           args: ["mcp"],
         },
@@ -128,7 +128,7 @@ function CliSection({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h3 className="flex items-center gap-1.5 text-sm font-medium">
-              <Trans>Anarlog CLI</Trans>
+              <Trans>Shots Founder Hub CLI</Trans>
               {isInstalled && (
                 <CheckCircle
                   aria-label={t`Installed`}
@@ -219,7 +219,7 @@ function CliStatus({
 
 function McpRow({ status }: { status: EmbeddedCliStatus | undefined }) {
   const isInstalled = status?.state === "installed";
-  const commandName = status?.commandName ?? "anarlog";
+  const commandName = status?.commandName ?? "sfh";
   const configuration = buildMcpConfiguration(
     isInstalled ? status.installPath : commandName,
   );

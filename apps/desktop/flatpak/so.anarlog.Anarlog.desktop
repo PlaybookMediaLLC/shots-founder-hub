@@ -1,14 +1,14 @@
 [Desktop Entry]
-Name=Anarlog
+Name=Shots Founder Hub
 GenericName=AI Meeting Notes
 Comment=The AI notepad for private meetings
-Exec=anarlog %U
+Exec=shots-founder-hub %U
 Icon=so.anarlog.Anarlog
 Terminal=false
 Type=Application
 Categories=Office;
 Keywords=notes;meeting;transcription;ai;audio;recording;
 StartupNotify=true
-StartupWMClass=anarlog
+StartupWMClass=shots-founder-hub
 MimeType=x-scheme-handler/anarlog;x-scheme-handler/hyprnote;
 X-GNOME-UsesNotifications=true

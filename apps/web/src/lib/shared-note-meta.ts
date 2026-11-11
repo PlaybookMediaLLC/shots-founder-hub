@@ -25,7 +25,7 @@ export const publicShareHeaders = {
 
 export function getPrivateShareHead() {
   return {
-    meta: getPrivateShareMeta("Shared note · Anarlog"),
+    meta: getPrivateShareMeta("Shared note · Shots Founder Hub"),
   };
 }
 
@@ -44,7 +44,7 @@ export function getLinkShareHead(
 
   return {
     meta: [
-      ...getPrivateShareMeta(`${title} · Anarlog`),
+      ...getPrivateShareMeta(`${title} · Shots Founder Hub`),
       { name: "description", content: description },
       { property: "og:type", content: "article" },
       { property: "og:site_name", content: ANARLOG_SITE_NAME },
@@ -78,7 +78,7 @@ export function getShortLinkShareHead(
 
   return {
     meta: [
-      ...getPrivateShareMeta(`${title} · Anarlog`),
+      ...getPrivateShareMeta(`${title} · Shots Founder Hub`),
       { name: "description", content: description },
       { property: "og:type", content: "article" },
       { property: "og:site_name", content: ANARLOG_SITE_NAME },
@@ -132,14 +132,17 @@ export function getStableShareHead(
 
   if (accessScope !== "public") {
     return {
-      meta: [...getPrivateShareMeta(`${title} · Anarlog`), ...socialMeta],
+      meta: [
+        ...getPrivateShareMeta(`${title} · Shots Founder Hub`),
+        ...socialMeta,
+      ],
     };
   }
 
   return {
     links: [{ rel: "canonical", href: url }],
     meta: [
-      { title: `${title} · Anarlog` },
+      { title: `${title} · Shots Founder Hub` },
       { name: "robots", content: "index, follow" },
       { name: "referrer", content: "no-referrer" },
       { name: "ai-content", content: "public" },
@@ -162,14 +165,14 @@ export function getPublicShareHead(
   const description = preview
     ? getPreviewDescription(preview)
     : getSharedNoteDescription(snapshot.body) ||
-      "A public note shared with Anarlog.";
+      "A public note shared with Shots Founder Hub.";
   const url = `${ANARLOG_SITE_URL}/share/${snapshot.shareId}/`;
   const imageUrl = getPublicSharedNoteOgImageUrl(publicSlug);
 
   return {
     links: [{ rel: "canonical", href: url }],
     meta: [
-      { title: `${title} · Anarlog` },
+      { title: `${title} · Shots Founder Hub` },
       { name: "description", content: description },
       { name: "robots", content: "index, follow" },
       { name: "referrer", content: "no-referrer" },

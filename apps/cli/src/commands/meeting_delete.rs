@@ -24,7 +24,7 @@ fn closed(base: &Path) -> Result<Vec<std::fs::File>> {
             .open(base.join(name))
             .map_err(|_| invalid("cannot lock recorder"))?;
         file.try_lock()
-            .map_err(|_| invalid("close Anarlog before deletion"))?;
+            .map_err(|_| invalid("close Shots Founder Hub before deletion"))?;
         locks.push(file);
     }
     Ok(locks)
@@ -317,7 +317,7 @@ mod tests {
             std::fs::write(dir.path().join(folder).join("audio.wav"), b"Raw audio").unwrap();
         }
         let args = Args::try_parse_from([
-            "anarlog",
+            "sfh",
             "--json",
             "--db-path",
             path.to_str().unwrap(),
@@ -461,7 +461,7 @@ mod tests {
     async fn first_launch_initialization_requires_managed_policy_and_never_enables_intelligence() {
         let dir = tempfile::tempdir().unwrap();
         let args = Args::try_parse_from([
-            "anarlog",
+            "sfh",
             "--json",
             "--base",
             dir.path().to_str().unwrap(),

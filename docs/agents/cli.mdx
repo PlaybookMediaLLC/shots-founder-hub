@@ -1,20 +1,20 @@
 ---
 title: "CLI for agents"
-description: "Use structured Anarlog CLI output as an agent-friendly MCP fallback."
+description: "Use structured Shots Founder Hub CLI output as an agent-friendly MCP fallback."
 ---
 
 Use the global `--json` flag whenever an agent consumes CLI output.
 
 A successful response contains `schema_version`, `command`, `data`, and optional `pagination`. Read results from `data`. Follow `pagination.next_offset` only when you need another page.
 
-Meeting reads default to the local database. Use `meetings --source cloud` after `anarlog auth login` to read opted-in Cloud snapshots, or `meetings --source auto` to use Cloud only when the local database is absent.
+Meeting reads default to the local database. Use `meetings --source cloud` after `sfh auth login` to read opted-in Cloud snapshots, or `meetings --source auto` to use Cloud only when the local database is absent.
 
 ## Resolve meeting context
 
 ```bash
-anarlog --json meetings list --query "weekly planning" --limit 10
-anarlog --json meetings get MEETING_ID
-anarlog --json meetings --source cloud list --query "weekly planning" --limit 10
+sfh --json meetings list --query "weekly planning" --limit 10
+sfh --json meetings get MEETING_ID
+sfh --json meetings --source cloud list --query "weekly planning" --limit 10
 ```
 
 Search is case-insensitive across meeting titles and IDs. If several meetings match, ask the user to choose one.
@@ -22,9 +22,9 @@ Search is case-insensitive across meeting titles and IDs. If several meetings ma
 ## Read the smallest useful surface
 
 ```bash
-anarlog --json meetings note MEETING_ID --kind note
-anarlog --json meetings note MEETING_ID --kind summary
-anarlog --json meetings history MEETING_ID --limit 10 --offset 0
+sfh --json meetings note MEETING_ID --kind note
+sfh --json meetings note MEETING_ID --kind summary
+sfh --json meetings history MEETING_ID --limit 10 --offset 0
 ```
 
 Use `meetings get` when participants or action items matter. Use `meetings note` when note content alone is enough.
@@ -32,10 +32,10 @@ Use `meetings get` when participants or action items matter. Use `meetings note`
 ## Stage an edit
 
 ```bash
-anarlog --json proposals create --meeting MEETING_ID --kind summary --content "Replacement markdown"
-anarlog --json proposals list --meeting MEETING_ID
-anarlog --json proposals show PROPOSAL_ID
-anarlog --json proposals decline PROPOSAL_ID
+sfh --json proposals create --meeting MEETING_ID --kind summary --content "Replacement markdown"
+sfh --json proposals list --meeting MEETING_ID
+sfh --json proposals show PROPOSAL_ID
+sfh --json proposals decline PROPOSAL_ID
 ```
 
 <Note>
@@ -45,7 +45,7 @@ anarlog --json proposals decline PROPOSAL_ID
 ## Transcripts
 
 ```bash
-anarlog --json meetings transcript MEETING_ID --limit 200 --offset 0
+sfh --json meetings transcript MEETING_ID --limit 200 --offset 0
 ```
 
 Transcript limits are measured in words. A page defaults to 200 words and caps at 500. Stop paging once you have enough evidence.
@@ -53,7 +53,7 @@ Transcript limits are measured in words. A page defaults to 200 words and caps a
 ## Diagnose setup
 
 ```bash
-anarlog --json doctor
+sfh --json doctor
 ```
 
 The report includes the CLI version, resolved database path, read-only connection status, and schema readiness. When `ready` is false, the command still prints the report to standard output and exits with status 1.
@@ -63,9 +63,9 @@ The report includes the CLI version, resolved database path, read-only connectio
 Only export a complete meeting when the user explicitly requests a file:
 
 ```bash
-anarlog meetings export MEETING_ID --format markdown --output meeting.md
-anarlog meetings export MEETING_ID --format json --output meeting.json
-anarlog meetings --source cloud export MEETING_ID --format json --output meeting.json
+sfh meetings export MEETING_ID --format markdown --output meeting.md
+sfh meetings export MEETING_ID --format json --output meeting.json
+sfh meetings --source cloud export MEETING_ID --format json --output meeting.json
 ```
 
 <Warning>

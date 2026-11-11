@@ -7,10 +7,10 @@ describe("micAppsShowInUse", () => {
     expect(micAppsShowInUse([{ id: "us.zoom.xos", name: "Zoom" }])).toBe(true);
   });
 
-  it("ignores Anarlog itself", () => {
+  it("ignores Shots Founder Hub itself", () => {
     expect(
       micAppsShowInUse([
-        { id: "com.anarlog.app", name: "Anarlog" },
+        { id: "com.anarlog.app", name: "Shots Founder Hub" },
         { id: "com.hyprnote.app", name: "Hyprnote" },
       ]),
     ).toBe(false);

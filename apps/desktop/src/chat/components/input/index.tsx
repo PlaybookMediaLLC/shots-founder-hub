@@ -267,7 +267,7 @@ function SendButton({
         "chat-input-send",
         "border-border text-muted-foreground/60 inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-100",
         !disabled && [
-          "bg-primary text-primary-foreground border-stone-600",
+          "bg-primary text-primary-foreground border-neutral-600",
           "hover:bg-primary/90",
           "active:bg-primary/80 active:scale-[0.97]",
         ],

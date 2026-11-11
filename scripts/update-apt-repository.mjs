@@ -9,7 +9,7 @@ import { gzipSync } from "node:zlib";
 
 const execFileAsync = promisify(execFile);
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
-const PACKAGE_NAME = "anarlog";
+const PACKAGE_NAME = "shots-founder-hub";
 
 const ARCHITECTURES = ["amd64", "arm64"];
 
@@ -61,7 +61,7 @@ export function buildPackageIndex({
   const release = `desktop_v${version}`;
 
   return `${control.trimEnd()}
-Filename: pool/${release}/${architecture}/anarlog.deb
+Filename: pool/${release}/${architecture}/shots-founder-hub.deb
 Size: ${size}
 MD5sum: ${hashes.md5}
 SHA1: ${hashes.sha1}
@@ -94,15 +94,15 @@ export function buildRepository({ date, packages, version }) {
     );
   }
 
-  const release = `Origin: Anarlog
-Label: Anarlog
+  const release = `Origin: Shots Founder Hub
+Label: Shots Founder Hub
 Suite: stable
 Codename: stable
 Version: ${version}
 Date: ${publishedAt.toUTCString()}
 Architectures: amd64 arm64
 Components: main
-Description: Anarlog stable desktop releases
+Description: Shots Founder Hub stable desktop releases
 MD5Sum:
 ${checksumRows(files, "md5")}
 SHA1:

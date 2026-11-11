@@ -11,7 +11,7 @@ test("related articles prioritize the reader's topic over newer unrelated posts"
     date: "2026-10-11",
     title: "Free transcription software",
     meta_description: "",
-    author: ["Anarlog Team"],
+    author: ["Shots Founder Hub Team"],
   } satisfies ArticleSummary;
   const articles = [
     article,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Anarlog Dev",
-  "mainBinaryName": "anarlog-dev",
+  "productName": "Shots Founder Hub Dev",
+  "mainBinaryName": "shots-founder-hub-dev",
   "identifier": "com.hyprnote.dev",
   "build": {
     "features": ["direct-distribution"],
@@ -25,7 +25,7 @@
     }
   },
   "bundle": {
-    "publisher": "Fastrepl",
+    "publisher": "Playbook Media Interactive LLC",
     "active": true,
     "createUpdaterArtifacts": true,
     "targets": "all",

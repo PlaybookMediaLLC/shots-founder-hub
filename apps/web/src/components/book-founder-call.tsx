@@ -29,7 +29,7 @@ export function BookFounderCall({
       }
       className="inline-flex h-11 items-center justify-center rounded-full bg-[#181613] px-6 text-sm font-medium text-white transition-all hover:scale-[102%] hover:bg-[#4f4940] active:scale-[98%]"
     >
-      Book a call with the founder
+      Contact Playbook
     </a>
   );
 }

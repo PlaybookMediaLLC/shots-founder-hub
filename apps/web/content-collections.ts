@@ -50,7 +50,7 @@ const articles = defineCollection({
 
     const slug = document._meta.path.replace(/\.mdx$/, "");
 
-    const rawAuthor = document.author || "Anarlog Team";
+    const rawAuthor = document.author || "Shots Founder Hub Team";
     const author = Array.isArray(rawAuthor) ? rawAuthor : [rawAuthor];
     const title = document.display_title || document.meta_title;
 
@@ -72,7 +72,7 @@ const articleSummaries = defineCollection({
   schema: articleSchema,
   transform: (document) => {
     const slug = document._meta.path.replace(/\.mdx$/, "");
-    const rawAuthor = document.author || "Anarlog Team";
+    const rawAuthor = document.author || "Shots Founder Hub Team";
     const author = Array.isArray(rawAuthor) ? rawAuthor : [rawAuthor];
 
     return {

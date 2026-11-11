@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { cn } from "@anlg/utils";
 
 const NUMBER_CLASS =
-  "font-hand text-[44px] leading-none font-semibold text-amber-800";
+  "text-[40px] leading-none font-semibold tracking-[-0.02em] text-foreground";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 function DayCount({ days, from }: { days: number; from?: number }) {
@@ -24,7 +24,7 @@ function DayCount({ days, from }: { days: number; from?: number }) {
             >
               {from}
               <motion.span
-                className="absolute top-1/2 -right-1 -left-1 h-[2.5px] origin-left rounded-full bg-amber-800"
+                className="bg-foreground absolute top-1/2 -right-1 -left-1 h-[2.5px] origin-left rounded-full"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: 0.45, duration: 0.3, ease: "easeOut" }}
@@ -43,7 +43,7 @@ function DayCount({ days, from }: { days: number; from?: number }) {
           <span className={NUMBER_CLASS}>{days}</span>
         )}
       </div>
-      <span className="mt-1 pl-[0.22em] text-[10px] font-semibold tracking-[0.22em] text-amber-800/70 uppercase">
+      <span className="text-muted-foreground mt-1 pl-[0.22em] text-[10px] font-semibold tracking-[0.22em] uppercase">
         days
       </span>
     </div>
@@ -66,13 +66,12 @@ export function TrialOfferCard({
   return (
     <div
       className={cn([
-        "flex w-full max-w-[400px] items-center gap-5 rounded-[20px] py-4 pr-6 pl-5",
-        "border border-amber-900/10 bg-white/75 backdrop-blur-md",
-        "shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_12px_32px_-16px_rgba(120,53,15,0.35)]",
+        "flex w-full max-w-[400px] items-center gap-5 rounded-xl py-4 pr-6 pl-5",
+        "border-border bg-card/85 border shadow-md backdrop-blur-md",
       ])}
     >
       <DayCount days={days} from={fromDays} />
-      <div className="h-11 w-px shrink-0 bg-amber-900/10" />
+      <div className="bg-border h-11 w-px shrink-0" />
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-foreground flex items-center gap-1.5 text-[15px] font-semibold tracking-[-0.01em]">
           {icon}

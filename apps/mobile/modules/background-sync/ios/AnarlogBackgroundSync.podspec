@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Keeps Anarlog sync running after the app leaves the foreground.'
   s.description    = 'Holds background execution time and a continued processing task while sync work is pending.'
   s.author         = 'Anarlog'
-  s.homepage       = 'https://anarlog.so'
+  s.homepage       = 'https://shots.playbookmedia.io'
   s.platform       = :ios, '16.4'
   s.source         = { git: '' }
   s.static_framework = true

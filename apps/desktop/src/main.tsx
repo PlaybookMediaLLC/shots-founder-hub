@@ -1,6 +1,8 @@
 // Must be the first import: React only reports commits to a devtools hook that
 // exists before react-dom evaluates.
 import "./devtools-bar/render-hook";
+import "@fontsource-variable/inter/opsz.css";
+import "@fontsource-variable/geist-mono";
 import "./styles/globals.css";
 import "./styles/cursor.css";
 
@@ -160,12 +162,27 @@ if (isMainWindow) {
 
 const rootElement = document.getElementById("root")!;
 
+// The UI fonts are bundled, so this takes milliseconds. Rendering before they
+// load lets WebKit swap fonts mid-paint and leave labels partly drawn.
+function loadUiFonts() {
+  const fonts = Promise.all(
+    ['1em "Inter Variable"', '1em "Geist Mono Variable"'].map((font) =>
+      document.fonts?.load(font).catch(() => undefined),
+    ),
+  );
+  return Promise.race([fonts, new Promise((r) => setTimeout(r, 1000))]);
+}
+
 async function renderApp() {
   if (import.meta.env.DEV) {
     startInteractionProfiler();
   }
 
-  await Promise.all([bootstrapThemeFromSettings(), initializeAppStoreBuild()]);
+  await Promise.all([
+    bootstrapThemeFromSettings(),
+    initializeAppStoreBuild(),
+    loadUiFonts(),
+  ]);
   const root = ReactDOM.createRoot(rootElement, {
     onCaughtError: reportCaughtReactError,
   });

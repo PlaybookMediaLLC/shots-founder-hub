@@ -27,9 +27,9 @@ import {
   TRUST_CENTER_UPDATED_ON,
 } from "@/lib/trust-center";
 
-const title = "Security · Anarlog";
+const title = "Security · Shots Founder Hub";
 const description =
-  "How Anarlog handles encryption, data location, retention, training, subprocessors, and incident reporting — the packet for a first enterprise security review.";
+  "Non-effective review draft for Shots Founder Hub: repository evidence and unverified deployment details for encryption, providers, regions, retention, and deletion.";
 
 export const Route = createFileRoute("/security")({
   component: SecurityPage,
@@ -69,20 +69,83 @@ function SecurityPage() {
       <div className="mx-auto w-full max-w-[700px] px-5 pt-4 pb-8 md:px-8 md:pt-4 md:pb-12">
         <div className="min-w-0">
           <section className="pt-10 pb-4 text-center md:pt-12 md:pb-6">
-            <Link to="/" aria-label="Anarlog home" className="inline-flex">
+            <Link
+              to="/"
+              aria-label="Shots Founder Hub home"
+              className="inline-flex"
+            >
               <AnarlogLogo className="h-8 w-auto md:h-9" />
             </Link>
             <h1 className="font-hand mt-12 text-4xl leading-none font-semibold text-[#181613] md:mt-16 md:text-5xl">
               Security
             </h1>
+            <p className="border-border-subtle bg-page text-fg-muted mt-5 rounded-md border p-4 text-sm leading-6">
+              Review draft — not yet effective: this page includes
+              implementation information. Playbook Media Interactive LLC owns
+              and operates the product’s cloud-service accounts. Operating facts
+              below are confirmed by Playbook, not independently
+              account-verified. Exact processing locations, provider settings,
+              and remaining policies still require review before publication.
+            </p>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#4f4940]">
-              What a first security review needs: how Anarlog stores meeting
-              data, who can see it, how long it is kept, and which documents we
-              can send today. Fastrepl does not claim SOC 2, ISO 27001, or HIPAA
-              here.
+              This review draft describes the inherited application’s data paths
+              and security mechanisms. Confirm the deployed configuration,
+              hosting regions, processors, retention, and operational procedures
+              before relying on it for a security assessment.
             </p>
             <p className="mt-3 text-xs text-[#756b5d]">
               Last updated {updatedOn}
+            </p>
+          </section>
+
+          <section className="pt-10 pb-4 md:pt-12">
+            <h2 className="font-hand text-fg text-3xl leading-none font-semibold">
+              Playbook-confirmed operating facts
+            </h2>
+            <p className="text-fg-muted mt-5 text-base leading-7">
+              Active providers: DigitalOcean, Azure, Resend, Stripe, OpenRouter,
+              and OpenPanel. Playbook reports operations in US East and US West
+              and identifies OpenPanel as its session-replay provider. Exact
+              provider-region mappings and any additional active analytics tools
+              remain unspecified.
+            </p>
+            <p className="text-fg-muted mt-4 text-base leading-7">
+              Playbook states that hosted data is retained indefinitely until
+              the user deletes it or requests deletion, deletion jobs are
+              enabled and monitored, and requests are processed the same day.
+              This means handling or initiation, not guaranteed complete erasure
+              that day. No formal completion deadline is specified.
+            </p>
+            <p className="text-fg-muted mt-4 text-base leading-7">
+              Playbook states that its AI providers do not use content for
+              training. These operating statements have not been independently
+              verified in provider accounts. Prompt and response retention,
+              backup erasure, log expiry, replay retention, consent, masking,
+              and legal or billing exceptions remain to be documented.
+            </p>
+          </section>
+
+          <section className="pt-10 pb-4 md:pt-12">
+            <h2 className="font-hand text-fg text-3xl leading-none font-semibold">
+              Configuration evidence, not deployed guarantees
+            </h2>
+            <p className="text-fg-muted mt-5 text-base leading-7">
+              Fly API templates specify sjc. The web targets Vercel: vercel.json
+              has no region pin, while the Vite-generated function configuration
+              specifies sfo1. The PostHog host defaults to us.i.posthog.com.
+              These settings do not establish the actual processing regions,
+              enabled vendors, replication, or failover. The Fly/Vercel
+              templates and source-listed integrations differ from the confirmed
+              operating inventory and need reconciliation; no infrastructure has
+              been changed for this draft.
+            </p>
+            <p className="text-fg-muted mt-4 text-base leading-7">
+              The core API template enables durable cleanup. Its initial
+              24-hour-and-5-minute safety horizon can be extended and prevents
+              interpreting same-day request handling as completed erasure.
+              Playbook confirms that jobs are enabled and monitored; execution,
+              provider account settings, and remaining retention details have
+              not been independently verified.
             </p>
           </section>
 
@@ -123,10 +186,10 @@ function SecurityPage() {
 
           <section className="pt-10 pb-4 md:pt-12">
             <h2 className="font-hand text-3xl leading-none font-semibold text-[#181613]">
-              Subprocessors
+              Integrations present in the repository
             </h2>
             <p className="mt-5 text-base leading-7 text-[#4f4940]">
-              Grounded in the{" "}
+              Read alongside the non-effective{" "}
               <EnterpriseCtaLink
                 to="/privacy/"
                 cta="privacy"
@@ -136,8 +199,10 @@ function SecurityPage() {
               >
                 privacy policy
               </EnterpriseCtaLink>
-              . A processor receives data only when the matching feature is
-              enabled.
+              . This is a code-supported inventory, not a confirmed list of
+              active subprocessors. Actual providers and downstream routing must
+              be verified against the deployed configuration and account
+              settings.
             </p>
             <div className="mt-6 overflow-x-auto">
               <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
@@ -176,7 +241,9 @@ function SecurityPage() {
                 <thead>
                   <tr className="border-b border-[#eadfce] text-[#756b5d]">
                     <th className="py-2 pr-4 font-medium">Data</th>
-                    <th className="py-2 font-medium">Kept until</th>
+                    <th className="py-2 font-medium">
+                      Implementation and unconfirmed policy
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -241,10 +308,10 @@ function SecurityPage() {
               Incident response
             </h2>
             <p className="mt-5 text-base leading-7 text-[#4f4940]">
-              Report a vulnerability privately — do not open a public GitHub
-              issue. We acknowledge reports within 3 business days, keep you
-              updated while we investigate, and credit you in the release notes
-              if the report is accepted unless you prefer to stay anonymous.
+              Send security concerns to Playbook using the contact below. Do not
+              include credentials, recovery keys, or unnecessary personal data.
+              Response times and disclosure arrangements must be agreed for the
+              deployed service.
             </p>
             <div className="mt-4 flex flex-col gap-2 text-sm">
               <EnterpriseCtaLink
@@ -253,7 +320,7 @@ function SecurityPage() {
                 location="packet"
                 page="security"
               >
-                Report a vulnerability on GitHub
+                Email a vulnerability report
               </EnterpriseCtaLink>
               <a
                 href={`mailto:${SECURITY_REPORT_EMAIL}`}
@@ -299,7 +366,7 @@ function SecurityPage() {
               Request the packet
             </h2>
             <p className="mx-auto mt-5 max-w-lg text-base leading-7 text-[#4f4940]">
-              Book a founder call, or email {PROCUREMENT_EMAIL} for a DPA and
+              Contact Playbook, or email {PROCUREMENT_EMAIL} for a DPA and
               questionnaire responses grounded in this page.
             </p>
             <div className="mt-8 flex flex-col items-center gap-4">

@@ -6,9 +6,9 @@ use anlg_agent_access::{DEFAULT_TRANSCRIPT_LIMIT, MAX_TRANSCRIPT_LIMIT};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "anarlog",
+    name = "sfh",
     version = crate::VERSION,
-    about = "Access Anarlog from the command line"
+    about = "Access Shots Founder Hub from the command line"
 )]
 pub struct Args {
     #[arg(
@@ -87,7 +87,7 @@ impl Args {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Sign in to an Anarlog account from a browser
+    /// Sign in to a Shots Founder Hub account from a browser
     Auth {
         #[command(subcommand)]
         command: AuthCommand,
@@ -107,7 +107,7 @@ pub enum Command {
         #[command(subcommand)]
         command: ProposalCommand,
     },
-    /// Run the Anarlog MCP server over stdio
+    /// Run the Shots Founder Hub MCP server over stdio
     Mcp,
 }
 
@@ -315,7 +315,7 @@ mod tests {
     #[test]
     fn parses_meeting_and_auth_arguments() {
         let args = Args::parse_from([
-            "anarlog", "--json", "meetings", "list", "--query", "planning", "--limit", "10",
+            "sfh", "--json", "meetings", "list", "--query", "planning", "--limit", "10",
         ]);
 
         assert!(args.json);
@@ -328,8 +328,7 @@ mod tests {
         assert_eq!(query.as_deref(), Some("planning"));
         assert_eq!(limit, 10);
         let Command::Meetings { command, .. } =
-            Args::parse_from(["anarlog", "meetings", "list", "--folder", "Projects/Launch"])
-                .command
+            Args::parse_from(["sfh", "meetings", "list", "--folder", "Projects/Launch"]).command
         else {
             panic!("expected meetings command");
         };
@@ -339,7 +338,7 @@ mod tests {
         assert_eq!(folder.as_deref(), Some("Projects/Launch"));
 
         let Command::Meetings { command, .. } =
-            Args::parse_from(["anarlog", "meetings", "folders", "--query", "acme"]).command
+            Args::parse_from(["sfh", "meetings", "folders", "--query", "acme"]).command
         else {
             panic!("expected meetings command");
         };
@@ -352,15 +351,9 @@ mod tests {
             }
         ));
 
-        let Command::Meetings { command, .. } = Args::parse_from([
-            "anarlog",
-            "meetings",
-            "export",
-            "meeting-1",
-            "--format",
-            "json",
-        ])
-        .command
+        let Command::Meetings { command, .. } =
+            Args::parse_from(["sfh", "meetings", "export", "meeting-1", "--format", "json"])
+                .command
         else {
             panic!("expected meetings command");
         };
@@ -373,26 +366,26 @@ mod tests {
         ));
 
         assert!(matches!(
-            Args::parse_from(["anarlog", "auth", "login"]).command,
+            Args::parse_from(["sfh", "auth", "login"]).command,
             Command::Auth {
                 command: AuthCommand::Login
             }
         ));
         assert!(matches!(
-            Args::parse_from(["anarlog", "auth", "status"]).command,
+            Args::parse_from(["sfh", "auth", "status"]).command,
             Command::Auth {
                 command: AuthCommand::Status
             }
         ));
         assert!(matches!(
-            Args::parse_from(["anarlog", "auth", "logout"]).command,
+            Args::parse_from(["sfh", "auth", "logout"]).command,
             Command::Auth {
                 command: AuthCommand::Logout
             }
         ));
 
         let Command::Meetings { command, .. } = Args::parse_from([
-            "anarlog",
+            "sfh",
             "meetings",
             "transcript",
             "meeting-1",
@@ -414,15 +407,8 @@ mod tests {
             }
         ));
 
-        let Command::Meetings { command, .. } = Args::parse_from([
-            "anarlog",
-            "meetings",
-            "history",
-            "meeting-1",
-            "--offset",
-            "10",
-        ])
-        .command
+        let Command::Meetings { command, .. } =
+            Args::parse_from(["sfh", "meetings", "history", "meeting-1", "--offset", "10"]).command
         else {
             panic!("expected meetings command");
         };
@@ -432,14 +418,14 @@ mod tests {
         ));
 
         let Command::Meetings { source, .. } =
-            Args::parse_from(["anarlog", "meetings", "--source", "cloud", "list"]).command
+            Args::parse_from(["sfh", "meetings", "--source", "cloud", "list"]).command
         else {
             panic!("expected meetings command");
         };
         assert_eq!(source, MeetingSource::Cloud);
 
         let Command::Meetings { source, .. } =
-            Args::parse_from(["anarlog", "meetings", "--source", "auto", "list"]).command
+            Args::parse_from(["sfh", "meetings", "--source", "auto", "list"]).command
         else {
             panic!("expected meetings command");
         };
@@ -455,15 +441,9 @@ mod tests {
         assert!(help.contains("doctor"));
         assert!(help.contains("proposals"));
 
-        let Command::Meetings { command, .. } = Args::parse_from([
-            "anarlog",
-            "meetings",
-            "export",
-            "meeting-1",
-            "--format",
-            "json",
-        ])
-        .command
+        let Command::Meetings { command, .. } =
+            Args::parse_from(["sfh", "meetings", "export", "meeting-1", "--format", "json"])
+                .command
         else {
             panic!("expected meetings command");
         };
@@ -479,8 +459,7 @@ mod tests {
     #[test]
     fn export_force_requires_an_output_path() {
         assert!(
-            Args::try_parse_from(["anarlog", "meetings", "export", "meeting-1", "--force"])
-                .is_err()
+            Args::try_parse_from(["sfh", "meetings", "export", "meeting-1", "--force"]).is_err()
         );
     }
 
@@ -488,8 +467,8 @@ mod tests {
     fn public_docs_and_skill_cover_the_command_contract() {
         let docs = include_str!("../../../docs/reference/cli.mdx");
         let skill = concat!(
-            include_str!("../../../skills/anarlog/references/cli.md"),
-            include_str!("../../../skills/anarlog/references/setup.md"),
+            include_str!("../../../skills/sfh/references/cli.md"),
+            include_str!("../../../skills/sfh/references/setup.md"),
         );
         let command = Args::command();
         let mut paths = Vec::new();
@@ -497,7 +476,10 @@ mod tests {
 
         for path in paths {
             assert!(docs.contains(&path), "CLI docs are missing `{path}`");
-            assert!(skill.contains(&path), "Anarlog skill is missing `{path}`");
+            assert!(
+                skill.contains(&path),
+                "Shots Founder Hub skill is missing `{path}`"
+            );
         }
         assert_options_are_documented(&command, docs);
     }

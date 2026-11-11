@@ -8,6 +8,7 @@ import { accountPlanLabel, fetchWorkspacePlan } from "@/auth/account-plan";
 import { supabase } from "@/auth/client";
 import { useAuth } from "@/auth/context";
 import { useTrial } from "@/auth/use-trial";
+import { confirmDestructive } from "@/lib/confirm";
 import { env } from "@/lib/env";
 import {
   SettingsError,
@@ -16,6 +17,8 @@ import {
 } from "@/settings/components";
 import { FieldGroup } from "@/settings/field-group";
 import { Text } from "@/settings/fields";
+import { isVoiceNoteUnsent } from "@/shots-voice/model";
+import { getShotsVoice } from "@/shots-voice/store";
 
 export default function AccountSettings() {
   const auth = useAuth();
@@ -44,7 +47,22 @@ export default function AccountSettings() {
       await workspacePlan.refetch({ throwOnError: true });
     },
   });
-  const signOut = useMutation({ mutationFn: auth.signOut });
+  const signOut = useMutation({
+    mutationFn: async () => {
+      // S12: say what stays on the phone before signing out.
+      const unsent = getShotsVoice().notes.filter(isVoiceNoteUnsent).length;
+      if (
+        unsent > 0 &&
+        !(await confirmDestructive(
+          "Sign out with notes not sent to Shots?",
+          "Sign out",
+          `${unsent} ${unsent === 1 ? "note has" : "notes have"} not reached Shots yet. They stay on this phone with their recordings and transcripts, and are sent when you sign in again as this account.`,
+        ))
+      )
+        return;
+      await auth.signOut();
+    },
+  });
   const manage = useMutation({
     mutationFn: () =>
       WebBrowser.openBrowserAsync(
@@ -100,19 +118,19 @@ export default function AccountSettings() {
         <FieldGroup.Section>
           {(!auth.billing.isPro || auth.billing.isTrialing) && (
             <SettingsRow
-              title="Explore Anarlog Pro"
+              title="Explore Shots Founder Hub Pro"
               onPress={() => router.push("/settings/pro")}
             />
           )}
           <FieldGroup.SectionFooter>
             <Text>
               {auth.billing.isTrialing
-                ? "Your Pro trial includes cloud sync and Anarlog models. After it ends, you can keep using your notes, recording, and your own API keys."
+                ? "Your Pro trial includes cloud sync and Shots Founder Hub models. After it ends, you can keep using your notes, recording, and your own API keys."
                 : auth.billing.isPro
-                  ? "Cloud sync and Anarlog models are included in your subscription."
+                  ? "Cloud sync and Shots Founder Hub models are included in your subscription."
                   : trial.isFetching
                     ? "Checking your free Pro trial. You can start taking notes and recording now."
-                    : "Notes and recording are free. Cloud sync and Anarlog models require an active Pro trial or subscription. You can also use your own API keys."}
+                    : "Notes and recording are free. Cloud sync and Shots Founder Hub models require an active Pro trial or subscription. You can also use your own API keys."}
             </Text>
           </FieldGroup.SectionFooter>
           {!auth.billing.isPro && trial.error && (

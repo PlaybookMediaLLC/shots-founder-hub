@@ -1,6 +1,6 @@
 import { getWorkspaceShareSlug } from "../lib/workspace-share-host.ts";
 
-const APP_ORIGIN = "https://anarlog.so";
+const APP_ORIGIN = "https://shots.playbookmedia.io";
 const PLATFORM_HOSTS = new Set([
   "anarlog.so",
   "api.anarlog.so",

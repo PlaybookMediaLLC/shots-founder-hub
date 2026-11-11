@@ -52,9 +52,9 @@ mod tests {
         }
 
         let temp = tempfile::tempdir().unwrap();
-        let bundle = temp.path().join("Anarlog.app");
+        let bundle = temp.path().join("Shots Founder Hub.app");
         let contents = bundle.join("Contents");
-        let executable = contents.join("MacOS/anarlog");
+        let executable = contents.join("MacOS/shots-founder-hub");
         std::fs::create_dir_all(executable.parent().unwrap()).unwrap();
         std::fs::copy(std::env::current_exe().unwrap(), &executable).unwrap();
         std::fs::write(
@@ -62,7 +62,7 @@ mod tests {
             r#"<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0"><dict>
 <key>CFBundleIdentifier</key><string>so.anarlog.icon-test</string>
-<key>CFBundleExecutable</key><string>anarlog</string>
+<key>CFBundleExecutable</key><string>shots-founder-hub</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 </dict></plist>"#,
         )

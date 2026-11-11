@@ -14,7 +14,7 @@ tasks:
       - stripe listen --skip-verify --forward-to http://localhost:8788/webhook/stripe
   bacon: bacon {{.CLI_ARGS}}
 
-  stat: btop -f anarlog -u 500 --preset 1
+  stat: btop -f shots-founder-hub -u 500 --preset 1
 
   clean-plugins:
     cmds:

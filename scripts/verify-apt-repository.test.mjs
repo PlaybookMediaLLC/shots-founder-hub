@@ -18,7 +18,7 @@ async function fixture(t) {
     ["amd64", "arm64"].map((architecture) => [
       architecture,
       {
-        control: `Package: anarlog\nVersion: 1.4.22\nArchitecture: ${architecture}\n`,
+        control: `Package: shots-founder-hub\nVersion: 1.4.22\nArchitecture: ${architecture}\n`,
         hashes: {
           md5: "a".repeat(32),
           sha1: "a".repeat(40),
@@ -37,7 +37,7 @@ async function fixture(t) {
     }),
   );
   for (const file of [
-    "anarlog-archive-keyring.asc",
+    "shots-founder-hub-archive-keyring.asc",
     "dists/stable/InRelease",
     "dists/stable/Release.gpg",
   ]) {
@@ -50,8 +50,8 @@ test("verifies the key, signatures, and both architectures including compressed 
   const files = await readExpectedRepository(await fixture(t), "1.4.22");
   const visited = [];
   await verifyRepository(files, async (url) => {
-    assert.ok(url.startsWith("https://anarlog.so/apt/"));
-    const file = url.slice("https://anarlog.so/apt/".length);
+    assert.ok(url.startsWith("https://shots.playbookmedia.io/apt/"));
+    const file = url.slice("https://shots.playbookmedia.io/apt/".length);
     visited.push(file);
     return new Response(files.get(file));
   });
@@ -77,7 +77,7 @@ test("rejects each stale or corrupted live file, even when the Release version m
   for (const staleFile of files.keys()) {
     await assert.rejects(
       verifyRepository(files, async (url) => {
-        const file = url.slice("https://anarlog.so/apt/".length);
+        const file = url.slice("https://shots.playbookmedia.io/apt/".length);
         return new Response(file === staleFile ? "stale" : files.get(file));
       }),
       /Live APT file differs/,

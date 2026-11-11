@@ -5,12 +5,7 @@ import { useRef, useState } from "react";
 import { commands as analyticsCommands } from "@anlg/plugin-analytics";
 import { commands as openerCommands } from "@anlg/plugin-opener2";
 import { commands as sfxCommands } from "@anlg/plugin-sfx";
-import {
-  CircleNotch,
-  DiscordLogo,
-  GithubLogo,
-  XLogo,
-} from "@anlg/ui/components/icons";
+import { CircleNotch, GithubLogo } from "@anlg/ui/components/icons";
 
 import { OnboardingButton } from "./shared";
 import {
@@ -24,20 +19,9 @@ import { commands } from "~/types/tauri.gen";
 
 const SOCIALS = [
   {
-    label: "Discord",
-    icon: DiscordLogo,
-    url: "https://anarlog.so/discord",
-  },
-  {
     label: "GitHub",
     icon: GithubLogo,
-    url: "https://github.com/fastrepl/anarlog",
-  },
-  {
-    label: "X",
-    icon: XLogo,
-    size: 14,
-    url: "https://x.com/anarlogapp",
+    url: "https://github.com/PlaybookMediaLLC/shots-founder-hub",
   },
 ] as const;
 
@@ -51,7 +35,7 @@ export function FinalDescription() {
       </span>
       <div className="flex items-center gap-2">
         {SOCIALS.map((social) => {
-          const iconSize = "size" in social ? social.size : SOCIAL_ICON_SIZE;
+          const iconSize = SOCIAL_ICON_SIZE;
           const SocialIcon = social.icon;
 
           return (
@@ -107,17 +91,17 @@ export function FinalSection({
         {status === "loading" ? (
           <span className="flex items-center gap-2">
             <CircleNotch className="size-4 animate-spin" />
-            <Trans>Open Anarlog</Trans>
+            <Trans>Open Shots Founder Hub</Trans>
           </span>
         ) : (
-          <Trans>Open Anarlog</Trans>
+          <Trans>Open Shots Founder Hub</Trans>
         )}
       </OnboardingButton>
       {status === "error" && (
         <p className="text-sm text-red-500" role="alert">
           {translate({
             id: "onboarding.finish-error",
-            message: "Couldn't open Anarlog. Please try again.",
+            message: "Couldn't open Shots Founder Hub. Please try again.",
           })}
         </p>
       )}

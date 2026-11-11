@@ -27,7 +27,7 @@ export type Plan = "free" | "trial" | "pro";
 export class ProRequiredError extends Error {
   constructor() {
     super(
-      "Anarlog models require an active Pro trial or subscription. Choose a provider with your own API key in Settings to continue.",
+      "Shots Founder Hub models require an active Pro trial or subscription. Choose a provider with your own API key in Settings to continue.",
     );
   }
 }

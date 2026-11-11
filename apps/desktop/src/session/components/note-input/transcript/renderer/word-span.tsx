@@ -28,7 +28,7 @@ export const WordSpan = memo(function WordSpan(props: WordSpanProps) {
     () =>
       cn([
         canSeek && "hover:bg-accent/60 cursor-pointer",
-        !props.word.is_final && ["opacity-60", "italic"],
+        !props.word.is_final && "opacity-60",
       ]),
     [canSeek, props.word.is_final],
   );

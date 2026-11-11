@@ -1,9 +1,9 @@
 ---
 title: "Install the desktop app"
-description: "Choose the right Anarlog build for macOS, Windows, or Linux."
+description: "Choose the right Shots Founder Hub build for macOS, Windows, or Linux."
 ---
 
-[Download Anarlog](https://anarlog.so/download) to get the latest stable desktop release. The download page offers every supported platform from the same release.
+[Download Shots Founder Hub](https://shots.playbookmedia.io/download) to get the latest stable desktop release. The download page offers every supported platform from the same release.
 
 ## Choose the right build
 
@@ -22,49 +22,49 @@ On a Mac, open **Apple menu → About This Mac** if you do not know whether it u
 ## macOS
 
 1. Download the DMG that matches your Mac.
-2. Open the DMG and move Anarlog to **Applications**.
-3. Open Anarlog and follow the setup screen.
+2. Open the DMG and move Shots Founder Hub to **Applications**.
+3. Open Shots Founder Hub and follow the setup screen.
 4. Allow microphone, system audio, and calendar access when you want to use those features.
 
 ## Windows
 
-1. Download the **Windows x64** installer or [get Anarlog from Microsoft Store](https://apps.microsoft.com/detail/XPDLN196NKSW10).
+1. Download the **Windows x64** installer or [get Shots Founder Hub from Microsoft Store](https://apps.microsoft.com/detail/XPDLN196NKSW10).
 2. For the direct download, run the EXE and follow the installer. Microsoft Store handles installation and updates automatically.
-3. Open Anarlog and complete setup.
+3. Open Shots Founder Hub and complete setup.
 4. Allow microphone and system-audio access when prompted.
 
 ## Linux
 
 ### APT repository
 
-On Debian, Ubuntu, or a compatible distribution, add Anarlog's signed repository to get updates through APT:
+On Debian, Ubuntu, or a compatible distribution, add Shots Founder Hub's signed repository to get updates through APT:
 
 ```bash
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://anarlog.so/apt/anarlog-archive-keyring.asc \
-  | sudo tee /etc/apt/keyrings/anarlog.asc > /dev/null
-sudo chmod a+r /etc/apt/keyrings/anarlog.asc
+curl -fsSL https://shots.playbookmedia.io/apt/shots-founder-hub-archive-keyring.asc \
+  | sudo tee /etc/apt/keyrings/shots-founder-hub.asc > /dev/null
+sudo chmod a+r /etc/apt/keyrings/shots-founder-hub.asc
 
-sudo tee /etc/apt/sources.list.d/anarlog.sources > /dev/null <<'EOF'
+sudo tee /etc/apt/sources.list.d/shots-founder-hub.sources > /dev/null <<'EOF'
 Types: deb
-URIs: https://anarlog.so/apt
+URIs: https://shots.playbookmedia.io/apt
 Suites: stable
 Components: main
-Signed-By: /etc/apt/keyrings/anarlog.asc
+Signed-By: /etc/apt/keyrings/shots-founder-hub.asc
 EOF
 
 sudo apt update
-sudo apt install anarlog
+sudo apt install shots-founder-hub
 ```
 
-APT verifies the repository metadata with the dedicated Anarlog archive key. New stable releases become available through the normal `apt upgrade` flow.
+APT verifies the repository metadata with the dedicated Shots Founder Hub archive key. New stable releases become available through the normal `apt upgrade` flow.
 
 ### Downloaded DEB
 
 To install a downloaded package directly:
 
 ```bash
-sudo apt install ./anarlog-*.deb
+sudo apt install ./shots-founder-hub-*.deb
 ```
 
 ### AppImage
@@ -72,31 +72,31 @@ sudo apt install ./anarlog-*.deb
 For an AppImage, make it executable and open it:
 
 ```bash
-chmod +x ./anarlog-*.AppImage
-./anarlog-*.AppImage
+chmod +x ./shots-founder-hub-*.AppImage
+./shots-founder-hub-*.AppImage
 ```
 
 On Wayland with an NVIDIA GPU, if the window is black or only audio plays, launch with:
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 ./anarlog-*.AppImage
+WEBKIT_DISABLE_DMABUF_RENDERER=1 ./shots-founder-hub-*.AppImage
 ```
 
 If the window is still black, also disable compositing:
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 ./anarlog-*.AppImage
+WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 ./shots-founder-hub-*.AppImage
 ```
 
 Current builds apply the DMA-BUF workaround automatically. Set the variables yourself only if a black window remains.
 
 ### Arch Linux
 
-Build the maintained `anarlog-bin` package with `makepkg`:
+Build the maintained `shots-founder-hub-bin` package with `makepkg`:
 
 ```bash
-git clone https://github.com/fastrepl/anarlog.git
-cd anarlog/packaging/aur/anarlog-bin
+git clone https://github.com/PlaybookMediaLLC/shots-founder-hub.git
+cd shots-founder-hub/packaging/aur/shots-founder-hub-bin
 makepkg -si
 ```
 
@@ -104,18 +104,18 @@ The PKGBUILD downloads the stable DEB for your architecture, verifies its checks
 
 ## Platform differences
 
-- Apple Calendar integration is available on macOS. Google Calendar works through your Anarlog account on every supported platform.
-- Soniqo, Apple Speech, and On-device file transcription require Apple Silicon. Apple Speech also appears only when a compatible Mac running macOS 26 reports the required system assets. On other systems, choose Anarlog Cloud or configure a supported transcription provider. See [how to use on-device models](/help#use-on-device-models) and [local models for hour-long calls](/help#local-model-hour-long-calls).
-- Windows and Linux support are in beta. Include your operating system and Anarlog version when you report a platform-specific problem.
+- Apple Calendar integration is available on macOS. Google Calendar works through your Shots Founder Hub account on every supported platform.
+- Soniqo, Apple Speech, and On-device file transcription require Apple Silicon. Apple Speech also appears only when a compatible Mac running macOS 26 reports the required system assets. On other systems, choose Shots Founder Hub Cloud or configure a supported transcription provider. See [how to use on-device models](/help#use-on-device-models) and [local models for hour-long calls](/help#local-model-hour-long-calls).
+- Windows and Linux support are in beta. Include your operating system and Shots Founder Hub version when you report a platform-specific problem.
 - Mobile beta testing is available through [TestFlight](https://testflight.apple.com/join/y7WJCXvG) on iOS and [Google Play beta](https://play.google.com/apps/testing/so.anarlog.mobile) on Android.
 
 When installation is complete, continue to [Your first meeting](/quickstart). If the app does not open or cannot capture audio, see [Troubleshooting](/troubleshooting).
 
 ## Nightly
 
-Anarlog Nightly is no longer published and does not receive updates. Install
-the [stable app](https://anarlog.so/download/) and quit Nightly before opening
-it: both apps use the same local notes database, and Anarlog does not open while
+Shots Founder Hub Nightly is no longer published and does not receive updates. Install
+the [stable app](https://shots.playbookmedia.io/download/) and quit Nightly before opening
+it: both apps use the same local notes database, and Shots Founder Hub does not open while
 the other app is running. Sign-in and app settings stay separate per app.
 
 If stable shows an update prompt instead of opening your notes, Nightly already
@@ -128,5 +128,5 @@ that change. Your data is not modified by the older app.
   or recovery key to resolve a version mismatch; see [Cloud sync troubleshooting](/sync).
 </Warning>
 
-If you installed the bundled CLI from Nightly, its command is `anarlog-nightly`;
-`anarlog` uses stable.
+If you installed the bundled CLI from Nightly, its command is `sfh-nightly`;
+`sfh` uses stable.

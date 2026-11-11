@@ -212,7 +212,9 @@ pub async fn import_recording(
     let vault: Option<String> = sqlx::query_scalar("SELECT vault_path FROM local_recording_import_worker WHERE updated_at > unixepoch() - 15 AND vault_path != '' ORDER BY updated_at DESC LIMIT 1")
         .fetch_optional(pool).await.map_err(database)?;
     let vault = vault.ok_or_else(|| {
-        Error::Invalid("Open the updated Anarlog desktop app before importing recordings".into())
+        Error::Invalid(
+            "Open the updated Shots Founder Hub desktop app before importing recordings".into(),
+        )
     })?;
     let source = tokio::fs::canonicalize(&input.file_path)
         .await

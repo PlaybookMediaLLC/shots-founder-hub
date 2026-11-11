@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Anarlog",
+    "name": "Shots Founder Hub",
     "slug": "anarlog-mobile",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -35,14 +35,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Anarlog uses the microphone to capture and transcribe your meetings.",
+          "microphonePermission": "Shots Founder Hub uses the microphone to capture and transcribe your meetings.",
           "enableBackgroundRecording": true,
           "enableBackgroundPlayback": false
         }
       ],
       "expo-widgets",
       "expo-secure-store",
-      ["expo-local-authentication", { "faceIDPermission": "Use Face ID to unlock your Anarlog notes." }],
+      ["expo-local-authentication", { "faceIDPermission": "Use Face ID to unlock your Shots Founder Hub notes." }],
       "@sentry/react-native/expo"
     ],
     "experiments": {

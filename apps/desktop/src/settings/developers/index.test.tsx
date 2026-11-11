@@ -105,13 +105,13 @@ import {
 describe("buildMcpConfiguration", () => {
   it("uses the exact installed CLI path", () => {
     const configuration = JSON.parse(
-      buildMcpConfiguration("/Users/test/.local/bin/anarlog"),
+      buildMcpConfiguration("/Users/test/.local/bin/sfh"),
     );
 
     expect(configuration).toEqual({
       mcpServers: {
-        anarlog: {
-          command: "/Users/test/.local/bin/anarlog",
+        sfh: {
+          command: "/Users/test/.local/bin/sfh",
           args: ["mcp"],
         },
       },
@@ -124,12 +124,12 @@ describe("getCliInstallNotification", () => {
     expect(
       getCliInstallNotification({
         supported: true,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "installed",
         details: "Installed.",
       }),
-    ).toEqual({ type: "success", message: "anarlog is ready to use" });
+    ).toEqual({ type: "success", message: "sfh is ready to use" });
   });
 
   it.each(["resource_missing", "unsupported"] as const)(
@@ -138,8 +138,8 @@ describe("getCliInstallNotification", () => {
       expect(
         getCliInstallNotification({
           supported: false,
-          commandName: "anarlog",
-          installPath: "/Users/test/.local/bin/anarlog",
+          commandName: "sfh",
+          installPath: "/Users/test/.local/bin/sfh",
           state,
           details: "The CLI is unavailable in this build.",
         }),
@@ -190,11 +190,11 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: true,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "installed",
         details:
-          "Installed at /Users/test/.local/bin/anarlog and managed by Anarlog.",
+          "Installed at /Users/test/.local/bin/sfh and managed by Shots Founder Hub.",
       },
     });
 
@@ -210,19 +210,17 @@ describe("SettingsDevelopers", () => {
     expect(await screen.findByText("Reinstall")).toBeTruthy();
     expect(screen.getByLabelText("Installed")).toBeTruthy();
     expect(screen.queryByText("Installed")).toBeNull();
-    expect(
-      screen.queryByText(/\/Users\/test\/\.local\/bin\/anarlog/),
-    ).toBeNull();
-    expect(screen.queryByText("anarlog --json meetings list")).toBeNull();
-    expect(screen.queryByText("anarlog mcp")).toBeNull();
+    expect(screen.queryByText(/\/Users\/test\/\.local\/bin\/sfh/)).toBeNull();
+    expect(screen.queryByText("sfh --json meetings list")).toBeNull();
+    expect(screen.queryByText("sfh mcp")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Copy config" }));
 
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     expect(JSON.parse(writeText.mock.calls[0][0])).toEqual({
       mcpServers: {
-        anarlog: {
-          command: "/Users/test/.local/bin/anarlog",
+        sfh: {
+          command: "/Users/test/.local/bin/sfh",
           args: ["mcp"],
         },
       },
@@ -234,8 +232,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog-dev",
-        installPath: "/Users/test/.local/bin/anarlog-dev",
+        commandName: "sfh-dev",
+        installPath: "/Users/test/.local/bin/sfh-dev",
         state: "unsupported",
         details: "Bundled CLI installation is currently available on macOS.",
       },
@@ -255,7 +253,7 @@ describe("SettingsDevelopers", () => {
     });
     expect(copyButton.hasAttribute("disabled")).toBe(true);
     expect(
-      screen.queryByText(/\/Users\/test\/\.local\/bin\/anarlog-dev/),
+      screen.queryByText(/\/Users\/test\/\.local\/bin\/sfh-dev/),
     ).toBeNull();
   });
 
@@ -264,8 +262,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "unsupported",
         details: "Unavailable.",
       },
@@ -324,8 +322,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "unsupported",
         details: "Unavailable.",
       },
@@ -378,8 +376,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "unsupported",
         details: "Unavailable.",
       },
@@ -425,8 +423,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "unsupported",
         details: "Unavailable.",
       },
@@ -451,7 +449,7 @@ describe("SettingsDevelopers", () => {
     expect(screen.getByText(/server-readable copy/)).toBeTruthy();
     expect(mocks.getCloudApiSettings).not.toHaveBeenCalled();
     expect(mocks.toastWarning).toHaveBeenCalledWith(
-      "This requires Anarlog Pro",
+      "This requires Shots Founder Hub Pro",
       {
         action: {
           label: "Upgrade",
@@ -467,8 +465,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "unsupported",
         details: "Unavailable.",
       },
@@ -481,28 +479,28 @@ describe("SettingsDevelopers", () => {
           displayName: "Claude Code",
           detected: true,
           installed: true,
-          skillPath: "/Users/test/.claude/skills/anarlog",
+          skillPath: "/Users/test/.claude/skills/sfh",
         },
         {
           agent: "codex",
           displayName: "Codex",
           detected: true,
           installed: false,
-          skillPath: "/Users/test/.codex/skills/anarlog",
+          skillPath: "/Users/test/.codex/skills/sfh",
         },
         {
           agent: "cursor",
           displayName: "Cursor",
           detected: false,
           installed: false,
-          skillPath: "/Users/test/.cursor/skills/anarlog",
+          skillPath: "/Users/test/.cursor/skills/sfh",
         },
         {
           agent: "opencode",
           displayName: "OpenCode",
           detected: true,
           installed: false,
-          skillPath: "/Users/test/.config/opencode/skills/anarlog",
+          skillPath: "/Users/test/.config/opencode/skills/sfh",
         },
       ],
     });
@@ -558,7 +556,7 @@ describe("SettingsDevelopers", () => {
     expect(mocks.installAgentSkill).not.toHaveBeenCalledWith("cursor");
     await waitFor(() =>
       expect(mocks.toastSuccess).toHaveBeenCalledWith(
-        "Anarlog skill added to 3 agents",
+        "Shots Founder Hub skill added to 3 agents",
       ),
     );
   });
@@ -568,8 +566,8 @@ describe("SettingsDevelopers", () => {
       status: "ok",
       data: {
         supported: false,
-        commandName: "anarlog",
-        installPath: "/Users/test/.local/bin/anarlog",
+        commandName: "sfh",
+        installPath: "/Users/test/.local/bin/sfh",
         state: "unsupported",
         details: "Unavailable.",
       },
@@ -582,7 +580,7 @@ describe("SettingsDevelopers", () => {
           displayName: "Codex",
           detected: true,
           installed: false,
-          skillPath: "/Users/test/.codex/skills/anarlog",
+          skillPath: "/Users/test/.codex/skills/sfh",
         },
       ],
     });
@@ -593,7 +591,7 @@ describe("SettingsDevelopers", () => {
         displayName: "Codex",
         detected: true,
         installed: true,
-        skillPath: "/Users/test/.codex/skills/anarlog",
+        skillPath: "/Users/test/.codex/skills/sfh",
       },
     });
 
@@ -613,7 +611,7 @@ describe("SettingsDevelopers", () => {
     );
     await waitFor(() =>
       expect(mocks.toastSuccess).toHaveBeenCalledWith(
-        "Anarlog skill added to Codex",
+        "Shots Founder Hub skill added to Codex",
       ),
     );
   });

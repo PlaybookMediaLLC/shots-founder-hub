@@ -1,4 +1,4 @@
-# Anarlog documentation
+# Shots Founder Hub documentation
 
 This Mintlify project is published at [docs.anarlog.so](https://docs.anarlog.so).
 
@@ -10,7 +10,7 @@ Configure the Mintlify project with `docs/` as its documentation directory and `
 2. Wait for both records and TLS provisioning to verify.
 3. Point the `docs` CNAME to the target shown by Mintlify.
 
-The website redirects the previous `anarlog.so/docs/*` routes to the matching path on the custom domain.
+The website redirects its `/docs` routes to the Shots documentation at `https://shots.playbookmedia.io/docs`.
 
 ## Local preview
 
@@ -22,7 +22,7 @@ cd docs
 mint dev
 ```
 
-Update `docs.json` whenever a page is added, moved, or removed. Keep CLI and MCP reference content aligned with `apps/cli/src/cli.rs` and `apps/cli/src/mcp.rs`. Mintlify publishes the custom agent skill from `skill.md`; keep it aligned with `../skills/anarlog/`.
+Update `docs.json` whenever a page is added, moved, or removed. Keep CLI and MCP reference content aligned with `apps/cli/src/cli.rs` and `apps/cli/src/mcp.rs`. Mintlify publishes the custom agent skill from `skill.md`; keep it aligned with `../skills/sfh/`.
 
 Before deploying, run:
 

@@ -1,14 +1,14 @@
 {
-  "name": "fastrepl",
+  "name": "playbook",
   "interface": {
-    "displayName": "Fastrepl"
+    "displayName": "Playbook Media"
   },
   "plugins": [
     {
-      "name": "anarlog",
+      "name": "sfh",
       "source": {
         "source": "local",
-        "path": "./agent-plugins/anarlog"
+        "path": "./agent-plugins/sfh"
       },
       "policy": {
         "installation": "AVAILABLE",

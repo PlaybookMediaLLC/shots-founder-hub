@@ -19,7 +19,7 @@ export const env = {
   supabaseUrl: shotsUrl ? getShotsCloudUrl(apiUrl) : read("supabaseUrl"),
   supabaseAnonKey: shotsUrl ? "shots-founder-hub" : read("supabaseAnonKey"),
   apiUrl,
-  appUrl: read("appUrl", "https://anarlog.so"),
+  appUrl: read("appUrl", "https://shots.playbookmedia.io"),
   posthogApiKey: read("posthogApiKey"),
   posthogHost: read("posthogHost", "https://us.i.posthog.com"),
   sentryDsn: read("sentryDsn"),

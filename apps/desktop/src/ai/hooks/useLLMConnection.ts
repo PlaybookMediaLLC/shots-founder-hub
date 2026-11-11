@@ -47,8 +47,8 @@ import { useConfigValues } from "~/shared/config";
 // APP_CATEGORIES, which only cover the "anarlog" hosted-provider case (it
 // routes through apps/api's llm-proxy); this BYOK "openrouter" case talks to
 // openrouter.ai directly from the client and needs its own headers.
-const OPENROUTER_APP_URL = "https://anarlog.so";
-const OPENROUTER_APP_NAME = "Anarlog";
+const OPENROUTER_APP_URL = "https://shots.playbookmedia.io";
+const OPENROUTER_APP_NAME = "Shots Founder Hub";
 const OPENROUTER_APP_CATEGORIES = "writing-assistant,personal-agent";
 
 type LanguageModelV3 = Parameters<typeof wrapLanguageModel>[0]["model"];

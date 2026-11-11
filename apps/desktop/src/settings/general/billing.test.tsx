@@ -310,7 +310,7 @@ describe("SettingsBilling", () => {
 
     await waitFor(() =>
       expect(mocks.openUrl).toHaveBeenCalledWith(
-        "https://anarlog.so/enterprise/",
+        "https://shots.playbookmedia.io/enterprise",
         null,
       ),
     );
@@ -326,7 +326,9 @@ describe("SettingsBilling", () => {
       screen.queryByRole("button", { name: "Sign in for Pro" }),
     ).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Sign in to Anarlog" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Sign in to Shots Founder Hub" }),
+    );
 
     expect(mocks.openNew).toHaveBeenCalledWith({
       type: "settings",

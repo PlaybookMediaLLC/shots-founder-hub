@@ -24,7 +24,7 @@ function getLocalModelIcon(model: string): ModelIconSpec | null {
   if (value === "cloud") {
     return {
       label: "A",
-      title: "Anarlog Pro",
+      title: "Shots Founder Hub Pro",
       imageSrc: ANARLOG_ICON_SRC,
     };
   }

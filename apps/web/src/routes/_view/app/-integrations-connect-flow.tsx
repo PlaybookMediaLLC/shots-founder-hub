@@ -309,7 +309,8 @@ export function ConnectFlow({ sessionToken }: { sessionToken?: string } = {}) {
       {isConnectedCalendar && !isConnecting && status !== "success" && (
         <ul className="flex list-disc flex-col gap-2 pl-5 text-left text-sm leading-6 text-neutral-600">
           <li>
-            Read-only access — Anarlog can’t create, edit, or delete events.
+            Read-only access — Shots Founder Hub can’t create, edit, or delete
+            events.
           </li>
           <li>
             Data passes through Nango’s encrypted proxy and stays on your
@@ -348,10 +349,7 @@ export function ConnectFlow({ sessionToken }: { sessionToken?: string } = {}) {
             Privacy Policy
           </a>{" "}
           and{" "}
-          <a
-            className="underline"
-            href="https://docs.anarlog.so/calendar#manage-or-delete-connected-calendar-data"
-          >
+          <a className="underline" href="https://shots.playbookmedia.io/docs">
             calendar data instructions
           </a>
           .

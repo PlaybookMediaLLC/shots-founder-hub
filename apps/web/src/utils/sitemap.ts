@@ -22,7 +22,7 @@ export function getSitemap(): Sitemap<TRoutes | "/security/" | "/about/"> {
   const slugs = getArticleSlugs();
 
   return {
-    siteUrl: "https://anarlog.so",
+    siteUrl: "https://shots.playbookmedia.io",
     defaultPriority: 0.5,
     defaultChangeFreq: "monthly",
     routes: {

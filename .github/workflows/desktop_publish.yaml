@@ -130,13 +130,13 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: nsis-x86_64
-          output: anarlog-windows-x86_64-setup.exe
+          output: shots-founder-hub-windows-x86_64-setup.exe
           key: ${{ secrets.CN_API_KEY }}
       - shell: pwsh
         env:
           WINDOWS_SIGNER_ORGANIZATION: ${{ vars.WINDOWS_SIGNER_ORGANIZATION }}
         run: |
-          $signature = Get-AuthenticodeSignature "anarlog-windows-x86_64-setup.exe"
+          $signature = Get-AuthenticodeSignature "shots-founder-hub-windows-x86_64-setup.exe"
           if ($signature.Status -ne "Valid") {
             throw "Invalid Windows Authenticode signature: $($signature.Status)"
           }
@@ -359,7 +359,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: dmg-aarch64
-          output: anarlog-macos-aarch64.dmg
+          output: shots-founder-hub-macos-aarch64.dmg
           key: ${{ secrets.CN_API_KEY }}
       - id: download-macos-x86_64
         uses: ./.github/actions/cn_download
@@ -368,7 +368,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: dmg-x86_64
-          output: anarlog-macos-x86_64.dmg
+          output: shots-founder-hub-macos-x86_64.dmg
           key: ${{ secrets.CN_API_KEY }}
       - id: download-linux-x86_64-appimage
         if: ${{ needs.parse.outputs.include_linux == 'true' }}
@@ -378,7 +378,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: appimage-x86_64
-          output: anarlog-linux-x86_64.AppImage
+          output: shots-founder-hub-linux-x86_64.AppImage
           key: ${{ secrets.CN_API_KEY }}
       - id: download-linux-x86_64-deb
         if: ${{ needs.parse.outputs.include_linux == 'true' }}
@@ -388,7 +388,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: debian-x86_64
-          output: anarlog-linux-x86_64.deb
+          output: shots-founder-hub-linux-x86_64.deb
           key: ${{ secrets.CN_API_KEY }}
       - id: download-linux-aarch64-appimage
         if: ${{ needs.parse.outputs.include_linux == 'true' }}
@@ -398,7 +398,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: appimage-aarch64
-          output: anarlog-linux-aarch64.AppImage
+          output: shots-founder-hub-linux-aarch64.AppImage
           key: ${{ secrets.CN_API_KEY }}
       - id: download-linux-aarch64-deb
         if: ${{ needs.parse.outputs.include_linux == 'true' }}
@@ -408,7 +408,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: debian-aarch64
-          output: anarlog-linux-aarch64.deb
+          output: shots-founder-hub-linux-aarch64.deb
           key: ${{ secrets.CN_API_KEY }}
       - id: download-windows-x86_64
         if: ${{ needs.parse.outputs.include_windows == 'true' }}
@@ -418,7 +418,7 @@ jobs:
           version: ${{ needs.parse.outputs.version }}
           channel: ${{ needs.parse.outputs.channel }}
           platform: nsis-x86_64
-          output: anarlog-windows-x86_64-setup.exe
+          output: shots-founder-hub-windows-x86_64-setup.exe
           key: ${{ secrets.CN_API_KEY }}
       - name: Verify GitHub release assets against provenance
         env:
@@ -455,16 +455,16 @@ jobs:
             cp "$source" "$ASSET_DIR/$asset_id"
           }
 
-          copy_asset "$MACOS_ARM64_ID" "anarlog-macos-aarch64.dmg"
-          copy_asset "$MACOS_X64_ID" "anarlog-macos-x86_64.dmg"
+          copy_asset "$MACOS_ARM64_ID" "shots-founder-hub-macos-aarch64.dmg"
+          copy_asset "$MACOS_X64_ID" "shots-founder-hub-macos-x86_64.dmg"
           if [[ "$INCLUDE_LINUX" == "true" ]]; then
-            copy_asset "$LINUX_X64_APPIMAGE_ID" "anarlog-linux-x86_64.AppImage"
-            copy_asset "$LINUX_X64_DEB_ID" "anarlog-linux-x86_64.deb"
-            copy_asset "$LINUX_ARM64_APPIMAGE_ID" "anarlog-linux-aarch64.AppImage"
-            copy_asset "$LINUX_ARM64_DEB_ID" "anarlog-linux-aarch64.deb"
+            copy_asset "$LINUX_X64_APPIMAGE_ID" "shots-founder-hub-linux-x86_64.AppImage"
+            copy_asset "$LINUX_X64_DEB_ID" "shots-founder-hub-linux-x86_64.deb"
+            copy_asset "$LINUX_ARM64_APPIMAGE_ID" "shots-founder-hub-linux-aarch64.AppImage"
+            copy_asset "$LINUX_ARM64_DEB_ID" "shots-founder-hub-linux-aarch64.deb"
           fi
           if [[ "$INCLUDE_WINDOWS" == "true" ]]; then
-            copy_asset "$WINDOWS_X64_ID" "anarlog-windows-x86_64-setup.exe"
+            copy_asset "$WINDOWS_X64_ID" "shots-founder-hub-windows-x86_64-setup.exe"
           fi
 
           PLATFORM_ASSET_IDS=$(jq -cn \
@@ -505,13 +505,13 @@ jobs:
         uses: ./.github/actions/generate_checksums
         with:
           files: |
-            anarlog-macos-aarch64.dmg
-            anarlog-macos-x86_64.dmg
-            ${{ needs.parse.outputs.include_linux == 'true' && 'anarlog-linux-x86_64.AppImage' || '' }}
-            ${{ needs.parse.outputs.include_linux == 'true' && 'anarlog-linux-x86_64.deb' || '' }}
-            ${{ needs.parse.outputs.include_linux == 'true' && 'anarlog-linux-aarch64.AppImage' || '' }}
-            ${{ needs.parse.outputs.include_linux == 'true' && 'anarlog-linux-aarch64.deb' || '' }}
-            ${{ needs.parse.outputs.include_windows == 'true' && 'anarlog-windows-x86_64-setup.exe' || '' }}
+            shots-founder-hub-macos-aarch64.dmg
+            shots-founder-hub-macos-x86_64.dmg
+            ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-x86_64.AppImage' || '' }}
+            ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-x86_64.deb' || '' }}
+            ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-aarch64.AppImage' || '' }}
+            ${{ needs.parse.outputs.include_linux == 'true' && 'shots-founder-hub-linux-aarch64.deb' || '' }}
+            ${{ needs.parse.outputs.include_windows == 'true' && 'shots-founder-hub-windows-x86_64-setup.exe' || '' }}
       - id: release-assets
         env:
           CHECKSUM_FILES: ${{ steps.checksums.outputs.checksum_files }}
@@ -519,19 +519,19 @@ jobs:
           INCLUDE_WINDOWS: ${{ needs.parse.outputs.include_windows }}
         run: |
           files=(
-            "anarlog-macos-aarch64.dmg"
-            "anarlog-macos-x86_64.dmg"
+            "shots-founder-hub-macos-aarch64.dmg"
+            "shots-founder-hub-macos-x86_64.dmg"
           )
           if [[ "$INCLUDE_LINUX" == "true" ]]; then
             files+=(
-              "anarlog-linux-x86_64.AppImage"
-              "anarlog-linux-x86_64.deb"
-              "anarlog-linux-aarch64.AppImage"
-              "anarlog-linux-aarch64.deb"
+              "shots-founder-hub-linux-x86_64.AppImage"
+              "shots-founder-hub-linux-x86_64.deb"
+              "shots-founder-hub-linux-aarch64.AppImage"
+              "shots-founder-hub-linux-aarch64.deb"
             )
           fi
           if [[ "$INCLUDE_WINDOWS" == "true" ]]; then
-            files+=("anarlog-windows-x86_64-setup.exe")
+            files+=("shots-founder-hub-windows-x86_64-setup.exe")
           fi
 
           artifact_files=$(IFS=,; echo "${files[*]}")
@@ -540,7 +540,7 @@ jobs:
         env:
           RELEASE_VERSION: ${{ needs.parse.outputs.version }}
         run: |
-          echo "value=https://anarlog.so/changelog/desktop/$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "value=https://shots.playbookmedia.io/changelog/desktop/$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
       - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         with:
           tag: desktop_v${{ needs.parse.outputs.version }}
@@ -556,8 +556,8 @@ jobs:
         env:
           VERSION: ${{ needs.parse.outputs.version }}
         run: |
-          package_url="https://github.com/$GITHUB_REPOSITORY/releases/download/desktop_v$VERSION/anarlog-windows-x86_64-setup.exe"
-          package_sha256=$(sha256sum anarlog-windows-x86_64-setup.exe | cut -d ' ' -f 1)
+          package_url="https://github.com/$GITHUB_REPOSITORY/releases/download/desktop_v$VERSION/shots-founder-hub-windows-x86_64-setup.exe"
+          package_sha256=$(sha256sum shots-founder-hub-windows-x86_64-setup.exe | cut -d ' ' -f 1)
           {
             echo "## Microsoft Store submission"
             echo "- Package URL: \`$package_url\`"
@@ -578,7 +578,6 @@ jobs:
       submit_to_stores: true
     secrets:
       AZURE_AD_APPLICATION_SECRET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
-      CN_API_KEY: ${{ secrets.CN_API_KEY }}
       SELLER_ID: ${{ secrets.SELLER_ID }}
 
   linux-package-bump:
@@ -606,7 +605,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/apt-packages"
           gh release download "desktop_v$VERSION" \
-            --pattern "anarlog-linux-*.deb" \
+            --pattern "shots-founder-hub-linux-*.deb" \
             --dir "$RUNNER_TEMP/apt-packages"
           published_at=$(gh release view "desktop_v$VERSION" \
             --json publishedAt \
@@ -631,7 +630,7 @@ jobs:
             exit 1
           fi
           public_fingerprint=$(gpg --batch --with-colons --show-keys \
-            apps/web/public/apt/anarlog-archive-keyring.asc \
+            apps/web/public/apt/shots-founder-hub-archive-keyring.asc \
             | awk -F: '$1 == "fpr" { print $10; exit }')
           if [[ "$public_fingerprint" != "$APT_REPOSITORY_GPG_FINGERPRINT" ]]; then
             echo "::error::Published APT key $public_fingerprint does not match $APT_REPOSITORY_GPG_FINGERPRINT"
@@ -642,8 +641,8 @@ jobs:
           cp -R "$release_dir" "$RUNNER_TEMP/previous-apt"
           node scripts/update-apt-repository.mjs \
             --version "$VERSION" \
-            --amd64 "$RUNNER_TEMP/apt-packages/anarlog-linux-x86_64.deb" \
-            --arm64 "$RUNNER_TEMP/apt-packages/anarlog-linux-aarch64.deb" \
+            --amd64 "$RUNNER_TEMP/apt-packages/shots-founder-hub-linux-x86_64.deb" \
+            --arm64 "$RUNNER_TEMP/apt-packages/shots-founder-hub-linux-aarch64.deb" \
             --date "$PUBLISHED_AT"
 
           if cmp -s "$release_dir/Release" "$RUNNER_TEMP/previous-apt/Release"; then
@@ -665,7 +664,7 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_GITHUB_TOKEN }}
           VERSION: ${{ needs.parse.outputs.version }}
         run: |
-          if git diff --quiet -- packaging/aur/anarlog-bin apps/web/public/apt; then
+          if git diff --quiet -- packaging/aur/shots-founder-hub-bin apps/web/public/apt; then
             echo "Linux package metadata already tracks $VERSION"
             echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
             exit 0
@@ -677,7 +676,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add packaging/aur/anarlog-bin apps/web/public/apt
+          git add packaging/aur/shots-founder-hub-bin apps/web/public/apt
           git commit -m "chore(packaging): publish Linux packages for $VERSION" \
             -m "Refresh the AUR package and signed APT repository metadata for the desktop_v$VERSION release."
           head_sha=$(git rev-parse HEAD)
@@ -758,4 +757,4 @@ jobs:
           VERSION: ${{ needs.parse.outputs.version }}
         run: |
           node scripts/verify-apt-repository.mjs --version "$VERSION"
-          echo "Signed APT repository for $VERSION is live at https://anarlog.so/apt/ (amd64 and arm64)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Signed APT repository for $VERSION is live at https://shots.playbookmedia.io/apt/ (amd64 and arm64)." >> "$GITHUB_STEP_SUMMARY"

@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>so.anarlog.Anarlog</id>
 
-  <name>Anarlog</name>
+  <name>Shots Founder Hub</name>
   <summary>The AI notepad for private meetings</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
@@ -10,7 +10,7 @@
 
   <description>
     <p>
-      Anarlog is a private meeting notepad that records microphone and computer
+      Shots Founder Hub is a private meeting notepad that records microphone and computer
       audio, transcribes conversations, and keeps notes alongside the transcript.
     </p>
     <p>Features include:</p>
@@ -25,13 +25,13 @@
 
   <launchable type="desktop-id">so.anarlog.Anarlog.desktop</launchable>
 
-  <url type="homepage">https://anarlog.so</url>
-  <url type="bugtracker">https://github.com/fastrepl/anarlog/issues</url>
-  <url type="vcs-browser">https://github.com/fastrepl/anarlog</url>
-  <url type="contribute">https://github.com/fastrepl/anarlog/blob/main/CONTRIBUTING.md</url>
+  <url type="homepage">https://shots.playbookmedia.io</url>
+  <url type="bugtracker">https://github.com/PlaybookMediaLLC/shots-founder-hub/issues</url>
+  <url type="vcs-browser">https://github.com/PlaybookMediaLLC/shots-founder-hub</url>
+  <url type="contribute">https://github.com/PlaybookMediaLLC/shots-founder-hub/blob/main/CONTRIBUTING.md</url>
 
-  <developer id="com.fastrepl">
-    <name>Fastrepl</name>
+  <developer id="io.playbookmedia">
+    <name>Playbook Media Interactive LLC</name>
   </developer>
 
   <branding>

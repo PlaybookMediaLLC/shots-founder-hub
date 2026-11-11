@@ -20,11 +20,11 @@ import {
 
 function packageFixture(architecture, marker) {
   return {
-    control: `Package: anarlog
+    control: `Package: shots-founder-hub
 Version: 1.4.9
 Architecture: ${architecture}
 Maintainer: Fastrepl <support@anarlog.so>
-Description: Anarlog Desktop App
+Description: Shots Founder Hub Desktop App
 `,
     hashes: {
       md5: marker.repeat(32),
@@ -47,12 +47,12 @@ test("builds package indexes that redirect through immutable release paths", () 
     version: "1.4.9",
   });
 
-  assert.match(index, /^Package: anarlog$/m);
+  assert.match(index, /^Package: shots-founder-hub$/m);
   assert.match(index, /^Version: 1\.4\.9$/m);
   assert.match(index, /^Architecture: amd64$/m);
   assert.match(
     index,
-    /^Filename: pool\/desktop_v1\.4\.9\/amd64\/anarlog\.deb$/m,
+    /^Filename: pool\/desktop_v1\.4\.9\/amd64\/shots-founder-hub\.deb$/m,
   );
   assert.match(index, /^Size: 318551982$/m);
   assert.match(index, new RegExp(`^SHA256: ${"a".repeat(64)}$`, "m"));
