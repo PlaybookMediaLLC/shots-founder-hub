@@ -201,7 +201,9 @@ describe("SQLite settings", () => {
       }),
     );
     expect(rows.get("theme")).toBe(JSON.stringify("light"));
-    expect(JSON.parse(rows.get("shots_settings_cache:user-a:device-a") ?? "null")).toEqual({
+    expect(
+      JSON.parse(rows.get("shots_settings_cache:user-a:device-a") ?? "null"),
+    ).toEqual({
       theme: "light",
     });
     expect((await getStoredSettingValues()).values.theme).toBe("light");

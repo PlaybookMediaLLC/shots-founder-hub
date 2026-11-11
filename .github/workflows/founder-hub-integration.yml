@@ -148,7 +148,7 @@ jobs:
       - name: Build the paired desktop automation binary
         run: pnpm -F @anlg/desktop tauri build --debug --bundles app --target aarch64-apple-darwin --config '{"identifier":"com.hyprnote.dev.ci"}' --features dev,devtools,automation
         env:
-          CI: 'false'
+          CI: "false"
           POSTHOG_API_KEY: phc_e2e
           VITE_API_URL: http://localhost:4408
           VITE_SHOTS_URL: http://localhost:4401

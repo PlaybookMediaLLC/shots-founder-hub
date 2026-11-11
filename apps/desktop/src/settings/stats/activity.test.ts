@@ -184,7 +184,11 @@ describe("personal activity", () => {
       0,
       "all",
     );
-    expect(stats).toMatchObject({ conversations: 1, totalConversations: 1, activeDays: 1 });
+    expect(stats).toMatchObject({
+      conversations: 1,
+      totalConversations: 1,
+      activeDays: 1,
+    });
     expect(JSON.stringify(stats)).not.toContain("private-session-id");
     expect(JSON.stringify(stats)).not.toContain("transcript");
   });
