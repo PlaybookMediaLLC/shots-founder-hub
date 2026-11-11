@@ -18,6 +18,7 @@ import {
   validateProviderConfig,
   normalizeTranscriptionResponse,
   providersFor,
+  isBuiltInProvider,
   isSubscriptionProvider,
 } from "./providers-model.ts";
 
@@ -1541,7 +1542,7 @@ test("analytics opt-out aborts in-flight requests and prevents subsequent events
 test("every provider keeps its key on this device and restores its own setup", async () => {
   for (const kind of ["stt", "llm"]) {
     for (const definition of providersFor(kind).filter(
-      ({ id }) => id !== "anarlog" && !isSubscriptionProvider(id),
+      ({ id }) => !isBuiltInProvider(id) && !isSubscriptionProvider(id),
     )) {
       const tag = `${kind}/${definition.id}`;
       fixture.db.exec("DELETE FROM app_settings");
@@ -2581,4 +2582,25 @@ test("Venice model discovery excludes offline and non-text entries", () => {
     }),
     ["venice-uncensored"],
   );
+});
+
+test("Apple on-device transcription is selectable without a key while the default provider stays Anarlog", async () => {
+  assert.equal((await readProviderConfig(null, "stt")).provider, "anarlog");
+  fixture.verify = async () => {
+    throw Error("On-device transcription must not be verified remotely.");
+  };
+  await saveProviderConfig(
+    null,
+    "stt",
+    defaultProviderConfig("stt", "apple_speech"),
+  );
+  const apple = {
+    provider: "apple_speech",
+    baseUrl: "",
+    model: "apple-speech",
+  };
+  assert.deepEqual(await readProviderConfig(null, "stt"), apple);
+  assert.deepEqual(await resolveProvider("stt"), { ...apple, apiKey: "" });
+  assert.equal(fixture.keys.size, 0);
+  assert.deepEqual(fixture.requests, []);
 });

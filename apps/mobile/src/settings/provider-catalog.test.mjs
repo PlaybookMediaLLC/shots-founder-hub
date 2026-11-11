@@ -7,7 +7,11 @@ import {
   modelOptions,
   presetProviderModels,
 } from "./provider-model-catalog.ts";
-import { providersFor, isSubscriptionProvider } from "./providers-model.ts";
+import {
+  isBuiltInProvider,
+  providersFor,
+  isSubscriptionProvider,
+} from "./providers-model.ts";
 
 function desktopProviders(kind) {
   const path = new URL(
@@ -87,7 +91,7 @@ test("mobile catalogs include the desktop's remote API-key providers supported b
     const desktop = desktopProviders(kind);
     const mobile = providersFor(kind).filter(
       (provider) =>
-        provider.id !== "anarlog" && !isSubscriptionProvider(provider.id),
+        !isBuiltInProvider(provider.id) && !isSubscriptionProvider(provider.id),
     );
     assert.deepEqual(
       mobile.map((provider) => provider.id).sort(),

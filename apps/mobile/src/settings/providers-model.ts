@@ -8,6 +8,12 @@ export const TRANSCRIPTION_PROVIDERS = [
     model: "cloud",
   },
   {
+    id: "apple_speech",
+    name: "Apple (on device)",
+    baseUrl: "",
+    model: "apple-speech",
+  },
+  {
     id: "deepgram",
     name: "Deepgram",
     baseUrl: "https://api.deepgram.com/v1",
@@ -426,7 +432,8 @@ export function validateProviderConfig(
   config: ProviderConfig,
 ): ProviderConfig {
   const connection = validateProviderConnection(kind, config);
-  if (config.provider === "anarlog") return defaultProviderConfig(kind);
+  if (isBuiltInProvider(config.provider))
+    return defaultProviderConfig(kind, config.provider);
   let model = config.model.trim();
   // Nari retired its :free beta IDs on 2026-09-16 in favor of the GA models.
   if (config.provider === "nari" && /^qwen3-asr(?:-fast)?:free$/.test(model))
@@ -441,7 +448,7 @@ export function validateProviderConnection(
   config: { provider: string; baseUrl: string },
 ) {
   const definition = defaultProviderConfig(kind, config.provider);
-  if (config.provider === "anarlog") return definition;
+  if (isBuiltInProvider(config.provider)) return definition;
   let url: URL;
   try {
     url = new URL(definition.baseUrl || config.baseUrl.trim());
@@ -517,6 +524,11 @@ export function normalizeTranscriptionResponse(
       ],
     },
   };
+}
+
+// Desktop's builtIn providers: no API key, base URL or model to configure.
+export function isBuiltInProvider(provider: string) {
+  return provider === "anarlog" || provider === "apple_speech";
 }
 
 export function isOAuthSubscriptionProvider(

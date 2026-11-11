@@ -15,6 +15,7 @@ import { useAuth } from "@/auth/context";
 import { FieldGroup } from "@/settings/field-group";
 import { Button, ListItem, Text, TextInput } from "@/settings/fields";
 
+import OnDeviceSpeech from "../../modules/on-device-speech";
 import { SettingsPage } from "./components";
 import { createProviderAutosave } from "./provider-autosave";
 import { ProviderIcon } from "./provider-icon";
@@ -31,6 +32,7 @@ import {
 } from "./providers";
 import {
   defaultProviderConfig,
+  isBuiltInProvider,
   isOAuthSubscriptionProvider,
   providersFor,
   type ProviderConfig,
@@ -79,7 +81,9 @@ function ProviderForm({
   const auth = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const definitions = providersFor(kind).filter(({ id }) => id !== "anarlog");
+  const definitions = providersFor(kind).filter(
+    ({ id }) => !isBuiltInProvider(id),
+  );
   const setups = useQueries({
     queries: definitions.map(({ id }) => ({
       queryKey: ["provider-setup", account, kind, id],
@@ -98,7 +102,10 @@ function ProviderForm({
     ),
   );
   const providerOptions = providersFor(kind).filter(
-    ({ id }) => id === "anarlog" || configuredIds.has(id),
+    ({ id }) =>
+      id === "anarlog" ||
+      (id === "apple_speech" && OnDeviceSpeech !== null) ||
+      configuredIds.has(id),
   );
   const visibleProvider = providerOptions.some(
     ({ id }) => id === selectedProvider,
@@ -158,14 +165,14 @@ function ProviderForm({
                 delete modelDrafts.current[provider];
               selectedProviderRef.current = provider;
               setSelectedProvider(provider);
-              setExpanded(provider === "anarlog" ? null : provider);
+              setExpanded(isBuiltInProvider(provider) ? null : provider);
               select.mutate({ provider, model: modelDrafts.current[provider] });
             }}
           />
         </Row>
         {!visibleProvider ? (
           <Text>Choose a configured provider to select a model.</Text>
-        ) : selectedProvider === "anarlog" ? (
+        ) : isBuiltInProvider(selectedProvider) ? (
           <Row alignment="center">
             <Text>Model</Text>
             <Spacer flexible />
@@ -209,7 +216,9 @@ function ProviderForm({
               ? select.error.message
               : selectedProvider === "anarlog"
                 ? "Included with your Pro trial or subscription. No API key needed."
-                : "Choose your model here. Configure connections below."}
+                : selectedProvider === "apple_speech"
+                  ? "Speech recognition runs on this iPhone after you stop recording. No API key needed."
+                  : "Choose your model here. Configure connections below."}
           </Text>
         </FieldGroup.SectionFooter>
       </FieldGroup.Section>

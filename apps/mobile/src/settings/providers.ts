@@ -13,6 +13,7 @@ import { execute, executeTransaction } from "@/db";
 
 import {
   defaultProviderConfig,
+  isBuiltInProvider,
   isOAuthSubscriptionProvider,
   providerStorageKey,
   validateProviderApiKey,
@@ -50,7 +51,7 @@ export async function readProviderKey(
   kind: ProviderKind,
   provider: string,
 ): Promise<string | null> {
-  if (provider === "anarlog") return null;
+  if (isBuiltInProvider(provider)) return null;
   return SecureStore.getItemAsync(
     providerStorageKey(accountId, kind, provider),
     secureOptions,
@@ -187,7 +188,7 @@ async function persistProviderConfig(
     : validateProviderConfig(kind, config);
   if (isOAuthSubscriptionProvider(normalized.provider)) {
     await resolveSubscriptionCredential(accountId, normalized.provider);
-  } else if (normalized.provider !== "anarlog") {
+  } else if (!isBuiltInProvider(normalized.provider)) {
     const key = validateProviderApiKey(
       apiKey?.trim() ||
         (await readProviderKey(accountId, kind, normalized.provider)) ||
@@ -277,6 +278,7 @@ export async function resolveProvider(kind: ProviderKind) {
     if (!supabase) return { ...config, apiKey: "" };
     throw new Error("Sign in to use Anarlog Pro.");
   }
+  if (config.provider === "apple_speech") return { ...config, apiKey: "" };
   const key = await readProviderKey(
     session?.user.id ?? null,
     kind,
