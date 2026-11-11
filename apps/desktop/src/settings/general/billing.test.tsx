@@ -368,7 +368,7 @@ describe("SettingsBilling", () => {
       isPaused: false,
       plan: "trial",
       trialDaysRemaining: 18,
-      trialEnd: new Date("2025-10-01T00:00:00Z"),
+      trialEnd: new Date(2027, 9, 1),
     };
 
     renderBilling();
@@ -376,7 +376,7 @@ describe("SettingsBilling", () => {
     expect(await screen.findByText("Plan limits")).toBeTruthy();
     expect(screen.getByText("Pro trial")).toBeTruthy();
     expect(screen.getByText("18 days left")).toBeTruthy();
-    expect(screen.getByText("Ends Oct 1, 2025")).toBeTruthy();
+    expect(screen.getByText("Ends Oct 1, 2027")).toBeTruthy();
   });
 
   it("shows synced device usage for Pro users", async () => {
@@ -393,7 +393,7 @@ describe("SettingsBilling", () => {
       isPaused: false,
       plan: "pro",
       trialDaysRemaining: null,
-      currentPeriodEnd: new Date("2025-10-15T00:00:00Z"),
+      currentPeriodEnd: new Date(2027, 9, 15),
     };
     mocks.requestSyncDevices.mockResolvedValue({
       devices: [{ deviceFingerprint: "device-a" }],
@@ -405,7 +405,7 @@ describe("SettingsBilling", () => {
 
     expect(await screen.findByText("Synced devices")).toBeTruthy();
     expect(screen.getByText("2 of 3 used")).toBeTruthy();
-    expect(screen.getByText(/renews Oct 15, 2025/)).toBeTruthy();
+    expect(screen.getByText(/renews Oct 15, 2027/)).toBeTruthy();
     expect(
       screen.getAllByRole("button", { name: "Manage billing" }),
     ).toHaveLength(1);

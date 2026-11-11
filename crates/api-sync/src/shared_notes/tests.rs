@@ -119,6 +119,7 @@ async fn verifies_and_sends_a_resend_shared_note_invitation_email() {
         .unwrap()
         .with_resend_api_base(reqwest::Url::parse(&format!("{}/", server.uri())).unwrap());
     let app = authenticated_router(SharedNotesState::new(config)).layer(Extension(AuthContext {
+        shots: None,
         token: "user-token".to_string(),
         claims: Claims {
             sub: OWNER_ID.to_string(),
@@ -191,6 +192,7 @@ async fn verifies_and_sends_a_workspace_invitation_email() {
         .unwrap()
         .with_resend_api_base(reqwest::Url::parse(&format!("{}/", server.uri())).unwrap());
     let app = authenticated_router(SharedNotesState::new(config)).layer(Extension(AuthContext {
+        shots: None,
         token: "user-token".to_string(),
         claims: Claims {
             sub: OWNER_ID.to_string(),
@@ -266,6 +268,7 @@ async fn authorizes_and_sends_a_meeting_recap_to_each_recipient() {
         .unwrap()
         .with_resend_api_base(reqwest::Url::parse(&format!("{}/", server.uri())).unwrap());
     let app = authenticated_router(SharedNotesState::new(config)).layer(Extension(AuthContext {
+        shots: None,
         token: "user-token".to_string(),
         claims: Claims {
             sub: OWNER_ID.to_string(),

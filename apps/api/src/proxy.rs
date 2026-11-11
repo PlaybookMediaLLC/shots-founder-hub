@@ -85,7 +85,7 @@ pub fn route(
     router.route_layer(middleware::from_fn_with_state(state, forward))
 }
 
-fn strip_hop_headers(headers: &mut HeaderMap) {
+pub(crate) fn strip_hop_headers(headers: &mut HeaderMap) {
     let connection_headers: Vec<_> = headers
         .get_all(header::CONNECTION)
         .iter()

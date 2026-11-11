@@ -128,7 +128,12 @@ impl FromStr for DeepLink {
         let query = parsed.query().unwrap_or("");
 
         match full_path.as_str() {
-            "auth/callback" => Ok(DeepLink::AuthCallback(serde_qs::from_str(query)?)),
+            "auth/callback" => {
+                let mut search: AuthCallbackSearch = serde_qs::from_str(query)?;
+                // PKCE validation must see the original redirect, issuer, and duplicate parameters.
+                search.raw_url = Some(s.to_string());
+                Ok(DeepLink::AuthCallback(search))
+            }
             "billing/refresh" => Ok(DeepLink::BillingRefresh(serde_qs::from_str(query)?)),
             "integration/callback" => Ok(DeepLink::IntegrationCallback(serde_qs::from_str(query)?)),
             "onboarding-demo/complete" => {
@@ -164,6 +169,11 @@ mod tests {
                 "ac_nf5hq",
                 "xYc5ZmNlqtWTu3BIbfbVQg",
             ),
+            (
+                "anarlog-dev://auth/callback?code=shots-code&state=shots-state&iss=https%3A%2F%2Fshots.example%2Fapi%2Fauth&raw_url=untrusted",
+                "shots-code",
+                "shots-state",
+            ),
         ] {
             let DeepLink::AuthCallback(search) = DeepLink::from_str(url).unwrap() else {
                 panic!("expected auth callback for {url}");
@@ -173,6 +183,8 @@ mod tests {
             assert!(search.refresh_token.is_empty(), "{url}");
             assert_eq!(search.code.as_deref(), Some(code), "{url}");
             assert_eq!(search.state.as_deref(), Some(state), "{url}");
+            assert_eq!(search.raw_url.as_deref(), Some(url));
+            assert!(!format!("{search:?}").contains(code));
         }
     }
 }

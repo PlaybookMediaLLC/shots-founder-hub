@@ -891,6 +891,7 @@ msgid "Beta"
 msgstr "Beta"
 
 #: src/settings/general/billing.tsx
+#: src/settings/shots.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Billing"
 msgstr "Billing"
@@ -2025,6 +2026,7 @@ msgid "Creating brief..."
 msgstr "Creating brief..."
 
 #: src/settings/crm/index.tsx
+#: src/settings/shots.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "CRM"
 msgstr "CRM"
@@ -3470,12 +3472,29 @@ msgid "Make the summary shorter."
 msgstr "Make the summary shorter."
 
 #: src/settings/general/billing.tsx
+#: src/settings/shots.tsx
 msgid "Manage billing"
 msgstr "Manage billing"
+
+#: src/settings/shots.tsx
+msgid "Manage CRM"
+msgstr "Manage CRM"
+
+#: src/settings/shots.tsx
+msgid "Manage CRM connections in Shots so Anarlog can use them."
+msgstr "Manage CRM connections in Shots so Anarlog can use them."
 
 #: src/settings/general/billing.tsx
 msgid "Manage or cancel your subscription in the billing portal."
 msgstr "Manage or cancel your subscription in the billing portal."
+
+#: src/settings/shots.tsx
+msgid "Manage referral invitations and rewards in Shots."
+msgstr "Manage referral invitations and rewards in Shots."
+
+#: src/settings/shots.tsx
+msgid "Manage referrals"
+msgstr "Manage referrals"
 
 #: src/settings/general/account.tsx
 msgid "Manage sign-in methods"
@@ -3488,6 +3507,10 @@ msgstr "Manage workspace billing"
 #: src/settings/general/account.tsx
 msgid "Manage your sign-in methods on the Anarlog website."
 msgstr "Manage your sign-in methods on the Anarlog website."
+
+#: src/settings/shots.tsx
+msgid "Manage your teams, invitations, and roles in Shots."
+msgstr "Manage your teams, invitations, and roles in Shots."
 
 #: src/settings/automations/google-drive-config.tsx
 msgid "Markdown (.md)"
@@ -4208,6 +4231,10 @@ msgstr "Open repository on GitHub"
 msgid "Open Settings"
 msgstr "Open Settings"
 
+#: src/settings/shots.tsx
+msgid "Open Shots settings"
+msgstr "Open Shots settings"
+
 #: src/resource-sharing/share-dialog.tsx
 #: src/settings/general/billing.tsx
 msgid "Open Teams"
@@ -4667,6 +4694,10 @@ msgstr "Redo"
 #: src/settings/referrals.tsx
 msgid "Refer friends, get a month free"
 msgstr "Refer friends, get a month free"
+
+#: src/settings/shots.tsx
+msgid "Referrals"
+msgstr "Referrals"
 
 #: src/settings/referrals.tsx
 msgid "Refresh"
@@ -5607,6 +5638,10 @@ msgstr "Sign in to share folders, templates, and automations."
 msgid "Sign in to share this note with others."
 msgstr "Sign in to share this note with others."
 
+#: src/settings/shots.tsx
+msgid "Sign in to Shots"
+msgstr "Sign in to Shots"
+
 #: src/settings/sync/index.tsx
 msgid "Sign in to use cloud sync"
 msgstr "Sign in to use cloud sync"
@@ -6067,6 +6102,7 @@ msgstr "Team seats"
 msgid "teammate@company.com"
 msgstr "teammate@company.com"
 
+#: src/settings/shots.tsx
 #: src/settings/team/index.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Teams"
@@ -6905,6 +6941,10 @@ msgstr "Your referrals"
 #: src/auth/context.tsx
 msgid "Your session has expired. Sign in again to reconnect."
 msgstr "Your session has expired. Sign in again to reconnect."
+
+#: src/settings/shots.tsx
+msgid "Your Shots workspace plan controls your Founder Hub access. Manage plans and payments in Shots."
+msgstr "Your Shots workspace plan controls your Founder Hub access. Manage plans and payments in Shots."
 
 #: src/services/enhancer/summary-notification.ts
 msgid "Your summary is ready."

@@ -52,6 +52,7 @@ vi.mock("~/db", () => ({
 }));
 
 import {
+  applyShotsSettingsSnapshot,
   getStoredSettingValues,
   initializeApplicationSettings,
   parseSettingRows,
@@ -61,6 +62,7 @@ import {
 } from "./queries";
 
 import { flushDatabaseWrites } from "~/db/write-queue";
+import { SETTING_DEFINITIONS, type SettingValues } from "~/settings/schema";
 import { usePendingSttSelection } from "~/store/zustand/pending-stt-selection";
 
 describe("SQLite settings", () => {
@@ -156,6 +158,55 @@ describe("SQLite settings", () => {
       current_stt_provider: "deepgram",
       current_stt_model: "",
     });
+  });
+
+  it("applies a Shots snapshot and re-reads the persisted setting rows", async () => {
+    const defaults = Object.fromEntries(
+      Object.entries(SETTING_DEFINITIONS).flatMap(([key, definition]) =>
+        "default" in definition ? [[key, definition.default]] : [],
+      ),
+    ) as SettingValues;
+    const local = { ...defaults, theme: "dark" } as SettingValues;
+    const rows = new Map(
+      Object.entries(local).map(([key, value]) => [key, JSON.stringify(value)]),
+    );
+    mocks.execute.mockImplementation(async (sql: string) =>
+      sql.includes("managed_app_settings")
+        ? []
+        : Array.from(rows, ([id, value_json]) => ({ id, value_json })),
+    );
+    mocks.executeTransaction.mockImplementation(async (statements) => {
+      for (const statement of statements) {
+        if (
+          statement.sql.includes("INSERT INTO app_settings") ||
+          statement.sql.includes("INSERT INTO synced_preferences")
+        ) {
+          rows.set(String(statement.params[0]), String(statement.params[1]));
+        }
+      }
+      return [1];
+    });
+
+    await applyShotsSettingsSnapshot(
+      local,
+      { theme: "light" },
+      "shots_settings_cache:user-a:device-a",
+      "user-a",
+      async () => true,
+    );
+
+    expect(mocks.executeTransaction.mock.calls[0]?.[0]).toContainEqual(
+      expect.objectContaining({
+        params: ["theme", JSON.stringify("light"), expect.any(String)],
+      }),
+    );
+    expect(rows.get("theme")).toBe(JSON.stringify("light"));
+    expect(
+      JSON.parse(rows.get("shots_settings_cache:user-a:device-a") ?? "null"),
+    ).toEqual({
+      theme: "light",
+    });
+    expect((await getStoredSettingValues()).values.theme).toBe("light");
   });
 
   it.each([

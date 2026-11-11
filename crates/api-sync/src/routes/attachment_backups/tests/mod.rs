@@ -38,9 +38,11 @@ fn timestamp_after(seconds: i64) -> String {
 
 fn test_state(server: &MockServer) -> AppState {
     AppState::new(SyncConfig {
-        project_url: server.uri(),
-        token_issuer_api_key: "issuer-key".to_string(),
-        database_id: "database-id".to_string(),
+        issuer: Some(crate::config::CloudsyncIssuer {
+            project_url: server.uri(),
+            token_issuer_api_key: "issuer-key".to_string(),
+            database_id: "database-id".to_string(),
+        }),
         legacy_database_id: None,
         protocol_mode: crate::config::CloudsyncProtocolMode::E2eeEnforced,
         desktop_transport: crate::config::CloudsyncTransport::SqliteSync,
@@ -53,6 +55,7 @@ fn test_state(server: &MockServer) -> AppState {
 
 fn test_router_with_state(state: AppState, is_pro: bool) -> axum::Router {
     router().with_state(state).layer(Extension(AuthContext {
+        shots: None,
         token: "user-token".to_string(),
         claims: Claims {
             sub: OWNER.to_string(),

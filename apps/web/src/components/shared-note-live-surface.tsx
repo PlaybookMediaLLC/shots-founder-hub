@@ -13,6 +13,7 @@ import {
   saveSharedNoteWebEdit,
 } from "@/functions/shared-note-live";
 import { readAuthenticatedSharedNote } from "@/functions/shared-notes";
+import { getSupabaseBrowserClient } from "@/functions/supabase";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import {
   buildSharedNoteLiveSocketUrl,
@@ -100,12 +101,21 @@ export function SharedNoteLiveSurface({
     const connect = async (): Promise<SharedNoteLiveConnection> => {
       const result = await createSharedNoteLiveTicket({ data: shareId });
       if (result.status !== "ready") return result;
+      let accessToken: string | undefined;
+      if (result.ticket.requiresAuth) {
+        const { data, error } =
+          await getSupabaseBrowserClient().auth.getSession();
+        if (error) return { status: "error" };
+        if (!data.session) return { status: "forbidden" };
+        accessToken = data.session.access_token;
+      }
       revisionRef.current = Math.max(
         revisionRef.current,
         result.ticket.contentRevision,
       );
       return {
         status: "ready",
+        accessToken,
         socket: new WebSocket(
           buildSharedNoteLiveSocketUrl(
             env.VITE_API_URL,

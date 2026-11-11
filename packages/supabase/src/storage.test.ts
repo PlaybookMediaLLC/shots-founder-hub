@@ -35,6 +35,7 @@ vi.mock("tus-js-client", () => ({
 }));
 
 import {
+  getTusEndpoint,
   PRIVATE_ATTACHMENT_STORAGE_CONFIG,
   uploadPrivateAttachment,
   uploadSharedAttachment,
@@ -43,6 +44,12 @@ import {
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const OBJECT_ID = "22222222-2222-4222-8222-222222222222";
 const OBJECT_KEY = `${USER_ID}/${OBJECT_ID}.anb1`;
+
+it("keeps resumed uploads inside the central gateway path", () => {
+  expect(getTusEndpoint("https://hub.example.test/cloud")).toBe(
+    "https://hub.example.test/cloud/storage/v1/upload/resumable",
+  );
+});
 
 function startUpload(
   overrides: Partial<Parameters<typeof uploadPrivateAttachment>[0]> = {},

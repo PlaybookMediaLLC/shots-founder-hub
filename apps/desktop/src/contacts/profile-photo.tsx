@@ -14,11 +14,13 @@ import { updateContactAvatar, usePersonalContact } from "./queries";
 import { ContactFacehash } from "./shared";
 
 import { useAuth } from "~/auth";
+import { env } from "~/env";
 
 export function useSharedProfilePhoto(userId: string) {
   const auth = useAuth();
   const local = usePersonalContact(userId);
-  const enabled = !!auth.supabase && auth.session?.user.id === userId;
+  const enabled =
+    !env.VITE_SHOTS_URL && !!auth.supabase && auth.session?.user.id === userId;
   // The environment-scoped auth client is not serializable cache data.
   // eslint-disable-next-line @tanstack/query/exhaustive-deps
   const profile = useQuery({
@@ -82,7 +84,8 @@ export function ProfilePhoto({
   const auth = useAuth();
   const queryClient = useQueryClient();
   const profile = useSharedProfilePhoto(userId);
-  const cloud = !!auth.supabase && auth.session?.user.id === userId;
+  const cloud =
+    !env.VITE_SHOTS_URL && !!auth.supabase && auth.session?.user.id === userId;
   const save = useMutation({
     scope: { id: `profile-photo:${userId}` },
     mutationFn: async (photo: string | null) => {

@@ -12,6 +12,7 @@ import {
 } from "@anlg/ui/components/ui/dialog";
 import { cn } from "@anlg/utils";
 
+import { env } from "@/env";
 import { signOutEverywhereFn, signOutFn } from "@/functions/auth";
 import { captureOperationalError } from "@/lib/error-reporting";
 import { resetPrivateRouteAnalyticsIdentity } from "@/lib/private-route-analytics";
@@ -102,25 +103,27 @@ export function AccountAccessSection() {
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-[#ede7dc] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-        <div>
-          <p className="text-base font-medium text-[#181613]">
-            Sign out everywhere
-          </p>
-          <p className="mt-1 text-sm leading-6 text-[#756b5d]">
-            End sessions on every device where you're signed in.
-          </p>
+      {!env.VITE_SHOTS_URL && (
+        <div className="flex flex-col gap-4 border-t border-[#ede7dc] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <p className="text-base font-medium text-[#181613]">
+              Sign out everywhere
+            </p>
+            <p className="mt-1 text-sm leading-6 text-[#756b5d]">
+              End sessions on every device where you're signed in.
+            </p>
+          </div>
+          <button
+            onClick={() => setConfirmAction("sign-out-everywhere")}
+            disabled={pending}
+            className={accountPillDangerClassName}
+          >
+            {signOutEverywhere.isPending
+              ? "Signing out..."
+              : "Sign out everywhere"}
+          </button>
         </div>
-        <button
-          onClick={() => setConfirmAction("sign-out-everywhere")}
-          disabled={pending}
-          className={accountPillDangerClassName}
-        >
-          {signOutEverywhere.isPending
-            ? "Signing out..."
-            : "Sign out everywhere"}
-        </button>
-      </div>
+      )}
 
       <Dialog
         open={open}

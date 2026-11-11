@@ -92,7 +92,7 @@ function createNowStore(timezone: string | undefined) {
   return { getSnapshot: () => now, subscribe };
 }
 
-function getSystemWeekStart(): 0 | 1 {
+export function getSystemWeekStart(): 0 | 1 {
   const locale = navigator.language || "en-US";
   try {
     const options = new Intl.Locale(locale);

@@ -264,6 +264,7 @@ mod tests {
             .allow_burst(std::num::NonZeroU32::new(1).unwrap());
         let state = RateLimitState::builder().pro(quota).free(quota).build();
         let auth = AuthContext {
+            shots: None,
             token: "token".to_string(),
             claims: anlg_api_auth::Claims {
                 sub: "user-a".to_string(),

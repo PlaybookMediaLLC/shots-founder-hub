@@ -17,10 +17,10 @@ impl DataSource {
     pub async fn open(args: &Args, source: MeetingSource) -> Result<Self> {
         match source {
             MeetingSource::Local => db::open(args).await.map(Arc::new).map(Self::Local),
-            MeetingSource::Cloud => CloudClient::current().map(Self::Cloud),
+            MeetingSource::Cloud => CloudClient::current().await.map(Self::Cloud),
             MeetingSource::Auto => match db::open(args).await {
                 Ok(db) => Ok(Self::Local(Arc::new(db))),
-                Err(Error::DatabaseNotFound(_)) => CloudClient::current().map(Self::Cloud),
+                Err(Error::DatabaseNotFound(_)) => CloudClient::current().await.map(Self::Cloud),
                 Err(error) => Err(error),
             },
         }

@@ -7,6 +7,7 @@ async function checkAuthCallback({
   storage,
   now = Date.now(),
   installSession,
+  shots,
 }: {
   url: string;
   scheme: string;
@@ -15,6 +16,7 @@ async function checkAuthCallback({
     removeItem: (key: string) => Promise<void>;
   };
   now?: number;
+  shots?: { gatewayUrl: string; fetch?: typeof fetch };
   installSession?: (tokens: {
     accessToken: string;
     refreshToken: string;
@@ -31,7 +33,7 @@ async function checkAuthCallback({
     const accessToken = parsed.searchParams.get("access_token");
     const refreshToken = parsed.searchParams.get("refresh_token");
     const state = parsed.searchParams.get("state");
-    if (!accessToken || !refreshToken || !state) return null;
+    if (!state || (!shots && (!accessToken || !refreshToken))) return null;
     const raw = await storage.getItem(pendingAuthStorageKey);
     if (!raw) return null;
     const pending = JSON.parse(raw);
@@ -42,7 +44,27 @@ async function checkAuthCallback({
       now - pending.createdAt > 15 * 60 * 1_000
     )
       return null;
-    const tokens = { accessToken, refreshToken };
+    let tokens;
+    if (shots) {
+      if (
+        typeof pending.codeVerifier !== "string" ||
+        typeof pending.redirectUri !== "string" ||
+        typeof pending.issuer !== "string"
+      )
+        return null;
+      const exchanged = await exchangeShotsCallback({
+        callback: url,
+        pending,
+        ...shots,
+      });
+      tokens = {
+        accessToken: exchanged.access_token,
+        refreshToken: exchanged.refresh_token,
+      };
+    } else {
+      if (!accessToken || !refreshToken) return null;
+      tokens = { accessToken, refreshToken };
+    }
     if (installSession && !(await installSession(tokens))) return null;
     if ((await storage.getItem(pendingAuthStorageKey)) === raw)
       await storage.removeItem(pendingAuthStorageKey);
@@ -61,3 +83,4 @@ export function consumeAuthCallback(
   callbackQueue = next;
   return next;
 }
+import { exchangeShotsCallback } from "@anlg/supabase/shots";

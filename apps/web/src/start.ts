@@ -1,4 +1,8 @@
-import { createMiddleware, createStart } from "@tanstack/react-start";
+import {
+  createCsrfMiddleware,
+  createMiddleware,
+  createStart,
+} from "@tanstack/react-start";
 
 import { invalidAuthSearchResponse } from "./functions/auth-search";
 import { prepareDrivePickerHandoff } from "./lib/drive-picker";
@@ -16,6 +20,9 @@ bootstrapBrowserTelemetry();
 export const startInstance = createStart(() => {
   return {
     requestMiddleware: [
+      createCsrfMiddleware({
+        filter: (context) => context.handlerType === "serverFn",
+      }),
       workspaceShareHostMiddleware,
       createMiddleware({ type: "request" }).server(
         ({ request, next }) => invalidAuthSearchResponse(request) ?? next(),

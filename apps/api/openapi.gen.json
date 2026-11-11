@@ -4239,7 +4239,7 @@
         "tags": [
           "sync"
         ],
-        "summary": "Issues a short-lived, HMAC-signed ticket that authorizes one WebSocket\nconnection to a shared note's live document. Browsers cannot attach a bearer\nheader to a WebSocket upgrade, so the ticket carries the resolved capability\ninstead and the socket route verifies it without touching Supabase.",
+        "summary": "Issues a short-lived, HMAC-signed ticket that authorizes one WebSocket\nconnection to a shared note's live document. Browsers cannot attach a bearer\nheader to a WebSocket upgrade. Central sessions authenticate in the first\nsocket frame, keeping the bearer credential out of URLs and access logs.",
         "operationId": "create_live_ticket",
         "parameters": [
           {
@@ -5359,7 +5359,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MeetingExport"
+                "$ref": "#/components/schemas/PublishSnapshotBody"
               }
             }
           },
@@ -9945,6 +9945,9 @@
             "format": "int64",
             "minimum": 0
           },
+          "requiresAuth": {
+            "type": "boolean"
+          },
           "ticket": {
             "type": "string"
           }
@@ -11206,6 +11209,24 @@
           },
           {
             "$ref": "#/components/schemas/LegacySessionShareSnapshotRequest"
+          }
+        ]
+      },
+      "PublishSnapshotBody": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MeetingExport"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "source_workspace_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
           }
         ]
       },

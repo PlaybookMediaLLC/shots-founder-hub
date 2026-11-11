@@ -20,6 +20,8 @@ supabase/.seed/
 internal
 .turbo
 .process-compose/
+.local/founder-hub/
+.local/founder-hub-*/
 .pc_env
 
 **/examples/out/

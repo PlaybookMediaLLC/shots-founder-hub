@@ -26,7 +26,10 @@ where
     )
 }
 
-pub fn create_stateless_service<S, F>(factory: F) -> StreamableHttpService<S, LocalSessionManager>
+pub fn create_stateless_service<S, F>(
+    factory: F,
+    resource_host: &str,
+) -> StreamableHttpService<S, LocalSessionManager>
 where
     S: ServerHandler + Send + 'static,
     F: Fn() -> Result<S, std::io::Error> + Send + Sync + 'static,
@@ -34,7 +37,11 @@ where
     create_service_with_config(
         factory,
         StreamableHttpServerConfig::default()
-            .with_allowed_hosts(ALLOWED_HTTP_HOSTS)
+            .with_allowed_hosts(
+                ALLOWED_HTTP_HOSTS
+                    .into_iter()
+                    .chain(std::iter::once(resource_host)),
+            )
             .with_legacy_session_mode(false)
             .with_json_response(true),
     )

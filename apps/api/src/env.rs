@@ -46,6 +46,14 @@ struct OptionalLoopsEnv {
 
 #[derive(Deserialize)]
 pub struct Env {
+    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
+    pub shots_auth_url: Option<String>,
+    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
+    pub founder_hub_mcp_url: Option<String>,
+    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
+    shots_auth_service_token: Option<String>,
+    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
+    supabase_jwt_secret: Option<String>,
     #[serde(default)]
     pub anarlog_service: Service,
     #[serde(flatten)]
@@ -100,6 +108,7 @@ pub struct Env {
 // group is either absent or completely validated, so router/state construction
 // can consume the concrete groups without re-deriving or re-validating them.
 pub struct RuntimeConfig {
+    pub shots: Option<anlg_api_auth::ShotsAuth>,
     env: Env,
     pub nango: Option<anlg_api_env::NangoEnv>,
     pub subscription: Option<(anlg_api_env::StripeEnv, anlg_api_env::LoopsEnv)>,
@@ -119,18 +128,44 @@ impl std::ops::Deref for RuntimeConfig {
 
 impl RuntimeConfig {
     pub(crate) fn resolve(mut env: Env) -> Result<Self, String> {
+        let shots = env
+            .shots_auth_url
+            .as_deref()
+            .map(|origin| {
+                let storage = anlg_api_auth::ShotsStorage::new(
+                    &env.supabase.supabase_url,
+                    &env.supabase.supabase_service_role_key,
+                    env.supabase_jwt_secret
+                        .as_deref()
+                        .ok_or("SUPABASE_JWT_SECRET is required with SHOTS_AUTH_URL")?,
+                )?;
+                Ok::<_, String>(
+                    anlg_api_auth::ShotsAuth::new(
+                        origin,
+                        env.shots_auth_service_token
+                            .as_deref()
+                            .ok_or("SHOTS_AUTH_SERVICE_TOKEN is required with SHOTS_AUTH_URL")?,
+                    )?
+                    .with_storage(storage),
+                )
+            })
+            .transpose()?;
         validate_supabase_env(&env.supabase)?;
         let service = env.anarlog_service;
         env.upstreams.validate(service)?;
         if env.anarlog_billing_webhooks && service != Service::Billing {
             return Err("Local billing webhooks require the billing role".into());
         }
+        if shots.is_some() && env.anarlog_billing_webhooks {
+            return Err("Shots manages billing; disable ANARLOG_BILLING_WEBHOOKS".into());
+        }
         let nango = if service.includes(Service::Core) {
             resolve_nango(&env.nango)?
         } else {
             None
         };
-        let subscription = if service.includes(Service::Core) || service.includes(Service::Billing)
+        let subscription = if shots.is_none()
+            && (service.includes(Service::Core) || service.includes(Service::Billing))
         {
             resolve_subscription(&env.stripe, &env.loops)?
         } else {
@@ -178,7 +213,7 @@ impl RuntimeConfig {
         {
             return Err("STRIPE_SECRET_KEY must be a live key in production".to_string());
         }
-        if env.anarlog_attachment_backup_gc_enabled && subscription.is_none() {
+        if env.anarlog_attachment_backup_gc_enabled && shots.is_none() && subscription.is_none() {
             return Err(
                 "Stripe and Loops configuration is required when ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED is true"
                     .to_string(),
@@ -186,6 +221,7 @@ impl RuntimeConfig {
         }
 
         Ok(Self {
+            shots,
             env,
             nango,
             subscription,
@@ -194,6 +230,10 @@ impl RuntimeConfig {
             llm,
             stt,
         })
+    }
+
+    pub(crate) fn auth_state(&self) -> anlg_api_auth::AuthState {
+        anlg_api_auth::AuthState::new(&self.supabase.supabase_url).with_shots(self.shots.clone())
     }
 }
 

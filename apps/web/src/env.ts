@@ -3,9 +3,14 @@ import { z } from "zod";
 
 const isCI = process.env.CI === "true";
 const isDev = process.env.NODE_ENV !== "production";
+const usesShots = Boolean(
+  process.env.VITE_SHOTS_URL || import.meta.env.VITE_SHOTS_URL,
+);
 
 const requiredInProd = <T extends z.ZodTypeAny>(schema: T) =>
   isDev ? schema.optional() : schema;
+const requiredWithoutShots = <T extends z.ZodTypeAny>(schema: T) =>
+  usesShots ? schema.optional() : requiredInProd(schema);
 
 export function requireEnv<T>(value: T | undefined, name: string): T {
   if (value === undefined) {
@@ -16,32 +21,33 @@ export function requireEnv<T>(value: T | undefined, name: string): T {
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: requiredInProd(z.string().min(1)),
+    DATABASE_URL: requiredWithoutShots(z.string().min(1)),
 
     SUPABASE_URL: requiredInProd(z.string().min(1)),
     SUPABASE_ANON_KEY: requiredInProd(z.string().min(1)),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
     WORKSPACE_SHARE_PROXY_SECRET: z.string().min(1).optional(),
 
-    STRIPE_SECRET_KEY: requiredInProd(z.string().min(1)),
-    STRIPE_MONTHLY_PRICE_ID: requiredInProd(z.string().min(1)),
-    STRIPE_YEARLY_PRICE_ID: requiredInProd(z.string().min(1)),
+    STRIPE_SECRET_KEY: requiredWithoutShots(z.string().min(1)),
+    STRIPE_MONTHLY_PRICE_ID: requiredWithoutShots(z.string().min(1)),
+    STRIPE_YEARLY_PRICE_ID: requiredWithoutShots(z.string().min(1)),
 
-    LOOPS_KEY: requiredInProd(z.string().min(1)),
+    LOOPS_KEY: requiredWithoutShots(z.string().min(1)),
 
     GITHUB_TOKEN: z.string().optional(),
   },
 
   clientPrefix: "VITE_",
   client: {
+    VITE_SHOTS_URL: z.string().url().optional(),
     VITE_APP_URL: isDev
       ? z.string().default("http://localhost:3000")
       : z.string().min(1),
     VITE_API_URL: isDev
       ? z.string().default("http://localhost:3001")
       : z.string().default("https://api.anarlog.so"),
-    VITE_SUPABASE_URL: requiredInProd(z.string().min(1)),
-    VITE_SUPABASE_ANON_KEY: requiredInProd(z.string().min(1)),
+    VITE_SUPABASE_URL: requiredWithoutShots(z.string().min(1)),
+    VITE_SUPABASE_ANON_KEY: requiredWithoutShots(z.string().min(1)),
     VITE_POSTHOG_API_KEY: requiredInProd(z.string().min(1)),
     VITE_POSTHOG_HOST: z.string().default("https://us.i.posthog.com"),
     VITE_OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),

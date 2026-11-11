@@ -49,7 +49,7 @@ pub(super) struct AuthStore {
 }
 
 impl AuthStore {
-    pub(super) fn new(bundle_id: &str) -> Result<Self> {
+    pub(super) fn new(bundle_id: &str, shots: bool) -> Result<Self> {
         let override_path = std::env::var_os("ANARLOG_AUTH_PATH").map(PathBuf::from);
         if override_path
             .as_ref()
@@ -70,10 +70,15 @@ impl AuthStore {
                     )
                 })?
                 .join(bundle_id)
-                .join("auth.json"),
+                .join(if shots {
+                    "auth.shots-cli.json"
+                } else {
+                    "auth.json"
+                }),
         };
         #[cfg(target_os = "linux")]
-        let use_secret_service = override_path.is_none() && bundle_id == "com.hyprnote.stable";
+        let use_secret_service =
+            !shots && override_path.is_none() && bundle_id == "com.hyprnote.stable";
         #[cfg(target_os = "linux")]
         let path = if use_secret_service {
             path.with_file_name(CLI_FALLBACK_FILENAME)
@@ -98,7 +103,7 @@ impl AuthStore {
     }
 
     #[cfg(test)]
-    fn at(path: PathBuf) -> Self {
+    pub(super) fn at(path: PathBuf) -> Self {
         Self {
             path,
             #[cfg(target_os = "linux")]
@@ -110,6 +115,28 @@ impl AuthStore {
 
     pub(super) fn path(&self) -> &Path {
         &self.path
+    }
+
+    pub(super) fn lock(&self) -> Result<std::fs::File> {
+        let parent = self
+            .path
+            .parent()
+            .ok_or_else(|| Error::operation("lock auth storage", "auth directory is missing"))?;
+        std::fs::create_dir_all(parent)
+            .map_err(|error| Error::operation("lock auth storage", error.to_string()))?;
+        let mut options = std::fs::OpenOptions::new();
+        options.read(true).write(true).create(true).truncate(false);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let file = options
+            .open(self.path.with_extension("lock"))
+            .map_err(|error| Error::operation("lock auth storage", error.to_string()))?;
+        file.lock()
+            .map_err(|error| Error::operation("lock auth storage", error.to_string()))?;
+        Ok(file)
     }
 
     pub(super) fn load(&self) -> Result<LoadedAuth> {

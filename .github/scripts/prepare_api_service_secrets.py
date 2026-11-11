@@ -41,6 +41,7 @@ AI = {
     "AQUAVOICE_API_KEY",
     "COHERE_API_KEY",
 }
+SHOTS = {"SHOTS_AUTH_URL", "SHOTS_AUTH_SERVICE_TOKEN", "SUPABASE_JWT_SECRET"}
 BILLING = {
     "STRIPE_SECRET_KEY",
     "STRIPE_MONTHLY_PRICE_ID",
@@ -71,7 +72,9 @@ ROLES = {"ai": AI, "sync": SYNC, "core": CORE | SYNC, "billing": BILLING}
 def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
     if service not in {*ROLES, "all", "gateway", "legacy"}:
         raise ValueError("Unknown API service")
-    allowed = SHARED | ROLES.get(service, AI | CORE | SYNC)
+    allowed = SHARED | SHOTS | ROLES.get(service, AI | CORE | SYNC)
+    if service in {"sync", "all", "gateway", "legacy"}:
+        allowed.add("FOUNDER_HUB_MCP_URL")
     values = {}
     for source in (api_secrets, cloudsync_secrets):
         for secret in source:
@@ -82,6 +85,15 @@ def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
                 raise ValueError(f"Conflicting secret: {key}")
             values[key] = value
     required = {"SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"}
+    shots = bool(values.get("SHOTS_AUTH_URL"))
+    if shots:
+        if service == "billing":
+            raise ValueError(
+                "Shots owns billing; do not deploy the legacy billing service"
+            )
+        required |= SHOTS
+        if service in {"sync", "all", "gateway", "legacy"}:
+            required.add("FOUNDER_HUB_MCP_URL")
     if service in {"ai", "all", "gateway", "legacy"}:
         required |= {"OPENROUTER_API_KEY", "API_BASE_URL", "CALLBACK_SECRET"}
         if not any(
@@ -98,12 +110,16 @@ def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
             }
         ):
             raise ValueError("At least one transcription provider is required")
-    if service in {"billing", "core", "all", "gateway", "legacy"}:
+    if not shots and service in {"billing", "core", "all", "gateway", "legacy"}:
         required |= BILLING
     if service in {"core", "all", "gateway", "legacy"}:
         required |= {"NANGO_API_KEY", "NANGO_WEBHOOK_SIGNING_KEY"}
     if service in {"sync", "core", "all", "gateway", "legacy"}:
-        required |= SYNC - {"ANARLOG_CLOUDSYNC_DESKTOP_TRANSPORT"}
+        required |= (
+            {"RESEND_API_KEY", "RESEND_FROM_EMAIL"}
+            if shots
+            else SYNC - {"ANARLOG_CLOUDSYNC_DESKTOP_TRANSPORT"}
+        )
     if service == "billing":
         webhook_values = {
             secret["key"]: secret.get("value", "") for secret in webhook_secrets

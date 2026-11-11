@@ -1,8 +1,5 @@
 use super::subscription_aliases;
-use crate::{
-    auth::{self, AuthState},
-    env::RuntimeConfig,
-};
+use crate::{auth, env::RuntimeConfig};
 use axum::{Router, middleware};
 use std::sync::Arc;
 
@@ -18,7 +15,7 @@ pub(crate) fn router(
     let router = subscription_aliases(anlg_api_subscription::billing_router(config))
         .route_layer(middleware::from_fn(auth::sentry_and_analytics))
         .route_layer(middleware::from_fn_with_state(
-            AuthState::new(&env.supabase.supabase_url),
+            env.auth_state(),
             auth::require_auth,
         ));
     if env.anarlog_billing_webhooks {

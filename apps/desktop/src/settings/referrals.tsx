@@ -14,6 +14,7 @@ import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
 import { useAuth } from "~/auth/auth-context";
 import { env } from "~/env";
 import { SettingsPageTitle } from "~/settings/page-title";
+import { ShotsSettings } from "~/settings/shots";
 import { useTabs } from "~/store/zustand/tabs";
 
 const summarySchema = z.object({
@@ -47,6 +48,11 @@ const summarySchema = z.object({
 });
 
 export function SettingsReferrals() {
+  if (env.VITE_SHOTS_URL) return <ShotsSettings section="referrals" />;
+  return <LegacySettingsReferrals />;
+}
+
+function LegacySettingsReferrals() {
   const { session } = useAuth();
   useMountEffect(() => {
     void analyticsCommands

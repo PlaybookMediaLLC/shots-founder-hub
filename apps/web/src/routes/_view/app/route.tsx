@@ -1,5 +1,8 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
+import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+
+import { env } from "@/env";
 import { fetchUser } from "@/functions/auth";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { setErrorReportingUser } from "@/lib/error-reporting";
@@ -34,6 +37,25 @@ export const Route = createFileRoute("/_view/app")({
           flow: "web",
           redirect: location.pathname + searchStr,
         },
+      });
+    }
+    if (
+      env.VITE_SHOTS_URL &&
+      [
+        "/app/checkout",
+        "/app/team-checkout",
+        "/app/switch-plan",
+        "/app/portal",
+      ].includes(location.pathname.replace(/\/$/, ""))
+    ) {
+      throw redirect({
+        to: "/",
+        reloadDocument: true,
+        href: getShotsSettingsUrl(
+          env.VITE_SHOTS_URL,
+          user.shotsUserId ?? "",
+          "billing",
+        ),
       });
     }
     return { user };

@@ -126,6 +126,18 @@ Process Compose builds shared UI first, manages the app processes, and saves log
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/fastrepl/anarlog) for a code-indexed explanation of a subsystem.
 
+### Test the Shots integration
+
+With the Shots fork checked out beside this repository, the pinned launcher fetches Node 26.12.1 and pnpm 11.1.1 into pnpm's cache, so the workflow doesn't depend on whichever global versions happen to be on `PATH`. Create an isolated profile and run the combined Go, OAuth/storage/revocation, and authenticated settings checks:
+
+```bash
+corepack pnpm dev:local:pinned setup --profile test --shots-path ../shots-founder-hub-backend --port 4400 --install
+corepack pnpm dev:local:pinned up --profile test
+corepack pnpm dev:local:pinned test --profile test
+```
+
+Use `corepack pnpm dev:local:pinned watch shots-api --profile test` or `watch hub-api` for source restarts, and `corepack pnpm dev:local:pinned desktop-dev --profile test` for the desktop with live reload. Named profiles have separate service data and desktop databases. Stop the stack with `corepack pnpm dev:local:pinned stop --profile test`; it preserves the profile for the next run.
+
 ## Name history
 
 **anarlog** started as **Hyprnote**, then briefly used the **char** name.

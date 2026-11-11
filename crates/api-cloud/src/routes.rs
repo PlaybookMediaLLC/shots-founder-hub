@@ -60,6 +60,13 @@ pub struct SnapshotReceipt {
     pub published_at: String,
 }
 
+#[derive(Deserialize, ToSchema)]
+pub struct PublishSnapshotBody {
+    #[serde(flatten)]
+    pub export: access::MeetingExport,
+    pub source_workspace_id: Option<String>,
+}
+
 #[derive(Debug, Default, Deserialize)]
 pub(crate) struct ListMeetingsQuery {
     pub(crate) query: Option<String>,
@@ -208,7 +215,7 @@ pub(crate) async fn create_key(
     let key_prefix = &key[..12];
     let info = state
         .create_key(
-            &auth.claims.sub,
+            &auth,
             &Uuid::new_v4().to_string(),
             name,
             &key_hash,
@@ -258,7 +265,7 @@ pub(crate) async fn revoke_key(
     path = "/v1/sync-snapshots/{session_id}",
     tag = "cloud-api",
     params(("session_id" = String, Path, description = "Anarlog meeting id")),
-    request_body = access::MeetingExport,
+    request_body = PublishSnapshotBody,
     responses(
         (status = 200, body = SnapshotReceipt),
         (status = 400, body = crate::error::ErrorEnvelope),
@@ -269,16 +276,35 @@ pub(crate) async fn publish_snapshot(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthContext>,
     Path(session_id): Path<String>,
-    Json(export): Json<access::MeetingExport>,
+    Json(body): Json<PublishSnapshotBody>,
 ) -> Result<Json<SnapshotReceipt>, CloudApiError> {
-    let export = sanitize_export(export)?;
+    let export = sanitize_export(body.export)?;
     if export.meeting.id != session_id {
         return Err(CloudApiError::InvalidRequest(
             "snapshot meeting id must match the path".to_string(),
         ));
     }
+    if let Some(shots) = &auth.shots {
+        let source = body
+            .source_workspace_id
+            .as_deref()
+            .filter(|source| Uuid::parse_str(source).is_ok())
+            .ok_or_else(|| {
+                CloudApiError::InvalidRequest(
+                    "source_workspace_id is required for Shots snapshots".into(),
+                )
+            })?;
+        if !shots.allows(source, "artifact:read") {
+            return Err(CloudApiError::PermissionDenied);
+        }
+    }
     state
-        .publish_snapshot(&auth.claims.sub, &session_id, &export)
+        .publish_snapshot(
+            &auth,
+            &session_id,
+            &export,
+            body.source_workspace_id.as_deref(),
+        )
         .await
         .map(Json)
         .map_err(map_store_error)
@@ -581,6 +607,11 @@ fn sanitize_value(value: &mut serde_json::Value) {
 
 fn map_store_error(error: StoreError) -> CloudApiError {
     match &error {
+        StoreError::Response { body, .. }
+            if body.contains("Shots snapshot permission required") =>
+        {
+            CloudApiError::PermissionDenied
+        }
         StoreError::Response { body, .. } if body.contains("hyprnote pro entitlement required") => {
             CloudApiError::SubscriptionRequired
         }

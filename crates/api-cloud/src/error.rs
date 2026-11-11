@@ -16,6 +16,8 @@ pub enum CloudApiError {
     SubscriptionRequired,
     #[error("cloud API not enabled")]
     NotEnabled,
+    #[error("workspace permission required")]
+    PermissionDenied,
     #[error("{0}")]
     NotFound(String),
     #[error("{0}")]
@@ -62,6 +64,7 @@ impl IntoResponse for CloudApiError {
                 "Enable Cloud API & Connectors in Anarlog before using this endpoint.".to_string(),
                 None,
             ),
+            Self::PermissionDenied => (StatusCode::FORBIDDEN, "permission_denied", "Current workspace permission is required.".into(), None),
             Self::NotFound(message) => (StatusCode::NOT_FOUND, "not_found", message, None),
             Self::InvalidRequest(message) => {
                 (StatusCode::BAD_REQUEST, "invalid_request", message, None)
