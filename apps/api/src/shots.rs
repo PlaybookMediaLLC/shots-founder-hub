@@ -112,7 +112,15 @@ async fn settings(
     let json = HeaderMap::from_iter([(CONTENT_TYPE, HeaderValue::from_static("application/json"))]);
     match state
         .shots
-        .forward(token, path, uri.query(), method, json, body.to_vec())
+        .forward(
+            token,
+            path,
+            uri.query(),
+            method,
+            json,
+            body.to_vec(),
+            Duration::from_secs(10),
+        )
         .await
     {
         Ok(response) => {
@@ -173,6 +181,9 @@ async fn voice(
             method,
             forwarded,
             body.to_vec(),
+            // Shots verifies an uploaded run (up to about 60 MB) and parses a
+            // transcript within the request.
+            Duration::from_secs(120),
         )
         .await
     {
