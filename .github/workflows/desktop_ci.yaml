@@ -278,8 +278,13 @@ jobs:
           }
 
           $installer = $installers[0]
-          $uninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Anarlog Staging"
-          $expectedInstallDir = Join-Path $env:LOCALAPPDATA "Anarlog Staging"
+          $config = Get-Content "apps/desktop/src-tauri/tauri.conf.staging.json" -Raw | ConvertFrom-Json
+          $productName = $config.productName
+          if ([string]::IsNullOrWhiteSpace($productName)) {
+            throw "Staging productName is missing"
+          }
+          $uninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$productName"
+          $expectedInstallDir = Join-Path $env:LOCALAPPDATA $productName
           $installDir = $null
           $binary = $null
           $uninstaller = $null
@@ -316,7 +321,7 @@ jobs:
           }
 
           if ((Test-Path $uninstallKey) -or (Test-Path $expectedInstallDir)) {
-            throw "Refusing to smoke-test over an existing Anarlog Staging installation"
+            throw "Refusing to smoke-test over an existing $productName installation"
           }
 
           try {
@@ -330,7 +335,7 @@ jobs:
             }
             $installProperties = Get-ItemProperty $uninstallKey
             $installDir = $installProperties.InstallLocation.Trim('"')
-            $binary = Join-Path $installDir "anarlog-staging.exe"
+            $binary = Join-Path $installDir "$($config.mainBinaryName).exe"
             $uninstaller = Join-Path $installDir "uninstall.exe"
             Write-Host "Installed version: $($installProperties.DisplayVersion)"
             Write-Host "Install location: $installDir"
@@ -354,9 +359,9 @@ jobs:
               -RedirectStandardError $stderrLog
             if ($appProcess.WaitForExit(20000)) {
               $appProcess.WaitForExit()
-              throw "Installed Anarlog exited before the 20-second smoke window with status $($appProcess.ExitCode)"
+              throw "Installed $productName exited before the 20-second smoke window with status $($appProcess.ExitCode)"
             }
-            Write-Host "Installed Anarlog remained running for the 20-second smoke window"
+            Write-Host "Installed $productName remained running for the 20-second smoke window"
             Stop-ProcessTree $appProcess
 
             $uninstallProcess = Start-Process $uninstaller `
@@ -471,7 +476,7 @@ jobs:
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
         run: pnpm -F ui build
       - if: github.event_name == 'workflow_dispatch' || inputs.rebuild_cloudsync
-        run: pnpm -F desktop tauri build --ci --bundles appimage,deb --target ${{ matrix.target }} --config ./src-tauri/tauri.conf.staging.json --features devtools --verbose
+        run: pnpm -F desktop tauri build --ci --bundles appimage,deb --target ${{ matrix.target }} --config ./src-tauri/tauri.conf.staging.json --config ./src-tauri/tauri.conf.staging-linux.json --features devtools --verbose
         env:
           POSTHOG_API_KEY: phc_linux_ci
           VITE_POSTHOG_API_KEY: phc_linux_ci
@@ -607,7 +612,7 @@ jobs:
             bash -euxo pipefail -c '
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              apt-get install -y "$DEB_PATH"
+              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH"
               apt-get install -y dbus-x11 xvfb
               set +e
               timeout --signal=TERM 20s xvfb-run -a dbus-run-session -- "$BINARY_PATH" >/tmp/anarlog.log 2>&1

@@ -60,6 +60,33 @@ fn finds_windows_path_entries_case_insensitively() {
     ));
 }
 
+#[test]
+fn windows_upgrade_replaces_cli_at_existing_path_entry() {
+    let dir = tempfile::tempdir().unwrap();
+    let old_install_path = dir.path().join("Anarlog/bin/anarlog.exe");
+    std::fs::create_dir_all(old_install_path.parent().unwrap()).unwrap();
+    std::fs::write(&old_install_path, "old cli").unwrap();
+    let old_path = format!(
+        "C:\\Windows;{};C:\\Tools",
+        old_install_path.parent().unwrap().display()
+    );
+    let resource_path = dir.path().join("bundled-cli.exe");
+    std::fs::write(&resource_path, "updated cli").unwrap();
+
+    let install_path = windows_install_path(dir.path(), "anarlog");
+    assert_eq!(install_path, old_install_path);
+    install_windows_cli(&resource_path, &install_path).unwrap();
+
+    assert!(path_list_contains(
+        &old_path,
+        install_path.parent().unwrap()
+    ));
+    assert_eq!(
+        std::fs::read_to_string(old_install_path).unwrap(),
+        "updated cli"
+    );
+}
+
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 #[test]
 fn classifies_missing_non_executable_and_stale_installs_as_missing() {
@@ -107,7 +134,7 @@ fn classifies_legacy_app_resource_symlink_as_missing() {
     let managed_path = dir.path().join("managed-anarlog-cli");
     let app_resource_path = dir
         .path()
-        .join("Anarlog.app/Contents/Resources/anarlog-cli");
+        .join("Shots Founder Hub.app/Contents/Resources/anarlog-cli");
     let install_path = dir.path().join("anarlog");
     std::fs::create_dir_all(app_resource_path.parent().unwrap()).unwrap();
     std::fs::write(&app_resource_path, "cli").unwrap();

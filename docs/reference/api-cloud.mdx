@@ -1,9 +1,9 @@
 ---
 title: "Cloud API and connectors"
-description: "Opt in to hosted REST and remote MCP access for your Anarlog meetings."
+description: "Opt in to hosted REST and remote MCP access for your Shots Founder Hub meetings."
 ---
 
-The Cloud API lets remote agents read your Anarlog meetings while the desktop app is closed. It requires Pro access, either from your personal plan or membership in an active paid Pro workspace, and stays off until you enable it.
+The Cloud API lets remote agents read your Shots Founder Hub meetings while the desktop app is closed. It requires Pro access, either from your personal plan or membership in an active paid Pro workspace, and stays off until you enable it.
 
 <Warning>
   Enabling Cloud API & Connectors uploads a separate server-readable copy of
@@ -16,7 +16,7 @@ The Cloud API lets remote agents read your Anarlog meetings while the desktop ap
 
 1. Open **Settings → Developers → Cloud API & Connectors**.
 2. Review the disclosure and turn the feature on.
-3. Wait for Anarlog to upload your existing meetings.
+3. Wait for Shots Founder Hub to upload your existing meetings.
 4. If your client does not support OAuth, create a cloud API key and copy it. The key is shown once.
 
 Keys start with `anl_` and are stored hashed. Revoke a key from the same settings page when you no longer use it.
@@ -58,7 +58,7 @@ Codes: `unauthorized`, `not_found`, `invalid_request`, `internal_error`. The hos
 The request limit allows a burst of 10 requests per account, then refills one request every 200 milliseconds.
 
 <Note>
-  Meeting snapshots are limited to 2 MB. When a snapshot is larger, Anarlog removes word-level transcript timing before upload but keeps the transcript text. If the snapshot is still larger than 2 MB, that meeting cannot upload. A hosted transcript without word timing returns the retained text with an empty `words` array.
+  Meeting snapshots are limited to 2 MB. When a snapshot is larger, Shots Founder Hub removes word-level transcript timing before upload but keeps the transcript text. If the snapshot is still larger than 2 MB, that meeting cannot upload. A hosted transcript without word timing returns the retained text with an empty `words` array.
 </Note>
 
 ## Remote MCP
@@ -77,25 +77,25 @@ It exposes the same five meeting-read tools as the local MCP server:
 - `get_recurring_meeting_history`
 - `export_meeting`
 
-Hosts that support MCP OAuth 2.1 connect your Anarlog account without a cloud API key. The host discovers Anarlog's authorization server from the MCP endpoint, opens the Anarlog sign-in and consent flow, and stores the resulting connection.
+Hosts that support MCP OAuth 2.1 connect your Shots Founder Hub account without a cloud API key. The host discovers Shots Founder Hub's authorization server from the MCP endpoint, opens the Shots Founder Hub sign-in and consent flow, and stores the resulting connection.
 
-Anarlog does not use identity scopes as meeting permissions. Meeting access remains limited to the server-readable snapshots you explicitly opted in to upload. Every MCP tool is read-only, and every access token is checked for its signature, issuer, expiry, MCP resource audience, and OAuth client identifier.
+Shots Founder Hub does not use identity scopes as meeting permissions. Meeting access remains limited to the server-readable snapshots you explicitly opted in to upload. Every MCP tool is read-only, and every access token is checked for its signature, issuer, expiry, MCP resource audience, and OAuth client identifier.
 
-Anarlog publishes OAuth protected-resource metadata at:
+Shots Founder Hub publishes OAuth protected-resource metadata at:
 
 ```text
 https://api.anarlog.so/.well-known/oauth-protected-resource/mcp
 ```
 
-The metadata points the host to Anarlog's existing Supabase authorization server. That server uses dynamic client registration and PKCE with SHA-256. The host sends the MCP `resource` value during authorization and token exchange; Anarlog binds issued OAuth tokens to `https://api.anarlog.so/mcp` and rejects tokens minted for another resource.
+The metadata points the host to Shots Founder Hub's existing Supabase authorization server. That server uses dynamic client registration and PKCE with SHA-256. The host sends the MCP `resource` value during authorization and token exchange; Shots Founder Hub binds issued OAuth tokens to `https://api.anarlog.so/mcp` and rejects tokens minted for another resource.
 
 <Note>
-  OAuth does not bypass Anarlog's product controls. The account must have Pro access through a personal plan or an active paid Pro workspace membership, and **Cloud API & Connectors** must remain enabled. Disabling the feature deletes the uploaded snapshots and makes existing connector tokens unusable for meeting access.
+  OAuth does not bypass Shots Founder Hub's product controls. The account must have Pro access through a personal plan or an active paid Pro workspace membership, and **Cloud API & Connectors** must remain enabled. Disabling the feature deletes the uploaded snapshots and makes existing connector tokens unusable for meeting access.
 </Note>
 
 ### Claude Code
 
-Install the **Anarlog** plugin:
+Install the **Shots Founder Hub** plugin:
 
 ```bash
 claude plugin marketplace add fastrepl/anarlog
@@ -110,7 +110,7 @@ claude mcp add --transport http anarlog https://api.anarlog.so/mcp
 
 ### Cursor
 
-Import `https://github.com/fastrepl/anarlog` as a team marketplace and install **Anarlog**, or add this MCP server:
+Import `https://github.com/fastrepl/anarlog` as a team marketplace and install **Shots Founder Hub**, or add this MCP server:
 
 ```json
 {
@@ -131,7 +131,7 @@ copilot plugin install anarlog@fastrepl
 
 ### ChatGPT and Codex
 
-Add the Fastrepl source, restart the ChatGPT desktop app, then install **Anarlog**:
+Add the Fastrepl source, restart the ChatGPT desktop app, then install **Shots Founder Hub**:
 
 ```bash
 codex plugin marketplace add fastrepl/anarlog \
@@ -143,17 +143,17 @@ Public listing in a host's plugin directory is a separate review step. Installin
 
 ### Grok Bot
 
-Grok Bot has no settings form for custom MCP servers. Add Anarlog from a Bot conversation:
+Grok Bot has no settings form for custom MCP servers. Add Shots Founder Hub from a Bot conversation:
 
 ```text
 Add this custom MCP server: https://api.anarlog.so/mcp
 ```
 
-Confirm the server details when the bot asks, then finish the Anarlog sign-in and consent flow in your browser. The Anarlog tools are available from your next message. Grok Bot runs in the cloud, so it can only reach the hosted endpoint, not local MCP.
+Confirm the server details when the bot asks, then finish the Shots Founder Hub sign-in and consent flow in your browser. The Shots Founder Hub tools are available from your next message. Grok Bot runs in the cloud, so it can only reach the hosted endpoint, not local MCP.
 
 ### Instinct
 
-Add `https://api.anarlog.so/mcp` as an MCP connection in your Instinct account and name it **Anarlog**. Complete the Anarlog sign-in and consent flow with the account that has Cloud API & Connectors enabled. If Instinct asks for a token instead of opening a sign-in page, create a personal cloud API key and paste it as the bearer token.
+Add `https://api.anarlog.so/mcp` as an MCP connection in your Instinct account and name it **Shots Founder Hub**. Complete the Shots Founder Hub sign-in and consent flow with the account that has Cloud API & Connectors enabled. If Instinct asks for a token instead of opening a sign-in page, create a personal cloud API key and paste it as the bearer token.
 
 ### Other OAuth MCP clients
 
@@ -177,7 +177,7 @@ Pass the remote MCP URL and authorization header in the tool definition:
 ```js
 const response = await client.responses.create({
   model: "gpt-5",
-  input: "Summarize my latest Anarlog meeting.",
+  input: "Summarize my latest Shots Founder Hub meeting.",
   tools: [
     {
       type: "mcp",
@@ -194,10 +194,10 @@ const response = await client.responses.create({
 
 ### Muse
 
-Meta Muse does not accept MCP servers. Instead, ask Muse to build a **Custom Connector** against the Anarlog REST API. Create a personal cloud API key named `muse` so you can revoke it separately, then send Muse:
+Meta Muse does not accept MCP servers. Instead, ask Muse to build a **Custom Connector** against the Shots Founder Hub REST API. Create a personal cloud API key named `muse` so you can revoke it separately, then send Muse:
 
 ```text
-Create a custom connector for Anarlog, my meeting notes. The base URL is
+Create a custom connector for Shots Founder Hub, my meeting notes. The base URL is
 https://api.anarlog.so and the OpenAPI document is
 https://api.anarlog.so/openapi.json. Only use the /v1/meetings operations.
 Authenticate every request with the header "Authorization: Bearer <my key>".
@@ -207,11 +207,11 @@ export it.
 
 The OpenAPI paths already include the `/v1` prefix, so the base URL is the bare host. Check that the first request Muse makes targets `/v1/meetings`, not `/v1/v1/meetings`.
 
-Muse stores the key in its Secure Credentials Store; Anarlog never sees your Muse account. The connector appears under **Settings → Connectors** in Muse. Meta does not review custom connectors, so keep the key to yourself.
+Muse stores the key in its Secure Credentials Store; Shots Founder Hub never sees your Muse account. The connector appears under **Settings → Connectors** in Muse. Meta does not review custom connectors, so keep the key to yourself.
 
 ### Poke
 
-Poke does not complete MCP OAuth. Create a personal cloud API key in Anarlog and paste it only into your own Poke recipe or connection.
+Poke does not complete MCP OAuth. Create a personal cloud API key in Shots Founder Hub and paste it only into your own Poke recipe or connection.
 
 <Warning>
   Do not share that key, put it in a public recipe, or reuse one key across users.
@@ -227,6 +227,6 @@ Authorization: Bearer anl_...
 
 ## Disable cloud access
 
-Turn off **Cloud API & Connectors** under **Settings → Developers**. Anarlog immediately deletes all server-readable meeting snapshots. Your local meetings and end-to-end encrypted cloud sync data are unchanged.
+Turn off **Cloud API & Connectors** under **Settings → Developers**. Shots Founder Hub immediately deletes all server-readable meeting snapshots. Your local meetings and end-to-end encrypted cloud sync data are unchanged.
 
 Revoked keys cannot read snapshots. If you lose Pro access from both your personal plan and any paid Pro workspace memberships, existing cloud keys return `subscription_required`.

@@ -97,8 +97,8 @@ private final class BackgroundSyncService {
       return
     }
     let content = UNMutableNotificationContent()
-    content.title = "Anarlog couldn't sync"
-    content.body = "Open Anarlog to finish syncing your notes and recordings."
+    content.title = "Shots Founder Hub couldn't sync"
+    content.body = "Open Shots Founder Hub to finish syncing your notes and recordings."
     content.sound = .default
     UNUserNotificationCenter.current().add(
       UNNotificationRequest(

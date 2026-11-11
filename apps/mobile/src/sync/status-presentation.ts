@@ -6,7 +6,7 @@ const phaseCopy: Record<
 > = {
   inactive: {
     title: "Cloud sync is off",
-    description: "Sign in with Anarlog Pro to sync this device.",
+    description: "Sign in with Shots Founder Hub Pro to sync this device.",
   },
   starting: {
     title: "Connecting…",
@@ -15,7 +15,7 @@ const phaseCopy: Record<
   approval_pending: {
     title: "Connecting this device",
     description:
-      "Open Anarlog on an existing synced device signed in to the same account. This device will connect automatically. Your local notes are safe while you wait.",
+      "Open Shots Founder Hub on an existing synced device signed in to the same account. This device will connect automatically. Your local notes are safe while you wait.",
   },
   ready: {
     title: "Cloud sync is on",
@@ -36,7 +36,7 @@ const phaseCopy: Record<
       "Remove this device in Device Management, then sign in here again.",
   },
   not_entitled: {
-    title: "Anarlog Pro required",
+    title: "Shots Founder Hub Pro required",
     description: "Refresh your plan to continue syncing this device.",
   },
   reauth_required: {
@@ -91,7 +91,7 @@ export function syncStatusPresentation(
     ? {
         title: "Cloud sync is retrying",
         description:
-          "Your notes are safe on this device. Anarlog will keep trying in the background.",
+          "Your notes are safe on this device. Shots Founder Hub will keep trying in the background.",
       }
     : paused
       ? {

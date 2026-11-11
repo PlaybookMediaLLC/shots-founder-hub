@@ -25,7 +25,7 @@ test("renders blog metadata into a post-specific image", async () => {
 
   assert.match(svg, /How to take better/);
   assert.match(svg, /John &amp; team - August 6, 2026/);
-  assert.match(createBlogOgSvg({ title: "Hi" }), />anarlog<\/text>/);
+  assert.match(createBlogOgSvg({ title: "Hi" }), />Shots Founder Hub<\/text>/);
 
   const response = await renderBlogOgImage({ title: "Dynamic blog post" });
   assert.match(process.env.FONTCONFIG_FILE ?? "", /anarlog-og-fonts\.conf$/);

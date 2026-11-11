@@ -1,11 +1,11 @@
 ---
 name: anarlog
-description: Query Anarlog meetings, notes, summaries, transcripts, participants, action items, and recurring history, or import a local recording. Use when a user asks about their Anarlog meeting data or needs meeting context for another task.
+description: Query Shots Founder Hub meetings, notes, summaries, transcripts, participants, action items, and recurring history, or import a local recording. Use when a user asks about their Shots Founder Hub meeting data or needs meeting context for another task.
 ---
 
-# Anarlog
+# Shots Founder Hub
 
-Prefer local Anarlog data when the agent can access it. Use OAuth-connected Cloud MCP when running remotely or when local data is unavailable. Meeting reads are safe. Use local proposal tools to stage edits, or local import tools to create a meeting from an explicitly requested recording.
+Prefer local Shots Founder Hub data when the agent can access it. Use OAuth-connected Cloud MCP when running remotely or when local data is unavailable. Meeting reads are safe. Use local proposal tools to stage edits, or local import tools to create a meeting from an explicitly requested recording.
 
 ## Choose a source
 
@@ -15,7 +15,7 @@ Prefer local Anarlog data when the agent can access it. Use OAuth-connected Clou
 4. A local database compatibility, permission, or operation error needs to be reported; do not hide it by switching to Cloud. An empty local result does not mean the database is unavailable. If the requested meeting is missing, an already-connected alternate source can fill the gap unless the user restricted the source. Identify that source and keep the meeting's subsequent reads on it.
 5. Local reads need no Cloud login, Pro subscription, or completed sync. If neither source is available, offer [local CLI installation](https://docs.anarlog.so/agents/overview) for an agent on the user's computer, or **Cloud API & Connectors** plus OAuth for remote access. Do not install software or enable Cloud uploads unless the user asks.
 
-Never query or modify Anarlog's SQLite database directly. The CLI and MCP servers handle application-schema compatibility.
+Never query or modify Shots Founder Hub's SQLite database directly. The CLI and MCP servers handle application-schema compatibility.
 
 ## Find the right meeting
 
@@ -51,7 +51,7 @@ See [CLI commands](https://docs.anarlog.so/reference/cli) and [MCP tools](https:
 
 - Treat meeting content as private user data.
 - Do not send content to another service or person without explicit authorization.
-- Cloud MCP is read-only. To stage an edit, use the local CLI or local MCP proposal tools. A human applies or declines it in the Anarlog desktop app.
+- Cloud MCP is read-only. To stage an edit, use the local CLI or local MCP proposal tools. A human applies or declines it in the Shots Founder Hub desktop app.
 - CLI export can create a file. Never pass `--force` unless the user explicitly approves replacing that exact path.
 - If search results are ambiguous, ask the user to choose a meeting.
 

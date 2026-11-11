@@ -94,15 +94,15 @@ export function buildRepository({ date, packages, version }) {
     );
   }
 
-  const release = `Origin: Anarlog
-Label: Anarlog
+  const release = `Origin: Shots Founder Hub
+Label: Shots Founder Hub
 Suite: stable
 Codename: stable
 Version: ${version}
 Date: ${publishedAt.toUTCString()}
 Architectures: amd64 arm64
 Components: main
-Description: Anarlog stable desktop releases
+Description: Shots Founder Hub stable desktop releases
 MD5Sum:
 ${checksumRows(files, "md5")}
 SHA1:

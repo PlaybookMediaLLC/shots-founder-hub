@@ -2,16 +2,16 @@
  * in note-typography.css and needs no dark overrides; the rules here cover
  * the remaining shared editor chrome. */
 .dark .prosemirror-editor {
-  caret-color: #d6d3d1;
+  caret-color: #d4d4d4;
 }
 
 .dark .ProseMirror td,
 .dark .ProseMirror th {
-  border-color: #57534e;
+  border-color: #525252;
 }
 
 .dark .ProseMirror th {
-  background-color: #292524;
+  background-color: #262626;
 }
 
 .dark .ProseMirror .ProseMirror-search-match {
@@ -25,5 +25,5 @@
 .dark .ProseMirror .is-editor-empty:first-child::before,
 .dark .ProseMirror .is-empty::before,
 .dark .ProseMirror .react-placeholder-widget {
-  color: #78716c;
+  color: #737373;
 }

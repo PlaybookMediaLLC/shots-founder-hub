@@ -9,17 +9,17 @@ category: "Comparisons"
 date: "2026-10-11"
 ---
 
-**For a browser-based transcription server, start with Scriberr or Whishper. For live meeting notes on your own computer, compare Anarlog and Meetily.** Vibe fits desktop transcription and local AI analysis; WhisperX is a component for a custom pipeline.
+**For a browser-based transcription server, start with Scriberr or Whishper. For live meeting notes on your own computer, compare Shots Founder Hub and Meetily.** Vibe fits desktop transcription and local AI analysis; WhisperX is a component for a custom pipeline.
 
 “Self-hosted AI notetaker” can mean three different things: an app that runs models on your laptop, a web service on your server, or a transcription engine you integrate yourself. Choose the deployment first. Installing a local desktop app does not automatically give a team a shared server with accounts and access controls.
 
-We build Anarlog. This comparison uses current official repositories and documentation; it does not report a hardware or accuracy benchmark.
+We build Shots Founder Hub. This comparison uses current official repositories and documentation; it does not report a hardware or accuracy benchmark.
 
 ## Self-hosted AI notetaker comparison
 
 | Tool | Deployment | Local transcription | Summaries | License and cost |
 | --- | --- | --- | --- | --- |
-| Anarlog | Desktop on macOS, Windows, Linux; enterprise deployment evaluated separately | Built-in speech paths on supported Apple Silicon; compatible local server on other platforms | Local model or selected cloud provider | MIT community app; free local/BYOK, Pro $14/month |
+| Shots Founder Hub | Desktop on macOS, Windows, Linux; enterprise deployment evaluated separately | Built-in speech paths on supported Apple Silicon; compatible local server on other platforms | Local model or selected cloud provider | MIT community app; free local/BYOK, Pro $14/month |
 | Meetily Community | Desktop on Windows/macOS; Linux source build | Whisper or Parakeet | Ollama or BYOK | MIT; free Community, commercial Pro separate |
 | Scriberr | Browser UI on a self-hosted server; Docker or Homebrew | Whisper, Parakeet, Canary; diarization | Ollama or OpenAI-compatible provider | MIT; free software |
 | Vibe | Desktop on macOS, Windows, Linux; HTTP API | Whisper, Nemotron, Parakeet | Ollama or Claude API | MIT; free software |
@@ -32,9 +32,9 @@ Free software still needs hardware, storage, maintenance, and downloaded models.
 
 ### 1. Anarlog: notes, transcript, and summary in one workspace
 
-![Anarlog meeting summary with recent meetings in the local sidebar](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
+![Shots Founder Hub meeting summary with recent meetings in the local sidebar](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
 
-[Anarlog](/download/) captures microphone and system audio without a meeting bot. You can write during the call, then combine your notes and transcript in a templated summary. Canonical meeting data lives in local SQLite, with recordings and attachments stored separately and portable exports when needed.
+[Shots Founder Hub](/download/) captures microphone and system audio without a meeting bot. You can write during the call, then combine your notes and transcript in a templated summary. Canonical meeting data lives in local SQLite, with recordings and attachments stored separately and portable exports when needed.
 
 **Setup:** choose the installer for your platform, then configure transcription and Intelligence separately. The [models and providers guide](https://docs.anarlog.so/models-and-providers) documents each path. Built-in Parakeet Streaming/Batch and whisper.cpp `.bin` transcription require supported Apple Silicon. Apple Speech also requires compatible macOS 26 system assets. Windows, Linux, and Intel Macs can use a Deepgram-compatible local server or a configured hosted provider.
 
@@ -118,13 +118,13 @@ Diarization requires a Hugging Face token and acceptance of the relevant model t
 
 ## Which deployment should you choose?
 
-- **Live notes on one computer:** Anarlog combines editable notes with capture and summaries; Meetily Community offers local capture and summaries.
+- **Live notes on one computer:** Shots Founder Hub combines editable notes with capture and summaries; Meetily Community offers local capture and summaries.
 - **Desktop files and local AI analysis:** compare Vibe's batch, export, and Ollama workflows.
 - **An upload/recording server with AI:** evaluate Scriberr and its current deployment instructions.
 - **A subtitle-focused web service:** evaluate Whishper, including its access-control and maintenance limits.
 - **A custom processing backend:** use WhisperX when you want to integrate alignment and diarization yourself.
-- **Company-managed infrastructure and policy:** distinguish community tools from commercial enterprise deployments. Anarlog's [enterprise evaluation](/enterprise/) is a separate path.
+- **Company-managed infrastructure and policy:** distinguish community tools from commercial enterprise deployments. Shots Founder Hub's [enterprise evaluation](/enterprise/) is a separate path.
 
 Before choosing, process the same representative recording with your intended setup. Check transcription, speaker attribution, summary decisions, export, and whether either AI stage calls a cloud provider. Prepare models before testing offline. For a server, also test user access and recovery from a backup; one working upload does not establish those behaviors.
 
-For broader file and meeting choices, use the [transcription guide hub](/guides/transcription/) or [open-source meeting transcription comparison](/blog/open-source-meeting-transcription-software/). To try Anarlog's desktop workflow, [choose the matching installer](/download/).
+For broader file and meeting choices, use the [transcription guide hub](/guides/transcription/) or [open-source meeting transcription comparison](/blog/open-source-meeting-transcription-software/). To try Shots Founder Hub's desktop workflow, [choose the matching installer](/download/).

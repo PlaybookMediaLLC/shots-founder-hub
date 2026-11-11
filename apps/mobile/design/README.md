@@ -1,6 +1,6 @@
 # Mobile UX design
 
-Lofi mockups for Anarlog mobile v1 (originals were hand-drawn wireframes, 2026-07-26, recreated here as SVG).
+Lofi mockups for Shots Founder Hub mobile v1 (originals were hand-drawn wireframes, 2026-07-26, recreated here as SVG).
 
 Linear project: https://linear.app/fastrepl-inc/project/anarlog-mobile-3ccc6cca38c1
 

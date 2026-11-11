@@ -110,7 +110,8 @@ pub fn install(agent: SkillAgent) -> Result<SkillAgentStatus, String> {
 }
 
 fn home_dir() -> Result<PathBuf, String> {
-    dirs::home_dir().ok_or_else(|| "Anarlog could not find your home directory.".to_string())
+    dirs::home_dir()
+        .ok_or_else(|| "Shots Founder Hub could not find your home directory.".to_string())
 }
 
 fn skill_dir(agent: SkillAgent, home: &Path) -> PathBuf {

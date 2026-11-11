@@ -68,7 +68,7 @@ it("creates a prerecorded demo note with normal meeting metadata", async () => {
 
   const [title, , initial] = mocks.createSession.mock.calls[0];
   const event = JSON.parse(initial.event_json);
-  expect(title).toBe("Welcome to Anarlog");
+  expect(title).toBe("Welcome to Shots Founder Hub");
   expect(event.meeting_link).toBe("https://anarlog.so/onboarding-demo/");
   expect(event.tracking_id).toBe("anarlog-onboarding-demo-v1");
   expect(() => JSON.parse(initial.raw_md)).not.toThrow();

@@ -1,6 +1,6 @@
 ---
 meta_title: "How to Use Obsidian for Meeting Notes"
-meta_description: "Build meeting notes in Obsidian with templates, person notes, backlinks, searchable action items, and local AI transcription via Anarlog."
+meta_description: "Build meeting notes in Obsidian with templates, person notes, backlinks, searchable action items, and local AI transcription via Shots Founder Hub."
 author:
   - "John Jeong"
 featured: true
@@ -17,9 +17,9 @@ By the end of this guide you'll have:
 - A meeting note template that fills in the date and title, with sections for decisions and action items
 - A person note that links back to meeting notes where you linked that colleague
 - Action items you can find across your entire vault in one search
-- A Markdown handoff from Anarlog to your vault through manual export or an enabled Pro automation
+- A Markdown handoff from Shots Founder Hub to your vault through manual export or an enabled Pro automation
 
-The [Anarlog setup below](#step-8-add-anarlog-for-real-time-transcription-and-ai-notes) explains the export choices and separate transcription and summary providers. Keeping both AI steps on-device requires supported local models; choosing a cloud provider sends the required audio or text to that service.
+The [Shots Founder Hub setup below](#step-8-add-anarlog-for-real-time-transcription-and-ai-notes) explains the export choices and separate transcription and summary providers. Keeping both AI steps on-device requires supported local models; choosing a cloud provider sends the required audio or text to that service.
 
 ## Sources and credit
 
@@ -237,23 +237,23 @@ Everyone at a specific company:
 
 Searches the `company` property across person notes. Useful when you're preparing for a client meeting and want to see all your contacts there.
 
-### Step 8: Add Anarlog for real-time transcription and AI notes
+### Step 8: Add Shots Founder Hub for real-time transcription and AI notes
 
-Your template captures what you type. A transcript can help you check the decision, name, or deadline you missed while listening. Anarlog, the open-source meeting notetaker we build, can capture microphone and system audio without adding a meeting bot. Tell participants when you record and follow the meeting's consent requirements.
+Your template captures what you type. A transcript can help you check the decision, name, or deadline you missed while listening. Shots Founder Hub, the open-source meeting notetaker we build, can capture microphone and system audio without adding a meeting bot. Tell participants when you record and follow the meeting's consent requirements.
 
-Anarlog stores the original meeting session, notes, and transcript in local SQLite, with attachments kept as separate local files. Markdown is an export format. Setting a storage location alone does not put readable notes in an Obsidian vault.
+Shots Founder Hub stores the original meeting session, notes, and transcript in local SQLite, with attachments kept as separate local files. Markdown is an export format. Setting a storage location alone does not put readable notes in an Obsidian vault.
 
-![Current Anarlog meeting summary view](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
+![Current Shots Founder Hub meeting summary view](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
 
 Start with a manual export:
 
 1. Finish the meeting and generate a summary if you want one included. Review the transcript and summary for names, decisions, and deadlines.
-2. Open the meeting's **Export** dialog in Anarlog. Choose **Markdown** and select the notes, summary, and transcript sections you need.
+2. Open the meeting's **Export** dialog in Shots Founder Hub. Choose **Markdown** and select the notes, summary, and transcript sections you need.
 3. Save the `.md` file in your vault's `Meetings/` folder, or move the exported file there. Open it in Obsidian and link it from your meeting note.
 
 For repeated exports, **Pro Automations** can write Markdown to a chosen folder. In **Settings → Automations**, create a workflow with **After the meeting summary is ready** as its trigger, add **Markdown export**, choose the content sections and your vault's `Meetings/` directory, then select **Save & enable**. Run a short sample and check the resulting file before depending on it for a real meeting. A meeting-end trigger runs at a different stage; do not assume a generated summary is already available then.
 
-This is a one-way export. Editing the vault copy does not update the original session in Anarlog. Keep Anarlog's original data and backups when you need the recording or the complete meeting record. Do not assume an exported file matches the YAML properties or template fields used earlier in this guide; check it and add the properties your Obsidian workflow needs.
+This is a one-way export. Editing the vault copy does not update the original session in Shots Founder Hub. Keep Shots Founder Hub's original data and backups when you need the recording or the complete meeting record. Do not assume an exported file matches the YAML properties or template fields used earlier in this guide; check it and add the properties your Obsidian workflow needs.
 
 Choose transcription and summary providers separately. Local speech models handle transcription; Ollama or LM Studio can handle local summaries. Selecting only a local summary model does not make cloud transcription local. Managed or bring-your-own-key cloud providers receive the audio or text needed for their requests. Follow the [offline transcription setup and checks](/blog/offline-meeting-transcription-mac/) if you need an on-device workflow.
 
@@ -264,9 +264,9 @@ For a broader comparison of editable files and database-backed notes, see the [M
 Monday morning. You open Obsidian.
 
 1. You check your calendar and see three meetings today. From your daily note, you create a meeting note for the first one: `2026-04-07 Sprint Planning`.
-2. With participants informed, you start recording in Anarlog. You take notes in Obsidian: quick bullets, [[wikilinks]] for people and topics as they come up.
-3. The meeting ends. You stop Anarlog, generate and review the summary, then export Markdown to your vault or check the file from your enabled summary-ready automation. You pull the verified decisions and action items to the top of your meeting note.
+2. With participants informed, you start recording in Shots Founder Hub. You take notes in Obsidian: quick bullets, [[wikilinks]] for people and topics as they come up.
+3. The meeting ends. You stop Shots Founder Hub, generate and review the summary, then export Markdown to your vault or check the file from your enabled summary-ready automation. You pull the verified decisions and action items to the top of your meeting note.
 4. Before your 1:1 with Sarah that afternoon, you open [[Sarah Chen]] and glance at backlinks to the meeting notes where you linked her. Search `task-todo:"Sarah Chen"` to find her incomplete tasks; in this example, there are two from last week.
 5. In the 1:1, you return to the sprint planning note and check the relevant transcript passage. Verify important wording against the authorized recording when available; transcription can contain errors.
 
-That's the system. Templates give you structure. Links connect everything. Backlinks surface history. Search finds anything. Anarlog fills the gap between what you typed and what was actually said. [Download Anarlog now](https://anarlog.so/download/apple-silicon) and try it on your next meeting.
+That's the system. Templates give you structure. Links connect everything. Backlinks surface history. Search finds anything. Shots Founder Hub fills the gap between what you typed and what was actually said. [Download Shots Founder Hub now](https://anarlog.so/download/apple-silicon) and try it on your next meeting.

@@ -12,9 +12,9 @@ import { applyYcPerk, submitYcPerkRequest } from "@/functions/yc-perk";
 import { getCanonicalUrl } from "@/lib/seo";
 import { validateYcVerificationUrl, ycPerkRequestSchema } from "@/lib/yc-perk";
 
-const title = "YC founder perk · Anarlog";
+const title = "YC founder perk · Shots Founder Hub";
 const description =
-  "YC founders get one year of the personal Anarlog Pro plan free for private, bot-free meeting notes.";
+  "YC founders get one year of the personal Shots Founder Hub Pro plan free for private, bot-free meeting notes.";
 
 const invalidVerificationMessages = {
   not_verified: "This YC link is no longer active.",
@@ -103,7 +103,7 @@ function YcPerkPage() {
         <section className="pt-10 pb-20 text-center md:pt-12 md:pb-24">
           <Link
             to="/"
-            aria-label="Anarlog home"
+            aria-label="Shots Founder Hub home"
             className="flex justify-center"
           >
             <AnarlogLogo className="h-8 w-auto md:h-9" />
@@ -124,9 +124,9 @@ function YcPerkPage() {
             Build the company. Keep every decision.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#4f4940]">
-            Get 1 year of the personal Anarlog Pro plan free for private,
-            bot-free meeting notes. Workspace billing and Enterprise plans are
-            separate.
+            Get 1 year of the personal Shots Founder Hub Pro plan free for
+            private, bot-free meeting notes. Workspace billing and Enterprise
+            plans are separate.
           </p>
 
           <div className="mx-auto mt-8 max-w-xl">

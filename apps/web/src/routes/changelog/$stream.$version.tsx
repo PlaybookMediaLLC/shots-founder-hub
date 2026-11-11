@@ -27,7 +27,7 @@ export const Route = createFileRoute("/changelog/$stream/$version")({
     const url = getCanonicalUrl(`/changelog/${entry.stream}/${entry.version}`);
     const description =
       entry.summary ??
-      `Release notes for Anarlog ${changelogStreamLabel(entry.stream)} v${entry.version}.`;
+      `Release notes for Shots Founder Hub ${changelogStreamLabel(entry.stream)} v${entry.version}.`;
 
     return {
       links: [{ rel: "canonical", href: url }],
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/changelog/$stream/$version")({
         // crawl budget that belongs to the blog; /changelog/ stays the hub.
         { name: "robots", content: "noindex, follow" },
         {
-          title: `Anarlog ${changelogStreamLabel(entry.stream)} v${entry.version} Changelog`,
+          title: `Shots Founder Hub ${changelogStreamLabel(entry.stream)} v${entry.version} Changelog`,
         },
         {
           name: "description",
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/changelog/$stream/$version")({
         },
         {
           property: "og:title",
-          content: `Anarlog ${changelogStreamLabel(entry.stream)} v${entry.version} Changelog`,
+          content: `Shots Founder Hub ${changelogStreamLabel(entry.stream)} v${entry.version} Changelog`,
         },
         {
           property: "og:description",
@@ -64,8 +64,12 @@ function Component() {
     <main className="bg-surface text-fg min-h-screen">
       <div className="mx-auto w-full max-w-[860px] px-5 py-8 md:px-8 md:py-12">
         <header className="flex items-center justify-between gap-6">
-          <Link to="/" aria-label="Anarlog home">
-            <img src="/logo.svg" alt="Anarlog" className="h-9 w-auto" />
+          <Link to="/" aria-label="Shots Founder Hub home">
+            <img
+              src="/logo.svg"
+              alt="Shots Founder Hub"
+              className="h-9 w-auto"
+            />
           </Link>
         </header>
 
@@ -93,7 +97,8 @@ function Component() {
             )}
           </div>
           <h1 className="font-hand text-fg mt-5 text-5xl leading-[1.02] font-semibold tracking-normal text-balance md:text-7xl">
-            Anarlog {changelogStreamLabel(entry.stream)} v{entry.version}
+            Shots Founder Hub {changelogStreamLabel(entry.stream)} v
+            {entry.version}
           </h1>
           <ChangelogAvailability entry={entry} />
           {entry.summary && (

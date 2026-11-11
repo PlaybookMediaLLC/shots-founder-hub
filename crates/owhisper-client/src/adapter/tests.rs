@@ -397,7 +397,7 @@ fn test_anarlog_proxy_always_selects_anarlog_adapter() {
             assert_eq!(
                 AdapterKind::from_url_and_languages(url, &langs, Some("cloud")),
                 AdapterKind::Anarlog,
-                "proxy URL should always select Anarlog adapter regardless of languages: url={url}, langs={langs:?}"
+                "proxy URL should always select Shots Founder Hub adapter regardless of languages: url={url}, langs={langs:?}"
             );
         }
     }
@@ -413,7 +413,7 @@ fn test_anarlog_cloud_adapter_supports_all_languages() {
         let langs: Vec<anlg_language::Language> = langs.iter().map(|l| (*l).into()).collect();
         assert!(
             AdapterKind::Anarlog.is_supported_languages_live(&langs, Some("cloud")),
-            "Anarlog adapter should support all languages: {langs:?}"
+            "Shots Founder Hub adapter should support all languages: {langs:?}"
         );
     }
 }

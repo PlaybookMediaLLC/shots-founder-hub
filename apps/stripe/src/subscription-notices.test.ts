@@ -90,7 +90,7 @@ describe("subscription notices", () => {
       new Set(["subscription-ack:sub_notice"]),
     );
     expect(sent[0].variables).toMatchObject({
-      planName: "Anarlog Team (3 seats)",
+      planName: "Shots Founder Hub Team (3 seats)",
       billingPeriod: "yearly (every 12 months)",
     });
     expect(sent[0].variables.cancellationUrl).toContain(
@@ -121,7 +121,7 @@ describe("subscription notices", () => {
       event("invoice.paid", { subscription: subscription.id }),
       deps,
     );
-    expect(sent[0].variables.planName).toBe("Anarlog Pro");
+    expect(sent[0].variables.planName).toBe("Shots Founder Hub Pro");
     expect(sent[0].variables.cancellationUrl).toBe(
       "https://anarlog.so/app/portal",
     );
@@ -130,7 +130,7 @@ describe("subscription notices", () => {
     expect(sent).toHaveLength(1);
   });
 
-  test("Autumn customers with conflicting Anarlog ownership never receive either notice", async () => {
+  test("Autumn customers with conflicting Shots Founder Hub ownership never receive either notice", async () => {
     const { deps, subscription, customer, sent } = fixture();
     customer.metadata.autumn_id = "char";
     deps.previewInvoice = async () => {

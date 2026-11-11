@@ -74,7 +74,7 @@ describe("EnhanceError", () => {
     expect(screen.getByText("Sign in to generate this summary")).toBeTruthy();
     expect(
       screen.getByText(
-        "Anarlog could not generate this summary because you were not signed in. Sign in, then try again.",
+        "Shots Founder Hub could not generate this summary because you were not signed in. Sign in, then try again.",
       ),
     ).toBeTruthy();
     expect(

@@ -184,7 +184,7 @@ export function ResourceView({ resource }: { resource: TaskResource }) {
               </Streamdown>
             </div>
           ) : (
-            <div className="border-border text-muted-foreground border-t pt-4 text-sm italic">
+            <div className="border-border text-muted-foreground border-t pt-4 text-sm">
               <Trans>No description provided.</Trans>
             </div>
           )}
@@ -239,7 +239,7 @@ export function ResourceView({ resource }: { resource: TaskResource }) {
                           {comment.body}
                         </Streamdown>
                       ) : (
-                        <span className="text-muted-foreground text-sm italic">
+                        <span className="text-muted-foreground text-sm">
                           <Trans>No content.</Trans>
                         </span>
                       )}

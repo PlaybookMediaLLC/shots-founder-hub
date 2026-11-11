@@ -796,7 +796,7 @@ describe("SettingsSync", () => {
     expect(screen.getByText("Devices")).toBeTruthy();
     expect(mocks.getCloudsyncStatus).not.toHaveBeenCalled();
     expect(mocks.toastWarning).toHaveBeenCalledWith(
-      "This requires Anarlog Pro",
+      "This requires Shots Founder Hub Pro",
       {
         action: {
           label: "Upgrade",

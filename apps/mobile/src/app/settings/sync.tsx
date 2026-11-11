@@ -79,7 +79,7 @@ export default function SyncSettings() {
         )}
         {!auth.bypass && !auth.billing.isPro && (
           <SettingsRow
-            title="Explore Anarlog Pro"
+            title="Explore Shots Founder Hub Pro"
             onPress={() => router.push("/settings/pro")}
           />
         )}

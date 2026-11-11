@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Anarlog",
+  "productName": "Shots Founder Hub",
   "mainBinaryName": "anarlog",
   "identifier": "so.anarlog.Anarlog",
   "bundle": {

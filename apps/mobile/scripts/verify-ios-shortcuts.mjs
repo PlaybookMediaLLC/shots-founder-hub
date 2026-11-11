@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 export function verifyAppShortcuts(metadata) {
   assert(
     metadata.actions?.ToggleListeningIntent?.openAppWhenRun,
-    "The recording intent must open Anarlog to start microphone capture.",
+    "The recording intent must open Shots Founder Hub to start microphone capture.",
   );
   assert(
     metadata.autoShortcuts?.some(

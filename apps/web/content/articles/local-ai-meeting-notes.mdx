@@ -10,7 +10,7 @@ date: "2026-10-12"
 
 Local AI meeting notes need more than a recorder that runs on your laptop. Speech recognition, summary generation, storage, and sharing can each use a different processing path.
 
-This guide compares Anarlog, Meetily, Shadow, Talat, and Screenpipe by those boundaries. Anarlog and Meetily let you select local speech and local summary models. Talat includes local models by default. Shadow keeps core transcription on the Mac but uses external providers for AI features. Screenpipe combines local capture with configurable AI and optional cloud services.
+This guide compares Shots Founder Hub, Meetily, Shadow, Talat, and Screenpipe by those boundaries. Shots Founder Hub and Meetily let you select local speech and local summary models. Talat includes local models by default. Shadow keeps core transcription on the Mac but uses external providers for AI features. Screenpipe combines local capture with configurable AI and optional cloud services.
 
 Product documentation and prices were checked on October 12, 2026. These are documented capabilities, not hardware or accuracy benchmark results. For desktop versus server deployment, see the [self-hosted notetaker guide](/blog/selfhosted-ai-notetakers/); for other workflows, browse our [transcription guides](/guides/transcription/).
 
@@ -18,19 +18,19 @@ Product documentation and prices were checked on October 12, 2026. These are doc
 
 | Tool | Local meeting content | What can leave the device | Current pricing |
 | --- | --- | --- | --- |
-| **Anarlog** | Local SQLite; supported on-device speech or a local server; local Intelligence selection | Hosted providers, sync, sharing, calendars, Cloud API and web search | Free local/BYOK; Pro $14/month or $140/year |
+| **Shots Founder Hub** | Local SQLite; supported on-device speech or a local server; local Intelligence selection | Hosted providers, sync, sharing, calendars, Cloud API and web search | Free local/BYOK; Pro $14/month or $140/year |
 | **Meetily** | Local speech and stored recordings; Ollama summaries | Transcript text for BYOK summaries; enabled integrations | Community free; Pro $10/user/month annually or $25 regular monthly |
 | **Shadow** | Mac capture, transcription, speaker labels, and local vault | AI titles, Skills, Ask, sharing, and webhooks can transmit context | Free capture; Plus from $8/month annually |
 | **Talat** | Local recording, speech, summaries, and database by default | Optional cloud summaries, calendar connection, exports; diagnostic/license ping | 10-hour trial; $89/year or $189 lifetime; monthly option |
 | **Screenpipe** | Local screen/audio history and search by default; local model options | Cloud speech/AI, sync, integrations, and managed storage; telemetry | Free; Basic $250/year; Business $500/seat/year; monthly options |
 
-The software license and the paid service are separate questions. Anarlog community and Meetily Community use MIT licenses. Current Screenpipe source uses its own commercial source-available license; older MIT releases retain their original license.
+The software license and the paid service are separate questions. Shots Founder Hub community and Meetily Community use MIT licenses. Current Screenpipe source uses its own commercial source-available license; older MIT releases retain their original license.
 
-## How to set up an offline Anarlog meeting
+## How to set up an offline Shots Founder Hub meeting
 
 Local transcription and local summaries are separate choices. Selecting Ollama for summaries does not change where your audio is transcribed.
 
-![Anarlog Settings → Transcription with the model dropdown open, showing on-device options](anarlog/blog/library/products/anarlog/desktop/2026-09-23-settings-transcription-dropdown.png)
+![Shots Founder Hub Settings → Transcription with the model dropdown open, showing on-device options](anarlog/blog/library/products/anarlog/desktop/2026-09-23-settings-transcription-dropdown.png)
 
 1. **Check model availability.** The built-in on-device transcription paths require a supported Apple Silicon Mac. Intel Macs, Windows, and Linux need a separate Deepgram-compatible local server or a hosted speech provider. Open **Settings → Transcription** and check the available models for your installed release. Apple Speech additionally requires macOS 26 and a supported language.
 2. **Prepare speech-to-text.** Download a Soniqo model and select it under **Model being used**. Alternatively, configure Apple Speech's language assets or choose **On-device file** with a downloaded whisper.cpp `.bin`. Read the model's **Live** or **After recording** label; after-recording models do not produce a live transcript.
@@ -40,21 +40,21 @@ Local transcription and local summaries are separate choices. Selecting Ollama f
 
 The canonical meeting record is stored in local SQLite; recordings and attachments are separate local files. Markdown is an export format. Enabling a hosted AI provider sends the content needed for that operation to that provider. Optional encrypted CloudSync and the server-readable Cloud API & Connectors copy are distinct services; review each before enabling it.
 
-Sources: Anarlog's [offline setup](https://docs.anarlog.so/offline), [model compatibility](https://docs.anarlog.so/models-and-providers), and [privacy policy](/privacy/). This is a setup procedure you can verify on your own hardware, not a claim that every model or operating system supports offline transcription.
+Sources: Shots Founder Hub's [offline setup](https://docs.anarlog.so/offline), [model compatibility](https://docs.anarlog.so/models-and-providers), and [privacy policy](/privacy/). This is a setup procedure you can verify on your own hardware, not a claim that every model or operating system supports offline transcription.
 
 ## Five local meeting workflows
 
 ### 1. Anarlog: meeting notes with a selectable AI stack
 
-![Current Anarlog meeting summary view](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
+![Current Shots Founder Hub meeting summary view](anarlog/blog/library/products/anarlog/desktop/2026-08-20-meeting-summary.jpg "char-editor-width=80")
 
-[Anarlog](/) captures microphone and system audio without adding a meeting bot. You can write a memo during the call, then generate a summary from your notes and the transcript. Sessions and text live in local SQLite, while recordings and attachments are separate files. Markdown is a portable export.
+[Shots Founder Hub](/) captures microphone and system audio without adding a meeting bot. You can write a memo during the call, then generate a summary from your notes and the transcript. Sessions and text live in local SQLite, while recordings and attachments are separate files. Markdown is a portable export.
 
 **Local path:** select a supported on-device speech model and a local Intelligence model independently. A whisper.cpp file is for processing after recording; it does not provide a live Whisper transcript. Intel Macs, Windows, and Linux can connect to a Deepgram-compatible local server instead of relying on built-in Mac speech models. The setup above covers the supported Mac path.
 
-**External path:** your own API keys and Anarlog Cloud use hosted providers. Encrypted CloudSync, sharing, the Cloud API, calendars, and chat web search also have their own data paths. Review [security](/security/) and the current [model documentation](https://docs.anarlog.so/models-and-providers) before choosing a configuration.
+**External path:** your own API keys and Shots Founder Hub Cloud use hosted providers. Encrypted CloudSync, sharing, the Cloud API, calendars, and chat web search also have their own data paths. Review [security](/security/) and the current [model documentation](https://docs.anarlog.so/models-and-providers) before choosing a configuration.
 
-**Tradeoff:** running speech and summary models together uses your computer's resources. Test your actual model choices and meeting length. Choose Anarlog when you want manual notes, transcripts, summaries, and exports in one local workspace.
+**Tradeoff:** running speech and summary models together uses your computer's resources. Test your actual model choices and meeting length. Choose Shots Founder Hub when you want manual notes, transcripts, summaries, and exports in one local workspace.
 
 **Pricing:** [Free](/pricing/) includes local and BYOK workflows; provider charges are separate. Pro is $14/month or $140/year and includes managed AI, encrypted CloudSync, sharing, and calendar integrations.
 
@@ -120,13 +120,13 @@ Current [app pricing](https://screenpipe.com/onboarding) offers Free, Basic at $
 
 ## Choose the workflow, then verify the boundary
 
-- **Notes plus a transcript:** Anarlog pairs your memo with captured meeting audio and lets you select speech and summary providers.
+- **Notes plus a transcript:** Shots Founder Hub pairs your memo with captured meeting audio and lets you select speech and summary providers.
 - **Local capture and summaries:** Meetily offers a free Community route; check Pro for speaker identification and advanced exports.
 - **Visual meeting context:** Shadow automates meeting screenshots, while Talat documents manual screenshot capture. Screenpipe covers broader desktop activity.
 - **Local defaults with packaged models:** Talat includes a local summary model and supports Mac and Windows.
 - **Searchable computer history:** Screenpipe connects screen and audio history to AI tools; review capture scope and current license terms first.
 
-For an open-source comparison, see [meeting capture versus dictation](/blog/open-source-meeting-transcription-software/). For a local meeting editor, [download Anarlog](/download/) and run the short offline check above before relying on it during a real call.
+For an open-source comparison, see [meeting capture versus dictation](/blog/open-source-meeting-transcription-software/). For a local meeting editor, [download Shots Founder Hub](/download/) and run the short offline check above before relying on it during a real call.
 
 ## Frequently asked questions
 
@@ -148,4 +148,4 @@ No. Hosted AI can receive meeting content, a webhook can transmit an export, and
 
 ### What hardware should I check?
 
-Check the app's platform requirements and the speech and summary models together. Anarlog's built-in speech models require supported Apple Silicon hardware; its local-server alternative is separate. Leave resources for your conferencing app and test a recording of the length you need.
+Check the app's platform requirements and the speech and summary models together. Shots Founder Hub's built-in speech models require supported Apple Silicon hardware; its local-server alternative is separate. Leave resources for your conferencing app and test a recording of the length you need.

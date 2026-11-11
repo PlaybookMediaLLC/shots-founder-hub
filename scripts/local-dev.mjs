@@ -1175,7 +1175,7 @@ async function desktop(config) {
   ]);
   await run("codesign", ["--verify", "--deep", "--strict", appPath]);
   prompts.note(
-    "Quit any older Anarlog Dev process before testing. Sign in uses Shots in your browser and returns through the registered macOS callback.",
+    "Quit any older Shots Founder Hub Dev process before testing. Sign in uses Shots in your browser and returns through the registered macOS callback.",
     "Desktop",
   );
   await run("open", [appPath]);

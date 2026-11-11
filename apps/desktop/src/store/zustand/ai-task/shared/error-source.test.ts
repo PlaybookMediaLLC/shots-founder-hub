@@ -54,13 +54,13 @@ describe("attributeAIError", () => {
       { kind: "openrouter" },
     ],
     [
-      "the Anarlog proxy failing to reach OpenRouter",
+      "the Shots Founder Hub proxy failing to reach OpenRouter",
       apiError(HOSTED_URL, 502, "Upstream request failed"),
       "openrouter",
       { kind: "openrouter" },
     ],
     [
-      "an Anarlog API rejection",
+      "a Shots Founder Hub API rejection",
       apiError(HOSTED_URL, 401, "invalid_token"),
       "openrouter",
       { kind: "anarlog" },

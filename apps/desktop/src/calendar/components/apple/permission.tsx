@@ -41,8 +41,8 @@ export function AppleCalendarPermissionDialog({
           </DialogTitle>
           <DialogDescription className="text-foreground w-full text-center text-[13px] leading-[1.36]">
             <Trans>
-              Turn on Anarlog in System Settings → Privacy &amp; Security →
-              Calendars, then return here.
+              Turn on Shots Founder Hub in System Settings → Privacy &amp;
+              Security → Calendars, then return here.
             </Trans>
           </DialogDescription>
         </DialogHeader>

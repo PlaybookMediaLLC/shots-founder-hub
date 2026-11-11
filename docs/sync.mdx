@@ -3,7 +3,7 @@ title: "Cloud sync"
 description: "Keep notes end-to-end encrypted across devices, and avoid conflicts with cloud-storage folders."
 ---
 
-Cloud sync keeps your notes up to date across your signed-in devices. It is part of Anarlog Pro.
+Cloud sync keeps your notes up to date across your signed-in devices. It is part of Shots Founder Hub Pro.
 
 ## Turn sync on or off
 
@@ -16,7 +16,7 @@ Pause sync when you want changes to remain only on the current device for a whil
 
 ## What Cloud Sync replicates
 
-Cloud Sync copies end-to-end encrypted notes across your signed-in devices. Anarlog cannot read this data.
+Cloud Sync copies end-to-end encrypted notes across your signed-in devices. Shots Founder Hub cannot read this data.
 
 Each synced device receives:
 
@@ -28,7 +28,7 @@ Each synced device receives:
 
 Since 1.4.24, new daily notes, folders, tags, and note-tag assignments stay on the device where you create them. Their sync rollout is deferred to keep meeting-note sync compatible with 1.4.23. **Synced** applies to the supported data above, not these local-only items. Existing items already synced by Nightly continue using their existing format; use matching app versions on those devices.
 
-API keys, model selections, and most other settings stay on the computer where you entered them. After you add a new device, enter each Transcription and Intelligence API key again and choose the models you want on that computer. Anarlog stores those keys in the operating system's credential store and does not copy them between devices.
+API keys, model selections, and most other settings stay on the computer where you entered them. After you add a new device, enter each Transcription and Intelligence API key again and choose the models you want on that computer. Shots Founder Hub stores those keys in the operating system's credential store and does not copy them between devices.
 
 Also set up on each device:
 
@@ -42,26 +42,26 @@ See [Data, privacy, and retention](/data-and-privacy) for what can leave your co
 
 ## Recovery keys
 
-Anarlog creates your first sync key automatically and stores it on your device. An existing synced device transfers the key to new devices through an encrypted package. Anarlog cannot read or recover the key.
+Shots Founder Hub creates your first sync key automatically and stores it on your device. An existing synced device transfers the key to new devices through an encrypted package. Shots Founder Hub cannot read or recover the key.
 
 If you saved a recovery key during an earlier setup, keep it in your password manager. On a new desktop device, **Use recovery key instead** lets you connect while your other devices are offline.
 
 <Warning>
-  If you lose every device holding the key and have no saved recovery key, Anarlog support cannot restore your encrypted cloud data. Local notes remain available on devices where they are stored.
+  If you lose every device holding the key and have no saved recovery key, Shots Founder Hub support cannot restore your encrypted cloud data. Local notes remain available on devices where they are stored.
 </Warning>
 
 ## Add another device
 
-1. Install Anarlog and sign in with the same Pro account on the new device.
-2. Keep Anarlog open and sync enabled on an existing synced device. It transfers the key automatically; no approval button is required.
+1. Install Shots Founder Hub and sign in with the same Pro account on the new device.
+2. Keep Shots Founder Hub open and sync enabled on an existing synced device. It transfers the key automatically; no approval button is required.
 3. Keep the new device open while it connects and downloads your notes. If all existing devices are offline, setup waits until one comes online.
 4. Re-enter any Transcription or Intelligence API keys you use on this computer, then select those models under **Settings → Transcription** and **Settings → Intelligence**.
 
 A device where you explicitly paused sync stays paused until you resume it. Connecting a local library previously used with another account still requires the **Connect library** choice below.
 
-Anarlog 1.4.29 includes five synced devices with Pro, plus any purchased extra slots. **Settings → Sync → Devices** shows your current usage and limit. If you reach the limit, remove an unused device or choose **Get more slots** to open your account page and add paid slots to a personal Pro subscription. Each add-on adds one slot. Existing connected devices remain connected if you later remove an add-on.
+Shots Founder Hub 1.4.29 includes five synced devices with Pro, plus any purchased extra slots. **Settings → Sync → Devices** shows your current usage and limit. If you reach the limit, remove an unused device or choose **Get more slots** to open your account page and add paid slots to a personal Pro subscription. Each add-on adds one slot. Existing connected devices remain connected if you later remove an add-on.
 
-Cloud API & Connectors is a separate, optional feature. If you enable it under **Settings → Developers**, Anarlog uploads a server-readable copy for remote agents; it does not decrypt or weaken your end-to-end encrypted sync data. See [Cloud API and connectors](/reference/api-cloud).
+Cloud API & Connectors is a separate, optional feature. If you enable it under **Settings → Developers**, Shots Founder Hub uploads a server-readable copy for remote agents; it does not decrypt or weaken your end-to-end encrypted sync data. See [Cloud API and connectors](/reference/api-cloud).
 
 ## Switch accounts while keeping local notes
 
@@ -76,16 +76,16 @@ This is an account-switching choice, not a repair for a delayed sync. Leave your
 
 ## Where local data lives
 
-Anarlog keeps your notes, recordings, and settings in its application data folder, next to the local database. You don't pick a storage folder, so a file-syncing service such as iCloud Drive, Dropbox, Google Drive, or OneDrive never competes with Cloud sync for the same files. Backup tools that snapshot the folder are fine.
+Shots Founder Hub keeps your notes, recordings, and settings in its application data folder, next to the local database. You don't pick a storage folder, so a file-syncing service such as iCloud Drive, Dropbox, Google Drive, or OneDrive never competes with Cloud sync for the same files. Backup tools that snapshot the folder are fine.
 
-Earlier versions let you point storage at a custom folder, often an Obsidian vault. The first launch after updating moves the notes and recordings from that folder back into the application data folder and removes only the files Anarlog created there. Your other files in that folder stay where they are.
+Earlier versions let you point storage at a custom folder, often an Obsidian vault. The first launch after updating moves the notes and recordings from that folder back into the application data folder and removes only the files Shots Founder Hub created there. Your other files in that folder stay where they are.
 
-To keep an Obsidian vault or another folder up to date, use the [Export every meeting as Markdown](/automations) automation and choose that folder as its export location. It writes files one way, from Anarlog into the folder.
+To keep an Obsidian vault or another folder up to date, use the [Export every meeting as Markdown](/automations) automation and choose that folder as its export location. It writes files one way, from Shots Founder Hub into the folder.
 
 ## Fix a blocked sync
 
-- **Sync needs attention / setup required:** Open Anarlog on an existing synced device signed in to the same account, or enter a recovery key you saved during an earlier setup.
-- **Connecting this device:** Open Anarlog on an existing synced device signed in to the same account, or use a previously saved recovery key.
+- **Sync needs attention / setup required:** Open Shots Founder Hub on an existing synced device signed in to the same account, or enter a recovery key you saved during an earlier setup.
+- **Connecting this device:** Open Shots Founder Hub on an existing synced device signed in to the same account, or use a previously saved recovery key.
 - **Sign in again:** Sign out and sign back in, then resume sync.
 - **Identity mismatch:** Sign in again with the account that owns the synced notes. Check Sync settings before changing local files.
 - **Device limit reached:** Remove an unused device, then try again.
@@ -93,16 +93,16 @@ To keep an Obsidian vault or another folder up to date, use the [Export every me
 
 ## Sync stays on Connecting or Cloud sync delayed
 
-Both states mean Anarlog is still retrying in the background. Your notes remain available locally.
+Both states mea Shots Founder Hub is still retrying in the background. Your notes remain available locally.
 
-- **Connecting...** means this device has not finished setting up encrypted sync. If setup fails, Anarlog may show **Sync needs attention** with more detail.
-- **Cloud sync delayed** means recovery has not finished. Anarlog may be waiting for more synced data or retrying a failed step. An error appears below the status when one is available.
+- **Connecting...** means this device has not finished setting up encrypted sync. If setup fails, Shots Founder Hub may show **Sync needs attention** with more detail.
+- **Cloud sync delayed** means recovery has not finished. Shots Founder Hub may be waiting for more synced data or retrying a failed step. An error appears below the status when one is available.
 
 To fix it:
 
 1. Check that the device is online and that a firewall, VPN, or proxy is not blocking `api.anarlog.so`. Opening `https://api.anarlog.so/` in a browser can return **404 Not Found** because there is no page at that address. This alone neither indicates a sync failure nor proves that the app can complete sync.
-2. Check the date and time on this device. A wrong clock makes sync credentials expire immediately; Anarlog reports this as a clock problem.
-3. Keep Anarlog open. A large first download can take several minutes and resumes if the app was closed.
+2. Check the date and time on this device. A wrong clock makes sync credentials expire immediately; Shots Founder Hub reports this as a clock problem.
+3. Keep Shots Founder Hub open. A large first download can take several minutes and resumes if the app was closed.
 4. Turn Cloud sync off and on again from **Settings → Sync**.
 5. If it still does not clear, click **Sync now** and expand **Sync log**. Note the time you tried it, the status text, any error, and the app version and operating system on each affected device.
 
@@ -119,4 +119,4 @@ Staging and the retired Nightly app keep separate logs; use `com.hyprnote.stagin
   Do not delete your local data or create a replacement recovery key to troubleshoot delayed sync. Keep the existing notes and recovery key until sync completes and you have verified your notes on another device.
 </Warning>
 
-If sync is paused during recording or an import, let that activity finish. Anarlog resumes background sync when it is safe to do so.
+If sync is paused during recording or an import, let that activity finish. Shots Founder Hub resumes background sync when it is safe to do so.

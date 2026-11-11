@@ -33,6 +33,10 @@ const SELF_BUNDLE_IDS: &[&str] = &[
 ];
 
 const SELF_APP_NAMES: &[&str] = &[
+    "shots founder hub",
+    "shots founder hub dev",
+    "shots founder hub staging",
+    "shots founder hub nightly",
     "anarlog",
     "anarlog staging",
     "anarlog nightly",
@@ -45,6 +49,10 @@ const SELF_APP_NAMES: &[&str] = &[
 ];
 
 const SELF_APP_PATH_SEGMENTS: &[&str] = &[
+    "/shots founder hub.app/",
+    "/shots founder hub dev.app/",
+    "/shots founder hub staging.app/",
+    "/shots founder hub nightly.app/",
     "/anarlog.app/",
     "/anarlog staging.app/",
     "/anarlog nightly.app/",
@@ -111,10 +119,16 @@ mod tests {
     #[test]
     fn is_self_app_matches_only_anarlog_identities() {
         for (id, name, expected) in [
-            ("com.anarlog.stable", "Anarlog", true),
-            ("com.hyprnote.stable", "Anarlog", true),
+            ("com.anarlog.stable", "Shots Founder Hub", true),
+            ("com.hyprnote.stable", "Shots Founder Hub", true),
             ("com.hyprnote.Hyprnote", "Hyprnote", true),
-            ("pid:42", "Anarlog", true),
+            ("pid:42", "Shots Founder Hub", true),
+            ("pid:45", "Shots Founder Hub Dev", true),
+            (
+                "/Applications/Shots Founder Hub.app/Contents/MacOS/anarlog",
+                "Unknown",
+                true,
+            ),
             ("pid:43", "Char Nightly", true),
             ("pid:44", "Hyprnote Staging", true),
             (

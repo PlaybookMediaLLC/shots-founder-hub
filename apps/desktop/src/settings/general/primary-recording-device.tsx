@@ -63,7 +63,7 @@ export function PrimaryRecordingDeviceSelector() {
             <Trans>Sign in to choose a primary recording device.</Trans>
           ) : !isPro ? (
             <Trans>
-              Anarlog Pro coordinates recording across your devices.
+              Shots Founder Hub Pro coordinates recording across your devices.
             </Trans>
           ) : (
             <Trans>

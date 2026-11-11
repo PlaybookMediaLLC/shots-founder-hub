@@ -123,8 +123,8 @@ export function GoogleDriveConfig({
       <p className="text-muted-foreground text-xs">
         <Trans>
           Every note summarized after enabling this automation is saved here as
-          one file with its summary and transcript in the selected format.
-          Anarlog must be open.
+          one file with its summary and transcript in the selected format. Shots
+          Founder Hub must be open.
         </Trans>
       </p>
       {picker.error ? (

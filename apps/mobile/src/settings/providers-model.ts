@@ -3,7 +3,7 @@ export type ProviderKind = "stt" | "llm";
 export const TRANSCRIPTION_PROVIDERS = [
   {
     id: "anarlog",
-    name: "Anarlog Pro",
+    name: "Shots Founder Hub Pro",
     baseUrl: "",
     model: "cloud",
   },
@@ -222,7 +222,7 @@ export const TRANSCRIPTION_PROVIDERS = [
 export const SUMMARY_PROVIDERS = [
   {
     id: "anarlog",
-    name: "Anarlog Pro",
+    name: "Shots Founder Hub Pro",
     baseUrl: "",
     model: "",
   },

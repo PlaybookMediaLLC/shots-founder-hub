@@ -29,7 +29,7 @@ const DERIVED_DIRECTORIES: &[&str] = &["search_index"];
 // delete from a folder the user also uses for other things.
 const OWNED_DIRECTORIES: &[&str] = &["sessions", "search_index"];
 const OWNED_FILES: &[&str] = &["settings.json", "store.json"];
-const GENERATED_AGENTS_HEADERS: &[&str] = &["# Anarlog", "# Hyprnote"];
+const GENERATED_AGENTS_HEADERS: &[&str] = &["# Shots Founder Hub", "# Anarlog", "# Hyprnote"];
 
 /// Copies the vault items of `src` over `dst`; files in `src` win on conflict.
 pub fn copy_vault_items(src: &Path, dst: &Path) -> std::io::Result<()> {

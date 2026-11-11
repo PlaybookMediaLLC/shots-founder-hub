@@ -81,7 +81,7 @@ pub struct ListFoldersInput {
 )]
 #[serde(rename_all = "snake_case")]
 pub struct GetMeetingInput {
-    #[schemars(description = "Anarlog meeting id")]
+    #[schemars(description = "Shots Founder Hub meeting id")]
     pub meeting_id: String,
 }
 
@@ -90,7 +90,7 @@ pub struct GetMeetingInput {
 )]
 #[serde(rename_all = "snake_case")]
 pub struct GetMeetingTranscriptInput {
-    #[schemars(description = "Anarlog meeting id")]
+    #[schemars(description = "Shots Founder Hub meeting id")]
     pub meeting_id: String,
     #[schemars(description = "Word offset; defaults to 0")]
     pub offset: Option<u32>,

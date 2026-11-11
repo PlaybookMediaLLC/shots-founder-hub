@@ -288,7 +288,7 @@ struct FloatingBarView: View {
     )
     .help(
       model.status == .error
-        ? "\(model.transcriptNotice ?? "Recording needs attention"). Open Anarlog to retry or change devices."
+        ? "\(model.transcriptNotice ?? "Recording needs attention"). Open Shots Founder Hub to retry or change devices."
         : "Stop listening"
     )
     .onHover { isStopHovered = $0 }

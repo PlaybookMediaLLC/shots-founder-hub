@@ -78,7 +78,7 @@ pub use webhook_types::*;
 // builds read or write. If a migration cannot be downgrade-safe, put a
 // "-- breaking" line in the leading comment block of its .sql file; older
 // builds will then refuse to open the database with an explicit
-// "update Anarlog" dialog instead of misbehaving on it.
+// "update Shots Founder Hub" dialog instead of misbehaving on it.
 pub const APP_MIGRATION_STEPS: &[anlg_db_migrate::MigrationStep] = &[
     anlg_db_migrate::MigrationStep {
         id: "20260413020000_templates",

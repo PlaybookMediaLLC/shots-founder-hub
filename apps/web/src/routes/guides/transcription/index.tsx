@@ -11,7 +11,7 @@ import {
 } from "@/lib/seo";
 
 const title =
-  "Transcription Guides: Tools, Local Models & Meeting Setup | Anarlog";
+  "Transcription Guides: Tools, Local Models & Meeting Setup | Shots Founder Hub";
 const description =
   "Find the right transcription workflow for files and meetings. Explore free tools, Mac and Windows options, offline models, and Zoom, Meet, and Teams setup.";
 const url = getCanonicalUrl("/guides/transcription");
@@ -69,8 +69,12 @@ function TranscriptionGuides() {
     <main className="bg-surface text-fg min-h-screen">
       <div className="mx-auto w-full max-w-[860px] px-5 py-8 md:px-8 md:py-12">
         <header className="flex items-center justify-between gap-6">
-          <Link to="/" aria-label="Anarlog home">
-            <img src="/logo.svg" alt="Anarlog" className="h-9 w-auto" />
+          <Link to="/" aria-label="Shots Founder Hub home">
+            <img
+              src="/logo.svg"
+              alt="Shots Founder Hub"
+              className="h-9 w-auto"
+            />
           </Link>
           <Link to="/blog/" className="text-sm hover:underline">
             All articles
@@ -78,7 +82,9 @@ function TranscriptionGuides() {
         </header>
 
         <section className="pt-24 pb-16 md:pt-32">
-          <p className="text-brand-dark mb-4 text-sm">Anarlog guides</p>
+          <p className="text-brand-dark mb-4 text-sm">
+            Shots Founder Hub guides
+          </p>
           <h1 className="font-hand text-6xl leading-[0.98] font-semibold tracking-normal text-balance md:text-8xl">
             Find your transcription workflow.
           </h1>
@@ -142,17 +148,17 @@ function TranscriptionGuides() {
             Bring the transcript into your meeting notes.
           </h2>
           <p className="text-brand-dark mt-4 max-w-2xl leading-7">
-            Anarlog captures meetings without a bot and keeps the meeting record
-            locally. Choose supported on-device models, your own provider keys,
-            or hosted AI. Built-in local speech models require Apple Silicon;
-            check your platform before choosing an offline setup.
+            Shots Founder Hub captures meetings without a bot and keeps the
+            meeting record locally. Choose supported on-device models, your own
+            provider keys, or hosted AI. Built-in local speech models require
+            Apple Silicon; check your platform before choosing an offline setup.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-5">
             <Link
               to="/download/"
               className="rounded-full bg-linear-to-t from-stone-600 to-stone-500 px-6 py-3 text-sm text-white"
             >
-              Try Anarlog
+              Try Shots Founder Hub
             </Link>
             <a
               href="https://docs.anarlog.so/desktop-installation"

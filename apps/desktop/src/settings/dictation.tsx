@@ -72,7 +72,8 @@ export function SettingsDictation() {
             title={<Trans>Enable dictation</Trans>}
             description={
               <Trans>
-                Keep Anarlog running to use your shortcut in other apps.
+                Keep Shots Founder Hub running to use your shortcut in other
+                apps.
               </Trans>
             }
             checked={enabled}
@@ -127,7 +128,7 @@ export function SettingsDictation() {
             ) : (
               <Trans>
                 Press Escape to cancel. Dictation stops after five minutes and
-                pauses while Anarlog records a meeting.
+                pauses while Shots Founder Hub records a meeting.
               </Trans>
             )}
           </p>
@@ -210,7 +211,7 @@ export function SettingsDictation() {
               Dictation uses your microphone, transcription provider, languages,
               and dictionary. Temporary audio is deleted after transcription.
               Your last transcript stays in memory until dictation is disabled
-              or Anarlog closes.
+              or Shots Founder Hub closes.
             </Trans>
           </p>
           {status.lastTranscript && (

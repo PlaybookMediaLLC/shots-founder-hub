@@ -7,8 +7,8 @@ export const oauthAuthorizationIdSchema = z
   .regex(/^[A-Za-z0-9_-]+$/);
 
 const scopeDescriptions: Record<string, string> = {
-  openid: "Confirm your Anarlog account identity",
-  email: "Share your Anarlog account email with the connector",
+  openid: "Confirm your Shots Founder Hub account identity",
+  email: "Share your Shots Founder Hub account email with the connector",
   offline_access: "Stay connected without asking you to sign in every time",
 };
 

@@ -18,7 +18,7 @@ export async function authenticateForAppLock(): Promise<boolean> {
   let success = false;
   try {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: "Unlock Anarlog",
+      promptMessage: "Unlock Shots Founder Hub",
       cancelLabel: "Cancel",
       fallbackLabel: "Use passcode",
       biometricsSecurityLevel: "strong",
@@ -53,7 +53,7 @@ export function AppLock() {
   return (
     <Modal visible animationType="none" onRequestClose={() => {}}>
       <View style={styles.cover}>
-        <Text style={styles.title}>Anarlog</Text>
+        <Text style={styles.title}>Shots Founder Hub</Text>
         {preferences.ready ? (
           <Button
             label="Unlock"

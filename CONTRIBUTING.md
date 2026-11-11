@@ -89,8 +89,8 @@ packaging also needs Xcode and the Metal toolchain
 (`xcodebuild -downloadComponent MetalToolchain`). First builds and container
 downloads can take several minutes and require substantial free disk space.
 The packaged desktop command currently supports macOS; browser testing works
-on macOS and Linux. Quit any older Anarlog Dev process before opening the new
-bundle so the callback reaches the correct build.
+on macOS and Linux. Quit any older Shots Founder Hub Dev process before opening
+the new bundle so the callback reaches the correct build.
 
 This starts Shots Postgres, Redis, Temporal, PostgREST and Storage over that same
 Shots database, both API servers,

@@ -376,7 +376,7 @@ mod tests {
             ),
         ] {
             let checkpoint = checkpoint(provider, platform);
-            MeetingSdkBridgeStart::new(checkpoint.clone(), "Anarlog Notetaker").unwrap();
+            MeetingSdkBridgeStart::new(checkpoint.clone(), "Shots Founder Hub Notetaker").unwrap();
             let mut normalizer = MeetingSdkBridgeNormalizer::new(&checkpoint).unwrap();
             let payloads = [
                 MeetingSdkBridgeEventPayload::Ready,
@@ -464,11 +464,12 @@ mod tests {
             ..checkpoint.clone()
         };
         assert!(matches!(
-            MeetingSdkBridgeStart::new(unsafe_checkpoint, "Anarlog Notetaker"),
+            MeetingSdkBridgeStart::new(unsafe_checkpoint, "Shots Founder Hub Notetaker"),
             Err(MeetingSdkBridgeError::InvalidMeetingUrl { .. })
         ));
 
-        let mut start = MeetingSdkBridgeStart::new(checkpoint, "Anarlog Notetaker").unwrap();
+        let mut start =
+            MeetingSdkBridgeStart::new(checkpoint, "Shots Founder Hub Notetaker").unwrap();
         start.protocol_version += 1;
         assert!(matches!(
             start.validate(),

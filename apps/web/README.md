@@ -39,7 +39,7 @@ existing job leases and delivery idempotency remain in place.
    sign-in, checkout, shared notes, OAuth callbacks, images, social previews,
    search, documentation discovery, APT downloads, and redirects. The five-minute
    schedules require a Vercel plan that supports that frequency.
-2. Deploy production with jobs disabled. Move the Anarlog web domains to Vercel
+2. Deploy production with jobs disabled. Move the Shots Founder Hub web domains to Vercel
    after verifying the deployment. Preserve DNS for the separate API, billing,
    documentation, and model services. Historical domain redirect rules are
    preserved in code; attach only domains intentionally owned by this deployment.
@@ -55,7 +55,7 @@ The old Netlify `anarlog` project was deleted on 2026-09-08 after its final
 host-specific routes; `www.hyprnote.com` redirects to the apex. Both use the
 Vercel CNAME target in Cloudflare with proxying disabled. The desktop download
 and update aliases remain on Vercel for installed-client compatibility.
-Netlify is no longer a deployment, scheduler, or rollback target for Anarlog.
+Netlify is no longer a deployment, scheduler, or rollback target for Shots Founder Hub.
 
 Local development uses `pnpm dev:web` from the repository root. Local image requests
 redirect to their original assets; Vercel performs width-based image

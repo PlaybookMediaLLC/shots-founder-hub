@@ -57,7 +57,7 @@ impl ResendClient {
             .header("Idempotency-Key", idempotency_key)
             .json(&ResendEmail {
                 from: format!(
-                    "{} via Anarlog <{}>",
+                    "{} via Shots Founder Hub <{}>",
                     safe_sender_name(sender_name),
                     self.from_email
                 ),
@@ -89,7 +89,7 @@ impl ResendClient {
             .join("emails/batch")
             .map_err(|error| error.to_string())?;
         let from = format!(
-            "{} via Anarlog <{}>",
+            "{} via Shots Founder Hub <{}>",
             safe_sender_name(sender_name),
             self.from_email
         );
@@ -139,7 +139,7 @@ impl EmailDelivery {
                         &sender_name,
                         format!("{sender_name} invited you to {note_title}"),
                         format!(
-                            "{} invited you to view \"{}\" in Anarlog.\n\nOpen the meeting notes:\n{}\n\nReply to this email to contact {}.",
+                            "{} invited you to view \"{}\" in Shots Founder Hub.\n\nOpen the meeting notes:\n{}\n\nReply to this email to contact {}.",
                             sender_name,
                             note_title,
                             invitation_url,
@@ -188,9 +188,9 @@ impl EmailDelivery {
                 recipient,
                 owner_email,
                 &sender_name,
-                format!("You're invited to join the \"{workspace_name}\" team in Anarlog"),
+                format!("You're invited to join the \"{workspace_name}\" team in Shots Founder Hub"),
                 format!(
-                    "{} invited you to join \"{}\", a team in Anarlog.\n\nAccept the invitation:\n{}\n\nReply to this email to contact {}.",
+                    "{} invited you to join \"{}\", a team in Shots Founder Hub.\n\nAccept the invitation:\n{}\n\nReply to this email to contact {}.",
                     sender_name,
                     workspace_name,
                     invitation_url,
@@ -220,7 +220,7 @@ impl EmailDelivery {
                 sender_name,
                 format!("Meeting notes: {note_title}"),
                 format!(
-                    "{note_title}\n\n{note_body}\n\nSent by {} via Anarlog. Reply to this email to contact them.",
+                    "{note_title}\n\n{note_body}\n\nSent by {} via Shots Founder Hub. Reply to this email to contact them.",
                     safe_sender_name(sender_name)
                 ),
                 idempotency_key,
@@ -252,7 +252,7 @@ pub(super) fn safe_sender_name(value: &str) -> String {
     let normalized = normalized.split_whitespace().collect::<Vec<_>>().join(" ");
     let normalized = normalized.chars().take(80).collect::<String>();
     if normalized.is_empty() {
-        "An Anarlog user".to_string()
+        "A Shots Founder Hub user".to_string()
     } else {
         normalized
     }
@@ -265,6 +265,6 @@ mod tests {
     #[test]
     fn sanitizes_sender_names_for_email_headers() {
         assert_eq!(safe_sender_name(" Ada <Lovelace>\n"), "Ada Lovelace");
-        assert_eq!(safe_sender_name("\r\n"), "An Anarlog user");
+        assert_eq!(safe_sender_name("\r\n"), "A Shots Founder Hub user");
     }
 }

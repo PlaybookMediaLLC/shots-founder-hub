@@ -51,7 +51,7 @@ function usage() {
     --slug meeting-minutes-software \\
     --filename meeting-minutes-workflow.png \\
     --content-file /tmp/figure-prompt.txt \\
-    --context "Anarlog blog figure for private, bot-free meeting notes"
+    --context "Shots Founder Hub blog figure for private, bot-free meeting notes"
 
 Required:
   --slug           Blog article slug. Publishes https://static.anarlog.so/blog/articles/<slug>/<filename>.
@@ -62,7 +62,7 @@ Required:
 Useful options:
   --format png|svg|ppt              Defaults from filename extension, then png.
   --context "..."                   Additional generation context.
-  --style-id <id>                   Napkin style/brand ID. Defaults to Anarlog brand.
+  --style-id <id>                   Napkin style/brand ID. Defaults to Shots Founder Hub brand.
   --visual-query flowchart|timeline Optional layout hint.
   --orientation auto|horizontal|vertical|square
   --width 1200                      PNG width hint.

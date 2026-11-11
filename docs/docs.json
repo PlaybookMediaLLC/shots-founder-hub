@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Anarlog",
+  "name": "Shots Founder Hub",
   "colors": {
     "primary": "#74540F",
     "light": "#946F25",
@@ -20,7 +20,7 @@
         "pages": ["index", "desktop-installation", "quickstart"]
       },
       {
-        "group": "Using Anarlog",
+        "group": "Using Shots Founder Hub",
         "pages": [
           "meetings",
           "dictation",
@@ -82,7 +82,7 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Anarlog",
+          "anchor": "Shots Founder Hub",
           "href": "https://anarlog.so/",
           "icon": "house"
         },
@@ -107,7 +107,7 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Download Anarlog",
+      "label": "Download Shots Founder Hub",
       "href": "https://anarlog.so/download/"
     }
   },

@@ -3682,7 +3682,7 @@ describe("useStartListening", () => {
     });
 
     expect(toastErrorMock).toHaveBeenCalledWith(
-      "Anarlog could not save part of the live transcript.",
+      "Shots Founder Hub could not save part of the live transcript.",
       { id: "live-transcript-persist-failed" },
     );
     expect(queueAutoEnhanceIfSummaryEmptyMock).not.toHaveBeenCalled();
@@ -3732,7 +3732,7 @@ describe("useStartListening", () => {
     });
 
     expect(toastErrorMock).toHaveBeenCalledWith(
-      "Anarlog could not finish saving the transcript. The recording was kept so you can try again.",
+      "Shots Founder Hub could not finish saving the transcript. The recording was kept so you can try again.",
       { id: "post-capture-transcript-incomplete" },
     );
     expect(markSessionAudioTranscriptionCompleteMock).not.toHaveBeenCalled();
@@ -4186,7 +4186,7 @@ describe("useStartListening", () => {
     listMicUsingApplicationsMock
       .mockResolvedValueOnce({
         status: "ok",
-        data: [{ id: "com.anarlog.dev", name: "Anarlog Dev" }],
+        data: [{ id: "com.anarlog.dev", name: "Shots Founder Hub Dev" }],
       })
       .mockResolvedValueOnce({
         status: "ok",
@@ -4376,7 +4376,7 @@ describe("useStartListening", () => {
       expect(startMeetingChatCaptureMock).toHaveBeenCalledWith({
         sessionId: "session-1",
         excludedTexts: [
-          "I'm using Anarlog to record and transcribe this meeting. https://anarlog.so",
+          "I'm using Shots Founder Hub to record and transcribe this meeting. https://anarlog.so",
         ],
         onParticipantDeclined: expect.any(Function),
       });
@@ -4415,7 +4415,7 @@ describe("useStartListening", () => {
       expect(startMeetingChatCaptureMock).toHaveBeenCalledWith({
         sessionId: "session-1",
         excludedTexts: [
-          "I'm using Anarlog to record and transcribe this meeting. https://anarlog.so",
+          "I'm using Shots Founder Hub to record and transcribe this meeting. https://anarlog.so",
         ],
         onParticipantDeclined: expect.any(Function),
       });

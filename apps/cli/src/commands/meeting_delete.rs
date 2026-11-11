@@ -24,7 +24,7 @@ fn closed(base: &Path) -> Result<Vec<std::fs::File>> {
             .open(base.join(name))
             .map_err(|_| invalid("cannot lock recorder"))?;
         file.try_lock()
-            .map_err(|_| invalid("close Anarlog before deletion"))?;
+            .map_err(|_| invalid("close Shots Founder Hub before deletion"))?;
         locks.push(file);
     }
     Ok(locks)
