@@ -155,8 +155,8 @@ export async function sendSubscriptionNotice(
       renewalDate,
       cancellationUrl:
         owner.kind === "workspace"
-          ? `mailto:team@fastrepl.com?${`subject=${encodeURIComponent("Cancel my Shots Founder Hub Team subscription")}&body=${encodeURIComponent(`Please cancel automatic renewal of my Shots Founder Hub Team subscription ${id}.`)}`}`
-          : "https://anarlog.so/app/portal",
+          ? `mailto:team@playbookmedia.io?${`subject=${encodeURIComponent("Cancel my Shots Founder Hub Team subscription")}&body=${encodeURIComponent(`Please cancel automatic renewal of my Shots Founder Hub Team subscription ${id}.`)}`}`
+          : "https://shots.playbookmedia.io/app/portal",
     },
   );
 }

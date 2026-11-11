@@ -25,4 +25,4 @@ export type ReferralSummary = {
 };
 
 export const referralSupportUrl =
-  "mailto:team@fastrepl.com?subject=Referral%20reward%20help";
+  "mailto:team@playbookmedia.io?subject=Referral%20reward%20help";

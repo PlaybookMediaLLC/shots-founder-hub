@@ -24,7 +24,7 @@ The repository package is named **Shots Founder Hub**. Its optional hosted conne
 
 ```bash
 claude plugin marketplace add PlaybookMediaLLC/shots-founder-hub
-claude plugin install sfh@fastrepl
+claude plugin install sfh@playbook
 ```
 
 Or add the remote server directly. Claude discovers OAuth from the MCP endpoint:
@@ -37,7 +37,7 @@ claude mcp add --transport http sfh https://api.anarlog.so/mcp
 
 ```bash
 copilot plugin marketplace add PlaybookMediaLLC/shots-founder-hub
-copilot plugin install sfh@fastrepl
+copilot plugin install sfh@playbook
 ```
 
 ### ChatGPT and Codex
@@ -48,7 +48,7 @@ codex plugin marketplace add PlaybookMediaLLC/shots-founder-hub \
   --sparse agent-plugins/sfh
 ```
 
-Restart the ChatGPT desktop app, open the Plugins Directory, select the Fastrepl source, and install **Shots Founder Hub**.
+Restart the ChatGPT desktop app, open the Plugins Directory, select the Playbook source, and install **Shots Founder Hub**.
 
 The plugin includes an optional **Shots Founder Hub Cloud** App connection. Connect it for hosted access; leave it disconnected to use the local CLI. The public directory listing has its own review and release process, separate from this repository marketplace.
 

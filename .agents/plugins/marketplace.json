@@ -1,7 +1,7 @@
 {
-  "name": "fastrepl",
+  "name": "playbook",
   "interface": {
-    "displayName": "Fastrepl"
+    "displayName": "Playbook Media"
   },
   "plugins": [
     {

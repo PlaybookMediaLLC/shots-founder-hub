@@ -25,7 +25,7 @@
     }
   },
   "bundle": {
-    "publisher": "Fastrepl",
+    "publisher": "Playbook Media Interactive LLC",
     "active": true,
     "createUpdaterArtifacts": true,
     "targets": "all",
