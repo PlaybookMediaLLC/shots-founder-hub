@@ -5,7 +5,10 @@ use axum::{
     Json, Router,
     body::Body,
     extract::{DefaultBodyLimit, OriginalUri, Query, Request, State},
-    http::{HeaderMap, StatusCode},
+    http::{
+        HeaderMap, HeaderValue, StatusCode,
+        header::{CACHE_CONTROL, CONTENT_TYPE},
+    },
     response::{IntoResponse, Response},
     routing::{any, get, post},
 };
@@ -50,6 +53,15 @@ pub fn router(shots: ShotsAuth, storage_origin: &str, anon_key: &str) -> Router 
         .route(
             "/settings/templates/{id}",
             axum::routing::patch(settings).layer(DefaultBodyLimit::max(1024 * 1024)),
+        )
+        .route(
+            "/voice/{*path}",
+            get(voice)
+                .post(voice)
+                .put(voice)
+                .patch(voice)
+                .delete(voice)
+                .layer(DefaultBodyLimit::max(1024 * 1024)),
         )
         .route("/rest/v1/{*path}", any(data))
         .route("/storage/v1/{*path}", any(data))
@@ -97,9 +109,10 @@ async fn settings(
     if uri.query().is_some_and(|query| query.len() > 2048) {
         return error(StatusCode::BAD_REQUEST, "invalid_settings_query");
     }
+    let json = HeaderMap::from_iter([(CONTENT_TYPE, HeaderValue::from_static("application/json"))]);
     match state
         .shots
-        .settings(token, path, uri.query(), method, body.to_vec())
+        .forward(token, path, uri.query(), method, json, body.to_vec())
         .await
     {
         Ok(response) => {
@@ -115,6 +128,68 @@ async fn settings(
                 .into_response()
         }
         Err(_) => error(StatusCode::BAD_GATEWAY, "shots_settings_unavailable"),
+    }
+}
+
+// Shots verifies the bearer token and workspace membership, as for settings. Bodies hold
+// transcript text: never log them.
+async fn voice(
+    State(state): State<Gateway>,
+    OriginalUri(uri): OriginalUri,
+    method: axum::http::Method,
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> Response {
+    let token = match access_token(&headers) {
+        Ok(token) => token,
+        Err(response) => return response,
+    };
+    let path = uri.path().strip_prefix("/cloud/voice/").unwrap_or("");
+    if path.split('/').count() > 8
+        || path.split('/').any(|segment| {
+            segment.is_empty()
+                || !segment
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || b"-_".contains(&byte))
+        })
+    {
+        return error(StatusCode::NOT_FOUND, "invalid_voice_path");
+    }
+    if uri.query().is_some_and(|query| query.len() > 2048) {
+        return error(StatusCode::BAD_REQUEST, "invalid_voice_query");
+    }
+    let mut forwarded = HeaderMap::new();
+    for name in [CONTENT_TYPE.as_str(), "x-shots-organization-id"] {
+        if let Some(value) = headers.get(name) {
+            forwarded.insert(name, value.clone());
+        }
+    }
+    match state
+        .shots
+        .forward(
+            token,
+            &format!("voice/{path}"),
+            uri.query(),
+            method,
+            forwarded,
+            body.to_vec(),
+        )
+        .await
+    {
+        Ok(response) => {
+            let mut headers = HeaderMap::new();
+            if let Some(value) = response.headers().get(CONTENT_TYPE) {
+                headers.insert(CONTENT_TYPE, value.clone());
+            }
+            headers.insert(CACHE_CONTROL, HeaderValue::from_static("no-store"));
+            (
+                response.status(),
+                headers,
+                Body::from_stream(response.bytes_stream()),
+            )
+                .into_response()
+        }
+        Err(_) => error(StatusCode::BAD_GATEWAY, "shots_voice_unavailable"),
     }
 }
 

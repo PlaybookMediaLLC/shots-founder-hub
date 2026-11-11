@@ -607,14 +607,14 @@ fn trace_export_endpoint(base_url: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use std::sync::{Arc, Mutex};
 
     #[derive(Clone, Default)]
-    struct LogBuffer(Arc<Mutex<Vec<u8>>>);
+    pub(crate) struct LogBuffer(pub(crate) Arc<Mutex<Vec<u8>>>);
 
-    struct LogWriter(Arc<Mutex<Vec<u8>>>);
+    pub(crate) struct LogWriter(Arc<Mutex<Vec<u8>>>);
 
     impl std::io::Write for LogWriter {
         fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {

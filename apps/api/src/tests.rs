@@ -15,15 +15,13 @@ use super::*;
 
 const TEST_KEY_ID: &str = "sync-composition-test";
 
-#[tokio::test]
-async fn shots_does_not_expose_legacy_identity_or_billing_mutations() {
-    let config = crate::env::RuntimeConfig::resolve(deserialize_api_env([
+const SHOTS_SERVICE_TOKEN: &str = "test-service-secret-at-least-thirty-two-bytes";
+
+fn shots_config(origin: &'static str) -> crate::env::RuntimeConfig {
+    crate::env::RuntimeConfig::resolve(deserialize_api_env([
         ("ANARLOG_SERVICE", "all"),
-        ("SHOTS_AUTH_URL", "https://shots.example.com"),
-        (
-            "SHOTS_AUTH_SERVICE_TOKEN",
-            "test-service-secret-at-least-thirty-two-bytes",
-        ),
+        ("SHOTS_AUTH_URL", origin),
+        ("SHOTS_AUTH_SERVICE_TOKEN", SHOTS_SERVICE_TOKEN),
         ("SUPABASE_JWT_SECRET", "internal-storage-jwt-signing-secret"),
         ("FOUNDER_HUB_MCP_URL", "https://hub.example.com/mcp"),
         ("STRIPE_SECRET_KEY", "sk_test_unused"),
@@ -31,7 +29,255 @@ async fn shots_does_not_expose_legacy_identity_or_billing_mutations() {
         ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
         ("LOOPS_KEY", "unused"),
     ]))
-    .unwrap();
+    .unwrap()
+}
+
+async fn shots_app(origin: &str) -> Router {
+    let origin = Box::leak(origin.to_owned().into_boxed_str());
+    app_with_env(Box::leak(Box::new(shots_config(origin)))).await
+}
+
+fn voice_request(method: Method, uri: &str, body: impl Into<Body>) -> Request<Body> {
+    Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::AUTHORIZATION, "Bearer shots-access-token")
+        .header("x-shots-organization-id", "shots-workspace")
+        .header(header::CONTENT_TYPE, "application/json; charset=utf-8")
+        .body(body.into())
+        .unwrap()
+}
+
+#[tokio::test]
+async fn voice_forwards_to_shots_with_the_service_credential_and_only_allowed_headers() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/api/founder-hub/voice/notes/note_1-a/transcript"))
+        .respond_with(
+            ResponseTemplate::new(201)
+                .insert_header("set-cookie", "shots=1")
+                .set_body_raw(r#"{"id":"note_1-a"}"#, "application/vnd.shots+json"),
+        )
+        .mount(&server)
+        .await;
+    let app = shots_app(&server.uri()).await;
+    let mut request = voice_request(
+        Method::POST,
+        "/cloud/voice/notes/note_1-a/transcript?draft=1&lang=en",
+        r#"{"text":"hello"}"#,
+    );
+    for (name, value) in [
+        ("cookie", "session=caller"),
+        ("x-shots-founder-hub-service", "forged"),
+        ("x-forwarded-for", "203.0.113.9"),
+    ] {
+        request.headers_mut().insert(name, value.parse().unwrap());
+    }
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+    assert_eq!(
+        response.headers()[header::CONTENT_TYPE],
+        "application/vnd.shots+json"
+    );
+    assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+    assert!(!response.headers().contains_key(header::SET_COOKIE));
+    assert_eq!(response_bytes(response).await, br#"{"id":"note_1-a"}"#);
+
+    let received = server.received_requests().await.unwrap();
+    let [forwarded] = received.as_slice() else {
+        panic!("expected one Shots request, got {}", received.len());
+    };
+    assert_eq!(forwarded.url.query(), Some("draft=1&lang=en"));
+    assert_eq!(forwarded.body, br#"{"text":"hello"}"#);
+    for (name, value) in [
+        ("x-shots-founder-hub-service", SHOTS_SERVICE_TOKEN),
+        ("authorization", "Bearer shots-access-token"),
+        ("x-shots-organization-id", "shots-workspace"),
+        ("content-type", "application/json; charset=utf-8"),
+    ] {
+        assert_eq!(
+            forwarded.headers.get_all(name).iter().collect::<Vec<_>>(),
+            [value],
+            "{name}"
+        );
+    }
+    for name in ["cookie", "x-forwarded-for", "x-request-id"] {
+        assert!(!forwarded.headers.contains_key(name), "{name}");
+    }
+
+    server.reset().await;
+    Mock::given(path("/api/founder-hub/voice/notes/n1"))
+        .respond_with(ResponseTemplate::new(204))
+        .mount(&server)
+        .await;
+    let methods = [Method::GET, Method::PUT, Method::PATCH, Method::DELETE];
+    for verb in methods.clone() {
+        let response = app
+            .clone()
+            .oneshot(voice_request(verb, "/cloud/voice/notes/n1", Body::empty()))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NO_CONTENT);
+        assert!(!response.headers().contains_key(header::CONTENT_TYPE));
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+    }
+    let received = server.received_requests().await.unwrap();
+    assert_eq!(
+        received
+            .iter()
+            .map(|request| request.method.clone())
+            .collect::<Vec<_>>(),
+        methods
+    );
+}
+
+#[tokio::test]
+async fn voice_passes_shots_status_and_body_through() {
+    let server = MockServer::start().await;
+    let app = shots_app(&server.uri()).await;
+    for status in [400, 401, 403, 404, 409] {
+        server.reset().await;
+        let body = format!(r#"{{"code":"shots_{status}"}}"#);
+        Mock::given(method("PATCH"))
+            .and(path("/api/founder-hub/voice/notes/n1"))
+            .respond_with(
+                ResponseTemplate::new(status).set_body_raw(body.clone(), "application/json"),
+            )
+            .mount(&server)
+            .await;
+        let response = app
+            .clone()
+            .oneshot(voice_request(Method::PATCH, "/cloud/voice/notes/n1", "{}"))
+            .await
+            .unwrap();
+        assert_eq!(response.status().as_u16(), status);
+        assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(response_bytes(response).await, body.as_bytes());
+    }
+}
+
+#[tokio::test]
+async fn voice_rejects_unauthenticated_malformed_and_oversized_requests_locally() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(204))
+        .mount(&server)
+        .await;
+    let app = shots_app(&server.uri()).await;
+
+    let mut request = voice_request(Method::POST, "/cloud/voice/notes", "{}");
+    request.headers_mut().remove(header::AUTHORIZATION);
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    let body: Value = serde_json::from_slice(&response_bytes(response).await).unwrap();
+    assert_eq!(body["code"], "invalid_token");
+
+    for uri in [
+        "/cloud/voice/..",
+        "/cloud/voice/notes/../settings",
+        "/cloud/voice/notes//n1",
+        "/cloud/voice/notes/",
+        "/cloud/voice/notes.json",
+        "/cloud/voice/notes/%2e%2e",
+        "/cloud/voice/notes/n%201",
+        "/cloud/voice/a/b/c/d/e/f/g/h/i",
+    ] {
+        let response = app
+            .clone()
+            .oneshot(voice_request(Method::POST, uri, "{}"))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND, "{uri}");
+    }
+
+    let response = app
+        .clone()
+        .oneshot(voice_request(
+            Method::POST,
+            "/cloud/voice/notes",
+            vec![b'a'; 1024 * 1024 + 1],
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+    assert!(server.received_requests().await.unwrap().is_empty());
+
+    let response = app
+        .oneshot(voice_request(
+            Method::POST,
+            "/cloud/voice/a/b/c/d/e/f/g/h",
+            vec![b'a'; 1024 * 1024],
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+}
+
+#[tokio::test]
+async fn voice_reports_unreachable_shots_as_bad_gateway() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    drop(listener);
+    let response = shots_app(&origin)
+        .await
+        .oneshot(voice_request(
+            Method::GET,
+            "/cloud/voice/notes",
+            Body::empty(),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    let body: Value = serde_json::from_slice(&response_bytes(response).await).unwrap();
+    assert_eq!(body["code"], "shots_voice_unavailable");
+}
+
+#[tokio::test]
+async fn voice_never_logs_transcripts_or_credentials() {
+    let logs = crate::observability::tests::LogBuffer::default();
+    let _guard = tracing::subscriber::set_default(
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::TRACE)
+            .with_writer(logs.clone())
+            .finish(),
+    );
+    // With one scoped dispatcher, tracing-core caches callsites first hit by other test threads
+    // as disabled; a second live dispatcher keeps this one in every callsite's interest.
+    let _second = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_raw("private summary words", "text/plain"),
+        )
+        .mount(&server)
+        .await;
+    let app = shots_app(&server.uri()).await;
+    tracing::callsite::rebuild_interest_cache();
+    let response = app
+        .oneshot(voice_request(
+            Method::POST,
+            "/cloud/voice/notes",
+            r#"{"text":"private transcript words"}"#,
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response_bytes(response).await, b"private summary words");
+    let logs = String::from_utf8(logs.0.lock().unwrap().clone()).unwrap();
+    assert!(logs.contains("http_request_finished"), "{logs}");
+    for secret in [
+        "private transcript words",
+        "private summary words",
+        "shots-access-token",
+        SHOTS_SERVICE_TOKEN,
+    ] {
+        assert!(!logs.contains(secret), "{secret} in {logs}");
+    }
+}
+
+#[tokio::test]
+async fn shots_does_not_expose_legacy_identity_or_billing_mutations() {
+    let config = shots_config("https://shots.example.com");
     assert!(config.subscription.is_none());
     assert!(config.sync.sqlitecloud_project_url.is_none());
     let app = app_with_env(Box::leak(Box::new(config))).await;
