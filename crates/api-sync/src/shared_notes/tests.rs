@@ -107,7 +107,7 @@ async fn verifies_and_sends_a_resend_shared_note_invitation_email() {
             "to": "invitee@example.com",
             "reply_to": "owner@example.com",
             "subject": "Owner invited you to Planning",
-            "text": "Owner invited you to view \"Planning\" in Shots Founder Hub.\n\nOpen the meeting notes:\nhttps://fastrepl.anarlog.so/share/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
+            "text": "Owner invited you to view \"Planning\" in Shots Founder Hub.\n\nOpen the meeting notes:\nhttps://fastrepl.shots.playbookmedia.io/share/invite/66666666-6666-4666-8666-666666666666/#token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n\nReply to this email to contact Owner."
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({ "id": "email-id" })))
         .expect(1)

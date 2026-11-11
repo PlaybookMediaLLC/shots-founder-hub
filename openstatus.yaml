@@ -41,7 +41,7 @@
     - jnb
   request:
     method: GET
-    url: https://anarlog.so
+    url: https://shots.playbookmedia.io
   retry: 3
   timeout: 45000
 "11028":
@@ -63,7 +63,7 @@
     - jnb
   request:
     method: GET
-    url: https://docs.anarlog.so
+    url: https://shots.playbookmedia.io/docs
   retry: 3
   timeout: 45000
 "11509":

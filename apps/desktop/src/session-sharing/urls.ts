@@ -159,11 +159,8 @@ function appUrl(
     ) {
       throw invalidUrl();
     }
-    if (
-      workspaceShareSlug &&
-      (base.hostname === "anarlog.so" || base.hostname === "www.anarlog.so")
-    ) {
-      base.hostname = `${workspaceShareSlug}.anarlog.so`;
+    if (workspaceShareSlug && base.hostname === "shots.playbookmedia.io") {
+      base.hostname = `${workspaceShareSlug}.shots.playbookmedia.io`;
     }
     return new URL(path, base.origin);
   } catch {

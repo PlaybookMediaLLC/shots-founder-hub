@@ -520,5 +520,5 @@ fn workspace_share_origin(slug: Option<&str>) -> Result<String> {
     {
         return Err(SyncError::InvitationEmailUnavailable);
     }
-    Ok(format!("https://{slug}.anarlog.so"))
+    Ok(format!("https://{slug}.shots.playbookmedia.io"))
 }
