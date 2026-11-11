@@ -58,7 +58,7 @@ test("repository marketplaces list a single sfh plugin", async () => {
   ];
   for (const marketplacePath of marketplacePaths) {
     const marketplace = await readJson(marketplacePath);
-    assert.equal(marketplace.name, "fastrepl");
+    assert.equal(marketplace.name, "playbook");
     assert.deepEqual(
       marketplace.plugins.map((plugin) => plugin.name),
       ["sfh"],
@@ -69,7 +69,7 @@ test("repository marketplaces list a single sfh plugin", async () => {
   }
 
   const codexMarketplace = await readJson(".agents/plugins/marketplace.json");
-  assert.equal(codexMarketplace.name, "fastrepl");
+  assert.equal(codexMarketplace.name, "playbook");
   assert.deepEqual(
     codexMarketplace.plugins.map((plugin) => plugin.name),
     ["sfh"],

@@ -28,7 +28,7 @@ export default function HelpSettings() {
           title="Contact support"
           onPress={() =>
             open.mutate(
-              "mailto:team@fastrepl.com?subject=Shots Founder Hub%20mobile%20support",
+              "mailto:team@playbookmedia.io?subject=Shots Founder Hub%20mobile%20support",
             )
           }
         />

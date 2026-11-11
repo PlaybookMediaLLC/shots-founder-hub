@@ -148,7 +148,7 @@ Contributions outside `enterprise/` are distributed under the MIT license.
 - Enterprise components: [commercial](LICENSE.enterprise)
 - Full boundary: [LICENSING.md](LICENSING.md)
 
-Maintained by [fastrepl](https://github.com/fastrepl).
+Maintained by Playbook Media Interactive LLC.
 
 ## Contributors
 
