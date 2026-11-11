@@ -22,7 +22,6 @@ export type ShotsVoicePrefs = {
 
 type Snapshot = {
   accountId: string | null;
-  ready: boolean;
   prefs: ShotsVoicePrefs;
   notes: VoiceNoteState[];
   status: VoicePassResult | null;
@@ -36,7 +35,6 @@ const DEFAULT_PREFS: ShotsVoicePrefs = {
 };
 const EMPTY: Snapshot = {
   accountId: null,
-  ready: false,
   prefs: DEFAULT_PREFS,
   notes: [],
   status: null,
@@ -129,7 +127,6 @@ export function activateShotsVoice(accountId: string | null): Promise<void> {
     };
     publish({
       accountId,
-      ready: true,
       prefs,
       notes: await readQueue(accountId, prefs.workspaceId),
       status: null,
@@ -197,6 +194,17 @@ export function removeShotsVoiceNote(
 ): Promise<void> {
   return writeQueue(accountId, workspaceId, (notes) =>
     notes.filter((note) => note.sessionId !== sessionId),
+  );
+}
+
+/** Clears waits, not refusals, so every waiting note is tried on the next pass. */
+export function sendShotsVoiceNotesNow(): Promise<void> {
+  const { accountId, prefs } = snapshot;
+  if (!accountId || !prefs.workspaceId) return Promise.resolve();
+  return writeQueue(accountId, prefs.workspaceId, (notes) =>
+    notes.map((note) =>
+      note.nextAttemptAt ? { ...note, nextAttemptAt: 0 } : note,
+    ),
   );
 }
 

@@ -12,7 +12,10 @@ import { readPreferences } from "@/settings/preferences";
 import OnDeviceSpeech from "../../modules/on-device-speech";
 import { generateSummaryAfterTranscription } from "./summarize";
 import { pendingSummaryStatement } from "./summary-job";
-import { batchTranscriptStatements } from "./transcript-model";
+import {
+  batchTranscriptStatements,
+  SESSION_AUDIO_SQL,
+} from "./transcript-model";
 
 export type OnDeviceSegment = {
   startMs: number;
@@ -35,22 +38,6 @@ const ENGINE_LABELS = {
   speech_analyzer: "apple-speech-analyzer",
   sf_speech_on_device: "apple-sf-speech-on-device",
 } as const;
-
-const SESSION_AUDIO_SQL = `
-SELECT
-  local_state.relative_path AS local_relative_path,
-  COALESCE(json_extract(attachment.metadata_json, '$.capture_started_at_ms'),
-    (SELECT MIN(started_at_ms) FROM transcripts WHERE audio_attachment_id = attachment.id),
-    CAST((julianday(attachment.created_at) - 2440587.5) * 86400000 AS INTEGER)) AS capture_started_at_ms
-FROM session_attachments AS attachment
-JOIN attachment_local_state AS local_state
-  ON local_state.attachment_id = attachment.id
- AND local_state.availability = 'present'
-WHERE attachment.session_id = ?
-  AND attachment.source_type = 'session_audio'
-  AND attachment.deleted_at IS NULL
-LIMIT 1
-`;
 
 const inflight = new Map<string, Promise<OnDeviceTranscript | null>>();
 
@@ -79,7 +66,7 @@ async function run(sessionId: string): Promise<OnDeviceTranscript | null> {
   const [audio] = await execute<{
     local_relative_path: string;
     capture_started_at_ms: number | null;
-  }>(SESSION_AUDIO_SQL, [sessionId]);
+  }>(SESSION_AUDIO_SQL, [sessionId, 0]);
   const file = audio
     ? new File(Paths.document, "sessions", sessionId, audio.local_relative_path)
     : null;

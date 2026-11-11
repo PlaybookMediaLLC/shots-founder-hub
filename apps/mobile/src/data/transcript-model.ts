@@ -9,6 +9,26 @@ export const SESSION_TRANSCRIPTS_SQL = `SELECT transcript.id, transcript.source,
 
 export const SESSION_SPEAKERS_SQL = `SELECT id, name FROM humans WHERE workspace_id = (SELECT workspace_id FROM sessions WHERE id = ?) AND name <> ''`;
 
+/** The session's primary recording on this device; with ?2 = 1, only while it is not transcribed yet. */
+export const SESSION_AUDIO_SQL = `
+SELECT
+  attachment.content_type,
+  attachment.size_bytes,
+  COALESCE(json_extract(attachment.metadata_json, '$.capture_started_at_ms'),
+    (SELECT MIN(started_at_ms) FROM transcripts WHERE audio_attachment_id = attachment.id),
+    CAST((julianday(attachment.created_at) - 2440587.5) * 86400000 AS INTEGER)) AS capture_started_at_ms,
+  local_state.relative_path AS local_relative_path
+FROM session_attachments AS attachment
+JOIN attachment_local_state AS local_state
+  ON local_state.attachment_id = attachment.id
+ AND local_state.availability = 'present'
+WHERE attachment.session_id = ?1
+  AND attachment.source_type = 'session_audio'
+  AND attachment.deleted_at IS NULL
+  AND (?2 = 0 OR COALESCE(json_extract(attachment.metadata_json, '$.transcript_status'), '') <> 'complete')
+LIMIT 1
+`;
+
 export const SESSION_HAS_TRANSCRIPT_SQL = `SELECT EXISTS (
   SELECT 1 FROM transcripts WHERE session_id = ? AND deleted_at IS NULL
 ) AS has_transcript`;

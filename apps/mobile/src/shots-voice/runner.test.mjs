@@ -69,8 +69,13 @@ registerHooks({
 
 const { queueSessionForShots, stopShotsVoiceSync } =
   await import("./runner.ts");
-const { activateShotsVoice, getShotsVoice, setShotsVoicePrefs } =
-  await import("./store.ts");
+const {
+  activateShotsVoice,
+  getShotsVoice,
+  saveShotsVoiceNote,
+  sendShotsVoiceNotesNow,
+  setShotsVoicePrefs,
+} = await import("./store.ts");
 
 const settings = {
   workspace: { voiceNotes: true, audioUpload: false, voiceCommands: false },
@@ -300,5 +305,36 @@ test("only this account's recordings are queued for Shots", async () => {
   assert.deepEqual(
     getShotsVoice().notes.map((note) => note.sessionId),
     ["synced"],
+  );
+});
+
+test("Send now ends every note's wait but keeps refusals", async () => {
+  const { newVoiceNote } = await import("./model.ts");
+  const base = newVoiceNote({
+    sessionId: "waiting",
+    recordedAt: "2026-11-11T09:00:00.000Z",
+    recordedTimeZone: "UTC",
+    locale: null,
+    durationMs: null,
+    audioUploadConsent: false,
+  });
+  await saveShotsVoiceNote("account-a", "ws-1", {
+    ...base,
+    attempts: 3,
+    nextAttemptAt: Date.now() + 60_000,
+  });
+  await saveShotsVoiceNote("account-a", "ws-1", {
+    ...base,
+    sessionId: "refused",
+    failed: "Shots could not accept this note.",
+  });
+  await sendShotsVoiceNotesNow();
+  const [waiting, refused] = getShotsVoice().notes;
+  assert.equal(waiting.nextAttemptAt, 0);
+  assert.equal(waiting.attempts, 3);
+  assert.equal(refused.failed, "Shots could not accept this note.");
+  assert.match(
+    fixture.storage.get("anarlog:shots-voice:account-a:ws-1"),
+    /"nextAttemptAt":0/,
   );
 });

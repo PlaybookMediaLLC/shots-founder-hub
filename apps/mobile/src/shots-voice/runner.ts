@@ -26,6 +26,7 @@ import {
 } from "./engine";
 import {
   newVoiceNote,
+  nextPassDelayMs,
   parseVoiceCommand,
   parseVoiceSettings,
   voiceErrorMessage,
@@ -380,6 +381,7 @@ function engineDeps(
 let running = false;
 let rerun = false;
 let timer: ReturnType<typeof setTimeout> | undefined;
+let offlinePasses = 0;
 
 /** Runs a pass for the active account and workspace now, or after the current one. */
 export function requestShotsVoiceSync(): void {
@@ -404,8 +406,8 @@ export function stopShotsVoiceSync(): void {
 
 async function runPass() {
   await whenShotsVoiceReady();
-  const { accountId, ready, prefs } = getShotsVoice();
-  if (!env.shotsUrl || !ready || !accountId || !prefs.workspaceId) return;
+  const { accountId, prefs } = getShotsVoice();
+  if (!env.shotsUrl || !accountId || !prefs.workspaceId) return;
   const workspaceId = prefs.workspaceId;
   stopShotsVoiceSync();
   let result;
@@ -425,10 +427,15 @@ async function runPass() {
     };
   }
   setShotsVoiceStatus(accountId, workspaceId, result);
+  offlinePasses = result.status === "offline" ? offlinePasses + 1 : 0;
   if (result.nextAttemptAt !== null)
     timer = setTimeout(
       requestShotsVoiceSync,
-      Math.min(Math.max(result.nextAttemptAt - Date.now(), 1_000), 2 ** 31 - 1),
+      nextPassDelayMs(
+        result.nextAttemptAt - Date.now(),
+        offlinePasses,
+        Math.random(),
+      ),
     );
 }
 

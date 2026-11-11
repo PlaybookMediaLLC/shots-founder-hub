@@ -754,3 +754,63 @@ test("a transcript over Shots' limits is never sent and the note says so", async
     shots.requests.every((call) => !call.suffix.endsWith("/transcripts")),
   );
 });
+
+test("a pass that changes nothing writes nothing, even while a proposal is pulled", async () => {
+  const { deps, shots } = harness({
+    queued: [recording("s1", { audioUploadConsent: false })],
+  });
+  await runVoicePass(deps);
+  const stored = shots.notes.get("s1");
+  stored.command = { id: "c1", status: "proposed", action: "schedule_post" };
+  stored.revision += 1;
+  await runVoicePass(deps);
+  let saves = 0;
+  const save = deps.save;
+  deps.save = async (note) => {
+    saves += 1;
+    return save(note);
+  };
+  const before = shots.requests.length;
+  await runVoicePass(deps);
+  assert.ok(
+    shots.requests.slice(before).some((call) => call.suffix === "notes/note-1"),
+  );
+  assert.equal(saves, 0);
+});
+
+test("sent notes past the edit window are forgotten unless a proposal is open", async () => {
+  const old = "2026-10-01T09:00:00.000Z";
+  const sent = {
+    recordedAt: old,
+    remoteId: "gone",
+    remoteRevision: 1,
+    createSent: true,
+    onDevice: "done",
+    audioUploadConsent: false,
+  };
+  const { deps, shots, notes } = harness({
+    queued: [
+      recording("old", sent),
+      recording("proposal", {
+        ...sent,
+        command: { id: "c1", status: "proposed" },
+      }),
+      recording("unsent", { recordedAt: old, audioUploadConsent: false }),
+      recording("recent", { ...sent, recordedAt: "2026-11-01T09:00:00.000Z" }),
+    ],
+  });
+  const looked = [];
+  const transcriptVersion = deps.transcriptVersion;
+  deps.transcriptVersion = async (sessionId, ids) => {
+    looked.push(sessionId);
+    return transcriptVersion(sessionId, ids);
+  };
+  await runVoicePass(deps);
+  assert.deepEqual(
+    notes().map((note) => note.sessionId),
+    ["proposal", "recent"],
+  );
+  // An old note is not searched for late transcripts; one queued now is sent, then forgotten.
+  assert.ok(!looked.includes("old"));
+  assert.equal(shots.notes.get("unsent").revisions.size, 1);
+});

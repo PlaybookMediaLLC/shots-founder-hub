@@ -2,7 +2,7 @@ import SegmentedControl from "@expo/ui/community/segmented-control";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Alert, Keyboard, Share, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -34,7 +34,7 @@ import { useMountEffect } from "@/lib/use-mount-effect";
 import { createStyleHook, useColors } from "@/settings/theme-provider";
 import { ShotsVoiceNotePanel } from "@/shots-voice/note-panel";
 import { queueSessionForShots } from "@/shots-voice/runner";
-import { useShotsVoice } from "@/shots-voice/store";
+import { getShotsVoice, subscribeShotsVoice } from "@/shots-voice/store";
 
 import { BodyEditor } from "./body-editor";
 import { NoteFiles } from "./note-files";
@@ -76,9 +76,17 @@ export function NoteScreen({
     setSheet((current) => (current === name ? null : current));
   const keyboardVisible = useKeyboardVisible();
   const recorder = useSessionRecorder(id, listening);
-  const shots = useShotsVoice();
+  // Stable slices: queue writes during a sync do not re-render the note.
+  const shotsAccountId = useSyncExternalStore(
+    subscribeShotsVoice,
+    () => getShotsVoice().accountId,
+  );
+  const shotsPrefs = useSyncExternalStore(
+    subscribeShotsVoice,
+    () => getShotsVoice().prefs,
+  );
   const shotsWorkspace =
-    env.shotsUrl && shots.accountId ? shots.prefs.workspaceName : null;
+    env.shotsUrl && shotsAccountId ? shotsPrefs.workspaceName : null;
   const hasRecordingHistory =
     Boolean(audio.data) || transcriptState.data === true;
   const active = listening && recorder.phase !== "saved";
@@ -436,7 +444,7 @@ export function NoteScreen({
           amplitude={recorder.amplitude}
           durationMs={recorder.durationMs}
           destination={
-            shotsWorkspace && shots.prefs.sendNew
+            shotsWorkspace && shotsPrefs.sendNew
               ? `Sending to Shots · ${shotsWorkspace}`
               : null
           }

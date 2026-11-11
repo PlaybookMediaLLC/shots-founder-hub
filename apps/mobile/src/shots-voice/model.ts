@@ -224,6 +224,21 @@ export function retryDelayMs(attempts: number): number {
   return Math.min(30_000 * 2 ** Math.max(0, attempts - 1), 60 * 60 * 1000);
 }
 
+/**
+ * The wait before the next pass: what the pass asked for, but consecutive
+ * offline passes back off like a note's retries, with jitter (`random` in
+ * [0, 1)) so phones do not retry in step.
+ */
+export function nextPassDelayMs(
+  wait: number,
+  offlinePasses: number,
+  random: number,
+): number {
+  const backoff =
+    offlinePasses > 0 ? retryDelayMs(offlinePasses) * (0.75 + random / 2) : 0;
+  return Math.round(Math.min(Math.max(wait, backoff, 1_000), 2 ** 31 - 1));
+}
+
 function versionParts(version: string): number[] | null {
   const match = /^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(version.trim());
   return match ? match.slice(1).map(Number) : null;

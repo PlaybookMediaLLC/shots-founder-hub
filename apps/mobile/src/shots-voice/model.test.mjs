@@ -6,6 +6,7 @@ import {
   diffVoiceIndex,
   isAppVersionSupported,
   newVoiceNote,
+  nextPassDelayMs,
   nextVoiceOp,
   parseStoredVoiceNote,
   parseVoiceSettings,
@@ -260,4 +261,15 @@ test("a sent note shows what Shots refused, and gateway codes read as sentences"
     }),
     "This voice note was deleted.",
   );
+});
+
+test("offline passes back off with jitter while other passes wait as asked", () => {
+  assert.equal(nextPassDelayMs(30_000, 0, 0.5), 30_000);
+  assert.equal(nextPassDelayMs(30_000, 1, 0.5), 30_000);
+  assert.equal(nextPassDelayMs(30_000, 3, 0.5), 120_000);
+  assert.equal(nextPassDelayMs(30_000, 3, 0), 90_000);
+  assert.equal(nextPassDelayMs(30_000, 3, 0.999), 149_940);
+  assert.equal(nextPassDelayMs(600_000, 2, 0.5), 600_000);
+  assert.equal(nextPassDelayMs(-5, 0, 0.5), 1_000);
+  assert.equal(nextPassDelayMs(2 ** 40, 0, 0.5), 2 ** 31 - 1);
 });

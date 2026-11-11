@@ -5,6 +5,7 @@ import {
   classifyVoiceStatus,
   diffVoiceIndex,
   isAppVersionSupported,
+  isVoiceNoteUnsent,
   nextVoiceOp,
   parseVoiceIndex,
   parseVoiceNoteDetail,
@@ -588,9 +589,9 @@ export async function runVoicePass(
       stopIfInactive();
       let note: VoiceNoteState | null = initial;
       try {
-        // shortcut: edits are looked for only in the last 30 days of notes, so a
-        // pass stays a few queries per recent note; batch the reads if edits of
-        // older notes matter.
+        // shortcut: edits and late transcripts are looked for only in the last
+        // 30 days of notes, so a pass stays a few queries per recent note;
+        // batch the reads if older notes matter.
         if (
           !note.pending &&
           note.onDevice === "done" &&
@@ -598,7 +599,7 @@ export async function runVoicePass(
           !note.deletedRemote &&
           !note.failed &&
           note.nextAttemptAt <= now &&
-          (!note.sent || now - Date.parse(note.recordedAt) < EDIT_WINDOW_MS)
+          now - Date.parse(note.recordedAt) < EDIT_WINDOW_MS
         )
           note = await discover(note);
         for (let step = 0; note && step < MAX_STEPS_PER_NOTE; step += 1) {
@@ -638,7 +639,13 @@ export async function runVoicePass(
       const note =
         detail &&
         deps.notes().find((item) => item.sessionId === detail.clientNoteId);
-      if (note)
+      if (
+        note &&
+        (note.remoteId !== detail.id ||
+          note.remoteRevision !== detail.revision ||
+          note.deletedRemote !== detail.deleted ||
+          JSON.stringify(note.command) !== JSON.stringify(detail.command))
+      )
         await save({
           ...note,
           remoteId: detail.id,
@@ -672,6 +679,20 @@ export async function runVoicePass(
         ["waiting", "proposed"].includes(note.command?.status ?? "")
       )
         await pull(note.remoteId);
+
+    // A sent note past the edit window has nothing left to send; forgetting it
+    // keeps the stored queue small (the note stays on the phone).
+    for (const note of deps.notes())
+      if (
+        now - Date.parse(note.recordedAt) >= EDIT_WINDOW_MS &&
+        !note.failed &&
+        !note.blocked &&
+        note.nextAttemptAt <= now &&
+        !isVoiceNoteUnsent(note) &&
+        !nextVoiceOp(note, { now, audioAllowed }) &&
+        !["waiting", "proposed"].includes(note.command?.status ?? "")
+      )
+        await deps.remove(note.sessionId);
 
     const due = deps
       .notes()

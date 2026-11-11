@@ -21,6 +21,7 @@ import {
 } from "./runner";
 import {
   retryShotsVoiceNotes,
+  sendShotsVoiceNotesNow,
   setShotsVoicePrefs,
   useShotsVoice,
   type ShotsVoicePrefs,
@@ -32,7 +33,7 @@ export function ShotsVoiceSettings() {
   const queryClient = useQueryClient();
   const accountId = auth.session?.user.id ?? null;
   const accessToken = auth.session?.access_token ?? null;
-  const workspaceId = voice.ready ? voice.prefs.workspaceId : null;
+  const workspaceId = voice.prefs.workspaceId;
   const workspaces = useQuery({
     queryKey: ["shots-voice-workspaces", accountId],
     queryFn: ({ signal }) => fetchShotsWorkspaces(accessToken!, signal),
@@ -60,6 +61,10 @@ export function ShotsVoiceSettings() {
   });
   const retry = useMutation({
     mutationFn: retryShotsVoiceNotes,
+    onSuccess: () => requestShotsVoiceSync(),
+  });
+  const sendNow = useMutation({
+    mutationFn: sendShotsVoiceNotesNow,
     onSuccess: () => requestShotsVoiceSync(),
   });
 
@@ -226,7 +231,11 @@ export function ShotsVoiceSettings() {
               description={note.failed ?? note.blocked ?? undefined}
             />
           ))}
-          <Button label="Send now" onPress={requestShotsVoiceSync} />
+          <Button
+            label="Send now"
+            disabled={sendNow.isPending}
+            onPress={() => sendNow.mutate()}
+          />
           {refused.length > 0 && (
             <Button
               label="Try again"

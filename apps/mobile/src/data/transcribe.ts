@@ -25,7 +25,10 @@ import { transcribeSessionOnDevice } from "./on-device-transcription";
 import { requestProviderTranscription } from "./provider-transcription";
 import { generateSummaryAfterTranscription } from "./summarize";
 import { pendingSummaryStatement } from "./summary-job";
-import { batchTranscriptStatements } from "./transcript-model";
+import {
+  batchTranscriptStatements,
+  SESSION_AUDIO_SQL,
+} from "./transcript-model";
 import { TranscriptionAdmission } from "./transcription-admission";
 import {
   assertBoundedTranscriptionResponse,
@@ -86,25 +89,6 @@ export function useTranscriptionState(sessionId: string): TranscriptionState {
     () => states.get(sessionId) ?? "idle",
   );
 }
-
-const PENDING_AUDIO_SQL = `
-SELECT
-  attachment.content_type,
-  attachment.size_bytes,
-  COALESCE(json_extract(attachment.metadata_json, '$.capture_started_at_ms'),
-    (SELECT MIN(started_at_ms) FROM transcripts WHERE audio_attachment_id = attachment.id),
-    CAST((julianday(attachment.created_at) - 2440587.5) * 86400000 AS INTEGER)) AS capture_started_at_ms,
-  local_state.relative_path AS local_relative_path
-FROM session_attachments AS attachment
-JOIN attachment_local_state AS local_state
-  ON local_state.attachment_id = attachment.id
- AND local_state.availability = 'present'
-WHERE attachment.session_id = ?
-  AND attachment.source_type = 'session_audio'
-  AND attachment.deleted_at IS NULL
-  AND COALESCE(json_extract(attachment.metadata_json, '$.transcript_status'), '') <> 'complete'
-LIMIT 1
-`;
 
 const PENDING_TRANSCRIPTION_RETRY_SQL = `
 SELECT attachment.session_id
@@ -388,7 +372,7 @@ async function runTranscription(sessionId: string): Promise<void> {
     size_bytes: number;
     local_relative_path: string;
     capture_started_at_ms: number | null;
-  }>(PENDING_AUDIO_SQL, [sessionId]);
+  }>(SESSION_AUDIO_SQL, [sessionId, 1]);
   const audio = rows[0];
   if (!audio) return;
 
