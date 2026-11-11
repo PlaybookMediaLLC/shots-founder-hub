@@ -132,6 +132,46 @@ async fn voice_forwards_to_shots_with_the_service_credential_and_only_allowed_he
 }
 
 #[tokio::test]
+async fn settings_still_forwards_json_with_the_service_credential() {
+    let server = MockServer::start().await;
+    Mock::given(method("PATCH"))
+        .and(path("/api/founder-hub/settings"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw("{}", "text/plain"))
+        .mount(&server)
+        .await;
+    let response = shots_app(&server.uri())
+        .await
+        .oneshot(
+            Request::builder()
+                .method(Method::PATCH)
+                .uri("/cloud/settings")
+                .header(header::AUTHORIZATION, "Bearer shots-access-token")
+                .header(header::CONTENT_TYPE, "text/plain")
+                .body(Body::from("{}"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+    let received = server.received_requests().await.unwrap();
+    let [forwarded] = received.as_slice() else {
+        panic!("expected one Shots request, got {}", received.len());
+    };
+    for (name, value) in [
+        ("x-shots-founder-hub-service", SHOTS_SERVICE_TOKEN),
+        ("authorization", "Bearer shots-access-token"),
+        ("content-type", "application/json"),
+    ] {
+        assert_eq!(
+            forwarded.headers.get_all(name).iter().collect::<Vec<_>>(),
+            [value],
+            "{name}"
+        );
+    }
+}
+
+#[tokio::test]
 async fn voice_passes_shots_status_and_body_through() {
     let server = MockServer::start().await;
     let app = shots_app(&server.uri()).await;
