@@ -757,4 +757,4 @@ jobs:
           VERSION: ${{ needs.parse.outputs.version }}
         run: |
           node scripts/verify-apt-repository.mjs --version "$VERSION"
-          echo "Signed APT repository for $VERSION is live at https://anarlog.so/apt/ (amd64 and arm64)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Signed APT repository for $VERSION is live at https://shots.playbookmedia.io/apt/ (amd64 and arm64)." >> "$GITHUB_STEP_SUMMARY"
