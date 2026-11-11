@@ -21,9 +21,11 @@ import {
 } from "@/settings/providers-model";
 import { batchTranscriptionModel } from "@/settings/transcription-mode";
 
+import { transcribeSessionOnDevice } from "./on-device-transcription";
 import { requestProviderTranscription } from "./provider-transcription";
 import { generateSummaryAfterTranscription } from "./summarize";
 import { pendingSummaryStatement } from "./summary-job";
+import { batchTranscriptStatements } from "./transcript-model";
 import { TranscriptionAdmission } from "./transcription-admission";
 import {
   assertBoundedTranscriptionResponse,
@@ -117,43 +119,6 @@ WHERE attachment.source_type = 'session_audio'
   AND COALESCE(json_extract(attachment.metadata_json, '$.transcript_status'), '') <> 'complete'
 ORDER BY attachment.updated_at, attachment.id
 LIMIT 8
-`;
-
-const TRANSCRIPT_TOMBSTONE_SQL = `
-UPDATE transcripts
-SET deleted_at = ?, updated_at = ?
-WHERE session_id = ? AND deleted_at IS NULL
-`;
-
-const TRANSCRIPT_INSERT_SQL = `
-INSERT INTO transcripts (
-  id, workspace_id, owner_user_id, session_id, source, provider,
-  model, language, started_at_ms, ended_at_ms, audio_attachment_id,
-  memo, words_json, speaker_hints_json, metadata_json, created_at,
-  updated_at, deleted_at
-)
-SELECT ?, session.workspace_id, session.owner_user_id, session.id,
-  'batch_transcription', ?, ?, ?, ?, NULL, '',
-  COALESCE((
-    SELECT note.body FROM session_documents AS note
-    WHERE note.id = session.id AND note.kind = 'note' AND note.deleted_at IS NULL
-  ), ''),
-  ?, ?, '{}', ?, ?, NULL
-FROM sessions AS session
-WHERE session.id = ? AND session.deleted_at IS NULL
-`;
-
-const MARK_COMPLETE_SQL = `
-UPDATE session_attachments
-SET
-  metadata_json = json_set(
-    CASE WHEN json_valid(metadata_json) THEN metadata_json ELSE '{}' END,
-    '$.transcript_status',
-    'complete'
-  ),
-  updated_at = ?
-WHERE id = ? AND session_id = ? AND source_type = 'session_audio'
-  AND source_id = 'primary' AND deleted_at IS NULL
 `;
 
 type BatchWord = {
@@ -334,6 +299,7 @@ function isPermanentTranscriptionFailure(error: unknown): boolean {
     "audio_too_large",
     "stt_response_too_large",
     "stt_live_only",
+    "stt_on_device_unavailable",
   ].includes(String(code));
 }
 
@@ -445,6 +411,15 @@ async function runTranscription(sessionId: string): Promise<void> {
   }
 
   const selected = await resolveProvider("stt");
+  if (selected.provider === "apple_speech") {
+    // Permission, locale support and silence all end here; none of them
+    // improves by retrying automatically.
+    if (!(await transcribeSessionOnDevice(sessionId)))
+      throw transcriptionFailure("No on-device transcript", "response", {
+        code: "stt_on_device_unavailable",
+      });
+    return;
+  }
   const model = batchTranscriptionModel(selected.provider, selected.model);
   if (!model)
     throw transcriptionFailure(
@@ -499,36 +474,24 @@ async function runTranscription(sessionId: string): Promise<void> {
       code: "stt_empty_result",
     });
   }
-  const now = nowIso();
-  const attachmentId = `session-audio:${sessionId}`;
   const wordsJson = JSON.stringify(words);
   words.length = 0;
   const hintsJson = JSON.stringify(hints);
   hints.length = 0;
   await executeTransaction([
-    {
-      sql: TRANSCRIPT_TOMBSTONE_SQL,
-      params: [now, now, sessionId] as unknown[],
-    },
-    {
-      sql: TRANSCRIPT_INSERT_SQL,
-      params: [
-        id(),
-        provider.provider,
-        provider.model,
-        preferences.ai_language,
+    ...batchTranscriptStatements(
+      sessionId,
+      {
+        id: id(),
+        provider: provider.provider,
+        model: provider.model,
+        language: preferences.ai_language,
         startedAtMs,
         wordsJson,
         hintsJson,
-        now,
-        now,
-        sessionId,
-      ] as unknown[],
-    },
-    {
-      sql: MARK_COMPLETE_SQL,
-      params: [now, attachmentId, sessionId] as unknown[],
-    },
+      },
+      nowIso(),
+    ),
     pendingSummaryStatement(sessionId),
   ]).catch((error) => {
     throw withTranscriptionStage(error, "persist");

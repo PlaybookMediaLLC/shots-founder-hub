@@ -19,6 +19,8 @@ const fixture = (globalThis.transcriptionRetryFixture = {
   failures: [],
   summaries: [],
   requestError: null,
+  onDevice: [],
+  onDeviceResult: null,
 });
 const mocks = {
   "./summarize": `export function generateSummaryAfterTranscription(sessionId) { globalThis.transcriptionRetryFixture.summaries.push(sessionId); }`,
@@ -40,6 +42,9 @@ const mocks = {
   "@/lib/env": `export const env = {apiUrl: 'https://api.anarlog.test'};`,
   "@/lib/analytics": `export function captureAnalytics() {}`,
   "@/lib/error-reporting": `export function captureOperationalError(error) { globalThis.transcriptionRetryFixture.failures.push(error); }`,
+  "./on-device-transcription": `export async function transcribeSessionOnDevice(sessionId) {
+    const f = globalThis.transcriptionRetryFixture; f.onDevice.push(sessionId); return f.onDeviceResult;
+  }`,
   "./provider-transcription": `export async function requestProviderTranscription() {
     const f = globalThis.transcriptionRetryFixture; f.requests++;
     if (f.requestError) throw f.requestError;
@@ -117,4 +122,28 @@ test("temporary request failures remain eligible for automatic retry", async () 
   assert.equal(fixture.requests, requests + 2);
   assert.equal(fixture.pending, false);
   assert.ok(fixture.summaries.includes(fixture.sessionId));
+});
+
+test("Apple on-device transcription never uploads and stops automatic retries when it cannot transcribe", async () => {
+  fixture.sessionId = "on-device-recording";
+  fixture.provider = {
+    provider: "apple_speech",
+    model: "apple-speech",
+    apiKey: "",
+  };
+  fixture.pending = true;
+  const requests = fixture.requests;
+  const failures = fixture.failures.length;
+  await transcribeSession(fixture.sessionId);
+  assert.deepEqual(fixture.onDevice, [fixture.sessionId]);
+  assert.equal(fixture.failures.at(-1).code, "stt_on_device_unavailable");
+
+  await retryPendingTranscriptions();
+  assert.deepEqual(fixture.onDevice, [fixture.sessionId]);
+
+  fixture.onDeviceResult = { transcriptId: "transcript" };
+  await transcribeSession(fixture.sessionId);
+  assert.deepEqual(fixture.onDevice, [fixture.sessionId, fixture.sessionId]);
+  assert.equal(fixture.failures.length, failures + 1);
+  assert.equal(fixture.requests, requests);
 });

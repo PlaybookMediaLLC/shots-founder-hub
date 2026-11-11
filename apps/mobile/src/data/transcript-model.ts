@@ -33,6 +33,73 @@ export type TranscriptSegment = {
   wordCount: number;
 };
 
+// Desktop's createTranscript for batch results: whole-session replace with
+// source batch_transcription, then mark the primary session audio transcribed.
+export function batchTranscriptStatements(
+  sessionId: string,
+  transcript: {
+    id: string;
+    provider: string;
+    model: string;
+    language: string;
+    startedAtMs: number;
+    wordsJson: string;
+    hintsJson: string;
+  },
+  now: string,
+) {
+  return [
+    {
+      sql: `UPDATE transcripts
+SET deleted_at = ?, updated_at = ?
+WHERE session_id = ? AND deleted_at IS NULL`,
+      params: [now, now, sessionId] as unknown[],
+    },
+    {
+      sql: `INSERT INTO transcripts (
+  id, workspace_id, owner_user_id, session_id, source, provider,
+  model, language, started_at_ms, ended_at_ms, audio_attachment_id,
+  memo, words_json, speaker_hints_json, metadata_json, created_at,
+  updated_at, deleted_at
+)
+SELECT ?, session.workspace_id, session.owner_user_id, session.id,
+  'batch_transcription', ?, ?, ?, ?, NULL, '',
+  COALESCE((
+    SELECT note.body FROM session_documents AS note
+    WHERE note.id = session.id AND note.kind = 'note' AND note.deleted_at IS NULL
+  ), ''),
+  ?, ?, '{}', ?, ?, NULL
+FROM sessions AS session
+WHERE session.id = ? AND session.deleted_at IS NULL`,
+      params: [
+        transcript.id,
+        transcript.provider,
+        transcript.model,
+        transcript.language,
+        transcript.startedAtMs,
+        transcript.wordsJson,
+        transcript.hintsJson,
+        now,
+        now,
+        sessionId,
+      ] as unknown[],
+    },
+    {
+      sql: `UPDATE session_attachments
+SET
+  metadata_json = json_set(
+    CASE WHEN json_valid(metadata_json) THEN metadata_json ELSE '{}' END,
+    '$.transcript_status',
+    'complete'
+  ),
+  updated_at = ?
+WHERE id = ? AND session_id = ? AND source_type = 'session_audio'
+  AND source_id = 'primary' AND deleted_at IS NULL`,
+      params: [now, `session-audio:${sessionId}`, sessionId] as unknown[],
+    },
+  ];
+}
+
 export function sharedMicrophoneContextStatement(
   sessionId: string,
   startedAtMs: number,
