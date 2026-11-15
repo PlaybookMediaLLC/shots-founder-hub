@@ -111,7 +111,7 @@ jobs:
             --token="$INFISICAL_TOKEN" \
             --env="$INFISICAL_ENV" \
             --projectId="$INFISICAL_PROJECT_ID" \
-            --path="/anarlog/cloudsync" \
+            --path="/founder-hub" \
             --format=json \
             --output-file="$cloudsync_secrets_json"
 
@@ -140,7 +140,7 @@ jobs:
             --token="$INFISICAL_TOKEN" \
             --env="$INFISICAL_ENV" \
             --projectId="$INFISICAL_PROJECT_ID" \
-            --path="/anarlog/ai" \
+            --path="/founder-hub" \
             --format=json \
             --output-file="$ai_secrets_json"
 
@@ -148,7 +148,7 @@ jobs:
             --token="$INFISICAL_TOKEN" \
             --env="$INFISICAL_ENV" \
             --projectId="$INFISICAL_PROJECT_ID" \
-            --path="/anarlog/cloudsync" \
+            --path="/founder-hub" \
             --format=json \
             --output-file="$cloudsync_secrets_json"
 
@@ -185,7 +185,7 @@ jobs:
             chmod 600 "$qa_secrets"
             trap 'rm -f "$qa_secrets"' EXIT
             infisical export --token="$INFISICAL_TOKEN" --env="$INFISICAL_ENV" \
-              --projectId="$INFISICAL_PROJECT_ID" --path=/anarlog/ai --format=json --output-file="$qa_secrets"
+              --projectId="$INFISICAL_PROJECT_ID" --path=/founder-hub --format=json --output-file="$qa_secrets"
             python3 -m venv "$RUNNER_TEMP/continuity-venv"
             "$RUNNER_TEMP/continuity-venv/bin/pip" install httpx==0.28.1 websockets==15.0.1
             qa_args=()
