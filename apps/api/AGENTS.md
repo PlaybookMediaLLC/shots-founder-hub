@@ -41,26 +41,19 @@ email configuration. Optional integration groups are validated only in their
 owning roles. `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` is accepted only by `core`
 and `all`. Assign cleanup to one deployment during migration.
 
-Role selection does not change Fly routing or provision applications. Keep
-existing URLs working while clients and webhook providers migrate.
-
-Standalone profiles are `fly.ai.toml` (`anarlog-inference`),
-`fly.sync.toml` (`anarlog-sync`), `fly.core.toml` (`anarlog-core`). The default `fly.toml` and
-`fly.gateway.toml` route public and legacy custom domains through `anarlog-gateway`
-to these services. Keep domain certificates and DNS routing on this shared gateway.
-Core owns durable cleanup; other profiles disable it. Never transfer cleanup
-ownership until the previous owner's worker has stopped.
+`api_cd.yaml` deploys one DigitalOcean App Platform app, `founder-hub-api`.
+It runs the `ai`, `sync`, and `core` roles as internal services. A public
+`gateway` service runs the combined role and forwards each role's routes to
+them, so all public URLs stay on `founder-hub-api.shots.playbookmedia.io`.
+`.github/scripts/render_api_app_spec.py` owns the app spec. Core owns durable
+cleanup; other services disable it. Never transfer cleanup ownership until the
+previous owner's worker has stopped.
 
 `/health/ready/{service}` verifies the expected runtime role, configuration of
 its primary subsystems, and that it is not draining. The combined role uses
-`api`. These checks do not probe external
-providers or prove request continuity. Keep dependency smoke tests and active
-traffic deploy/rollback tests as separate rollout gates.
-
-The drain deploy helper reconciles the supported single-process Fly profile
-into each candidate. Unsupported settings fail before machine mutations;
-extend its translation and tests before introducing additional Fly features.
-
+`api`. These checks do not probe external providers or prove request
+continuity. App Platform health checks use `/health`, because readiness also
+requires optional integrations.
 
 The combined compatibility runtime can forward each role through
 `ANARLOG_AI_ORIGIN`, `ANARLOG_SYNC_ORIGIN`, `ANARLOG_CORE_ORIGIN`. Unset origins keep the existing local route behavior.
@@ -69,12 +62,10 @@ not retry writes or follow redirects. Drain permits cover proxied requests and
 upgraded connections through completion. Origins are rejected in standalone
 roles to prevent routing cycles.
 
-`api_cd.yaml` selects one explicit service per dispatch. `gateway` retains the
-existing public URLs with its forwarding profile; deploy and verify all
-standalone services before activating this profile. The default dispatch is
-`gateway`. The optional `image` input accepts only an immutable API image digest.
-Keep the image and configuration together in the rollout record. Explicit drain
-adoption requires independent verification that the exact image handles SIGUSR1;
-health alone does not establish that capability. Secrets are filtered by the
-selected runtime before staging. Core's checked-in profile enables cleanup so
-routine deployments preserve worker ownership.
+`api_cd.yaml` runs on pushes to `main` that change the API and on manual
+dispatch. It builds one image in GHCR, then updates every service to that tag.
+A PRE_DEPLOY job runs `/usr/local/bin/migrate` with `DATABASE_MIGRATION_URL`
+before the new services start. The workflow reads secrets from Infisical
+(Desktop App Backend, `prod`, `/founder-hub`) through GitHub OIDC, and gives each
+service only its role's secrets. A deploy replaces instances, so it ends active
+live-transcription streams.

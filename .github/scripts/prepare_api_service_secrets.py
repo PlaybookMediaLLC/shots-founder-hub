@@ -1,8 +1,4 @@
-"""Write only the selected API service's runtime secrets; never print values."""
-
-import argparse
-import json
-from pathlib import Path
+"""Select only the given API service's runtime secrets; never print values."""
 
 SHARED = {
     "DATABASE_URL",
@@ -107,41 +103,9 @@ def select(service, api_secrets, cloudsync_secrets):
             }
         ):
             raise ValueError("At least one transcription provider is required")
-    if service in {"core", "all", "gateway", "legacy"}:
-        required |= {"NANGO_API_KEY", "NANGO_WEBHOOK_SIGNING_KEY"}
     if service in {"sync", "core", "all", "gateway", "legacy"}:
         required |= {"RESEND_API_KEY", "RESEND_FROM_EMAIL"}
     missing = sorted(key for key in required if not values.get(key))
     if missing:
         raise ValueError("Missing required service secrets: " + ", ".join(missing))
-    if service == "ai":
-        values["API_BASE_URL"] = "https://anarlog-inference.fly.dev"
     return values
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--service", required=True)
-    parser.add_argument("--api", required=True)
-    parser.add_argument("--cloudsync", required=True)
-    parser.add_argument("--output", required=True)
-    args = parser.parse_args()
-    values = select(
-        args.service,
-        json.loads(Path(args.api).read_text()),
-        json.loads(Path(args.cloudsync).read_text()),
-    )
-    path = Path(args.output)
-    path.touch(mode=0o600)
-    path.chmod(0o600)
-    with path.open("w") as output:
-        for key, value in sorted(values.items()):
-            escaped = (
-                value.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n")
-            )
-            output.write(f"{key}={escaped}\n")
-    print(f"Prepared {len(values)} runtime secrets for {args.service}")
-
-
-if __name__ == "__main__":
-    main()

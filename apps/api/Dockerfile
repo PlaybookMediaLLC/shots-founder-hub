@@ -39,16 +39,17 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     cargo clean -p progenitor-utils
 RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
-    cargo build --locked --release -p api
+    cargo build --locked --release -p api -p cloud-db --bin api --bin migrate
 
 FROM debian:bookworm-slim AS api-runtime
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1001 appgroup && \
     useradd -u 1001 -g appgroup -d /nonexistent -s /usr/sbin/nologin -M appuser
 COPY --from=build --chown=appuser:appgroup /app/target/release/api /usr/local/bin/api
+COPY --from=build --chown=appuser:appgroup /app/target/release/migrate /usr/local/bin/migrate
 USER appuser
 WORKDIR /app
 EXPOSE 3001
-ENTRYPOINT ["/usr/local/bin/api"]
+CMD ["/usr/local/bin/api"]
 
 FROM api-runtime AS runtime

@@ -73,7 +73,6 @@ cat .github/workflows/desktop_store_publish.yaml
 cat .github/workflows/cli_ci.yaml
 cat .github/workflows/api_ci.yaml
 cat .github/workflows/api_cd.yaml
-cat .github/workflows/db_cd.yaml
 cat .github/workflows/web_ci.yaml
 cat .github/workflows/web_cd.yaml
 ```

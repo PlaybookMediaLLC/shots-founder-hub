@@ -23,6 +23,8 @@ class ServiceSecretsTests(unittest.TestCase):
                 result = select(role, self.api, [])
                 self.assertFalse(result.keys() & excluded)
                 self.assertTrue(SHOTS <= result.keys())
+                if role == "core":
+                    self.assertTrue(CORE <= result.keys())
                 self.assertIn("DATABASE_URL", result)
                 self.assertIn("R2_SECRET_ACCESS_KEY", result)
                 self.assertNotIn("SUPABASE_SERVICE_ROLE_KEY", result)
@@ -38,12 +40,16 @@ class ServiceSecretsTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Unknown"):
                 select(role, self.api, [])
 
-    def test_callback_origin_belongs_to_ai_service(self):
-        self.assertEqual(
-            select("ai", self.api, [])["API_BASE_URL"],
-            "https://anarlog-inference.fly.dev",
-        )
+    def test_ai_callbacks_use_the_configured_public_origin(self):
+        # The gateway forwards provider callbacks on the public origin to ai.
+        self.assertEqual(select("ai", self.api, [])["API_BASE_URL"], "test-value")
         self.assertEqual(select("all", self.api, [])["API_BASE_URL"], "test-value")
+
+    def test_core_and_gateway_start_without_nango(self):
+        without_nango = [s for s in self.api if not s["key"].startswith("NANGO_")]
+        for role in ["core", "gateway"]:
+            with self.subTest(role=role):
+                self.assertNotIn("NANGO_API_KEY", select(role, without_nango, []))
 
     def test_authority_and_public_mcp_configuration_is_required(self):
         for key in [
