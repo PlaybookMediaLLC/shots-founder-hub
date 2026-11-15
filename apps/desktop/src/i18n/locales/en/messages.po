@@ -62,11 +62,6 @@ msgstr "{0} is ready to use"
 msgid "{0} min"
 msgstr "{0} min"
 
-#. placeholder {0}: transferTarget?.email
-#: src/settings/team/index.tsx
-msgid "{0} must accept before becoming Primary owner. Until then, ownership and permissions stay the same. After acceptance, you remain an Owner and they can delete the workspace."
-msgstr "{0} must accept before becoming Primary owner. Until then, ownership and permissions stay the same. After acceptance, you remain an Owner and they can delete the workspace."
-
 #. placeholder {0}: access.usedSeats
 #. placeholder {1}: access.seatLimit
 #: src/settings/general/billing.tsx
@@ -261,18 +256,6 @@ msgstr "A to Z"
 msgid "a week ago"
 msgstr "a week ago"
 
-#: src/settings/team/index.tsx
-msgid "Accept"
-msgstr "Accept"
-
-#: src/settings/team/index.tsx
-msgid "Accept ownership"
-msgstr "Accept ownership"
-
-#: src/settings/team/index.tsx
-msgid "Accept workspace ownership?"
-msgstr "Accept workspace ownership?"
-
 #: src/settings/referrals.tsx
 msgid "Accepted"
 msgstr "Accepted"
@@ -305,24 +288,10 @@ msgstr "Accessibility"
 msgid "Account"
 msgstr "Account"
 
-#: src/settings/team/index.tsx
-msgid "Acme"
-msgstr "Acme"
-
 #: src/settings/automations/index.tsx
 #: src/settings/automations/workflow-builder.tsx
 msgid "Action"
 msgstr "Action"
-
-#: src/settings/team/index.tsx
-msgid "Actions"
-msgstr "Actions"
-
-#. placeholder {0}: invitation.email
-#. placeholder {0}: member.email
-#: src/settings/team/index.tsx
-msgid "Actions for {0}"
-msgstr "Actions for {0}"
 
 #: src/settings/stats/index.tsx
 msgid "Active days"
@@ -444,10 +413,6 @@ msgstr "Add material"
 msgid "Add meeting decisions and follow-ups to a Notion project."
 msgstr "Add meeting decisions and follow-ups to a Notion project."
 
-#: src/settings/team/index.tsx
-msgid "Add members"
-msgstr "Add members"
-
 #: src/settings/dictionary/index.tsx
 msgid "Add names, jargon, or product terms to prefer"
 msgstr "Add names, jargon, or product terms to prefer"
@@ -496,10 +461,6 @@ msgstr "Add webhook"
 #: src/settings/general/spoken-languages.tsx
 msgid "Additional spoken languages"
 msgstr "Additional spoken languages"
-
-#: src/settings/team/index.tsx
-msgid "Admin"
-msgstr "Admin"
 
 #: src/settings/ai/shared/index.tsx
 #: src/sidebar/settings-nav-groups.ts
@@ -558,18 +519,6 @@ msgstr "All time"
 #: src/onboarding/index.tsx
 msgid "Allow access"
 msgstr "Allow access"
-
-#: src/settings/team/index.tsx
-msgid "Allow anyone-with-the-link sharing"
-msgstr "Allow anyone-with-the-link sharing"
-
-#: src/settings/team/index.tsx
-msgid "Allow public indexing"
-msgstr "Allow public indexing"
-
-#: src/settings/team/index.tsx
-msgid "Already taken"
-msgstr "Already taken"
 
 #: src/session/components/outer-header/overflow/always-on-top.tsx
 msgid "Always on Top"
@@ -776,10 +725,6 @@ msgstr "Automation removed"
 msgid "Automations"
 msgstr "Automations"
 
-#: src/settings/team/index.tsx
-msgid "Available"
-msgstr "Available"
-
 #: src/settings/stats/insights.tsx
 msgid "Average across the capture days counted above."
 msgstr "Average across the capture days counted above."
@@ -865,10 +810,6 @@ msgstr "Busy"
 msgid "Calendar"
 msgstr "Calendar"
 
-#: src/settings/team/index.tsx
-msgid "Calendar-scheduled capture jobs. Canceling stops the bot from joining."
-msgstr "Calendar-scheduled capture jobs. Canceling stops the bot from joining."
-
 #: src/session-sharing/access-management.tsx
 msgid "Can comment"
 msgstr "Can comment"
@@ -896,17 +837,12 @@ msgstr "Can view"
 #: src/settings/general/e2ee-setup.tsx
 #: src/settings/general/storage/legacy-cleanup.tsx
 #: src/settings/sync/index.tsx
-#: src/settings/team/index.tsx
 #: src/settings/todo/github.tsx
 #: src/shared/ui/destructive-confirmation-dialog.tsx
 #: src/sidebar/folder-name-dialog.tsx
 #: src/templates/auto-format-examples-dialog.tsx
 msgid "Cancel"
 msgstr "Cancel"
-
-#: src/settings/team/index.tsx
-msgid "Cancel bot"
-msgstr "Cancel bot"
 
 #: src/session/components/outer-header/metadata/date.tsx
 msgid "Cancel date edit"
@@ -915,23 +851,6 @@ msgstr "Cancel date edit"
 #: src/settings/dictation.tsx
 msgid "Cancel dictation"
 msgstr "Cancel dictation"
-
-#: src/settings/team/index.tsx
-msgid "Cancel invitation"
-msgstr "Cancel invitation"
-
-#: src/settings/team/index.tsx
-msgid "Cancel invitation?"
-msgstr "Cancel invitation?"
-
-#. placeholder {0}: cancelInviteTarget?.email
-#: src/settings/team/index.tsx
-msgid "Cancel the invitation for {0}? They will no longer be able to join using this invitation."
-msgstr "Cancel the invitation for {0}? They will no longer be able to join using this invitation."
-
-#: src/settings/team/index.tsx
-msgid "Cancel transfer"
-msgstr "Cancel transfer"
 
 #: src/settings/stats/badge-collection.tsx
 msgid "Capture 10 conversations. More moments you can return to."
@@ -991,10 +910,6 @@ msgstr "Change speaker"
 msgid "Change speaker from here"
 msgstr "Change speaker from here"
 
-#: src/settings/team/index.tsx
-msgid "Change workspace logo"
-msgstr "Change workspace logo"
-
 #: src/settings/sync/index.tsx
 msgid "Changes stay on this device until you resume sync."
 msgstr "Changes stay on this device until you resume sync."
@@ -1006,10 +921,6 @@ msgstr "Chat history"
 #: src/chat/components/input/use-dictation.ts
 msgid "Check microphone permission and the selected input device, then try again."
 msgstr "Check microphone permission and the selected input device, then try again."
-
-#: src/settings/team/index.tsx
-msgid "Checking availability…"
-msgstr "Checking availability…"
 
 #: src/imports/screen.tsx
 msgid "Checking connection"
@@ -1180,10 +1091,6 @@ msgstr "Choose which day begins your calendar week."
 #: src/settings/general/default-share-access.tsx
 msgid "Choose who can access notes from new meetings."
 msgstr "Choose who can access notes from new meetings."
-
-#: src/settings/team/index.tsx
-msgid "Claim email domain"
-msgstr "Claim email domain"
 
 #: src/settings/general/storage/legacy-cleanup.tsx
 msgid "Clean Up"
@@ -1570,10 +1477,6 @@ msgstr "Context"
 msgid "Continue"
 msgstr "Continue"
 
-#: src/settings/team/index.tsx
-msgid "Continue to Pro checkout"
-msgstr "Continue to Pro checkout"
-
 #: src/settings/general/meeting-settings.tsx
 msgid "Control listening without reopening Shots Founder Hub."
 msgstr "Control listening without reopening Shots Founder Hub."
@@ -1714,10 +1617,6 @@ msgstr "Could not load Slack channels. Reconnect Slack and try again."
 msgid "Could not load sync logs."
 msgstr "Could not load sync logs."
 
-#: src/settings/team/index.tsx
-msgid "Could not load workspace members."
-msgstr "Could not load workspace members."
-
 #: src/settings/general/primary-recording-device.tsx
 #: src/settings/sync/index.tsx
 msgid "Could not load your devices."
@@ -1817,10 +1716,6 @@ msgstr "Could not update this person's access."
 msgid "Could not use the selected model"
 msgstr "Could not use the selected model"
 
-#: src/settings/team/index.tsx
-msgid "Couldn’t check availability. You can still try Save."
-msgstr "Couldn’t check availability. You can still try Save."
-
 #: src/settings/referrals.tsx
 msgid "Couldn't copy the invite link. Try again."
 msgstr "Couldn't copy the invite link. Try again."
@@ -1860,7 +1755,6 @@ msgid "Couldn't save your profile. Try again."
 msgstr "Couldn't save your profile. Try again."
 
 #: src/folders/sidebar.tsx
-#: src/settings/team/index.tsx
 msgid "Create"
 msgstr "Create"
 
@@ -1875,10 +1769,6 @@ msgstr "Create a brief to prepare this meeting"
 #: src/settings/general/e2ee-setup.tsx
 msgid "Create a recovery key"
 msgstr "Create a recovery key"
-
-#: src/settings/team/index.tsx
-msgid "Create a shared workspace"
-msgstr "Create a shared workspace"
 
 #: src/resource-sharing/share-dialog.tsx
 msgid "Create a Team to share a library"
@@ -1945,10 +1835,6 @@ msgstr "Current"
 msgid "Current default"
 msgstr "Current default"
 
-#: src/settings/team/index.tsx
-msgid "Current domain"
-msgstr "Current domain"
-
 #: src/settings/general/billing.tsx
 msgid "Current plan"
 msgstr "Current plan"
@@ -1987,7 +1873,6 @@ msgid "Date range"
 msgstr "Date range"
 
 #: src/edit/tab-content.tsx
-#: src/settings/team/index.tsx
 msgid "Decline"
 msgstr "Decline"
 
@@ -2022,10 +1907,6 @@ msgstr "Delete"
 #: src/sidebar/timeline/index.tsx
 msgid "Delete {pendingDeleteCount} selected notes?"
 msgstr "Delete {pendingDeleteCount} selected notes?"
-
-#: src/settings/team/index.tsx
-msgid "Delete {workspaceName} for everyone?"
-msgstr "Delete {workspaceName} for everyone?"
 
 #: src/sidebar/timeline/index.tsx
 msgid "Delete 1 selected note?"
@@ -2067,14 +1948,6 @@ msgstr "Delete Selected ({sessionCount})"
 #: src/sidebar/timeline/item.tsx
 msgid "Delete This Event"
 msgstr "Delete This Event"
-
-#: src/settings/team/index.tsx
-msgid "Delete workspace"
-msgstr "Delete workspace"
-
-#: src/settings/team/index.tsx
-msgid "Deleting removes the workspace for everyone. Transfer ownership first if you only want to leave."
-msgstr "Deleting removes the workspace for everyone. Transfer ownership first if you only want to leave."
 
 #: src/session-sharing/access-management.tsx
 msgid "Deny"
@@ -2119,7 +1992,6 @@ msgid "Device name"
 msgstr "Device name"
 
 #: src/settings/sync/index.tsx
-#: src/settings/team/index.tsx
 msgid "Devices"
 msgstr "Devices"
 
@@ -2257,7 +2129,6 @@ msgstr "email"
 #: src/contacts/details.tsx
 #: src/session-sharing/delivery-panel.tsx
 #: src/settings/general/account-profile.tsx
-#: src/settings/team/index.tsx
 msgid "Email"
 msgstr "Email"
 
@@ -2271,7 +2142,6 @@ msgstr "Email or name"
 
 #: src/session-sharing/access-management.tsx
 #: src/session-sharing/invitation-management.ts
-#: src/settings/team/invitation.ts
 msgid "Email unavailable. Invite link copied instead."
 msgstr "Email unavailable. Invite link copied instead."
 
@@ -2964,19 +2834,13 @@ msgid "Intelligence"
 msgstr "Intelligence"
 
 #: src/session-sharing/access-management.tsx
-#: src/settings/team/index.tsx
 msgid "Invitation pending"
 msgstr "Invitation pending"
 
 #: src/session-sharing/access-management.tsx
 #: src/session-sharing/invitation-management.ts
-#: src/settings/team/invitation.ts
 msgid "Invitation sent."
 msgstr "Invitation sent."
-
-#: src/settings/team/index.tsx
-msgid "Invitations"
-msgstr "Invitations"
 
 #: src/session-sharing/invitation-management.ts
 msgid "Invitations sent."
@@ -3011,28 +2875,10 @@ msgstr "Invite people"
 msgid "Invite people to this note."
 msgstr "Invite people to this note."
 
-#: src/settings/team/index.tsx
-msgid "Invite teammates, share notes across the workspace, and manage who has access. Your personal notes stay private."
-msgstr "Invite teammates, share notes across the workspace, and manage who has access. Your personal notes stay private."
-
-#: src/settings/team/index.tsx
-msgid "Invite teammates, share notes across the workspace, and manage who has access. Your personal notes stay private. Pending invitations are free. New members are billed from when they join."
-msgstr "Invite teammates, share notes across the workspace, and manage who has access. Your personal notes stay private. Pending invitations are free. New members are billed from when they join."
-
 #. placeholder {0}: sent.length
 #: src/session-sharing/invitation-management.ts
 msgid "Invited {0}. Could not invite {failed}. Try again."
 msgstr "Invited {0}. Could not invite {failed}. Try again."
-
-#. placeholder {0}: invitation.invitedByEmail
-#: src/settings/team/index.tsx
-#: src/settings/team/invitation-toast.tsx
-msgid "Invited by {0}"
-msgstr "Invited by {0}"
-
-#: src/settings/team/index.tsx
-msgid "Invited to join"
-msgstr "Invited to join"
 
 #: src/settings/referrals.tsx
 msgid "Invites remaining"
@@ -3052,10 +2898,6 @@ msgstr "Job Title"
 msgid "Join & record"
 msgstr "Join & record"
 
-#: src/settings/team/email-auto-join.tsx
-msgid "Join automatically with a work email"
-msgstr "Join automatically with a work email"
-
 #: src/session/components/outer-header/index.tsx
 msgid "Join meeting and record"
 msgstr "Join meeting and record"
@@ -3068,18 +2910,9 @@ msgstr "Join our community and stay updated:"
 msgid "Join scheduled meetings"
 msgstr "Join scheduled meetings"
 
-#. placeholder {0}: invitation.workspaceName
-#: src/settings/team/index.tsx
-msgid "Joined {0}"
-msgstr "Joined {0}"
-
 #: src/session-sharing/management-panel.tsx
 msgid "Keep desktop edits"
 msgstr "Keep desktop edits"
-
-#: src/settings/team/index.tsx
-msgid "Keep forever"
-msgstr "Keep forever"
 
 #: src/settings/sync/index.tsx
 msgid "Keep notes current automatically."
@@ -3171,21 +3004,9 @@ msgstr "Last used {0}"
 msgid "Learn how to fix this"
 msgstr "Learn how to fix this"
 
-#: src/settings/team/index.tsx
-msgid "Leave {workspaceName}?"
-msgstr "Leave {workspaceName}?"
-
 #: src/settings/automations/markdown-export-options.tsx
 msgid "Leave blank to use the meeting date and title."
 msgstr "Leave blank to use the meeting date and title."
-
-#: src/settings/team/index.tsx
-msgid "Leave workspace"
-msgstr "Leave workspace"
-
-#: src/settings/team/index.tsx
-msgid "Leaving gives up your access to shared notes here."
-msgstr "Leaving gives up your access to shared notes here."
 
 #: src/settings/stats/index.tsx
 msgid "Less"
@@ -3277,10 +3098,6 @@ msgstr "Loading edit…"
 #: src/settings/ai/shared/model-combobox.tsx
 msgid "Loading models..."
 msgstr "Loading models..."
-
-#: src/settings/team/index.tsx
-msgid "Loading scheduled captures…"
-msgstr "Loading scheduled captures…"
 
 #: src/settings/general/index.tsx
 #: src/settings/hydration-boundary.tsx
@@ -3401,10 +3218,6 @@ msgstr "Manage referrals"
 msgid "Manage sign-in methods"
 msgstr "Manage sign-in methods"
 
-#: src/settings/team/index.tsx
-msgid "Manage workspace billing"
-msgstr "Manage workspace billing"
-
 #: src/settings/general/account.tsx
 msgid "Manage your sign-in methods on the Shots Founder Hub website."
 msgstr "Manage your sign-in methods on the Shots Founder Hub website."
@@ -3517,21 +3330,9 @@ msgstr "Meetings"
 msgid "member"
 msgstr "member"
 
-#: src/settings/team/index.tsx
-msgid "Member"
-msgstr "Member"
-
 #: src/contacts/organization-details.tsx
 msgid "members"
 msgstr "members"
-
-#: src/settings/team/index.tsx
-msgid "Members"
-msgstr "Members"
-
-#: src/settings/team/index.tsx
-msgid "Members on a claimed email domain must sign in with SSO instead of Google, GitHub, or email."
-msgstr "Members on a claimed email domain must sign in with SSO instead of Google, GitHub, or email."
 
 #: src/edit/tab-content.tsx
 #: src/session/components/outer-header/overflow/export-modal.tsx
@@ -3668,7 +3469,6 @@ msgstr "name"
 #: src/contacts/details.tsx
 #: src/contacts/organization-details.tsx
 #: src/settings/general/account-profile.tsx
-#: src/settings/team/index.tsx
 msgid "Name"
 msgstr "Name"
 
@@ -3932,10 +3732,6 @@ msgstr "No templates yet"
 #: src/session/components/note-input/transcript/screens/empty.tsx
 msgid "No transcript available"
 msgstr "No transcript available"
-
-#: src/settings/team/index.tsx
-msgid "No upcoming bots."
-msgstr "No upcoming bots."
 
 #: src/settings/stats/insights.tsx
 msgid "Not available"
@@ -4221,14 +4017,6 @@ msgstr "Others"
 msgid "Overview"
 msgstr "Overview"
 
-#: src/settings/team/index.tsx
-msgid "Owner"
-msgstr "Owner"
-
-#: src/settings/team/index.tsx
-msgid "Ownership transfer Pending. Current ownership and permissions remain unchanged until the proposed owner accepts."
-msgstr "Ownership transfer Pending. Current ownership and permissions remain unchanged until the proposed owner accepts."
-
 #: src/shared/control.tsx
 msgid "Page not found"
 msgstr "Page not found"
@@ -4274,10 +4062,6 @@ msgstr "Pause alerts while Do Not Disturb is on."
 msgid "Paused"
 msgstr "Paused"
 
-#: src/settings/team/index.tsx
-msgid "Pending"
-msgstr "Pending"
-
 #: src/contacts/organization-details.tsx
 #: src/session/components/note-input/transcript/renderer/speaker-assign.tsx
 msgid "People"
@@ -4288,10 +4072,6 @@ msgstr "People"
 #: src/settings/general/default-share-access.tsx
 msgid "People in the meeting"
 msgstr "People in the meeting"
-
-#: src/settings/team/email-auto-join.tsx
-msgid "People with a verified @{domain} email join this team when they sign in. Billing starts when they join and is prorated for the remaining billing period."
-msgstr "People with a verified @{domain} email join this team when they sign in. Billing starts when they join and is prorated for the remaining billing period."
 
 #: src/session-sharing/draft-panel.tsx
 #: src/session-sharing/management-panel.tsx
@@ -4308,15 +4088,9 @@ msgstr "permission panel."
 
 #: src/settings/dictation.tsx
 #: src/settings/general/index.tsx
-#: src/settings/team/index.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Permissions"
 msgstr "Permissions"
-
-#. placeholder {0}: member.email
-#: src/settings/team/index.tsx
-msgid "Permissions for {0}"
-msgstr "Permissions for {0}"
 
 #: src/crm/enrich-contact.tsx
 msgid "phone"
@@ -4350,10 +4124,6 @@ msgstr "Play from here"
 #: src/onboarding/index.tsx
 msgid "Play music"
 msgstr "Play music"
-
-#: src/settings/team/index.tsx
-msgid "Policies"
-msgstr "Policies"
 
 #: src/automations/starters.tsx
 msgid "Post a meeting recap to a Slack channel."
@@ -4428,10 +4198,6 @@ msgstr "Previous referral offer · Waiting for first payment"
 msgid "Previous referrals keep their original reward terms and count toward your 3-invite limit."
 msgstr "Previous referrals keep their original reward terms and count toward your 3-invite limit."
 
-#: src/settings/team/index.tsx
-msgid "Primary owner"
-msgstr "Primary owner"
-
 #: src/settings/general/primary-recording-device.tsx
 msgid "Primary recording device"
 msgstr "Primary recording device"
@@ -4447,14 +4213,6 @@ msgstr "Pro"
 #: src/sidebar/toast/registry.tsx
 msgid "Pro features available"
 msgstr "Pro features available"
-
-#: src/settings/team/index.tsx
-msgid "Pro for every member, shared workspaces, roles, and centralized billing. $14 per person monthly or $140 yearly."
-msgstr "Pro for every member, shared workspaces, roles, and centralized billing. $14 per person monthly or $140 yearly."
-
-#: src/settings/team/index.tsx
-msgid "Pro plan"
-msgstr "Pro plan"
 
 #: src/settings/general/billing.tsx
 msgid "Pro trial"
@@ -4529,7 +4287,6 @@ msgid "Recent CloudSync entries from the app log."
 msgstr "Recent CloudSync entries from the app log."
 
 #: src/session-sharing/delivery-panel.tsx
-#: src/settings/team/index.tsx
 msgid "Recipient email"
 msgstr "Recipient email"
 
@@ -4660,11 +4417,6 @@ msgstr "Remove"
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
-#. placeholder {0}: removeTarget?.email
-#: src/settings/team/index.tsx
-msgid "Remove {0} from {workspaceName}? They will lose access to this workspace."
-msgstr "Remove {0} from {workspaceName}? They will lose access to this workspace."
-
 #: src/settings/dictionary/index.tsx
 msgid "Remove {term}"
 msgstr "Remove {term}"
@@ -4682,14 +4434,6 @@ msgstr "Remove email"
 msgid "Remove example {0}"
 msgstr "Remove example {0}"
 
-#: src/settings/team/index.tsx
-msgid "Remove member"
-msgstr "Remove member"
-
-#: src/settings/team/index.tsx
-msgid "Remove member?"
-msgstr "Remove member?"
-
 #: src/contacts/contact-page-header.tsx
 #: src/contacts/profile-photo.tsx
 msgid "Remove photo"
@@ -4698,10 +4442,6 @@ msgstr "Remove photo"
 #: src/settings/todo/github.tsx
 msgid "Remove repository"
 msgstr "Remove repository"
-
-#: src/settings/team/index.tsx
-msgid "Remove workspace logo"
-msgstr "Remove workspace logo"
 
 #: src/sidebar/folder-materials.tsx
 msgid "Rename"
@@ -4780,22 +4520,10 @@ msgstr "Request {0}"
 msgid "Request {0} permission"
 msgstr "Request {0} permission"
 
-#: src/settings/team/index.tsx
-msgid "Request ownership transfer?"
-msgstr "Request ownership transfer?"
-
-#: src/settings/team/index.tsx
-msgid "Request transfer"
-msgstr "Request transfer"
-
 #. placeholder {0}: capabilityLabels[entry.capability].toLowerCase()
 #: src/session-sharing/access-management.tsx
 msgid "Requested {0}"
 msgstr "Requested {0}"
-
-#: src/settings/team/index.tsx
-msgid "Require SSO"
-msgstr "Require SSO"
 
 #: src/settings/privacy/index.tsx
 msgid "Require Touch ID or your password when opening Shots Founder Hub."
@@ -4809,10 +4537,6 @@ msgstr "Require Windows Hello face, PIN, or password when opening Shots Founder 
 #: src/sidebar/settings.tsx
 msgid "Requires Shots Founder Hub Pro"
 msgstr "Requires Shots Founder Hub Pro"
-
-#: src/settings/team/index.tsx
-msgid "Resend invitation"
-msgstr "Resend invitation"
 
 #: src/session-sharing/access-management.tsx
 msgid "Resend invite"
@@ -4864,10 +4588,6 @@ msgstr "Restoring cloud sync..."
 msgid "Resume"
 msgstr "Resume"
 
-#: src/settings/team/index.tsx
-msgid "Retention (days)"
-msgstr "Retention (days)"
-
 #: src/chat/components/message/error.tsx
 #: src/contacts/profile-photo.tsx
 #: src/session/components/note-input/enhanced/enhance-error.tsx
@@ -4894,10 +4614,6 @@ msgstr "Review memo"
 #: src/session/components/pending-proposals-banner.tsx
 msgid "Review summary"
 msgstr "Review summary"
-
-#: src/settings/team/index.tsx
-msgid "Review transfer"
-msgstr "Review transfer"
 
 #: src/settings/developers/api-key-row.tsx
 msgid "Revoke"
@@ -4958,21 +4674,9 @@ msgstr "Save meetings to Google Drive"
 msgid "Save PDF, text, Markdown, and Org exports to this folder."
 msgstr "Save PDF, text, Markdown, and Org exports to this folder."
 
-#: src/settings/team/index.tsx
-msgid "Save policies"
-msgstr "Save policies"
-
-#: src/settings/team/index.tsx
-msgid "Save SCIM token"
-msgstr "Save SCIM token"
-
 #: src/settings/general/meeting-settings.tsx
 msgid "Save slides and screens others share in meetings. Requires Screen Recording."
 msgstr "Save slides and screens others share in meetings. Requires Screen Recording."
-
-#: src/settings/team/index.tsx
-msgid "Save subdomain"
-msgstr "Save subdomain"
 
 #: src/automations/starters.tsx
 msgid "Save the summary and transcript to the selected folder."
@@ -5003,10 +4707,6 @@ msgstr "Saved locally"
 #: src/settings/general/account-profile.tsx
 msgid "Saving..."
 msgstr "Saving..."
-
-#: src/settings/team/index.tsx
-msgid "SCIM bearer token"
-msgstr "SCIM bearer token"
 
 #: src/session/components/note-input/transcript/renderer/index.tsx
 msgid "Scroll to bottom"
@@ -5098,10 +4798,6 @@ msgstr "Search timezone..."
 #: src/settings/general/searchable-select.tsx
 msgid "Search..."
 msgstr "Search..."
-
-#: src/settings/team/index.tsx
-msgid "Seats"
-msgstr "Seats"
 
 #: src/templates/sections-editor.tsx
 msgid "Section actions"
@@ -5347,14 +5043,6 @@ msgstr "Shared with me · Can edit"
 msgid "Shared with me · View only"
 msgstr "Shared with me · View only"
 
-#: src/settings/team/index.tsx
-msgid "Shares (30d)"
-msgstr "Shares (30d)"
-
-#: src/settings/team/index.tsx
-msgid "Sharing domain"
-msgstr "Sharing domain"
-
 #: src/session-sharing/management-panel.tsx
 msgid "Sharing paused to protect your edits"
 msgstr "Sharing paused to protect your edits"
@@ -5598,10 +5286,6 @@ msgstr "Sign in to connect a CRM."
 msgid "Sign in to connect your calendar"
 msgstr "Sign in to connect your calendar"
 
-#: src/settings/team/index.tsx
-msgid "Sign in to create a shared workspace for your team."
-msgstr "Sign in to create a shared workspace for your team."
-
 #: src/session/components/note-input/enhanced/enhance-error.tsx
 msgid "Sign in to generate this summary"
 msgstr "Sign in to generate this summary"
@@ -5806,10 +5490,6 @@ msgstr "Start free trial"
 #: src/settings/general/meeting-settings.tsx
 msgid "Start listening when a scheduled meeting begins."
 msgstr "Start listening when a scheduled meeting begins."
-
-#: src/settings/team/index.tsx
-msgid "Start Pro"
-msgstr "Start Pro"
 
 #: src/services/event-notification/index.ts
 msgid "Start recording"
@@ -6091,12 +5771,7 @@ msgstr "Team library"
 msgid "Team seats"
 msgstr "Team seats"
 
-#: src/settings/team/index.tsx
-msgid "teammate@company.com"
-msgstr "teammate@company.com"
-
 #: src/settings/shots.tsx
-#: src/settings/team/index.tsx
 #: src/sidebar/settings-nav-groups.ts
 msgid "Teams"
 msgstr "Teams"
@@ -6166,10 +5841,6 @@ msgstr "Theme"
 #: src/settings/automations/workflow-builder.tsx
 msgid "Then"
 msgstr "Then"
-
-#: src/settings/team/index.tsx
-msgid "These rules apply to every member. Sharing changes fail closed on the server."
-msgstr "These rules apply to every member. Sharing changes fail closed on the server."
 
 #: src/resource-sharing/share-dialog.tsx
 msgid "They already have another shared item. Invite them to your Team for folders, templates, and automations."
@@ -6291,10 +5962,6 @@ msgstr "Transcription provider needed"
 msgid "Transcription unavailable"
 msgstr "Transcription unavailable"
 
-#: src/settings/team/index.tsx
-msgid "Transfer primary ownership before changing your role."
-msgstr "Transfer primary ownership before changing your role."
-
 #: src/templates/template-icon-picker.tsx
 msgid "Travel & Places"
 msgstr "Travel & Places"
@@ -6319,7 +5986,6 @@ msgstr "Trigger"
 #: src/settings/general/primary-recording-device.tsx
 #: src/settings/referrals.tsx
 #: src/settings/stats/badge-collection.tsx
-#: src/settings/team/index.tsx
 msgid "Try again"
 msgstr "Try again"
 
@@ -6446,10 +6112,6 @@ msgstr "Untitled session"
 msgid "Untitled template"
 msgstr "Untitled template"
 
-#: src/settings/team/index.tsx
-msgid "Upcoming bot attendance"
-msgstr "Upcoming bot attendance"
-
 #: src/services/event-notification/index.ts
 msgid "Upcoming Event"
 msgstr "Upcoming Event"
@@ -6529,25 +6191,13 @@ msgstr "Upload transcript"
 msgid "Uploads meeting content for remote access while Shots Founder Hub is closed."
 msgstr "Uploads meeting content for remote access while Shots Founder Hub is closed."
 
-#: src/settings/team/index.tsx
-msgid "Usage"
-msgstr "Usage"
-
 #: src/settings/appearance/time-format.tsx
 msgid "Use 24-hour time"
 msgstr "Use 24-hour time"
 
-#: src/settings/team/index.tsx
-msgid "Use 3–63 lowercase letters, numbers, or hyphens."
-msgstr "Use 3–63 lowercase letters, numbers, or hyphens."
-
 #: src/automations/starters.tsx
 msgid "Use a stable filename in the configured export directory."
 msgstr "Use a stable filename in the configured export directory."
-
-#: src/settings/team/email-auto-join.tsx
-msgid "Use a verified work email to enable automatic joining. Personal email providers such as Gmail are excluded."
-msgstr "Use a verified work email to enable automatic joining. Personal email providers such as Gmail are excluded."
 
 #: src/settings/general/e2ee-setup.tsx
 msgid "Use an existing key"
@@ -6581,10 +6231,6 @@ msgstr "Use the meeting's action items and summary tasks."
 msgid "Use the other version"
 msgstr "Use the other version"
 
-#: src/settings/team/index.tsx
-msgid "Use this domain for links shared from this workspace."
-msgstr "Use this domain for links shared from this workspace."
-
 #: src/lock/screen.tsx
 msgid "Use Touch ID or enter your password to view."
 msgstr "Use Touch ID or enter your password to view."
@@ -6601,10 +6247,6 @@ msgstr "Use your microphone to capture your voice"
 msgid "Used for transcription and automatic summary language detection."
 msgstr "Used for transcription and automatic summary language detection."
 
-#: src/settings/team/index.tsx
-msgid "Verify domain"
-msgstr "Verify domain"
-
 #: src/settings/general/storage/legacy-cleanup.tsx
 msgid "Verifying the SQLite migration status"
 msgstr "Verifying the SQLite migration status"
@@ -6615,7 +6257,6 @@ msgid "Version history"
 msgstr "Version history"
 
 #: src/main/windows-title-bar.tsx
-#: src/settings/team/invitation-toast.tsx
 msgid "View"
 msgstr "View"
 
@@ -6740,18 +6381,6 @@ msgstr "Workflow"
 msgid "Workspace"
 msgstr "Workspace"
 
-#: src/settings/team/index.tsx
-msgid "Workspace activity from metadata only. Note content stays unreadable on the server."
-msgstr "Workspace activity from metadata only. Note content stays unreadable on the server."
-
-#: src/settings/team/index.tsx
-msgid "Workspace name"
-msgstr "Workspace name"
-
-#: src/settings/team/index.tsx
-msgid "Workspace subdomain"
-msgstr "Workspace subdomain"
-
 #: src/automations/starters.tsx
 msgid "Write to a folder"
 msgstr "Write to a folder"
@@ -6769,7 +6398,6 @@ msgid "Yesterday"
 msgstr "Yesterday"
 
 #: src/session-sharing/comments.tsx
-#: src/settings/team/index.tsx
 msgid "You"
 msgstr "You"
 
@@ -6785,10 +6413,6 @@ msgstr "You can undo this action for a short time."
 msgid "You can use up to three example summaries."
 msgstr "You can use up to three example summaries."
 
-#: src/settings/team/index.tsx
-msgid "You will become the Primary owner of {workspaceName}, with control over its members, billing, and deletion. The current Primary owner will remain an Owner."
-msgstr "You will become the Primary owner of {workspaceName}, with control over its members, billing, and deletion. The current Primary owner will remain an Owner."
-
 #: src/settings/general/account.tsx
 msgid "You'll need to sign in again to use cloud sync and account features."
 msgstr "You'll need to sign in again to use cloud sync and account features."
@@ -6800,11 +6424,6 @@ msgstr "You're all set"
 #: src/settings/general/billing.tsx
 msgid "You're on the <0>{planLabel}</0> plan"
 msgstr "You're on the <0>{planLabel}</0> plan"
-
-#. placeholder {0}: invitation.workspaceName
-#: src/settings/team/invitation-toast.tsx
-msgid "You've been invited to join {0}"
-msgstr "You've been invited to join {0}"
 
 #: src/billing/trial-started-dialog.tsx
 msgid "Your {days}-day Pro trial starts now. Add a payment method before it ends to keep Pro."

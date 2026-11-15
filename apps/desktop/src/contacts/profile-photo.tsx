@@ -1,29 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 import { Button } from "@anlg/ui/components/ui/button";
 
 import { AvatarUploadButton, ContactImage } from "./contact-avatar";
 import { ContactFacehash } from "./shared";
-
-import { useAuth } from "~/auth";
-
-export function useSharedProfilePhoto(userId: string) {
-  const auth = useAuth();
-  // The account ID identifies the cache; the transport must not serialize credentials into it.
-  // eslint-disable-next-line @tanstack/query/exhaustive-deps
-  return useQuery({
-    queryKey: ["profile-photo", userId],
-    enabled: !!auth.cloudClient && auth.session?.user.id === userId,
-    queryFn: async () => {
-      const { data, error } = await auth.cloudClient!.auth.getUser();
-      if (error) throw error;
-      if (data.user?.id !== userId)
-        throw new Error("Account changed during photo lookup");
-      return data.user;
-    },
-  });
-}
 
 export function ProfilePhoto({
   userId,

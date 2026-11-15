@@ -2087,13 +2087,6 @@ export type WorkspaceE2EeKeyRecipient = {
     userId: string;
 };
 
-export type WorkspaceInvitationEmailRequest = {
-    fromName?: string;
-    inviteToken: string;
-    workspaceId: string;
-    workspaceName: string;
-};
-
 export type ZoomImportMeetingsRequest = {
     connection_id: string;
     known_meeting_ids?: Array<string>;
@@ -5867,46 +5860,6 @@ export type WebexImportMeetingsResponses = {
 };
 
 export type WebexImportMeetingsResponse = WebexImportMeetingsResponses[keyof WebexImportMeetingsResponses];
-
-export type SendWorkspaceInvitationEmailData = {
-    body: WorkspaceInvitationEmailRequest;
-    path: {
-        /**
-         * Workspace invitation ID
-         */
-        invitation_id: string;
-    };
-    query?: never;
-    url: '/workspaces/invitations/{invitation_id}/email';
-};
-
-export type SendWorkspaceInvitationEmailErrors = {
-    /**
-     * Invalid invitation email request
-     */
-    400: unknown;
-    /**
-     * Authentication required
-     */
-    401: unknown;
-    /**
-     * Invitation unavailable
-     */
-    404: unknown;
-    /**
-     * Invitation email service unavailable
-     */
-    502: unknown;
-};
-
-export type SendWorkspaceInvitationEmailResponses = {
-    /**
-     * Invitation email sent
-     */
-    204: void;
-};
-
-export type SendWorkspaceInvitationEmailResponse = SendWorkspaceInvitationEmailResponses[keyof SendWorkspaceInvitationEmailResponses];
 
 export type ZoomImportMeetingsData = {
     body: ZoomImportMeetingsRequest;
