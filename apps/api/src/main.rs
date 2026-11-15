@@ -341,12 +341,11 @@ fn build_analytics_client(env: &Env) -> Arc<anlg_analytics::AnalyticsClient> {
     }
     if cfg!(debug_assertions) {
         tracing::info!("analytics: dev mode, printing events as tracing");
-    } else {
-        let key = env
-            .posthog_api_key
-            .as_ref()
-            .expect("POSTHOG_API_KEY is required in production");
+    } else if let Some(key) = env.posthog_api_key.as_ref() {
         builder = builder.with_posthog(key);
+    } else {
+        // Without PostHog the client logs only event names, so no user data leaves the API.
+        tracing::warn!("analytics: POSTHOG_API_KEY is not set, events are not sent");
     }
     Arc::new(builder.build())
 }
