@@ -543,67 +543,14 @@ async fn drain_status(
 }
 
 async fn drain_after_shutdown_signal(gate: anlg_transcribe_proxy::SessionGate) {
-    let force_timeout = wait_for_shutdown_kind().await;
+    stop_signal().await;
     gate.begin_drain();
-    tracing::info!(
-        active_streams = gate.active(),
-        force_timeout_ms = force_timeout.map(|timeout| timeout.as_millis() as u64),
-        "api_drain_started"
-    );
-
-    let idle = gate.wait_until_idle();
-    tokio::pin!(idle);
-
-    match force_timeout {
-        Some(timeout) => {
-            if tokio::time::timeout(timeout, idle).await.is_err() {
-                tracing::warn!(active_streams = gate.active(), "api_drain_timeout");
-            }
-        }
-        None => {
-            tokio::select! {
-                _ = &mut idle => {}
-                _ = stop_signal() => {
-                    tracing::info!(
-                        active_streams = gate.active(),
-                        "api_drain_force_stop_received"
-                    );
-                    if tokio::time::timeout(TERM_DRAIN_TIMEOUT, idle).await.is_err() {
-                        tracing::warn!(active_streams = gate.active(), "api_drain_timeout");
-                    }
-                }
-            }
-        }
-    }
-}
-
-async fn wait_for_shutdown_kind() -> Option<Duration> {
-    let ctrl_c = async {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("failed to install CTRL+C signal handler");
-    };
-
-    #[cfg(unix)]
+    tracing::info!(active_streams = gate.active(), "api_drain_started");
+    if tokio::time::timeout(TERM_DRAIN_TIMEOUT, gate.wait_until_idle())
+        .await
+        .is_err()
     {
-        let mut terminate =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-                .expect("failed to install SIGTERM signal handler");
-        let mut drain =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::user_defined1())
-                .expect("failed to install SIGUSR1 signal handler");
-
-        tokio::select! {
-            _ = ctrl_c => Some(TERM_DRAIN_TIMEOUT),
-            _ = terminate.recv() => Some(TERM_DRAIN_TIMEOUT),
-            _ = drain.recv() => None,
-        }
-    }
-
-    #[cfg(not(unix))]
-    {
-        ctrl_c.await;
-        Some(TERM_DRAIN_TIMEOUT)
+        tracing::warn!(active_streams = gate.active(), "api_drain_timeout");
     }
 }
 

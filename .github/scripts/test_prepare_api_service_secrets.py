@@ -14,13 +14,14 @@ class ServiceSecretsTests(unittest.TestCase):
                 "SUPABASE_SERVICE_ROLE_KEY",
                 "STRIPE_SECRET_KEY",
                 "OTA_S3_SECRET_ACCESS_KEY",
+                "SQLITECLOUD_TOKEN_ISSUER_API_KEY",
             ]
         ]
 
     def test_services_receive_direct_database_storage_and_shots_credentials_only(self):
         for role, excluded in [("ai", CORE | SYNC), ("sync", AI | CORE), ("core", AI)]:
             with self.subTest(role=role):
-                result = select(role, self.api, [])
+                result = select(role, self.api)
                 self.assertFalse(result.keys() & excluded)
                 self.assertTrue(SHOTS <= result.keys())
                 if role == "core":
@@ -30,26 +31,27 @@ class ServiceSecretsTests(unittest.TestCase):
                 self.assertNotIn("SUPABASE_SERVICE_ROLE_KEY", result)
                 self.assertNotIn("STRIPE_SECRET_KEY", result)
                 self.assertNotIn("OTA_S3_SECRET_ACCESS_KEY", result)
+                self.assertNotIn("SQLITECLOUD_TOKEN_ISSUER_API_KEY", result)
 
     def test_missing_or_conflicting_configuration_fails_without_secret_values(self):
         with self.assertRaisesRegex(ValueError, "Missing"):
-            select("core", [], [])
+            select("core", [])
         with self.assertRaisesRegex(ValueError, "Conflicting secret: DATABASE_URL"):
-            select("core", self.api, [{"key": "DATABASE_URL", "value": "different"}])
-        for role in ["billing", "misspelled"]:
+            select("core", self.api + [{"key": "DATABASE_URL", "value": "different"}])
+        for role in ["billing", "misspelled", "legacy"]:
             with self.assertRaisesRegex(ValueError, "Unknown"):
-                select(role, self.api, [])
+                select(role, self.api)
 
     def test_ai_callbacks_use_the_configured_public_origin(self):
         # The gateway forwards provider callbacks on the public origin to ai.
-        self.assertEqual(select("ai", self.api, [])["API_BASE_URL"], "test-value")
-        self.assertEqual(select("all", self.api, [])["API_BASE_URL"], "test-value")
+        self.assertEqual(select("ai", self.api)["API_BASE_URL"], "test-value")
+        self.assertEqual(select("all", self.api)["API_BASE_URL"], "test-value")
 
     def test_core_and_gateway_start_without_nango(self):
         without_nango = [s for s in self.api if not s["key"].startswith("NANGO_")]
         for role in ["core", "gateway"]:
             with self.subTest(role=role):
-                self.assertNotIn("NANGO_API_KEY", select(role, without_nango, []))
+                self.assertNotIn("NANGO_API_KEY", select(role, without_nango))
 
     def test_authority_and_public_mcp_configuration_is_required(self):
         for key in [
@@ -59,7 +61,7 @@ class ServiceSecretsTests(unittest.TestCase):
             "R2_BUCKET",
         ]:
             with self.subTest(key=key), self.assertRaisesRegex(ValueError, key):
-                select("sync", [s for s in self.api if s["key"] != key], [])
+                select("sync", [s for s in self.api if s["key"] != key])
 
 
 if __name__ == "__main__":

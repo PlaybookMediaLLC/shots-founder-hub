@@ -68,7 +68,7 @@ def render(tag, secrets):
                 # One instance owns attachment-backup cleanup.
                 "ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED": str(role == "core").lower(),
             },
-            select(role, secrets, []),
+            select(role, secrets),
         )
         item["internal_ports"] = [PORT]
         services.append(item)
@@ -86,7 +86,7 @@ def render(tag, secrets):
                 for role in ROLES
             },
         },
-        select("gateway", secrets, []),
+        select("gateway", secrets),
     )
     gateway["http_port"] = PORT
     services.insert(0, gateway)
