@@ -47,7 +47,7 @@ const MAX_RECAP_EMAIL_REQUEST_BYTES: usize = 128 * 1024;
 const MAX_ACCESS_LIST_RESPONSE_BYTES: usize = 1024 * 1024;
 const SHARED_ATTACHMENT_BUCKET: &str = "shared-note-attachments";
 const ATTACHMENT_DOWNLOAD_TTL_SECONDS: i64 = 60;
-const FLY_CLIENT_IP_HEADER: &str = "fly-client-ip";
+const CLIENT_IP_HEADER: &str = "do-connecting-ip";
 const HANDOFF_SOURCE_DOMAIN: &[u8] = b"anarlog:shared-note-handoff-source:v1\0";
 const INVITATION_TRANSACTIONAL_ID: &str = "cmrvkrh3c0k0t0jvh80zpkk93";
 
@@ -102,7 +102,7 @@ impl SharedNotesState {
 
     fn handoff_source_hash(&self, headers: &HeaderMap) -> String {
         let source = headers
-            .get(FLY_CLIENT_IP_HEADER)
+            .get(CLIENT_IP_HEADER)
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.parse::<IpAddr>().ok())
             .map(|address| address.to_string())

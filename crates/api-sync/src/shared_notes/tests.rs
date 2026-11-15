@@ -10,7 +10,7 @@ fn test_source_hash(client_ip: Option<&str>) -> String {
     );
     let mut headers = HeaderMap::new();
     if let Some(client_ip) = client_ip {
-        headers.insert(FLY_CLIENT_IP_HEADER, client_ip.parse().unwrap());
+        headers.insert(CLIENT_IP_HEADER, client_ip.parse().unwrap());
     }
     state.handoff_source_hash(&headers)
 }

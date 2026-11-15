@@ -793,11 +793,8 @@ mod tests {
 
     #[tokio::test]
     async fn mcp_supports_stateless_tool_discovery_on_every_public_host() {
-        for host in [
-            "api.anarlog.so",
-            "anarlog-gateway.fly.dev",
-            "anarlog-sync.fly.dev",
-        ] {
+        // `sync:3001` is the Host the App Platform gateway sends upstream.
+        for host in ["api.anarlog.so", "sync:3001"] {
             assert_mcp_tool_discovery(host).await;
         }
     }

@@ -42,7 +42,7 @@ pub(super) fn sign(headers: &mut HeaderMap, key: &str) {
         headers.remove(name);
     }
     let Some(ip) = headers
-        .get("fly-client-ip")
+        .get("do-connecting-ip")
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.parse::<IpAddr>().ok())
     else {
@@ -71,10 +71,10 @@ fn verified(headers: &HeaderMap, key: &str, now: u64) -> Option<HeaderValue> {
 }
 
 pub async fn restore(State(key): State<Arc<str>>, mut request: Request, next: Next) -> Response {
-    // A second public Fly Proxy replaces fly-client-ip with the gateway's IP. Only a
-    // recent authenticated assertion may restore the original rate-limit identity.
+    // A role service sees the gateway as its client. Only a recent authenticated
+    // assertion may restore the original rate-limit identity.
     if let Some(ip) = verified(request.headers(), &key, now()) {
-        request.headers_mut().insert("fly-client-ip", ip);
+        request.headers_mut().insert("do-connecting-ip", ip);
     }
     for name in [IP, TIME, SIGNATURE] {
         request.headers_mut().remove(name);
@@ -89,7 +89,7 @@ mod tests {
     #[test]
     fn unsigned_tampered_expired_and_wrong_key_assertions_are_rejected() {
         let mut headers = HeaderMap::new();
-        headers.insert("fly-client-ip", HeaderValue::from_static("192.0.2.1"));
+        headers.insert("do-connecting-ip", HeaderValue::from_static("192.0.2.1"));
         headers.insert(IP, HeaderValue::from_static("192.0.2.99"));
         assert!(verified(&headers, "key", now()).is_none());
         sign(&mut headers, "key");
@@ -100,7 +100,7 @@ mod tests {
         assert!(verified(&headers, "key", signed_at - 61).is_none());
         headers.insert(IP, HeaderValue::from_static("192.0.2.99"));
         assert!(verified(&headers, "key", now()).is_none());
-        headers.remove("fly-client-ip");
+        headers.remove("do-connecting-ip");
         sign(&mut headers, "key");
         assert!(!headers.contains_key(SIGNATURE));
     }

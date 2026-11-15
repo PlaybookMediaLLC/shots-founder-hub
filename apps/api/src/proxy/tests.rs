@@ -234,7 +234,7 @@ async fn fly_second_hop_preserves_distinct_client_rate_limit_identities() {
                             .headers()
                             .contains_key("x-anarlog-client-ip-signature")
                     );
-                    request.headers()["fly-client-ip"]
+                    request.headers()["do-connecting-ip"]
                         .to_str()
                         .unwrap()
                         .to_owned()
@@ -248,7 +248,7 @@ async fn fly_second_hop_preserves_distinct_client_rate_limit_identities() {
                 |mut request: Request, next: Next| async move {
                     request
                         .headers_mut()
-                        .insert("fly-client-ip", HeaderValue::from_static("198.51.100.1"));
+                        .insert("do-connecting-ip", HeaderValue::from_static("198.51.100.1"));
                     next.run(request).await
                 },
             )),
@@ -260,7 +260,7 @@ async fn fly_second_hop_preserves_distinct_client_rate_limit_identities() {
     for ip in ["192.0.2.1", "192.0.2.2", "2001:db8::1"] {
         let response = client
             .get(format!("{base}/identity"))
-            .header("fly-client-ip", ip)
+            .header("do-connecting-ip", ip)
             .header("x-anarlog-client-ip", "192.0.2.99")
             .header("x-anarlog-client-ip-signature", "spoofed")
             .send()
