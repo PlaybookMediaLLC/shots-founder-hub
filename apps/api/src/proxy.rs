@@ -118,12 +118,7 @@ async fn forward(State(proxy): State<Arc<Proxy>>, mut request: Request, _next: N
     let permit = match proxy.gate.try_acquire() {
         Ok(permit) => Some(permit),
         Err(_) if websocket => {
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                [("fly-replay", "elsewhere=true")],
-                "Server is draining",
-            )
-                .into_response();
+            return (StatusCode::SERVICE_UNAVAILABLE, "Server is draining").into_response();
         }
         // Axum waits for accepted HTTP responses during graceful shutdown. Residual
         // requests may still arrive after cordoning; complete them without replaying writes.
@@ -143,14 +138,6 @@ async fn forward(State(proxy): State<Arc<Proxy>>, mut request: Request, _next: N
     let host = headers.get(header::HOST).cloned();
     strip_hop_headers(&mut headers);
     headers.remove(header::HOST);
-    // Instance selection belongs to this Fly app, not the destination service.
-    for name in [
-        "fly-force-instance-id",
-        "fly-prefer-instance-id",
-        "fly-force-region",
-    ] {
-        headers.remove(name);
-    }
     client_ip::sign(&mut headers, &proxy.signing_key);
     headers.insert("x-anarlog-proxy-hop", HeaderValue::from_static("1"));
     if let Some(host) = host {
