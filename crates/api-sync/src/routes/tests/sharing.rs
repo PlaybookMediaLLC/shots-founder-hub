@@ -210,6 +210,23 @@ async fn stored(state: &AppState, share: &str) -> Value {
 }
 
 #[tokio::test]
+async fn live_tickets_are_refused_to_users_without_access() {
+    let (state, _owner, share, _authority) = live_fixture().await;
+    let outsider = live_router(state.clone(), account(&state.config.database).await);
+    let (status, body) = request(
+        &outsider,
+        "POST",
+        &format!("/shares/{share}/live/ticket"),
+        Value::Null,
+        None,
+    )
+    .await;
+    // 404, not 403: an outsider does not learn that the share exists.
+    assert_eq!(status, StatusCode::NOT_FOUND, "{body}");
+    assert_eq!(body["error"]["code"], "shared_note_not_found");
+}
+
+#[tokio::test]
 async fn live_edits_survive_restart_and_relay_between_instances() {
     let (state, auth, share, _authority) = live_fixture().await;
     let app = live_router(state.clone(), auth.clone());

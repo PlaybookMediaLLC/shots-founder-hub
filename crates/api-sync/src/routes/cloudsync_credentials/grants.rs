@@ -77,6 +77,15 @@ struct SetWorkspaceE2eeKeyRow {
     granted_member_count: i64,
 }
 
+fn workspace_key_error(error: anlg_cloud_db::Error) -> SyncError {
+    match error {
+        anlg_cloud_db::Error::Database { code, .. } if code == "42501" => {
+            SyncError::WorkspaceKeyForbidden
+        }
+        _ => SyncError::Upstream,
+    }
+}
+
 pub(super) async fn fetch_workspace_key_recipients(
     state: &ReplicaState,
     auth: &anlg_api_auth::AuthContext,
@@ -92,7 +101,7 @@ pub(super) async fn fetch_workspace_key_recipients(
             },
         )
         .await
-        .map_err(|_| SyncError::Upstream)?;
+        .map_err(workspace_key_error)?;
     validate_workspace_key_recipients(recipients)
 }
 
@@ -115,7 +124,7 @@ pub(super) async fn publish_workspace_e2ee_key(
             },
         )
         .await
-        .map_err(|_| SyncError::Upstream)?;
+        .map_err(workspace_key_error)?;
     if rows.len() != 1
         || rows[0].key_id != request.key_id
         || !(1..=MAX_WORKSPACE_KEY_RECIPIENTS as i64).contains(&rows[0].granted_member_count)
