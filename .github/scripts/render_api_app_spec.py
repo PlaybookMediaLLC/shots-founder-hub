@@ -48,6 +48,9 @@ def service(name, tag, size, plain, secrets):
             "period_seconds": 15,
             "failure_threshold": 6,
         },
+        # The API drains live streams for up to 270 s after SIGTERM
+        # (TERM_DRAIN_TIMEOUT in apps/api/src/main.rs). Give it that time.
+        "termination": {"grace_period_seconds": 300},
         "envs": envs,
     }
 

@@ -3,8 +3,10 @@
 # applies database migrations first. Secrets come from Infisical
 # (Desktop App Backend, prod, /founder-hub) through GitHub OIDC.
 # A deploy starts only after api_ci passes on main, for the commit it tested.
+# The image job accepts only push runs from this repository. A fork pull
+# request can also run api_ci from a branch named main.
 on:
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers] the image job guard limits it to pushes to main here
     workflows: [.github/workflows/api_ci.yaml]
     types: [completed]
     branches: [main]
@@ -25,7 +27,12 @@ env:
 
 jobs:
   image:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' || (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -69,39 +76,37 @@ jobs:
           ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
       - uses: ./.github/actions/infisical_install
-      - name: Load secrets and render the app spec
+      # doctl reads the token from DIGITALOCEAN_ACCESS_TOKEN in the deploy step,
+      # so the token stays in that one step.
+      - uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          no_auth: true
+          version: 1.180.0
+      - name: Deploy
         env:
           INFISICAL_IDENTITY_ID: ${{ vars.INFISICAL_IDENTITY_ID }}
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
         run: |
           set -euo pipefail
           umask 077
+          secrets="$RUNNER_TEMP/secrets.json"
+          spec="$RUNNER_TEMP/spec.json"
+          trap 'rm -f "$secrets" "$spec"' EXIT
           test -n "$INFISICAL_IDENTITY_ID" && test -n "$INFISICAL_PROJECT_ID"
           jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}" | jq -r '.value')
           token=$(infisical login --method=oidc-auth --machine-identity-id="$INFISICAL_IDENTITY_ID" \
             --jwt="$jwt" --silent --plain)
           echo "::add-mask::$token"
-          secrets="$RUNNER_TEMP/secrets.json"
           infisical export --token="$token" --projectId="$INFISICAL_PROJECT_ID" --env=prod \
             --path=/founder-hub --format=json --output-file="$secrets"
-          do_token=$(infisical secrets get DIGITALOCEAN_ACCESS_TOKEN --token="$token" \
+          DIGITALOCEAN_ACCESS_TOKEN=$(infisical secrets get DIGITALOCEAN_ACCESS_TOKEN --token="$token" \
             --projectId="$INFISICAL_PROJECT_ID" --env=prod --path=/founder-hub/deploy --plain --silent)
-          echo "::add-mask::$do_token"
-          echo "DIGITALOCEAN_ACCESS_TOKEN=$do_token" >> "$GITHUB_ENV"
-          cd .github/scripts
-          python3 render_api_app_spec.py --secrets "$secrets" --tag "$DEPLOY_SHA" \
-            --output "$RUNNER_TEMP/spec.json"
+          echo "::add-mask::$DIGITALOCEAN_ACCESS_TOKEN"
+          export DIGITALOCEAN_ACCESS_TOKEN
+          (cd .github/scripts && python3 render_api_app_spec.py --secrets "$secrets" \
+            --tag "$DEPLOY_SHA" --output "$spec")
           rm -f "$secrets"
-      - uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
-        with:
-          token: ${{ env.DIGITALOCEAN_ACCESS_TOKEN }}
-          version: 1.180.0
-      - name: Deploy
-        run: |
-          set -euo pipefail
-          spec="$RUNNER_TEMP/spec.json"
-          trap 'rm -f "$spec"' EXIT
           app_id=$(doctl apps list -o json | jq -r --arg name "$APP_NAME" '.[] | select(.spec.name == $name) | .id')
           if test -z "$app_id"; then
             doctl apps create --spec "$spec" --wait -o json > /dev/null

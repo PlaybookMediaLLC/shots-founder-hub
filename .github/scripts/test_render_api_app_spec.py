@@ -81,6 +81,13 @@ class AppSpecTests(unittest.TestCase):
                     self.envs(name)["DATABASE_URL"]["value"], "migrator-url"
                 )
 
+    def test_shutdown_waits_longer_than_the_stream_drain(self):
+        for name in self.services:
+            with self.subTest(service=name):
+                grace = self.services[name]["termination"]["grace_period_seconds"]
+                self.assertGreater(grace, 270)
+                self.assertLessEqual(grace, 600)
+
     def test_missing_transcription_provider_stops_the_render(self):
         secrets = [s for s in self.secrets if s["key"] != "DEEPGRAM_API_KEY"]
         with self.assertRaisesRegex(ValueError, "transcription provider"):
