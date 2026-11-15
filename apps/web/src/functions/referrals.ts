@@ -101,6 +101,18 @@ export const claimPendingReferral = createServerOnlyFn(
   },
 );
 
+// Retries a claim that failed at sign-in. Without a referral cookie it does
+// not read the session, so a normal page load never refreshes tokens.
+export const retryPendingReferral = createServerOnlyFn(
+  async (client: CloudClient, userId: string) => {
+    if (!getCookie(REFERRAL_COOKIE)) return;
+    const { data } = await client.auth.getSession();
+    if (data.session) {
+      await claimPendingReferral(data.session.access_token, userId);
+    }
+  },
+);
+
 export const getProTrialDays = createServerOnlyFn(
   async (cloudClient: CloudClient) => {
     const { data, error } = await cloudClient.rpc("get_pro_trial_offer");

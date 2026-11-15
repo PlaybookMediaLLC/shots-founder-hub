@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { getCloudServerClient } from "@/functions/cloud-client";
+import { retryPendingReferral } from "@/functions/referrals";
+import { captureOperationalError } from "@/lib/error-reporting";
 import { clearServerAnalyticsIdentity } from "@/lib/server-analytics";
 
 export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
@@ -10,6 +12,11 @@ export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
   if (!data.user?.email) {
     return null;
   }
+
+  await retryPendingReferral(cloudClient, data.user.id).catch(
+    (error: unknown) =>
+      captureOperationalError(error, { operation: "referral_claim_retry" }),
+  );
 
   return {
     id: data.user.id,
