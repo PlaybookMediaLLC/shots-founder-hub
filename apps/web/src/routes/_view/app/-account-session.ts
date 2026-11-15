@@ -1,21 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { jwtDecode } from "jwt-decode";
 
-import { deriveBillingInfo, type SupabaseJwtPayload } from "@anlg/supabase";
+import { deriveBillingInfo } from "@anlg/cloud-client";
 
-import { getSupabaseBrowserClient } from "@/functions/supabase";
+import { getCloudBrowserClient } from "@/functions/cloud-client";
 
 export const accountSessionQueryKey = ["account-session"];
 
 export function useAccountSession() {
   return useQuery({
     queryKey: accountSessionQueryKey,
-    // Skip the SSR fetch: the browser-only Supabase client throws on the
+    // Skip the SSR fetch: the browser-only cloud client throws on the
     // server, and this data is session-scoped anyway.
     enabled: typeof window !== "undefined",
     queryFn: async () => {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase.auth.getSession();
+      const cloudClient = getCloudBrowserClient();
+      const { data } = await cloudClient.auth.getSession();
       const session = data.session;
       if (!session) {
         return null;
@@ -28,11 +27,11 @@ export function useAccountSession() {
         return typeof value === "string" && value.trim() ? value.trim() : null;
       };
 
+      const claims = await cloudClient.claims(session.access_token);
+      if (claims.error) throw claims.error;
       return {
         userId: session.user.id,
-        billing: deriveBillingInfo(
-          jwtDecode<SupabaseJwtPayload>(session.access_token),
-        ),
+        billing: deriveBillingInfo(claims.data),
         createdAt: session.user.created_at ?? null,
         email: session.user.email ?? null,
         profile: {

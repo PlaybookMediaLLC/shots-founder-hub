@@ -24,7 +24,7 @@ export function useWorkspaceShareScopes(
   const workspaceIds = workspaces.map((workspace) => workspace.id).join(",");
   const { data = DEFAULT_SCOPES } = useQuery({
     queryKey: ["workspace-share-scopes", workspaceIds],
-    enabled: Boolean(auth.session && auth.supabase && workspaces.length > 0),
+    enabled: Boolean(auth.session && auth.cloudClient && workspaces.length > 0),
     retry: false,
     queryFn: async () => {
       const context = requireTeamContext(auth);

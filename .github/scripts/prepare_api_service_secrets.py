@@ -1,13 +1,12 @@
-"""Write only the selected API service's runtime secrets; never print values."""
-
-import argparse
-import json
-from pathlib import Path
+"""Select only the given API service's runtime secrets; never print values."""
 
 SHARED = {
-    "SUPABASE_URL",
-    "SUPABASE_ANON_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
+    "DATABASE_URL",
+    "CLOUD_SIGNING_KEY",
+    "R2_ENDPOINT",
+    "R2_BUCKET",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
     "SENTRY_DSN",
     "POSTHOG_API_KEY",
     "RUST_LOG",
@@ -41,14 +40,8 @@ AI = {
     "AQUAVOICE_API_KEY",
     "COHERE_API_KEY",
 }
-SHOTS = {"SHOTS_AUTH_URL", "SHOTS_AUTH_SERVICE_TOKEN", "SUPABASE_JWT_SECRET"}
-BILLING = {
-    "STRIPE_SECRET_KEY",
-    "STRIPE_MONTHLY_PRICE_ID",
-    "STRIPE_YEARLY_PRICE_ID",
-    "LOOPS_KEY",
-}
-CORE = BILLING | {
+SHOTS = {"SHOTS_AUTH_URL", "SHOTS_AUTH_SERVICE_TOKEN"}
+CORE = {
     "NANGO_API_BASE",
     "NANGO_API_KEY",
     "NANGO_WEBHOOK_SIGNING_KEY",
@@ -66,10 +59,10 @@ SYNC = {
     "SQLITECLOUD_PROJECT_URL",
     "SQLITECLOUD_TOKEN_ISSUER_API_KEY",
 }
-ROLES = {"ai": AI, "sync": SYNC, "core": CORE | SYNC, "billing": BILLING}
+ROLES = {"ai": AI, "sync": SYNC, "core": CORE | SYNC}
 
 
-def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
+def select(service, api_secrets, cloudsync_secrets):
     if service not in {*ROLES, "all", "gateway", "legacy"}:
         raise ValueError("Unknown API service")
     allowed = SHARED | SHOTS | ROLES.get(service, AI | CORE | SYNC)
@@ -84,16 +77,16 @@ def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
             if key in values and values[key] != value:
                 raise ValueError(f"Conflicting secret: {key}")
             values[key] = value
-    required = {"SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"}
-    shots = bool(values.get("SHOTS_AUTH_URL"))
-    if shots:
-        if service == "billing":
-            raise ValueError(
-                "Shots owns billing; do not deploy the legacy billing service"
-            )
-        required |= SHOTS
-        if service in {"sync", "all", "gateway", "legacy"}:
-            required.add("FOUNDER_HUB_MCP_URL")
+    required = {
+        "DATABASE_URL",
+        "CLOUD_SIGNING_KEY",
+        "R2_ENDPOINT",
+        "R2_BUCKET",
+        "R2_ACCESS_KEY_ID",
+        "R2_SECRET_ACCESS_KEY",
+    } | SHOTS
+    if service in {"sync", "all", "gateway", "legacy"}:
+        required.add("FOUNDER_HUB_MCP_URL")
     if service in {"ai", "all", "gateway", "legacy"}:
         required |= {"OPENROUTER_API_KEY", "API_BASE_URL", "CALLBACK_SECRET"}
         if not any(
@@ -110,62 +103,9 @@ def select(service, api_secrets, cloudsync_secrets, webhook_secrets=()):
             }
         ):
             raise ValueError("At least one transcription provider is required")
-    if not shots and service in {"billing", "core", "all", "gateway", "legacy"}:
-        required |= BILLING
-    if service in {"core", "all", "gateway", "legacy"}:
-        required |= {"NANGO_API_KEY", "NANGO_WEBHOOK_SIGNING_KEY"}
     if service in {"sync", "core", "all", "gateway", "legacy"}:
-        required |= (
-            {"RESEND_API_KEY", "RESEND_FROM_EMAIL"}
-            if shots
-            else SYNC - {"ANARLOG_CLOUDSYNC_DESKTOP_TRANSPORT"}
-        )
-    if service == "billing":
-        webhook_values = {
-            secret["key"]: secret.get("value", "") for secret in webhook_secrets
-        }
-        for key in {"DATABASE_URL", "STRIPE_WEBHOOK_SECRET"}:
-            values[key] = webhook_values.get(key, "")
-            required.add(key)
-        values["LOOPS_API_KEY"] = values.get("LOOPS_KEY", "")
-        if webhook_values.get("SENTRY_DSN"):
-            values["BILLING_SENTRY_DSN"] = webhook_values["SENTRY_DSN"]
-        for key in ("SLACK_ALERT_ANARLOG_WEBHOOK_URL", "SLACK_ALERT_CHAR_WEBHOOK_URL"):
-            if webhook_values.get(key):
-                values[key] = webhook_values[key]
+        required |= {"RESEND_API_KEY", "RESEND_FROM_EMAIL"}
     missing = sorted(key for key in required if not values.get(key))
     if missing:
         raise ValueError("Missing required service secrets: " + ", ".join(missing))
-    if service == "ai":
-        values["API_BASE_URL"] = "https://anarlog-inference.fly.dev"
     return values
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--service", required=True)
-    parser.add_argument("--api", required=True)
-    parser.add_argument("--cloudsync", required=True)
-    parser.add_argument("--output", required=True)
-    parser.add_argument("--webhooks")
-    args = parser.parse_args()
-    values = select(
-        args.service,
-        json.loads(Path(args.api).read_text()),
-        json.loads(Path(args.cloudsync).read_text()),
-        json.loads(Path(args.webhooks).read_text()) if args.webhooks else [],
-    )
-    path = Path(args.output)
-    path.touch(mode=0o600)
-    path.chmod(0o600)
-    with path.open("w") as output:
-        for key, value in sorted(values.items()):
-            escaped = (
-                value.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n")
-            )
-            output.write(f"{key}={escaped}\n")
-    print(f"Prepared {len(values)} runtime secrets for {args.service}")
-
-
-if __name__ == "__main__":
-    main()

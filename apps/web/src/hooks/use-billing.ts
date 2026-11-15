@@ -1,24 +1,17 @@
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { jwtDecode } from "jwt-decode";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
-import {
-  type BillingInfo,
-  deriveBillingInfo,
-  type SupabaseJwtPayload,
-} from "@anlg/supabase";
+import { type BillingInfo, deriveBillingInfo } from "@anlg/cloud-client";
 
-import { getSupabaseBrowserClient } from "@/functions/supabase";
+import { getCloudBrowserClient } from "@/functions/cloud-client";
 import { useMountEffect } from "@/hooks/useMountEffect";
 
 const DEFAULT_BILLING = deriveBillingInfo(null);
 
-function deriveBillingFromAccessToken(accessToken: string) {
-  return deriveBillingInfo(jwtDecode<SupabaseJwtPayload>(accessToken));
+async function deriveBillingFromAccessToken(accessToken: string) {
+  const { data, error } = await getCloudBrowserClient().claims(accessToken);
+  if (error) throw error;
+  return deriveBillingInfo(data);
 }
 
 export function useBilling() {
@@ -28,15 +21,15 @@ export function useBilling() {
   );
 
   useMountEffect(() => {
-    const supabase = getSupabaseBrowserClient();
+    const cloudClient = getCloudBrowserClient();
 
-    void supabase.auth.getSession().then(({ data }) => {
+    void cloudClient.auth.getSession().then(({ data }) => {
       setAccessToken(data.session?.access_token ?? null);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = cloudClient.auth.onAuthStateChange((_event, session) => {
       setAccessToken(session?.access_token ?? null);
     });
 
@@ -55,19 +48,17 @@ export function useBilling() {
       return deriveBillingFromAccessToken(accessToken);
     },
     enabled: accessToken !== undefined,
-    // Keep isReady stable across token refreshes so consumers gating on it
-    // (e.g. the integration connect flow) do not unmount mid-flow.
-    placeholderData: keepPreviousData,
     retry: false,
   });
 
   const billing: BillingInfo = jwtQuery.data ?? DEFAULT_BILLING;
-  const isReady = accessToken !== undefined && !jwtQuery.isPending;
+  const isReady =
+    accessToken !== undefined && !jwtQuery.isPending && !jwtQuery.isError;
   const isVerified = isReady;
 
   const refreshBilling = useCallback(async () => {
-    const supabase = getSupabaseBrowserClient();
-    const { data, error } = await supabase.auth.refreshSession();
+    const cloudClient = getCloudBrowserClient();
+    const { data, error } = await cloudClient.auth.refreshSession();
 
     if (error) {
       throw error;
@@ -79,7 +70,8 @@ export function useBilling() {
       throw new Error("Billing refresh returned no authenticated session");
     }
 
-    const refreshedBilling = deriveBillingFromAccessToken(refreshedAccessToken);
+    const refreshedBilling =
+      await deriveBillingFromAccessToken(refreshedAccessToken);
     setAccessToken(refreshedAccessToken);
     await queryClient.invalidateQueries({ queryKey: ["billing", "jwt"] });
 

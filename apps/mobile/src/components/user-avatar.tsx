@@ -1,12 +1,12 @@
-import type { User } from "@supabase/supabase-js";
 import { Image } from "expo-image";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import type { User } from "@anlg/cloud-client";
 import {
   getProviderProfileImageUrl,
   getProviderProfileName,
-} from "@anlg/supabase/profile";
+} from "@anlg/cloud-client/profile";
 
 import { NativeIcon } from "@/components/ui/native-icon";
 import {

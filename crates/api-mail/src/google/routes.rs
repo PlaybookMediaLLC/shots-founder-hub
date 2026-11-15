@@ -109,12 +109,7 @@ pub async fn list_labels(
     Json(req): Json<GoogleListLabelsRequest>,
 ) -> Result<Json<ListLabelsResponse>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -145,12 +140,7 @@ pub async fn list_messages(
     Json(req): Json<GoogleListMessagesRequest>,
 ) -> Result<Json<ListMessagesResponse>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -189,12 +179,7 @@ pub async fn get_message(
     Json(req): Json<GoogleGetMessageRequest>,
 ) -> Result<Json<Message>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -243,12 +228,7 @@ pub async fn get_attachment(
     Json(req): Json<GoogleGetAttachmentRequest>,
 ) -> Result<Json<Attachment>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -279,12 +259,7 @@ pub async fn get_profile(
     Json(req): Json<GoogleGetProfileRequest>,
 ) -> Result<Json<Profile>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -315,12 +290,7 @@ pub async fn list_threads(
     Json(req): Json<GoogleListThreadsRequest>,
 ) -> Result<Json<ListThreadsResponse>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -359,12 +329,7 @@ pub async fn get_thread(
     Json(req): Json<GoogleGetThreadRequest>,
 ) -> Result<Json<Thread>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);
@@ -413,12 +378,7 @@ pub async fn list_history(
     Json(req): Json<GoogleListHistoryRequest>,
 ) -> Result<Json<ListHistoryResponse>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleMail::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleMail::ID, &req.connection_id)
         .await?;
 
     let client = GoogleMailClient::new(http);

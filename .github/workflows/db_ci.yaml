@@ -1,27 +1,44 @@
-# https://supabase.com/docs/guides/deployment/ci/testing
-
 on:
   push:
-    branches:
-      - main
-    paths:
-      - supabase/**
+    branches: [main]
+    paths: [postgres/**, crates/cloud-db/**, .github/workflows/db_ci.yaml]
   pull_request:
-    paths:
-      - supabase/**
-
+    paths: [postgres/**, crates/cloud-db/**, .github/workflows/db_ci.yaml]
+permissions:
+  contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-bookworm
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: founder_hub_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:test-only@localhost:5432/founder_hub_test
+      CLOUD_DATABASE_TEST_URL: postgres://postgres:test-only@localhost:5432/founder_hub_test
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          version: latest
-      - run: supabase db start
-      - run: supabase test db
+          persist-credentials: false
+      - uses: $/.github/actions/rust_install
+        with:
+          platform: linux
+      - run: cargo test --locked -p cloud-db --test postgres
+      - env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec "$POSTGRES_CONTAINER" apt-get update
+          docker exec "$POSTGRES_CONTAINER" apt-get install -y postgresql-16-pgtap libtap-parser-sourcehandler-pgtap-perl
+          docker cp postgres/tests/. "$POSTGRES_CONTAINER:/tmp/founder-hub-tests"
+          docker exec "$POSTGRES_CONTAINER" psql -U postgres -d founder_hub_test -v ON_ERROR_STOP=1 -f /tmp/founder-hub-tests/setup.sql
+          docker exec -e PGOPTIONS=--search_path=founder_hub,extensions,public "$POSTGRES_CONTAINER" sh -c 'pg_prove -U postgres -d founder_hub_test /tmp/founder-hub-tests/[0-9]*.sql'

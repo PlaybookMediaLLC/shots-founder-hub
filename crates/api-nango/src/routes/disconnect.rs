@@ -35,9 +35,9 @@ pub async fn delete_connection(
     Json(body): Json<DeleteConnectionRequest>,
 ) -> Result<Json<DeleteConnectionResponse>> {
     let owns = state
-        .supabase
+        .store
         .verify_connection_ownership(
-            &auth.token,
+            &auth,
             &auth.claims.sub,
             &body.connection_id,
             &body.integration_id,
@@ -64,7 +64,7 @@ pub async fn delete_connection(
     }
 
     state
-        .supabase
+        .store
         .delete_connection_by_connection(&body.integration_id, &body.connection_id)
         .await?;
 

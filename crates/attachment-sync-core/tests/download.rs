@@ -1,6 +1,6 @@
 use anlg_e2ee::{AttachmentBlobContext, AttachmentBlobPlaintextMetadata};
 use attachment_sync_core::{
-    DownloadObject, hex_digest, persist_staged_attachment, require_configured_supabase_url,
+    DownloadObject, hex_digest, persist_staged_attachment, require_configured_r2_url,
     seal_attachment_to_cache, stage_attachment_restore, validate_signed_download_url,
 };
 use sha2::{Digest, Sha256};
@@ -11,12 +11,12 @@ fn signed_urls_are_origin_and_path_bound() {
     let object_key =
         "00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002.anb1";
     let valid = format!(
-        "https://project.supabase.co/storage/v1/object/sign/attachment-backups/{object_key}?token=secret"
+        "https://account.r2.cloudflarestorage.com/founder-hub/attachment-backups/{object_key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&X-Amz-Expires=300&X-Amz-Credential=test&X-Amz-Date=20261114T000000Z"
     );
     assert!(
         validate_signed_download_url(
             &valid,
-            "https://project.supabase.co",
+            "https://account.r2.cloudflarestorage.com/founder-hub",
             DownloadObject::Private(object_key),
         )
         .is_ok()
@@ -24,15 +24,15 @@ fn signed_urls_are_origin_and_path_bound() {
     assert!(
         validate_signed_download_url(
             &valid,
-            "https://other.supabase.co",
+            "https://other.r2.cloudflarestorage.com/founder-hub",
             DownloadObject::Private(object_key),
         )
         .is_err()
     );
     assert!(
         validate_signed_download_url(
-            "http://project.supabase.co/storage/v1/object/sign/bucket/item?token=secret",
-            "http://project.supabase.co",
+            "http://account.r2.cloudflarestorage.com/founder-hub/bucket/item?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&X-Amz-Expires=300&X-Amz-Credential=test&X-Amz-Date=20261114T000000Z",
+            "http://account.r2.cloudflarestorage.com/founder-hub",
             DownloadObject::Private(object_key),
         )
         .is_err()
@@ -40,9 +40,9 @@ fn signed_urls_are_origin_and_path_bound() {
     assert!(
         validate_signed_download_url(
             &format!(
-                "http://127.0.0.1:54321/storage/v1/object/sign/attachment-backups/{object_key}?token=secret"
+                "http://127.0.0.1:54321/founder-hub/attachment-backups/{object_key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&X-Amz-Expires=300&X-Amz-Credential=test&X-Amz-Date=20261114T000000Z"
             ),
-            "http://127.0.0.1:54321",
+            "http://127.0.0.1:54321/founder-hub",
             DownloadObject::Private(object_key),
         )
         .is_ok()
@@ -50,12 +50,12 @@ fn signed_urls_are_origin_and_path_bound() {
 
     let attachment_id = "00000000-0000-4000-8000-000000000003";
     let shared = format!(
-        "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/{attachment_id}.sna1?token=secret"
+        "https://account.r2.cloudflarestorage.com/founder-hub/shared-note-attachments/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002/{attachment_id}.sna1?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-SignedHeaders=host&X-Amz-Signature=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&X-Amz-Expires=300&X-Amz-Credential=test&X-Amz-Date=20261114T000000Z"
     );
     assert!(
         validate_signed_download_url(
             &shared,
-            "https://project.supabase.co",
+            "https://account.r2.cloudflarestorage.com/founder-hub",
             DownloadObject::Shared(attachment_id),
         )
         .is_ok()
@@ -63,7 +63,7 @@ fn signed_urls_are_origin_and_path_bound() {
     assert!(
         validate_signed_download_url(
             &shared.replace("shared-note-attachments", "other-bucket"),
-            "https://project.supabase.co",
+            "https://account.r2.cloudflarestorage.com/founder-hub",
             DownloadObject::Shared(attachment_id),
         )
         .is_err()
@@ -71,7 +71,7 @@ fn signed_urls_are_origin_and_path_bound() {
     assert!(
         validate_signed_download_url(
             &shared.replace(attachment_id, "00000000-0000-4000-8000-000000000004"),
-            "https://project.supabase.co",
+            "https://account.r2.cloudflarestorage.com/founder-hub",
             DownloadObject::Shared(attachment_id),
         )
         .is_err()
@@ -80,12 +80,13 @@ fn signed_urls_are_origin_and_path_bound() {
 
 #[test]
 fn missing_or_empty_configured_origins_fail_closed() {
-    assert!(require_configured_supabase_url(None).is_err());
-    assert!(require_configured_supabase_url(Some("")).is_err());
-    assert!(require_configured_supabase_url(Some("   ")).is_err());
+    assert!(require_configured_r2_url(None).is_err());
+    assert!(require_configured_r2_url(Some("")).is_err());
+    assert!(require_configured_r2_url(Some("   ")).is_err());
     assert_eq!(
-        require_configured_supabase_url(Some("https://project.supabase.co")).unwrap(),
-        "https://project.supabase.co"
+        require_configured_r2_url(Some("https://account.r2.cloudflarestorage.com/founder-hub"))
+            .unwrap(),
+        "https://account.r2.cloudflarestorage.com/founder-hub"
     );
 }
 

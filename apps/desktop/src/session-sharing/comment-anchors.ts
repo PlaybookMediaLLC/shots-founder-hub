@@ -56,7 +56,7 @@ export function applySessionShareCommentAnchors(
 /**
  * Display-only comment highlights for the owner's live session editors.
  * Enabled only when the session has a managed share and an authenticated
- * Supabase session; loads the first comment page (v1: no pagination).
+ * cloud session; loads the first comment page (v1: no pagination).
  */
 export function useSessionCommentAnchors(sessionId: string) {
   const auth = useAuth();
@@ -65,7 +65,7 @@ export function useSessionCommentAnchors(sessionId: string) {
     auth.session && auth.session.user.is_anonymous !== true
       ? auth.session
       : null;
-  const supabase = auth.supabase;
+  const cloudClient = auth.cloudClient;
   const userId = session?.user.id ?? null;
 
   const shareQuery = useQuery({
@@ -78,15 +78,15 @@ export function useSessionCommentAnchors(sessionId: string) {
   const commentsQuery = useQuery({
     queryKey: sessionShareCommentsQueryKey(shareId ?? ""),
     queryFn: ({ signal }) => {
-      if (!supabase || !session || !shareId) {
+      if (!cloudClient || !session || !shareId) {
         throw new ShareManagementError();
       }
       return listSessionShareComments(
-        { supabase, session, signal },
+        { cloudClient, session, signal },
         { shareId },
       );
     },
-    enabled: shareId !== null && session !== null && supabase !== null,
+    enabled: shareId !== null && session !== null && cloudClient !== null,
   });
   const comments = commentsQuery.data?.comments;
 

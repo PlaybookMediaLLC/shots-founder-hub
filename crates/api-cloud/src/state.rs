@@ -1,5 +1,4 @@
 use anlg_agent_access::MeetingExport;
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{
@@ -7,34 +6,17 @@ use crate::{
     routes::{ApiKeyInfo, CloudApiSettings, SnapshotReceipt},
 };
 
-const MAX_RPC_RESPONSE_BYTES: usize = 64 * 1024 * 1024;
-const MAX_RPC_ERROR_BYTES: usize = 64 * 1024;
-
 #[derive(Clone)]
 pub struct CloudApiConfig {
-    supabase_url: String,
-    supabase_service_role_key: String,
+    database: anlg_cloud_db::Database,
     oauth: OAuthResourceConfig,
 }
 
 impl CloudApiConfig {
-    pub fn new(
-        supabase_url: impl Into<String>,
-        supabase_service_role_key: impl Into<String>,
-    ) -> Result<Self, String> {
-        let supabase_url = supabase_url.into().trim_end_matches('/').to_string();
-        let supabase_service_role_key = supabase_service_role_key.into();
-        if !supabase_url.starts_with("https://") && !supabase_url.starts_with("http://") {
-            return Err("Supabase URL must use http or https".to_string());
-        }
-        if supabase_service_role_key.trim().is_empty() {
-            return Err("Supabase service role key is required".to_string());
-        }
-        let oauth = OAuthResourceConfig::new(crate::oauth::MCP_RESOURCE, &supabase_url)?;
+    pub fn new(database: anlg_cloud_db::Database, shots_origin: &str) -> Result<Self, String> {
         Ok(Self {
-            supabase_url,
-            supabase_service_role_key,
-            oauth,
+            database,
+            oauth: OAuthResourceConfig::shots(crate::oauth::MCP_RESOURCE, shots_origin)?,
         })
     }
 
@@ -46,21 +28,16 @@ impl CloudApiConfig {
 
 #[derive(Clone)]
 pub struct AppState {
-    client: reqwest::Client,
     auth: anlg_api_auth::AuthState,
     config: CloudApiConfig,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum StoreError {
-    #[error("cloud data request failed: {0}")]
-    Request(#[from] reqwest::Error),
-    #[error("cloud data request returned {status}: {body}")]
-    Response { status: StatusCode, body: String },
+    #[error(transparent)]
+    Database(#[from] anlg_cloud_db::Error),
     #[error("cloud data response was invalid: {0}")]
     InvalidResponse(#[from] serde_json::Error),
-    #[error("cloud data response exceeded the {limit}-byte limit")]
-    ResponseTooLarge { limit: usize },
 }
 
 #[derive(Deserialize)]
@@ -96,12 +73,8 @@ impl AppState {
     }
 
     pub fn new(config: CloudApiConfig) -> Self {
-        let auth = anlg_api_auth::AuthState::new(&config.supabase_url);
-        Self {
-            client: reqwest::Client::new(),
-            auth,
-            config,
-        }
+        let auth = anlg_api_auth::AuthState::new();
+        Self { auth, config }
     }
 
     pub(crate) fn oauth(&self) -> &OAuthResourceConfig {
@@ -118,15 +91,7 @@ impl AppState {
                 .await
                 .map_err(|_| anlg_api_auth::OAuthTokenError::Invalid);
         }
-        let claims = self
-            .auth
-            .verify_oauth_token(token, self.oauth().resource(), self.oauth().scopes())
-            .await?;
-        Ok(anlg_api_auth::AuthContext {
-            claims,
-            token: token.to_owned(),
-            shots: None,
-        })
+        Err(anlg_api_auth::OAuthTokenError::Invalid)
     }
 
     pub(crate) async fn verify_session_token(
@@ -141,31 +106,11 @@ impl AppState {
         function: &str,
         body: impl Serialize,
     ) -> Result<T, StoreError> {
-        let response = self
-            .client
-            .post(format!(
-                "{}/rest/v1/rpc/{function}",
-                self.config.supabase_url
-            ))
-            .header("apikey", &self.config.supabase_service_role_key)
-            .bearer_auth(&self.config.supabase_service_role_key)
-            .json(&body)
-            .send()
-            .await?;
-        let status = response.status();
-        let response_limit = if status.is_success() {
-            MAX_RPC_RESPONSE_BYTES
-        } else {
-            MAX_RPC_ERROR_BYTES
-        };
-        let bytes = read_response_body(response, response_limit).await?;
-        if !status.is_success() {
-            return Err(StoreError::Response {
-                status,
-                body: String::from_utf8_lossy(&bytes).into_owned(),
-            });
-        }
-        Ok(serde_json::from_slice(&bytes)?)
+        self.config
+            .database
+            .rpc(&anlg_cloud_db::Principal::Service, function, &body)
+            .await
+            .map_err(StoreError::from)
     }
 
     pub(crate) async fn get_settings(&self, user_id: &str) -> Result<CloudApiSettings, StoreError> {
@@ -375,56 +320,5 @@ impl AppState {
                 "cloud API user verification row missing",
             )))
         })
-    }
-}
-
-async fn read_response_body(
-    mut response: reqwest::Response,
-    limit: usize,
-) -> Result<Vec<u8>, StoreError> {
-    if response
-        .content_length()
-        .is_some_and(|length| length > limit as u64)
-    {
-        return Err(StoreError::ResponseTooLarge { limit });
-    }
-
-    let mut bytes = Vec::with_capacity(
-        response
-            .content_length()
-            .and_then(|length| usize::try_from(length).ok())
-            .unwrap_or_default()
-            .min(limit),
-    );
-    while let Some(chunk) = response.chunk().await? {
-        if bytes.len().saturating_add(chunk.len()) > limit {
-            return Err(StoreError::ResponseTooLarge { limit });
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    Ok(bytes)
-}
-
-#[cfg(test)]
-mod tests {
-    use wiremock::{Mock, MockServer, ResponseTemplate, matchers::path};
-
-    use super::{StoreError, read_response_body};
-
-    #[tokio::test]
-    async fn rejects_response_bodies_over_the_limit() {
-        let server = MockServer::start().await;
-        Mock::given(path("/large"))
-            .respond_with(ResponseTemplate::new(200).set_body_bytes(vec![b'x'; 17]))
-            .mount(&server)
-            .await;
-
-        let response = reqwest::get(format!("{}/large", server.uri()))
-            .await
-            .unwrap();
-        let error = read_response_body(response, 16)
-            .await
-            .expect_err("oversized response must fail");
-        assert!(matches!(error, StoreError::ResponseTooLarge { limit: 16 }));
     }
 }

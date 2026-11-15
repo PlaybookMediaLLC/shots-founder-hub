@@ -14,7 +14,7 @@ vi.mock("@anlg/plugin-auth", () => ({
   },
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
+vi.mock("@anlg/cloud-client", () => ({
   createClient: vi.fn(() => ({})),
   processLock: vi.fn(),
 }));
@@ -23,8 +23,8 @@ vi.mock("@tauri-apps/plugin-http", () => ({ fetch: vi.fn() }));
 
 vi.mock("~/env", () => ({
   env: {
-    VITE_SUPABASE_ANON_KEY: "anon-key",
-    VITE_SUPABASE_URL: "https://project.supabase.co",
+    VITE_SHOTS_URL: "anon-key",
+    VITE_CLOUD_URL: "https://project.example.test",
   },
 }));
 

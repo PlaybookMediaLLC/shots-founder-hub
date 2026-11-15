@@ -56,7 +56,7 @@ vi.mock("~/auth", () => ({
     isRefreshingSession: false,
     refreshSession: vi.fn(),
     session: mocks.session,
-    supabase: {},
+    cloudClient: {},
     signIn: mocks.signIn,
     signOut: mocks.signOut,
   }),

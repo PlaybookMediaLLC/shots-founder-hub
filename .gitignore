@@ -10,9 +10,7 @@ Secrets*.toml
 !.env.sample
 .venv
 **/__pycache__/
-.supabase/
 .stripe/
-supabase/.seed/
 
 *storybook.log
 .cache/

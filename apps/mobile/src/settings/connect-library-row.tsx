@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Alert } from "react-native";
 
-import { supabase } from "@/auth/client";
+import { cloudClient } from "@/auth/client";
 import { useAuth } from "@/auth/context";
 import { connectLocalLibrary, execute } from "@/db";
 import { SettingsError } from "@/settings/components";
@@ -20,7 +20,7 @@ export function ConnectLibraryRow({ phase }: { phase: MobileSyncPhase }) {
       );
       if (!library?.workspace_id)
         throw new Error("Could not read the local library");
-      const current = await supabase?.auth.getSession();
+      const current = await cloudClient?.auth.getSession();
       if (current?.data.session?.user.id !== accountUserId)
         throw new Error("The signed-in account changed. Try again.");
       await connectLocalLibrary(accountUserId, library.workspace_id);

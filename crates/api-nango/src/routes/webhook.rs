@@ -120,14 +120,9 @@ pub(crate) async fn handle_auth_webhook(state: &AppState, payload: NangoAuthWebh
         "nango webhook received"
     );
 
-    if !state.supabase.is_configured() {
-        tracing::warn!("supabase_service_role_key not configured, skipping connection persistence");
-        return Ok(());
-    }
-
     if payload.operation == AuthOperation::Refresh && !payload.success {
         state
-            .supabase
+            .store
             .mark_connection_refresh_failed(
                 &payload.provider_config_key,
                 &payload.connection_id,
@@ -145,7 +140,7 @@ pub(crate) async fn handle_auth_webhook(state: &AppState, payload: NangoAuthWebh
 
     if payload.success && payload.operation == AuthOperation::Deletion {
         state
-            .supabase
+            .store
             .delete_connection_by_connection(&payload.provider_config_key, &payload.connection_id)
             .await
             .map_err(|_| {
@@ -165,7 +160,7 @@ pub(crate) async fn handle_auth_webhook(state: &AppState, payload: NangoAuthWebh
         };
 
         state
-            .supabase
+            .store
             .upsert_connection(
                 end_user_id,
                 &payload.provider_config_key,
@@ -240,12 +235,11 @@ mod tests {
         headers
     }
 
-    async fn make_fixture() -> (MockServer, MockServer, AppState) {
+    async fn make_fixture() -> (MockServer, AppState) {
         let nango_mock = MockServer::start().await;
-        let supabase_mock = MockServer::start().await;
-        let config = NangoConfig::for_test(&nango_mock.uri(), &supabase_mock.uri());
+        let config = NangoConfig::for_test(&nango_mock.uri());
         let state = AppState::new(config);
-        (nango_mock, supabase_mock, state)
+        (nango_mock, state)
     }
 
     fn auth_payload(operation: AuthOperation, success: bool) -> NangoAuthWebhook {
@@ -260,7 +254,7 @@ mod tests {
             success,
             tags: None,
             end_user: Some(NangoWebhookEndUser {
-                end_user_id: "user-abc".to_string(),
+                end_user_id: "11111111-1111-4111-8111-111111111111".to_string(),
                 end_user_email: None,
                 tags: None,
             }),
@@ -272,7 +266,7 @@ mod tests {
 
     #[tokio::test]
     async fn webhook_signature_uses_webhook_signing_key_not_api_key() {
-        let (_nango_mock, _supabase_mock, state) = make_fixture().await;
+        let (_nango_mock, state) = make_fixture().await;
         let body = r#"{"type":"sync"}"#.to_string();
 
         let signed_with_api_key = nango_webhook(
@@ -292,15 +286,10 @@ mod tests {
 
     #[tokio::test]
     async fn creation_upserts_connection_and_patches_identity() {
-        let (nango_mock, supabase_mock, state) = make_fixture().await;
+        let (nango_mock, state) = make_fixture().await;
 
-        Mock::given(method("POST"))
-            .and(path("/rest/v1/nango_connections"))
-            .respond_with(ResponseTemplate::new(201))
-            .expect(1)
-            .mount(&supabase_mock)
-            .await;
-
+        let user = crate::config::test_user(&state.config.database).await;
+        let connection_id = format!("conn-{user}");
         Mock::given(method("GET"))
             .and(path("/proxy/calendar/v3/calendars/primary"))
             .respond_with(ResponseTemplate::new(200).set_body_json(
@@ -310,17 +299,17 @@ mod tests {
             .await;
 
         Mock::given(method("GET"))
-            .and(path("/connections/conn-123"))
+            .and(path(format!("/connections/{connection_id}")))
             .and(query_param("provider_config_key", "google-calendar"))
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
                 "id": 1,
-                "connection_id": "conn-123",
+                "connection_id": connection_id,
                 "provider_config_key": "google-calendar",
                 "provider": "google-calendar",
                 "errors": [],
                 "end_user": null,
                 "tags": {
-                    "end_user_id": "user-abc",
+                    "end_user_id": "11111111-1111-4111-8111-111111111111",
                     "end_user_email": "user@old.example.com"
                 },
                 "metadata": {},
@@ -335,11 +324,11 @@ mod tests {
             .await;
 
         Mock::given(method("PATCH"))
-            .and(path_regex("/connections/conn-123"))
+            .and(path_regex(format!("/connections/{connection_id}")))
             .and(query_param("provider_config_key", "google-calendar"))
             .and(body_json(serde_json::json!({
                 "tags": {
-                    "end_user_id": "user-abc",
+                    "end_user_id": "11111111-1111-4111-8111-111111111111",
                     "end_user_email": "user@old.example.com",
                     "account_identity": "user@example.com"
                 }
@@ -349,68 +338,74 @@ mod tests {
             .mount(&nango_mock)
             .await;
 
-        handle_auth_webhook(&state, auth_payload(AuthOperation::Creation, true))
-            .await
-            .unwrap();
+        handle_auth_webhook(&state, {
+            let mut payload = auth_payload(AuthOperation::Creation, true);
+            payload.connection_id = connection_id.clone();
+            payload.end_user.as_mut().unwrap().end_user_id = user.to_string();
+            payload
+        })
+        .await
+        .unwrap();
 
         tokio::time::sleep(std::time::Duration::from_millis(200)).await;
 
-        supabase_mock.verify().await;
+        use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+        let row = anlg_cloud_db::entities::nango_connection::Entity::find()
+            .filter(
+                anlg_cloud_db::entities::nango_connection::Column::ConnectionId.eq(&connection_id),
+            )
+            .one(state.config.database.connection().await.unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(row.user_id, user);
+        assert_eq!(row.status, "connected");
         nango_mock.verify().await;
     }
 
     #[tokio::test]
-    async fn refresh_failure_marks_reconnect_required() {
-        let (_nango_mock, supabase_mock, state) = make_fixture().await;
-
-        Mock::given(method("PATCH"))
-            .and(path_regex("/rest/v1/nango_connections"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(1)
-            .mount(&supabase_mock)
-            .await;
-
-        let mut payload = auth_payload(AuthOperation::Refresh, false);
-        payload.error = Some(NangoWebhookError {
-            r#type: "refresh_token_error".to_string(),
-            description: "Token expired".to_string(),
-        });
-
-        handle_auth_webhook(&state, payload).await.unwrap();
-
-        supabase_mock.verify().await;
-    }
-
-    #[tokio::test]
-    async fn deletion_deletes_connection() {
-        let (_nango_mock, supabase_mock, state) = make_fixture().await;
-
-        Mock::given(method("DELETE"))
-            .and(path_regex("/rest/v1/nango_connections"))
-            .and(query_param("integration_id", "eq.google-calendar"))
-            .and(query_param("connection_id", "eq.conn-123"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(1)
-            .mount(&supabase_mock)
-            .await;
-
-        handle_auth_webhook(&state, auth_payload(AuthOperation::Deletion, true))
+    async fn refresh_failure_and_deletion_update_the_database() {
+        use anlg_cloud_db::entities::nango_connection as connection;
+        use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+        let (_nango, state) = make_fixture().await;
+        let user = crate::config::test_user(&state.config.database).await;
+        let id = format!("conn-{user}");
+        state
+            .store
+            .upsert_connection(&user.to_string(), "google-calendar", &id, "google-calendar")
             .await
             .unwrap();
-
-        supabase_mock.verify().await;
+        let mut payload = auth_payload(AuthOperation::Refresh, false);
+        payload.connection_id = id.clone();
+        payload.error = Some(NangoWebhookError {
+            r#type: "refresh_token_error".into(),
+            description: "Token expired".into(),
+        });
+        handle_auth_webhook(&state, payload).await.unwrap();
+        let query = connection::Entity::find().filter(connection::Column::ConnectionId.eq(&id));
+        let row = query
+            .clone()
+            .one(state.config.database.connection().await.unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(row.status, "reconnect_required");
+        assert_eq!(row.last_error_type.as_deref(), Some("provider_auth"));
+        let mut payload = auth_payload(AuthOperation::Deletion, true);
+        payload.connection_id = id;
+        handle_auth_webhook(&state, payload).await.unwrap();
+        assert!(
+            query
+                .one(state.config.database.connection().await.unwrap())
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 
     #[tokio::test]
     async fn missing_end_user_id_skips_persistence() {
-        let (_nango_mock, supabase_mock, state) = make_fixture().await;
-
-        // No mocks mounted — any HTTP call would return connection refused
-        Mock::given(method("POST"))
-            .respond_with(ResponseTemplate::new(500))
-            .expect(0)
-            .mount(&supabase_mock)
-            .await;
+        let (_nango_mock, state) = make_fixture().await;
 
         let mut payload = auth_payload(AuthOperation::Creation, true);
         payload.end_user = None;
@@ -418,12 +413,11 @@ mod tests {
         let result = handle_auth_webhook(&state, payload).await;
 
         assert!(result.is_ok());
-        supabase_mock.verify().await;
     }
 
     #[tokio::test]
     async fn malformed_forward_webhook_returns_bad_request() {
-        let (_nango_mock, _supabase_mock, state) = make_fixture().await;
+        let (_nango_mock, state) = make_fixture().await;
 
         let result = handle_forward_webhook(&state, r#"{"type":"forward"}"#);
 

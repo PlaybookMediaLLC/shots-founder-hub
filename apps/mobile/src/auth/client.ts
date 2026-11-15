@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 
-import { env, hasSupabaseEnv } from "@/lib/env";
+import { createClient, type CloudClient } from "@anlg/cloud-client";
+
+import { env, hasCloudEnv } from "@/lib/env";
 
 const firstHostnameLabel = (url: string): string =>
   url
@@ -11,11 +12,11 @@ const firstHostnameLabel = (url: string): string =>
     .split(".")[0]!;
 
 export const authStorageKey = `sb-${firstHostnameLabel(
-  env.supabaseUrl || "local",
+  env.cloudUrl || "local",
 )}-auth-token`;
 
-export const supabase: SupabaseClient | null = hasSupabaseEnv
-  ? createClient(env.supabaseUrl, env.supabaseAnonKey, {
+export const cloudClient: CloudClient | null = hasCloudEnv
+  ? createClient(env.cloudUrl, {
       auth: {
         storage: AsyncStorage,
         storageKey: authStorageKey,
@@ -26,8 +27,8 @@ export const supabase: SupabaseClient | null = hasSupabaseEnv
     })
   : null;
 
-if (supabase) {
-  const client = supabase;
+if (cloudClient) {
+  const client = cloudClient;
   AppState.addEventListener("change", (state) => {
     if (state === "active") {
       void client.auth.startAutoRefresh();

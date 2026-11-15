@@ -62,12 +62,7 @@ pub async fn search_pages(
     Json(req): Json<NotionSearchPagesRequest>,
 ) -> Result<Json<NotionPagesResponse>> {
     let proxy = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Notion::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Notion::ID, &req.connection_id)
         .await?
         .into_proxy();
 
@@ -143,12 +138,7 @@ pub async fn append_update(
     children.extend(markdown_to_blocks(&req.markdown));
 
     let proxy = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Notion::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Notion::ID, &req.connection_id)
         .await?
         .into_proxy();
 
@@ -216,12 +206,7 @@ pub async fn import_meetings(
     }
 
     let proxy = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Notion::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Notion::ID, &req.connection_id)
         .await?
         .into_proxy();
     let imported = import::import_meetings(&proxy, &req.known_meeting_ids).await?;

@@ -4,16 +4,13 @@ use chrono::{DateTime, TimeDelta, Utc};
 use futures_util::{StreamExt, stream};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use stripe_core::customer::{DeleteCustomer, RetrieveCustomer, RetrieveCustomerReturned};
 use tokio::time::MissedTickBehavior;
 use tokio_util::sync::CancellationToken;
 use uuid::{Uuid, Version};
 
 use crate::{
-    SubscriptionConfig,
-    cloudsync_cleanup::CloudsyncCleanupClient,
     error::{Result, SubscriptionError},
-    supabase::SupabaseClient,
+    store::AccountStore,
 };
 
 const ATTACHMENT_BACKUP_BUCKET: &str = "attachment-backups";
@@ -29,7 +26,6 @@ const POLL_INTERVAL: Duration = Duration::from_secs(30);
 const FULL_BATCH_POLL_INTERVAL: Duration = Duration::from_secs(5);
 const MAX_ACCOUNT_PREFIX_OBJECTS: usize = 20_000;
 const MAX_CIPHERTEXT_SIZE_BYTES: i64 = 545_259_520;
-const STRIPE_DELETE_TIMEOUT: Duration = Duration::from_secs(30);
 
 fn full_batch_poll_delay(full_batch: bool) -> Option<Duration> {
     full_batch.then_some(FULL_BATCH_POLL_INTERVAL)
@@ -37,18 +33,7 @@ fn full_batch_poll_delay(full_batch: bool) -> Option<Duration> {
 
 #[derive(Clone)]
 pub struct CleanupWorker {
-    supabase: SupabaseClient,
-    storage: anlg_supabase_storage::SupabaseStorage,
-    backend: CleanupBackend,
-}
-
-#[derive(Clone)]
-enum CleanupBackend {
-    Shots,
-    Cloudsync {
-        stripe: stripe::Client,
-        cloudsync: Option<CloudsyncCleanupClient>,
-    },
+    store: AccountStore,
 }
 
 #[derive(Serialize)]
@@ -124,42 +109,10 @@ struct StripeDeleteRequest<'a> {
     p_stripe_customer_id: Option<&'a str>,
 }
 
-#[derive(Serialize)]
-struct E2eePurgeRequest<'a> {
-    p_owner_user_id: &'a str,
-    p_lease_id: &'a str,
-    p_workspace_ids: &'a [String],
-}
-
 impl CleanupWorker {
-    pub fn new(config: &SubscriptionConfig) -> Self {
-        Self::with_backend(
-            &config.supabase,
-            CleanupBackend::Cloudsync {
-                stripe: stripe::Client::new(&config.stripe.stripe_secret_key),
-                cloudsync: config
-                    .cloudsync_cleanup
-                    .clone()
-                    .map(CloudsyncCleanupClient::new),
-            },
-        )
-    }
-
-    pub fn for_shots(supabase: &anlg_api_env::SupabaseEnv) -> Self {
-        Self::with_backend(supabase, CleanupBackend::Shots)
-    }
-
-    fn with_backend(config: &anlg_api_env::SupabaseEnv, backend: CleanupBackend) -> Self {
-        let supabase = SupabaseClient::new(
-            config.supabase_url.clone(),
-            config.supabase_anon_key.clone(),
-            config.supabase_service_role_key.clone(),
-        );
-        let storage = supabase.storage();
+    pub fn for_shots(database: anlg_cloud_db::Database, storage: anlg_r2_storage::Storage) -> Self {
         Self {
-            supabase,
-            storage,
-            backend,
+            store: AccountStore::new(database, storage),
         }
     }
 
@@ -212,7 +165,7 @@ impl CleanupWorker {
 
     async fn run_retention_batch(&self) -> Result<i32> {
         let deleted: i32 = self
-            .supabase
+            .store
             .admin_rpc("enforce_workspace_retention", &json!({}))
             .await?;
         if deleted < 0 {
@@ -227,7 +180,7 @@ impl CleanupWorker {
         }
         let lease_id = Uuid::now_v7().to_string();
         let rows: Vec<AttachmentLeaseRow> = self
-            .supabase
+            .store
             .admin_rpc(
                 "claim_attachment_backup_gc_leases",
                 &ClaimRequest {
@@ -265,12 +218,12 @@ impl CleanupWorker {
     }
 
     async fn delete_attachment(&self, row: AttachmentLeaseRow) -> Result<()> {
-        self.storage
+        self.store
             .delete_file(ATTACHMENT_BACKUP_BUCKET, &row.object_key)
             .await
             .map_err(storage_error)?;
         let finished: bool = self
-            .supabase
+            .store
             .admin_rpc(
                 "finish_attachment_backup_deletion",
                 &FinishAttachmentRequest {
@@ -293,7 +246,7 @@ impl CleanupWorker {
         }
         let lease_id = Uuid::now_v7().to_string();
         let rows: Vec<SharedAttachmentLeaseRow> = self
-            .supabase
+            .store
             .admin_rpc(
                 "claim_session_share_attachment_gc_leases",
                 &ClaimRequest {
@@ -331,12 +284,12 @@ impl CleanupWorker {
     }
 
     async fn delete_shared_attachment(&self, row: SharedAttachmentLeaseRow) -> Result<()> {
-        self.storage
+        self.store
             .delete_file(SHARED_ATTACHMENT_BUCKET, &row.object_key)
             .await
             .map_err(storage_error)?;
         let finished: bool = self
-            .supabase
+            .store
             .admin_rpc(
                 "finish_session_share_attachment_deletion",
                 &FinishSharedAttachmentRequest {
@@ -358,7 +311,7 @@ impl CleanupWorker {
         }
         let lease_id = Uuid::now_v7().to_string();
         let rows: Vec<AccountLeaseRow> = self
-            .supabase
+            .store
             .admin_rpc(
                 "claim_account_deletion_leases_v2",
                 &ClaimRequest {
@@ -395,21 +348,16 @@ impl CleanupWorker {
             if cancellation.is_cancelled() {
                 return Ok(());
             }
-            if let Some(customer_id) = row.stripe_customer_id.as_deref() {
-                tokio::time::timeout(
-                    STRIPE_DELETE_TIMEOUT,
-                    self.delete_stripe_customer(&row.owner_user_id, customer_id),
-                )
-                .await
-                .map_err(|_| {
-                    SubscriptionError::Stripe("Stripe customer deletion timed out".to_string())
-                })??;
+            if row.stripe_customer_id.is_some() {
+                return Err(SubscriptionError::Internal(
+                    "Shots billing must settle the legacy personal customer before cleanup".into(),
+                ));
             }
             if cancellation.is_cancelled() {
                 return Ok(());
             }
             let marked: bool = self
-                .supabase
+                .store
                 .admin_rpc(
                     "mark_account_deletion_stripe_deleted",
                     &StripeDeleteRequest {
@@ -431,7 +379,7 @@ impl CleanupWorker {
         if !row.prefix_swept {
             let prefix = format!("{}/", row.owner_user_id);
             match self
-                .storage
+                .store
                 .clear_prefix_until(
                     ATTACHMENT_BACKUP_BUCKET,
                     &prefix,
@@ -441,28 +389,28 @@ impl CleanupWorker {
                 .await
             {
                 Ok(_) => {}
-                Err(anlg_supabase_storage::Error::Cancelled) => return Ok(()),
+                Err(anlg_r2_storage::Error::Cancelled) => return Ok(()),
                 Err(error) => return Err(storage_error(error)),
             }
             if cancellation.is_cancelled() {
                 return Ok(());
             }
             match self
-                .storage
+                .store
                 .clear_prefix_until(AUDIO_BUCKET, &prefix, MAX_ACCOUNT_PREFIX_OBJECTS, || {
                     cancellation.is_cancelled()
                 })
                 .await
             {
                 Ok(_) => {}
-                Err(anlg_supabase_storage::Error::Cancelled) => return Ok(()),
+                Err(anlg_r2_storage::Error::Cancelled) => return Ok(()),
                 Err(error) => return Err(storage_error(error)),
             }
             if cancellation.is_cancelled() {
                 return Ok(());
             }
             match self
-                .storage
+                .store
                 .clear_prefix_until(
                     SHARED_ATTACHMENT_BUCKET,
                     &prefix,
@@ -472,14 +420,14 @@ impl CleanupWorker {
                 .await
             {
                 Ok(_) => {}
-                Err(anlg_supabase_storage::Error::Cancelled) => return Ok(()),
+                Err(anlg_r2_storage::Error::Cancelled) => return Ok(()),
                 Err(error) => return Err(storage_error(error)),
             }
             if cancellation.is_cancelled() {
                 return Ok(());
             }
             match self
-                .storage
+                .store
                 .clear_prefix_until(
                     PROFILE_AVATAR_BUCKET,
                     &prefix,
@@ -489,14 +437,14 @@ impl CleanupWorker {
                 .await
             {
                 Ok(_) => {}
-                Err(anlg_supabase_storage::Error::Cancelled) => return Ok(()),
+                Err(anlg_r2_storage::Error::Cancelled) => return Ok(()),
                 Err(error) => return Err(storage_error(error)),
             }
             if cancellation.is_cancelled() {
                 return Ok(());
             }
             let marked: bool = self
-                .supabase
+                .store
                 .admin_rpc(
                     "mark_account_deletion_prefix_swept",
                     &AccountLeaseRequest {
@@ -514,40 +462,16 @@ impl CleanupWorker {
             if cancellation.is_cancelled() {
                 return Ok(());
             }
-            let marked: bool = match &self.backend {
-                CleanupBackend::Shots => {
-                    self.supabase
-                        .admin_rpc(
-                            "purge_shots_account_replica",
-                            &AccountLeaseRequest {
-                                p_owner_user_id: &row.owner_user_id,
-                                p_lease_id: &row.lease_id,
-                            },
-                        )
-                        .await?
-                }
-                CleanupBackend::Cloudsync { cloudsync, .. } => {
-                    let cloudsync = cloudsync.as_ref().ok_or_else(|| {
-                        SubscriptionError::Internal(
-                            "CloudSync cleanup is not configured".to_string(),
-                        )
-                    })?;
-                    cloudsync.purge_and_confirm(&row.e2ee_workspace_ids).await?;
-                    if cancellation.is_cancelled() {
-                        return Ok(());
-                    }
-                    self.supabase
-                        .admin_rpc(
-                            "mark_account_deletion_e2ee_purged",
-                            &E2eePurgeRequest {
-                                p_owner_user_id: &row.owner_user_id,
-                                p_lease_id: &row.lease_id,
-                                p_workspace_ids: &row.e2ee_workspace_ids,
-                            },
-                        )
-                        .await?
-                }
-            };
+            let marked: bool = self
+                .store
+                .admin_rpc(
+                    "purge_shots_account_replica",
+                    &AccountLeaseRequest {
+                        p_owner_user_id: &row.owner_user_id,
+                        p_lease_id: &row.lease_id,
+                    },
+                )
+                .await?;
             if !marked {
                 return Err(invalid_upstream("account deletion E2EE checkpoint"));
             }
@@ -557,17 +481,10 @@ impl CleanupWorker {
             return Ok(());
         }
 
-        let finish_rpc = match &self.backend {
-            CleanupBackend::Shots => "finish_shots_account_deletion",
-            CleanupBackend::Cloudsync { .. } => {
-                self.supabase.admin_delete_user(&row.owner_user_id).await?;
-                "finish_account_deletion"
-            }
-        };
         let finished: bool = self
-            .supabase
+            .store
             .admin_rpc(
-                finish_rpc,
+                "finish_shots_account_deletion",
                 &AccountLeaseRequest {
                     p_owner_user_id: &row.owner_user_id,
                     p_lease_id: &row.lease_id,
@@ -578,70 +495,6 @@ impl CleanupWorker {
             tracing::info!("account_deletion_already_finished");
         }
         Ok(())
-    }
-
-    async fn delete_stripe_customer(&self, owner_user_id: &str, customer_id: &str) -> Result<()> {
-        let CleanupBackend::Cloudsync { stripe, .. } = &self.backend else {
-            // Shots workspace customers are shared; a personal cleanup must never delete one.
-            return Err(SubscriptionError::Internal(
-                "Shots billing must settle the legacy personal customer before cleanup".to_string(),
-            ));
-        };
-        match RetrieveCustomer::new(customer_id).send(stripe).await {
-            Ok(RetrieveCustomerReturned::Customer(customer)) => {
-                let metadata_owner_ids = customer
-                    .metadata
-                    .as_ref()
-                    .map(|metadata| {
-                        ["userId", "user_id", "userID"]
-                            .into_iter()
-                            .filter_map(|key| metadata.get(key).map(String::as_str))
-                            .filter(|owner_id| !owner_id.is_empty())
-                            .collect::<Vec<_>>()
-                    })
-                    .unwrap_or_default();
-                let metadata_matches = !metadata_owner_ids.is_empty()
-                    && metadata_owner_ids
-                        .iter()
-                        .all(|metadata_owner_id| *metadata_owner_id == owner_user_id);
-                let email_matches = if metadata_owner_ids.is_empty() {
-                    match (
-                        customer.email.as_deref(),
-                        self.supabase.admin_get_user_email(owner_user_id).await?,
-                    ) {
-                        (Some(customer_email), Some(user_email)) => {
-                            customer_email.eq_ignore_ascii_case(&user_email)
-                        }
-                        _ => false,
-                    }
-                } else {
-                    false
-                };
-                if !metadata_matches && !email_matches {
-                    return Err(SubscriptionError::Internal(
-                        "Stripe customer ownership could not be verified".to_string(),
-                    ));
-                }
-            }
-            Ok(RetrieveCustomerReturned::DeletedCustomer(_))
-            | Err(stripe::StripeError::Stripe(_, 404)) => {
-                tracing::info!("account_deletion_stripe_customer_already_deleted");
-                return Ok(());
-            }
-            Err(error) => return Err(SubscriptionError::Stripe(error.to_string())),
-        }
-
-        match DeleteCustomer::new(customer_id).send(stripe).await {
-            Ok(_) => {
-                tracing::info!("account_deletion_stripe_customer_deleted");
-                Ok(())
-            }
-            Err(stripe::StripeError::Stripe(_, 404)) => {
-                tracing::info!("account_deletion_stripe_customer_already_deleted");
-                Ok(())
-            }
-            Err(error) => Err(SubscriptionError::Stripe(error.to_string())),
-        }
     }
 }
 
@@ -789,7 +642,7 @@ fn validate_shared_attachment_object_key(
     Ok(value.to_string())
 }
 
-fn storage_error(error: anlg_supabase_storage::Error) -> SubscriptionError {
+fn storage_error(error: anlg_r2_storage::Error) -> SubscriptionError {
     SubscriptionError::Internal(format!("Storage cleanup failed: {error}"))
 }
 

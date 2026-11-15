@@ -12,7 +12,7 @@ import {
 } from "@anlg/ui/components/ui/dialog";
 import { toast } from "@anlg/ui/components/ui/toast";
 
-import { supabase } from "./client";
+import { cloudClient } from "./client";
 
 import {
   GlassDialogCancelButton,
@@ -49,7 +49,7 @@ export function ConnectLocalLibraryDialog({
   const connect = useMutation({
     mutationFn: async () => {
       if (!library.data) throw new Error(t`Could not read the local library`);
-      const current = await supabase?.auth.getSession();
+      const current = await cloudClient?.auth.getSession();
       if (
         !current ||
         current.error ||

@@ -3,17 +3,14 @@ use axum::{
     http::{Method, Request, StatusCode, header},
     routing::get,
 };
-use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use serde_json::{Value, json};
 use tower::ServiceExt;
 use wiremock::{
     Mock, MockServer, ResponseTemplate,
-    matchers::{body_json, method, path},
+    matchers::{method, path},
 };
 
 use super::*;
-
-const TEST_KEY_ID: &str = "sync-composition-test";
 
 const SHOTS_SERVICE_TOKEN: &str = "test-service-secret-at-least-thirty-two-bytes";
 
@@ -22,12 +19,7 @@ fn shots_config(origin: &'static str) -> crate::env::RuntimeConfig {
         ("ANARLOG_SERVICE", "all"),
         ("SHOTS_AUTH_URL", origin),
         ("SHOTS_AUTH_SERVICE_TOKEN", SHOTS_SERVICE_TOKEN),
-        ("SUPABASE_JWT_SECRET", "internal-storage-jwt-signing-secret"),
         ("FOUNDER_HUB_MCP_URL", "https://hub.example.com/mcp"),
-        ("STRIPE_SECRET_KEY", "sk_test_unused"),
-        ("STRIPE_MONTHLY_PRICE_ID", "price_monthly"),
-        ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
-        ("LOOPS_KEY", "unused"),
     ]))
     .unwrap()
 }
@@ -79,7 +71,10 @@ async fn voice_forwards_to_shots_with_the_service_credential_and_only_allowed_he
         response.headers()[header::CONTENT_TYPE],
         "application/vnd.shots+json"
     );
-    assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+    assert_eq!(
+        response.headers()[header::CACHE_CONTROL],
+        "private, no-store"
+    );
     assert!(!response.headers().contains_key(header::SET_COOKIE));
     assert_eq!(response_bytes(response).await, br#"{"id":"note_1-a"}"#);
 
@@ -119,7 +114,10 @@ async fn voice_forwards_to_shots_with_the_service_credential_and_only_allowed_he
             .unwrap();
         assert_eq!(response.status(), StatusCode::NO_CONTENT);
         assert!(!response.headers().contains_key(header::CONTENT_TYPE));
-        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(
+            response.headers()[header::CACHE_CONTROL],
+            "private, no-store"
+        );
     }
     let received = server.received_requests().await.unwrap();
     assert_eq!(
@@ -192,7 +190,10 @@ async fn voice_passes_shots_status_and_body_through() {
             .unwrap();
         assert_eq!(response.status().as_u16(), status);
         assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
-        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(
+            response.headers()[header::CACHE_CONTROL],
+            "private, no-store"
+        );
         assert_eq!(response_bytes(response).await, body.as_bytes());
     }
 }
@@ -318,7 +319,6 @@ async fn voice_never_logs_transcripts_or_credentials() {
 #[tokio::test]
 async fn shots_does_not_expose_legacy_identity_or_billing_mutations() {
     let config = shots_config("https://shots.example.com");
-    assert!(config.subscription.is_none());
     assert!(config.sync.sqlitecloud_project_url.is_none());
     let app = app_with_env(Box::leak(Box::new(config))).await;
     for path in [
@@ -358,13 +358,74 @@ async fn shots_does_not_expose_legacy_identity_or_billing_mutations() {
 }
 
 #[tokio::test]
+async fn cloud_rpc_serves_referrals_and_policy_reads_but_leaves_team_management_to_shots() {
+    let app = app_with_env(Box::leak(Box::new(shots_config(
+        "https://shots.example.com",
+    ))))
+    .await;
+    let rpc = |name: &str, token: Option<&str>| {
+        let mut request = Request::builder()
+            .method(Method::POST)
+            .uri(format!("/cloud/data/rpc/{name}"))
+            .header(header::CONTENT_TYPE, "application/json");
+        if let Some(token) = token {
+            request = request.header(header::AUTHORIZATION, format!("Bearer {token}"));
+        }
+        app.clone().oneshot(
+            request
+                .body(Body::from(r#"{"p_code":"000000000000000000000000"}"#))
+                .unwrap(),
+        )
+    };
+    // Signed-out invite visitors check the referral link, and a stale browser
+    // token must not change that path. These router tests have no database, so
+    // reaching it gives 502, not 401 or 404.
+    let response = rpc("referral_link_available", Some("stale-token"))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    let body: Value = serde_json::from_slice(&response_bytes(response).await).unwrap();
+    assert_eq!(body["code"], "database_unavailable");
+    for name in ["claim_referral", "get_workspace_policy"] {
+        assert_eq!(
+            rpc(name, None).await.unwrap().status(),
+            StatusCode::UNAUTHORIZED,
+            "{name}"
+        );
+    }
+    for name in [
+        "create_workspace",
+        "accept_workspace_invitation",
+        "rename_workspace",
+    ] {
+        assert_eq!(
+            rpc(name, None).await.unwrap().status(),
+            StatusCode::NOT_FOUND,
+            "{name}"
+        );
+    }
+}
+
+#[tokio::test]
 async fn standalone_services_build_without_other_services_credentials() {
-    for role in ["ai", "sync", "core", "billing"] {
+    for role in ["ai", "sync", "core"] {
         let mut values = vec![
+            (
+                "DATABASE_URL",
+                "postgres://localhost/unavailable_test_database",
+            ),
+            (
+                "CLOUD_SIGNING_KEY",
+                "test-signing-key-at-least-thirty-two-bytes",
+            ),
+            ("R2_ENDPOINT", "http://127.0.0.1:9000"),
+            ("R2_BUCKET", "founder-hub-test"),
+            ("R2_ACCESS_KEY_ID", "test-access-key"),
+            ("R2_SECRET_ACCESS_KEY", "test-secret-key"),
+            ("SHOTS_AUTH_URL", "https://shots.example.com"),
+            ("SHOTS_AUTH_SERVICE_TOKEN", SHOTS_SERVICE_TOKEN),
+            ("FOUNDER_HUB_MCP_URL", "https://hub.example.com/mcp"),
             ("ANARLOG_SERVICE", role),
-            ("SUPABASE_URL", "http://127.0.0.1:54321"),
-            ("SUPABASE_ANON_KEY", "anon"),
-            ("SUPABASE_SERVICE_ROLE_KEY", "service"),
         ];
         match role {
             "ai" => values.extend([
@@ -375,11 +436,9 @@ async fn standalone_services_build_without_other_services_credentials() {
                 ("RESEND_API_KEY", "key"),
                 ("RESEND_FROM_EMAIL", "test@example.com"),
             ]),
-            "core" | "billing" => values.extend([
-                ("STRIPE_SECRET_KEY", "sk_test_role"),
-                ("STRIPE_MONTHLY_PRICE_ID", "price_monthly"),
-                ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
-                ("LOOPS_KEY", "loops"),
+            "core" => values.extend([
+                ("NANGO_API_KEY", "nango"),
+                ("NANGO_WEBHOOK_SIGNING_KEY", "nango-signing"),
             ]),
             _ => unreachable!(),
         }
@@ -401,15 +460,11 @@ async fn standalone_services_build_without_other_services_credentials() {
 
 #[tokio::test]
 async fn service_roles_only_expose_owned_routes() {
-    for role in ["all", "ai", "sync", "core", "billing"] {
+    for role in ["all", "ai", "sync", "core"] {
         let config = crate::env::RuntimeConfig::resolve(deserialize_api_env([
             ("ANARLOG_SERVICE", role),
             ("NANGO_API_KEY", "nango-key"),
             ("NANGO_WEBHOOK_SIGNING_KEY", "signing-key"),
-            ("STRIPE_SECRET_KEY", "sk_test_role"),
-            ("STRIPE_MONTHLY_PRICE_ID", "price_monthly"),
-            ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
-            ("LOOPS_KEY", "loops-key"),
         ]))
         .unwrap();
         let app = app_with_env(Box::leak(Box::new(config))).await;
@@ -419,12 +474,6 @@ async fn service_roles_only_expose_owned_routes() {
             ("sync", Method::GET, "/v1/cloud-api/settings"),
             ("sync", Method::PUT, "/v1/sync-snapshots/session"),
             ("core", Method::GET, "/nango/connections"),
-            ("core", Method::DELETE, "/subscription/delete-account"),
-            ("core", Method::DELETE, "/rpc/delete-account"),
-            ("core", Method::DELETE, "/billing/delete-account"),
-            ("billing", Method::POST, "/subscription/start-trial"),
-            ("billing", Method::GET, "/rpc/can-start-trial"),
-            ("billing", Method::POST, "/billing/start-trial"),
         ] {
             let response = app
                 .clone()
@@ -446,36 +495,35 @@ async fn service_roles_only_expose_owned_routes() {
         }
     }
 }
-const TEST_PRIVATE_KEY: &str = "-----BEGIN PRIVATE KEY-----\n\
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgWTFfCGljY6aw3Hrt\n\
-kHmPRiazukxPLb6ilpRAewjW8nihRANCAATDskChT+Altkm9X7MI69T3IUmrQU0L\n\
-950IxEzvw/x5BMEINRMrXLBJhqzO9Bm+d6JbqA21YQmd1Kt4RzLJR1W+\n\
------END PRIVATE KEY-----";
-
-fn token_with_entitlements(entitlements: &[&str]) -> String {
-    let mut header = Header::new(Algorithm::ES256);
-    header.kid = Some(TEST_KEY_ID.to_string());
-    let expires_at = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-        + 3_600;
-
-    encode(
-        &header,
-        &json!({
-            "sub": "editor-user",
-            "aud": "authenticated",
-            "exp": expires_at,
-            "entitlements": entitlements
-        }),
-        &EncodingKey::from_ec_pem(TEST_PRIVATE_KEY.as_bytes()).unwrap(),
-    )
-    .unwrap()
-}
-
-fn non_pro_token() -> String {
-    token_with_entitlements(&[])
+async fn test_auth(server: &MockServer, paid: bool) -> AuthState {
+    let id = uuid::Uuid::new_v4();
+    let workspace = uuid::Uuid::new_v4();
+    let user =
+        json!({"id":id,"email":format!("{id}@example.test"),"name":"Integration","image":null});
+    let permissions = json!([
+        "workspace:read",
+        "artifact:read",
+        "artifact:edit",
+        "artifact:create",
+        "artifact:share",
+        "workspace:manage"
+    ]);
+    let member = json!({"emailVerified":true,"createdAt":chrono::Utc::now(),"user":user,"accountUserId":id,"role":"owner","permissions":permissions});
+    let snapshot = json!({"emailVerified":true,"revision":"1","createdAt":chrono::Utc::now(),"user":user,
+        "accountUserId":id,"sessionId":uuid::Uuid::new_v4().to_string(),"expiresAt":chrono::Utc::now()+chrono::Duration::hours(1),
+        "workspaces": if paid { json!([{"organizationId":workspace.to_string(),"workspaceId":workspace,"ownerUserId":id,
+            "owner":member,"members":[member],"name":"Team","role":"owner","permissions":permissions,"features":{"workspace:paid":true}}]) } else { json!([]) }
+    });
+    Mock::given(method("GET"))
+        .and(path("/api/founder-hub/session"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(snapshot))
+        .mount(server)
+        .await;
+    AuthState::new().with_shots(Some(
+        anlg_api_auth::ShotsAuth::new(&server.uri(), SHOTS_SERVICE_TOKEN)
+            .unwrap()
+            .with_authority(anlg_api_auth::ShotsAuthority::new(test_database())),
+    ))
 }
 
 fn test_sync_rate_limit(burst: u32) -> rate_limit::RateLimitState {
@@ -491,14 +539,14 @@ fn test_sync_rate_limit(burst: u32) -> rate_limit::RateLimitState {
         .build()
 }
 
-fn test_sync_state(server: &MockServer) -> anlg_api_sync::AppState {
+fn test_sync_state(_server: &MockServer) -> anlg_api_sync::AppState {
     let config = anlg_api_sync::SyncConfig::new(
         "https://test.sqlite.cloud",
         "issuer-key",
         "database-id",
-        server.uri(),
-        "anon-key",
-        "service-role-key",
+        test_database(),
+        test_storage(),
+        "test-signing-key-at-least-thirty-two-bytes".into(),
     )
     .unwrap()
     .with_token_ttl_seconds(60)
@@ -506,9 +554,14 @@ fn test_sync_state(server: &MockServer) -> anlg_api_sync::AppState {
     anlg_api_sync::AppState::new(config)
 }
 
-fn test_replica_state(server: &MockServer) -> anlg_api_sync::ReplicaState {
+fn test_replica_state(_server: &MockServer) -> anlg_api_sync::ReplicaState {
     anlg_api_sync::ReplicaState::new(
-        anlg_api_sync::ReplicaConfig::new(server.uri(), "anon-key", "service-role-key").unwrap(),
+        anlg_api_sync::ReplicaConfig::new(
+            test_database(),
+            test_storage(),
+            "test-signing-key-at-least-thirty-two-bytes".into(),
+        )
+        .unwrap(),
     )
 }
 
@@ -523,9 +576,21 @@ fn deserialize_api_env(
     additional_values: impl IntoIterator<Item = (&'static str, &'static str)>,
 ) -> Env {
     let mut values = vec![
-        ("SUPABASE_URL", "http://127.0.0.1:54321"),
-        ("SUPABASE_ANON_KEY", "anon-key"),
-        ("SUPABASE_SERVICE_ROLE_KEY", "service-role-key"),
+        (
+            "DATABASE_URL",
+            "postgres://localhost/unavailable_test_database",
+        ),
+        (
+            "CLOUD_SIGNING_KEY",
+            "test-signing-key-at-least-thirty-two-bytes",
+        ),
+        ("R2_ENDPOINT", "http://127.0.0.1:9000"),
+        ("R2_BUCKET", "founder-hub-test"),
+        ("R2_ACCESS_KEY_ID", "test-access-key"),
+        ("R2_SECRET_ACCESS_KEY", "test-secret-key"),
+        ("SHOTS_AUTH_URL", "https://shots.example.com"),
+        ("SHOTS_AUTH_SERVICE_TOKEN", SHOTS_SERVICE_TOKEN),
+        ("FOUNDER_HUB_MCP_URL", "https://hub.example.com/mcp"),
         ("OPENROUTER_API_KEY", "openrouter-key"),
         ("API_BASE_URL", "http://127.0.0.1:3001"),
         ("RESEND_API_KEY", "resend-key"),
@@ -535,6 +600,8 @@ fn deserialize_api_env(
 
     envy::from_iter(
         values
+            .into_iter()
+            .collect::<std::collections::BTreeMap<_, _>>()
             .into_iter()
             .map(|(key, value)| (key.to_string(), value.to_string())),
     )
@@ -547,10 +614,6 @@ fn api_env(with_hosted_integrations: bool) -> &'static crate::env::RuntimeConfig
         integration_values.extend([
             ("NANGO_API_KEY", "nango-key"),
             ("NANGO_WEBHOOK_SIGNING_KEY", "nango-signing-key"),
-            ("STRIPE_SECRET_KEY", "sk_test_hosted"),
-            ("STRIPE_MONTHLY_PRICE_ID", "price_monthly"),
-            ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
-            ("LOOPS_KEY", "loops-key"),
             ("PYANNOTE_API_KEY", "pyannote-key"),
             ("EXA_API_KEY", "exa-key"),
             ("JINA_API_KEY", "jina-key"),
@@ -619,8 +682,6 @@ fn subsystem_health_app(
         .with_state(SubsystemHealthState {
             service: Service::All,
             integrations_configured: false,
-            billing_configured: false,
-            billing_webhooks: false,
             cloudsync_configured,
             transcription_configured,
             llm_configured,
@@ -652,8 +713,8 @@ async fn boots_with_minimal_self_hosted_configuration() {
     }
     assert_eq!(
         request_status(&app, Method::POST, "/sync/token").await,
-        StatusCode::NOT_FOUND,
-        "SQLiteCloud credential route should remain optional"
+        StatusCode::UNAUTHORIZED,
+        "credential route must require Shots authentication"
     );
     for (method, path) in [
         (Method::POST, "/research/search"),
@@ -806,7 +867,6 @@ async fn hosted_configuration_keeps_optional_routes_mounted() {
         (Method::POST, "/pyannote/v1/diarize"),
         (Method::POST, "/nango/session"),
         (Method::POST, "/calendar/google/list-calendars"),
-        (Method::GET, "/subscription/can-start-trial"),
     ] {
         assert_eq!(
             request_status(&app, method, path).await,
@@ -836,26 +896,6 @@ fn partial_optional_integration_configuration_fails_closed() {
             "NANGO_API_KEY is required when Nango is configured",
         ),
         (
-            vec![("STRIPE_SECRET_KEY", "sk_test_partial")],
-            "STRIPE_MONTHLY_PRICE_ID is required when subscriptions are configured",
-        ),
-        (
-            vec![("STRIPE_MONTHLY_PRICE_ID", "price_monthly")],
-            "STRIPE_SECRET_KEY is required when subscriptions are configured",
-        ),
-        (
-            vec![("LOOPS_KEY", "loops-key")],
-            "Stripe configuration is required when subscriptions are configured",
-        ),
-        (
-            vec![
-                ("STRIPE_SECRET_KEY", "sk_test_partial"),
-                ("STRIPE_MONTHLY_PRICE_ID", "price_monthly"),
-                ("STRIPE_YEARLY_PRICE_ID", "price_yearly"),
-            ],
-            "LOOPS_KEY is required when subscriptions are configured",
-        ),
-        (
             vec![("PYANNOTE_API_BASE", "https://pyannote.example.com")],
             "PYANNOTE_API_KEY is required when pyannote is configured",
         ),
@@ -880,32 +920,7 @@ fn partial_optional_integration_configuration_fails_closed() {
 #[tokio::test]
 async fn sync_composition_allows_non_pro_web_edits_but_keeps_other_routes_pro_only() {
     let server = MockServer::start().await;
-    Mock::given(method("GET"))
-        .and(path("/auth/v1/.well-known/jwks.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "keys": [{
-                "kty": "EC",
-                "use": "sig",
-                "crv": "P-256",
-                "kid": TEST_KEY_ID,
-                "x": "w7JAoU_gJbZJvV-zCOvU9yFJq0FNC_edCMRM78P8eQQ",
-                "y": "wQg1EytcsEmGrM70Gb53oluoDbVhCZ3Uq3hHMslHVb4",
-                "alg": "ES256"
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-    Mock::given(method("POST"))
-        .and(path("/rest/v1/rpc/edit_session_share_snapshot_cas"))
-        .respond_with(ResponseTemplate::new(403).set_body_json(json!({
-            "code": "42501",
-            "message": "editor access required"
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
+    let auth = test_auth(&server, false).await;
     let sync_state = test_sync_state(&server);
     let replica_state = test_replica_state(&server);
     let app = Router::new().nest(
@@ -917,10 +932,10 @@ async fn sync_composition_allows_non_pro_web_edits_but_keeps_other_routes_pro_on
             test_sync_rate_limit(10),
             test_sync_rate_limit(10),
             test_sync_rate_limit(10),
-            AuthState::new(&server.uri()),
+            auth,
         ),
     );
-    let token = non_pro_token();
+    let token = "opaque-shots-token";
     for (method, path) in [
         (Method::GET, "/sync/devices"),
         (Method::POST, "/sync/e2ee/device-enrollments"),
@@ -1019,53 +1034,9 @@ async fn sync_composition_allows_non_pro_web_edits_but_keeps_other_routes_pro_on
 #[tokio::test]
 async fn sync_composition_keeps_devices_and_sharing_available_when_credentials_are_rate_limited() {
     let server = MockServer::start().await;
-    Mock::given(method("GET"))
-        .and(path("/auth/v1/.well-known/jwks.json"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "keys": [{
-                "kty": "EC",
-                "use": "sig",
-                "crv": "P-256",
-                "kid": TEST_KEY_ID,
-                "x": "w7JAoU_gJbZJvV-zCOvU9yFJq0FNC_edCMRM78P8eQQ",
-                "y": "wQg1EytcsEmGrM70Gb53oluoDbVhCZ3Uq3hHMslHVb4",
-                "alg": "ES256"
-            }]
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-    Mock::given(method("POST"))
-        .and(path("/rest/v1/rpc/publish_session_share_snapshot_cas"))
-        .respond_with(ResponseTemplate::new(403).set_body_json(json!({
-            "code": "42501",
-            "message": "share manager access required"
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Mock::given(method("POST"))
-        .and(path("/rest/v1/rpc/get_sync_device_limit"))
-        .and(body_json(json!({ "p_actor_user_id": "editor-user" })))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!(3)))
-        .expect(1)
-        .mount(&server)
-        .await;
-
+    let auth = test_auth(&server, true).await;
     let sync_state = test_sync_state(&server);
     let replica_state = test_replica_state(&server);
-    for route in [
-        "/rest/v1/sync_devices",
-        "/rest/v1/e2ee_device_enrollment_requests",
-    ] {
-        Mock::given(method("GET"))
-            .and(path(route))
-            .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
-            .expect(1)
-            .mount(&server)
-            .await;
-    }
     let app = Router::new().nest(
         "/sync",
         build_sync_routes(
@@ -1075,10 +1046,10 @@ async fn sync_composition_keeps_devices_and_sharing_available_when_credentials_a
             test_sync_rate_limit(1),
             test_sync_rate_limit(1),
             test_sync_rate_limit(1),
-            AuthState::new(&server.uri()),
+            auth,
         ),
     );
-    let token = token_with_entitlements(&["hyprnote_pro"]);
+    let token = "opaque-shots-token";
     let cloudsync_request = || {
         Request::post("/sync/token")
             .header(header::AUTHORIZATION, format!("Bearer {token}"))
@@ -1145,19 +1116,11 @@ async fn sync_composition_keeps_devices_and_sharing_available_when_credentials_a
 
 #[tokio::test]
 async fn readiness_requires_the_expected_role_configuration_and_accepting_state() {
-    for service in [
-        Service::Ai,
-        Service::Sync,
-        Service::Core,
-        Service::Billing,
-        Service::All,
-    ] {
+    for service in [Service::Ai, Service::Sync, Service::Core, Service::All] {
         let gate = anlg_transcribe_proxy::SessionGate::new();
         let state = SubsystemHealthState {
             service,
             integrations_configured: true,
-            billing_configured: true,
-            billing_webhooks: false,
             cloudsync_configured: true,
             transcription_configured: true,
             llm_configured: true,
@@ -1187,7 +1150,6 @@ async fn readiness_requires_the_expected_role_configuration_and_accepting_state(
             Service::Ai | Service::All => incomplete.transcription_configured = false,
             Service::Sync => incomplete.cloudsync_configured = false,
             Service::Core => incomplete.integrations_configured = false,
-            Service::Billing => incomplete.billing_configured = false,
         }
         assert_eq!(
             request_status(&router(incomplete), Method::GET, &path).await,
@@ -1199,4 +1161,17 @@ async fn readiness_requires_the_expected_role_configuration_and_accepting_state(
             StatusCode::SERVICE_UNAVAILABLE
         );
     }
+}
+
+fn test_database() -> anlg_cloud_db::Database {
+    anlg_cloud_db::Database::new(
+        &std::env::var("CLOUD_DATABASE_TEST_URL")
+            .unwrap_or_else(|_| "postgres://localhost/unavailable_test_database".into()),
+    )
+    .unwrap()
+}
+fn test_storage() -> anlg_r2_storage::Storage {
+    anlg_r2_storage::Storage::new(&serde_json::from_value(serde_json::json!({
+        "r2_endpoint":"http://127.0.0.1:9000", "r2_bucket":"founder-hub-test", "r2_access_key_id":"test-key", "r2_secret_access_key":"test-secret"
+    })).unwrap()).unwrap()
 }

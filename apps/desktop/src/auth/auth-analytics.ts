@@ -1,10 +1,11 @@
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { getVersion } from "@tauri-apps/api/app";
 import { version as osVersion, platform } from "@tauri-apps/plugin-os";
 
+import type { AuthChangeEvent, Session } from "@anlg/cloud-client";
+import { deriveBillingInfo } from "@anlg/cloud-client";
 import { commands as analyticsCommands } from "@anlg/plugin-analytics";
-import { commands as authPluginCommands } from "@anlg/plugin-auth";
-import { deriveBillingInfo } from "@anlg/supabase";
+
+import { cloudClient } from "./client";
 
 import { setErrorReportingUser } from "~/error-reporting";
 
@@ -22,21 +23,15 @@ export async function clearAuthAnalyticsGroups() {
 }
 
 async function getBillingAnalytics(accessToken: string) {
-  const result = await authPluginCommands.decodeClaims(accessToken);
-  if (result.status === "error") {
+  const result = await cloudClient?.claims(accessToken);
+  if (!result || result.error) {
     return {
       plan: "free" as const,
       trialEndDate: null,
     };
   }
 
-  const billing = deriveBillingInfo({
-    sub: result.data.sub,
-    email: result.data.email ?? undefined,
-    entitlements: result.data.entitlements,
-    subscription_status: result.data.subscription_status,
-    trial_end: result.data.trial_end,
-  });
+  const billing = deriveBillingInfo(result.data);
 
   return {
     plan: billing.plan,

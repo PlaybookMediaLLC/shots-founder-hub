@@ -65,6 +65,7 @@ anlg-calendar = { path = "crates/calendar", package = "calendar" }
 anlg-calendar-interface = { path = "crates/calendar-interface", package = "calendar-interface" }
 anlg-claude = { path = "crates/claude", package = "claude" }
 anlg-cli-process = { path = "crates/cli-process", package = "cli-process" }
+anlg-cloud-db = { path = "crates/cloud-db", package = "cloud-db" }
 anlg-cloudsync = { path = "crates/cloudsync", package = "cloudsync" }
 anlg-codex = { path = "crates/codex", package = "codex" }
 anlg-data = { path = "crates/data", package = "data" }
@@ -125,15 +126,15 @@ anlg-outlook-calendar = { path = "crates/outlook-calendar", package = "outlook-c
 anlg-overlay-kit = { path = "crates/overlay-kit", package = "overlay-kit" }
 anlg-pyannote-cloud = { path = "crates/pyannote-cloud", package = "pyannote-cloud" }
 anlg-pyannote-local = { path = "crates/pyannote-local", package = "pyannote-local" }
+anlg-r2-storage = { path = "crates/r2-storage", package = "r2-storage" }
 anlg-resampler = { path = "crates/resampler", package = "resampler" }
 anlg-s3 = { path = "crates/s3", package = "s3" }
+anlg-session-auth = { path = "crates/session-auth", package = "session-auth" }
 anlg-session-ingest = { path = "crates/session-ingest", package = "session-ingest" }
 anlg-shortcut-macos = { path = "crates/shortcut-macos", package = "shortcut-macos" }
 anlg-slack-web = { path = "crates/slack-web", package = "slack-web" }
 anlg-storage = { path = "crates/storage", package = "storage" }
 anlg-summary = { path = "crates/summary", package = "summary" }
-anlg-supabase-auth = { path = "crates/supabase-auth", package = "supabase-auth" }
-anlg-supabase-storage = { path = "crates/supabase-storage", package = "supabase-storage" }
 anlg-tcc = { path = "crates/tcc", package = "tcc" }
 anlg-template-app = { path = "crates/template-app", package = "template-app" }
 anlg-template-app-legacy = { path = "crates/template-app-legacy", package = "template-app-legacy" }
@@ -315,9 +316,6 @@ utoipa = { version = "5", features = ["axum_extras"] }
 chrono = "0.4"
 chrono-tz = "0.10"
 
-async-stripe = { version = "1.0.0-rc.0" }
-async-stripe-billing = { version = "1.0.0-rc.1", default-features = false }
-async-stripe-core = { version = "1.0.0-rc.1", default-features = false }
 gbnf-validator = { git = "https://github.com/fastrepl/gbnf-validator", rev = "3dec055" }
 
 jsonwebtoken = { version = "10", features = ["rust_crypto"] }
@@ -397,6 +395,7 @@ xcap = "0.9.3"
 
 rmcp = "3.2"
 rustls = { version = "0.23", default-features = false }
-sqlx = { version = "=0.9.0-alpha.1", default-features = false }
+sea-orm = { version = "=2.0.4", default-features = false, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-json", "with-chrono", "with-uuid", "stream"] }
+sqlx = { version = "=0.9.0", default-features = false }
 sys-locale = "0.3.2"
 sysinfo = "0.38"

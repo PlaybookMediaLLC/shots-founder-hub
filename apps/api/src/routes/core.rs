@@ -1,4 +1,3 @@
-use super::subscription_aliases;
 use crate::PAID_ENTITLEMENTS;
 use crate::{auth, env::RuntimeConfig};
 use axum::{Router, middleware};
@@ -6,7 +5,7 @@ use std::sync::Arc;
 
 pub(crate) fn router(
     env: &RuntimeConfig,
-    analytics: Arc<anlg_analytics::AnalyticsClient>,
+    _analytics: Arc<anlg_analytics::AnalyticsClient>,
 ) -> Router {
     let auth_state = env.auth_state();
     let auth_state_paid = auth_state.clone().with_required_entitlements(
@@ -16,18 +15,10 @@ pub(crate) fn router(
             .collect(),
     );
     let auth_state_basic = auth_state.clone();
-    let nango_config = env.nango.as_ref().map(|nango| {
-        anlg_api_nango::NangoConfig::new(
-            nango,
-            &env.supabase,
-            Some(env.supabase.supabase_service_role_key.clone()),
-        )
-    });
-    let subscription_config = env.subscription.as_ref().map(|(stripe, loops)| {
-        anlg_api_subscription::SubscriptionConfig::new(&env.supabase, stripe, loops)
-            .with_analytics(analytics.clone())
-            .with_durable_cleanup_enabled(env.anarlog_attachment_backup_gc_enabled)
-    });
+    let nango_config = env
+        .nango
+        .as_ref()
+        .map(|nango| anlg_api_nango::NangoConfig::new(nango, env.database.clone()));
     use anlg_api_nango::NangoIntegrationId;
     let nango_webhook_routes = match nango_config.clone() {
         Some(config) => {
@@ -78,23 +69,8 @@ pub(crate) fn router(
         None => Router::new(),
     };
 
-    let scim_routes = match subscription_config.clone() {
-        Some(config) => anlg_api_subscription::scim_router(config),
-        None => Router::new(),
-    };
-    let account_routes = match subscription_config {
-        Some(config) => subscription_aliases(anlg_api_subscription::account_router(config))
-            .route_layer(middleware::from_fn(auth::sentry_and_analytics))
-            .route_layer(middleware::from_fn_with_state(
-                auth_state,
-                auth::require_auth,
-            )),
-        None => Router::new(),
-    };
     Router::new()
         .merge(nango_webhook_routes)
         .merge(integration_routes)
         .merge(integration_management_routes)
-        .merge(account_routes)
-        .nest("/scim/v2", scim_routes)
 }

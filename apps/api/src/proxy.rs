@@ -17,7 +17,6 @@ pub struct Env {
     pub anarlog_ai_origin: Option<String>,
     pub anarlog_sync_origin: Option<String>,
     pub anarlog_core_origin: Option<String>,
-    pub anarlog_billing_origin: Option<String>,
 }
 
 impl Env {
@@ -26,7 +25,6 @@ impl Env {
             &self.anarlog_ai_origin,
             &self.anarlog_sync_origin,
             &self.anarlog_core_origin,
-            &self.anarlog_billing_origin,
         ]
         .into_iter()
         .flatten()

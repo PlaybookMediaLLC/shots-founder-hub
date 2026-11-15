@@ -5,7 +5,7 @@ pub mod integrations;
 mod openapi;
 mod routes;
 mod state;
-mod supabase;
+mod store;
 
 pub use config::NangoConfig;
 pub use extractor::{

@@ -25,9 +25,7 @@ use gateway::{
     sign_attachment_download, validate_handoff, validate_handoff_lease, validate_snapshot,
 };
 use invitation::__path_send_shared_note_invitation_email;
-use invitation::__path_send_workspace_invitation_email;
 use invitation::send_shared_note_invitation_email;
-use invitation::send_workspace_invitation_email;
 
 use crate::{
     SharedNotesConfig,
@@ -49,7 +47,7 @@ const MAX_RECAP_EMAIL_REQUEST_BYTES: usize = 128 * 1024;
 const MAX_ACCESS_LIST_RESPONSE_BYTES: usize = 1024 * 1024;
 const SHARED_ATTACHMENT_BUCKET: &str = "shared-note-attachments";
 const ATTACHMENT_DOWNLOAD_TTL_SECONDS: i64 = 60;
-const FLY_CLIENT_IP_HEADER: &str = "fly-client-ip";
+const CLIENT_IP_HEADER: &str = "do-connecting-ip";
 const HANDOFF_SOURCE_DOMAIN: &[u8] = b"anarlog:shared-note-handoff-source:v1\0";
 const INVITATION_TRANSACTIONAL_ID: &str = "cmrvkrh3c0k0t0jvh80zpkk93";
 
@@ -62,8 +60,7 @@ pub fn recap_openapi() -> utoipa::openapi::OpenApi {
 #[derive(Clone)]
 pub struct SharedNotesState {
     config: SharedNotesConfig,
-    client: reqwest::Client,
-    storage: anlg_supabase_storage::SupabaseStorage,
+    storage: anlg_r2_storage::Storage,
     email_delivery: Option<email_delivery::EmailDelivery>,
 }
 
@@ -74,11 +71,7 @@ impl SharedNotesState {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .expect("shared-note HTTP client must build");
-        let storage = anlg_supabase_storage::SupabaseStorage::new(
-            client.clone(),
-            &config.supabase_url,
-            &config.supabase_service_role_key,
-        );
+        let storage = config.storage.clone();
         let email_delivery = if let (Some(api_key), Some(from_email)) = (
             config.resend_api_key.clone(),
             config.resend_from_email.clone(),
@@ -102,7 +95,6 @@ impl SharedNotesState {
         };
         Self {
             config,
-            client,
             storage,
             email_delivery,
         }
@@ -110,14 +102,13 @@ impl SharedNotesState {
 
     fn handoff_source_hash(&self, headers: &HeaderMap) -> String {
         let source = headers
-            .get(FLY_CLIENT_IP_HEADER)
+            .get(CLIENT_IP_HEADER)
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.parse::<IpAddr>().ok())
             .map(|address| address.to_string())
             .unwrap_or_else(|| "unknown".to_string());
-        let mut mac =
-            Hmac::<Sha256>::new_from_slice(self.config.supabase_service_role_key.as_bytes())
-                .expect("HMAC accepts service-role keys of any size");
+        let mut mac = Hmac::<Sha256>::new_from_slice(self.config.handoff_signing_key.as_bytes())
+            .expect("HMAC accepts the validated signing key");
         mac.update(HANDOFF_SOURCE_DOMAIN);
         mac.update(source.as_bytes());
         let bytes = mac.finalize().into_bytes();
@@ -161,16 +152,6 @@ pub struct SharedNoteInvitationEmailRequest {
     share_id: String,
     invite_token: String,
     note_title: String,
-    #[serde(default)]
-    from_name: String,
-}
-
-#[derive(Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct WorkspaceInvitationEmailRequest {
-    workspace_id: String,
-    invite_token: String,
-    workspace_name: String,
     #[serde(default)]
     from_name: String,
 }
@@ -439,8 +420,7 @@ struct GatewayHandoffRow {
         download_public_shared_attachment,
         download_link_shared_attachment,
         download_access_shared_attachment,
-        send_shared_note_invitation_email,
-        send_workspace_invitation_email
+        send_shared_note_invitation_email
     ),
     components(schemas(
         SharedNoteLinkRequest,
@@ -448,7 +428,6 @@ struct GatewayHandoffRow {
         SharedNoteHandoffClaimRequest,
         SharedNoteHandoffAttachmentRequest,
         SharedNoteInvitationEmailRequest,
-        WorkspaceInvitationEmailRequest,
         SharedNoteSnapshot,
         StableSharedNoteSnapshot,
         SharedNotePreview,
@@ -536,11 +515,6 @@ pub fn authenticated_router(state: SharedNotesState) -> Router {
         .route(
             "/shared-notes/invitations/{invitation_id}/email",
             post(send_shared_note_invitation_email)
-                .layer(DefaultBodyLimit::max(MAX_INVITATION_EMAIL_REQUEST_BYTES)),
-        )
-        .route(
-            "/workspaces/invitations/{invitation_id}/email",
-            post(send_workspace_invitation_email)
                 .layer(DefaultBodyLimit::max(MAX_INVITATION_EMAIL_REQUEST_BYTES)),
         )
         .route(

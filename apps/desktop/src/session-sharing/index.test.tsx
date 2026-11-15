@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   auth: {
     session: null as any,
-    supabase: {} as any,
+    cloudClient: {} as any,
     signIn: vi.fn().mockResolvedValue(undefined),
   },
   billing: {
@@ -447,7 +447,7 @@ describe("SessionShareButton", () => {
     mocks.workspaces = [];
     mocks.defaultMeetingShareAccess = "me";
     mocks.auth.session = createSession();
-    mocks.auth.supabase = {};
+    mocks.auth.cloudClient = {};
     mocks.billing.isReady = true;
     mocks.billing.isPaid = true;
     mocks.syncStatus = "clean";

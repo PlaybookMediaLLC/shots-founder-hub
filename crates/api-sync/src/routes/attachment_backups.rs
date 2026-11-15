@@ -19,8 +19,6 @@ use crate::{
 mod ledger;
 mod validation;
 
-#[cfg(test)]
-use ledger::MAX_BACKUP_RPC_RESPONSE_BYTES;
 use ledger::{
     CanceledDeletionRow, CurrentRow, CurrentRpcRequest, DeleteRpcRequest, FinalizeRpcRequest,
     FinalizedRow, MarkSignedRpcRequest, MarkedSignedRow, PrepareDownloadRpcRequest,
@@ -373,14 +371,18 @@ async fn grant_attachment_backup_upload(
         &upload_expires_at,
     )?;
 
-    let signed_upload = state
-        .storage
-        .create_signed_upload(ATTACHMENT_BACKUP_BUCKET, &object_key)
-        .await
-        .map_err(|_| {
-            tracing::warn!("Supabase Storage upload signing failed");
-            SyncError::AttachmentBackupServiceUnavailable
-        })?;
+    let upload_token = crate::uploads::grant(
+        &state,
+        &owner_user_id,
+        ATTACHMENT_BACKUP_BUCKET,
+        &object_key,
+        "application/octet-stream",
+        valid_size(object.ciphertext_size_bytes)?,
+        serde_json::json!({"formatVersion": 1, "ciphertextSha256": request.ciphertext_sha256}),
+        &upload_expires_at,
+    )
+    .await
+    .map_err(|_| SyncError::AttachmentBackupServiceUnavailable)?;
 
     Ok(Json(AttachmentBackupUploadGrant {
         object_id: object.object_id,
@@ -390,7 +392,7 @@ async fn grant_attachment_backup_upload(
         ciphertext_sha256: marked.ciphertext_sha256,
         format_version: object.format_version,
         upload_expires_at: Some(marked.upload_expires_at),
-        upload_token: Some(signed_upload.token),
+        upload_token: Some(upload_token),
     }))
 }
 
@@ -444,7 +446,7 @@ async fn finalize_attachment_backup(
         .object_info(ATTACHMENT_BACKUP_BUCKET, &object_key)
         .await
         .map_err(|_| {
-            tracing::warn!("Supabase Storage object verification failed");
+            tracing::warn!("R2 storage object verification failed");
             SyncError::AttachmentBackupServiceUnavailable
         })?;
     let expected_size = valid_size(object.ciphertext_size_bytes)?;
@@ -470,7 +472,7 @@ async fn finalize_attachment_backup(
         .object_sha256(ATTACHMENT_BACKUP_BUCKET, &object_key, expected_size)
         .await
         .map_err(|_| {
-            tracing::warn!("Supabase Storage object checksum verification failed");
+            tracing::warn!("R2 storage object checksum verification failed");
             SyncError::AttachmentBackupServiceUnavailable
         })?;
     if observed_ciphertext_sha256 != expected_ciphertext_sha256 {
@@ -664,7 +666,7 @@ async fn download_attachment_backup(
         )
         .await
         .map_err(|_| {
-            tracing::warn!("Supabase Storage download signing failed");
+            tracing::warn!("R2 storage download signing failed");
             SyncError::AttachmentBackupServiceUnavailable
         })?;
 
@@ -806,6 +808,3 @@ async fn cancel_attachment_backup_deletion(
         delete_request_id: request.delete_request_id,
     }))
 }
-
-#[cfg(test)]
-mod tests;

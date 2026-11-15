@@ -2,12 +2,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 
-import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+import { getShotsSettingsUrl } from "@anlg/cloud-client/shots";
 
 import { accountPlanLabel, fetchWorkspacePlan } from "@/auth/account-plan";
-import { supabase } from "@/auth/client";
+import { cloudClient } from "@/auth/client";
 import { useAuth } from "@/auth/context";
-import { useTrial } from "@/auth/use-trial";
 import { confirmDestructive } from "@/lib/confirm";
 import { env } from "@/lib/env";
 import {
@@ -22,7 +21,6 @@ import { getShotsVoice } from "@/shots-voice/store";
 
 export default function AccountSettings() {
   const auth = useAuth();
-  const trial = useTrial();
   const router = useRouter();
   const accountId = auth.session?.user.id;
   const workspacePlan = useQuery({
@@ -30,12 +28,12 @@ export default function AccountSettings() {
     enabled: Boolean(accountId) && !auth.bypass,
     retry: 1,
     queryFn: async ({ signal }) => {
-      const current = await supabase!.auth.getSession();
+      const current = await cloudClient!.auth.getSession();
       const session = current.data.session;
       if (current.error || !session || session.user.id !== accountId)
         throw new Error("Sign in again to refresh your plan.");
       return fetchWorkspacePlan({
-        client: supabase!,
+        client: cloudClient!,
         accessToken: session.access_token,
         signal,
       });
@@ -128,18 +126,9 @@ export default function AccountSettings() {
                 ? "Your Pro trial includes cloud sync and Shots Founder Hub models. After it ends, you can keep using your notes, recording, and your own API keys."
                 : auth.billing.isPro
                   ? "Cloud sync and Shots Founder Hub models are included in your subscription."
-                  : trial.isFetching
-                    ? "Checking your free Pro trial. You can start taking notes and recording now."
-                    : "Notes and recording are free. Cloud sync and Shots Founder Hub models require an active Pro trial or subscription. You can also use your own API keys."}
+                  : "Notes and recording are free. Manage cloud sync and AI access through your Shots workspace. You can also use your own API keys."}
             </Text>
           </FieldGroup.SectionFooter>
-          {!auth.billing.isPro && trial.error && (
-            <SettingsRow
-              title="Retry trial activation"
-              onPress={() => void trial.refetch()}
-            />
-          )}
-          <SettingsError error={!auth.billing.isPro ? trial.error : null} />
           <SettingsRow
             title="Manage account & subscription"
             onPress={() => manage.mutate()}

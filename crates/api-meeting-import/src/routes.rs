@@ -148,12 +148,7 @@ async fn connection_http(
         ));
     }
     nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            integration_id,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, integration_id, &req.connection_id)
         .await
         .map_err(MeetingImportError::from)
 }

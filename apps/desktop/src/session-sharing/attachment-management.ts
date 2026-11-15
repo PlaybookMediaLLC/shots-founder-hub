@@ -63,7 +63,7 @@ export function useSessionAttachmentManagement({
         const context = requireActiveContext(signal);
         const prepared = await prepareSessionShareAttachment({
           apiBaseUrl: env.VITE_API_URL,
-          supabaseUrl: env.VITE_SUPABASE_URL ?? "",
+          cloudUrl: env.VITE_CLOUD_URL ?? "",
           session: context.session,
           shareId: identity.shareId,
           attachment,

@@ -78,9 +78,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
     config.serviceToken,
     config.authSecret,
     config.authorityToken,
-    config.storageJwtSecret,
-    config.restPassword,
-    config.storagePassword,
+    config.cloudSigningKey,
     config.objectPassword,
     config.socialEncryptionKey,
     config.webhookEncryptionKey,
@@ -95,9 +93,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
   assert.equal(again.status, 0, again.stderr + again.stdout);
   assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), config);
   const legacy = { ...config };
-  delete legacy.storageJwtSecret;
-  delete legacy.restPassword;
-  delete legacy.storagePassword;
+  delete legacy.cloudSigningKey;
   delete legacy.objectPassword;
   delete legacy.socialEncryptionKey;
   delete legacy.webhookEncryptionKey;
@@ -108,7 +104,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
   const migrated = JSON.parse(readFileSync(path, "utf8"));
   assert.equal(migrated.postgresPassword, config.postgresPassword);
   assert.equal(migrated.authorityToken, config.authorityToken);
-  assert.equal(migrated.storageJwtSecret.length, 64);
+  assert.equal(migrated.cloudSigningKey.length, 64);
   assert.equal(migrated.objectPassword.length, 64);
   assert.equal(migrated.socialEncryptionKey.length, 64);
   assert.equal(migrated.webhookEncryptionKey.length, 64);

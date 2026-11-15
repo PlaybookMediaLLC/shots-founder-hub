@@ -105,12 +105,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       appVariant,
       appScheme: variant.scheme,
       shotsUrl: process.env.EXPO_PUBLIC_SHOTS_URL ?? "",
-      supabaseUrl:
-        process.env.EXPO_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "",
-      supabaseAnonKey:
-        process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
-        process.env.SUPABASE_ANON_KEY ??
-        "",
+      r2DownloadBaseUrl: process.env.EXPO_PUBLIC_R2_DOWNLOAD_BASE_URL ?? "",
       apiUrl:
         process.env.EXPO_PUBLIC_API_URL ??
         (isDev ? "http://localhost:3001" : "https://api.anarlog.so"),

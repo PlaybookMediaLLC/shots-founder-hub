@@ -1,10 +1,4 @@
 import { t } from "@lingui/core/macro";
-import {
-  type AuthChangeEvent,
-  AuthRetryableFetchError,
-  AuthSessionMissingError,
-  type Session,
-} from "@supabase/supabase-js";
 import { useMutation } from "@tanstack/react-query";
 import { emit, emitTo, listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -12,13 +6,19 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { commands as miscCommands } from "@anlg/plugin-misc";
-import { commands as openerCommands } from "@anlg/plugin-opener2";
-import { openUrlWithInstruction } from "@anlg/plugin-windows";
+import {
+  type AuthChangeEvent,
+  AuthRetryableFetchError,
+  AuthSessionMissingError,
+  type Session,
+} from "@anlg/cloud-client";
 import {
   getCustomProfileImageUrl,
   getProviderProfileImageUrl,
-} from "@anlg/supabase/profile";
+} from "@anlg/cloud-client/profile";
+import { commands as miscCommands } from "@anlg/plugin-misc";
+import { commands as openerCommands } from "@anlg/plugin-opener2";
+import { openUrlWithInstruction } from "@anlg/plugin-windows";
 import { toast } from "@anlg/ui/components/ui/toast";
 import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
 
@@ -28,7 +28,7 @@ import {
   trackAuthEvent,
 } from "./auth-analytics";
 import { AuthContext } from "./auth-context";
-import { persistAuthSession, supabase } from "./client";
+import { persistAuthSession, cloudClient } from "./client";
 import {
   bindCloudsyncAccountForAuth,
   type CloudsyncAccountAdmission,
@@ -181,11 +181,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setSessionFromTokens = useCallback(
     async (accessToken: string, refreshToken: string) => {
-      if (!supabase) {
-        throw new Error("Supabase client not found");
+      if (!cloudClient) {
+        throw new Error("Cloud client not found");
       }
 
-      const res = await supabase.auth.setSession({
+      const res = await cloudClient.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
@@ -201,10 +201,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (url: string) => {
       if (env.VITE_SHOTS_URL) {
         if (
-          !env.VITE_SUPABASE_URL ||
+          !env.VITE_CLOUD_URL ||
           !(await installShotsDesktopAuthSession(
             url,
-            env.VITE_SUPABASE_URL,
+            env.VITE_CLOUD_URL,
             tauriFetch,
             setSessionFromTokens,
           ))
@@ -280,9 +280,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (invalidateClientSession && supabase) {
+      if (invalidateClientSession && cloudClient) {
         try {
-          await supabase.auth.stopAutoRefresh();
+          await cloudClient.auth.stopAutoRefresh();
         } catch {
           console.warn("[auth] session refresh could not be stopped");
         }
@@ -292,7 +292,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-          const { error } = await supabase.auth.signOut({ scope: "local" });
+          const { error } = await cloudClient.auth.signOut({ scope: "local" });
           if (error) {
             console.warn("[auth] rejected session could not be invalidated");
           }
@@ -410,9 +410,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (supabase) {
+      if (cloudClient) {
         try {
-          await supabase.auth.startAutoRefresh();
+          await cloudClient.auth.startAutoRefresh();
         } catch {
           console.warn("[auth] session refresh could not be started");
         }
@@ -561,7 +561,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             );
             commitSession(nextSession);
             void enqueueAuthAnalytics(() => trackAuthEvent(event, nextSession));
-            void supabase?.auth.startAutoRefresh().catch(() => {
+            void cloudClient?.auth.startAutoRefresh().catch(() => {
               console.warn("[auth] session refresh could not be started");
             });
             finishLateAdmission(
@@ -754,14 +754,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    if (!supabase) {
+    if (!cloudClient) {
       return;
     }
 
     if (!initStartedRef.current) {
       initStartedRef.current = true;
       const initialTransition = authTransitionRef.current;
-      void loadInitialSession(supabase, (error, storedSession) => {
+      void loadInitialSession(cloudClient, (error, storedSession) => {
         if (initialTransition === authTransitionRef.current) {
           handleRefreshFailure(error, storedSession);
         }
@@ -774,7 +774,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = cloudClient.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") {
         return;
       }
@@ -805,23 +805,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   // Tauri's visibilitychange event is broken (always reports "visible" on Windows,
-  // only fires on minimize/maximize on macOS — not when hidden behind other windows).
-  // The Supabase SDK relies on visibilitychange to start/stop its auto-refresh ticker,
-  // which can cause sessions to expire during inactivity when the window is hidden.
-  // We bypass this by running the ticker continuously and using Tauri's native
-  // onFocusChanged for immediate recovery after sleep/hibernate.
-  // See: https://supabase.com/docs/guides/auth/sessions
+  // only fires on minimize/maximize on macOS — not when hidden behind other windows),
+  // so the refresh ticker runs continuously and does not depend on visibility.
+  // In the main window, Tauri's native onFocusChanged also checks the session
+  // and refreshes it when it is near expiry, to recover after sleep/hibernate.
   // See: https://github.com/tauri-apps/tauri/issues/10592
   useEffect(() => {
-    if (!supabase) {
+    if (!cloudClient) {
       return;
     }
 
-    const client = supabase;
+    const client = cloudClient;
 
-    // startAutoRefresh() removes the SDK's visibilitychange listener and
-    // runs the refresh ticker continuously (checks storage every 30s,
-    // only makes a network call when the token is near expiry).
+    // startAutoRefresh() runs the refresh ticker continuously (checks storage
+    // every 30s, only makes a network call when the token is near expiry).
     console.log("[auth] startAutoRefresh: mounting continuous ticker");
     void client.auth.startAutoRefresh();
 
@@ -831,8 +828,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .onFocusChanged(({ payload: focused }) => {
         console.log(`[auth] onFocusChanged: focused=${focused}`);
         if (focused) {
-          // Restart the ticker on window focus to trigger an immediate refresh
-          // check, recovering stale sessions after sleep/hibernate.
+          // Make sure the ticker runs. The main window checks the session
+          // below for immediate recovery after sleep/hibernate.
           console.log("[auth] startAutoRefresh: window regained focus");
           void client.auth.startAutoRefresh();
           if (managesCloudsync) {
@@ -916,7 +913,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [handleRefreshFailure, managesCloudsync, rejectAccountMismatch]);
 
   const signOutFromMain = useCallback(async (): Promise<boolean> => {
-    if (!supabase) {
+    if (!cloudClient) {
       return false;
     }
 
@@ -934,7 +931,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let signOutError: unknown = null;
 
     try {
-      const { error } = await supabase.auth.signOut({ scope: "local" });
+      const { error } = await cloudClient.auth.signOut({ scope: "local" });
       if (transition !== authTransitionRef.current) {
         return authTransitionEventRef.current === "SIGNED_OUT";
       }
@@ -1113,12 +1110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSessionMutation = useMutation({
     mutationFn: async (): Promise<Session | null> => {
-      if (!supabase) {
+      if (!cloudClient) {
         return null;
       }
 
       const attemptedSession = sessionRef.current;
-      const { data, error } = await supabase.auth.refreshSession();
+      const { data, error } = await cloudClient.auth.refreshSession();
       if (error) {
         handleRefreshFailure(error, attemptedSession);
         return null;
@@ -1136,13 +1133,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (options?: {
       requireLibraryAdmission?: boolean;
     }): Promise<Session | null> => {
-      if (!supabase) {
+      if (!cloudClient) {
         return null;
       }
 
       let requestSession = sessionRef.current;
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await cloudClient.auth.getSession();
         handleRefreshFailure(error, requestSession);
         if (!error && data.session) {
           requestSession = data.session;
@@ -1240,7 +1237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       session,
-      supabase,
+      cloudClient,
       isFingerprintSettled,
       signIn,
       signOut,

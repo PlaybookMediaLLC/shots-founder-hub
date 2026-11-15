@@ -5,6 +5,8 @@ mod routes;
 mod shared_notes;
 mod snapshot;
 mod state;
+mod uploads;
+pub use uploads::{file_router, router as file_upload_router};
 
 pub use config::{ReplicaConfig, SharedNotesConfig, SyncConfig, SyncEnv};
 pub use error::{Result, SyncError};
@@ -18,3 +20,6 @@ pub use shared_notes::{
     router as shared_notes_router,
 };
 pub use state::{AppState, ReplicaState};
+
+#[cfg(test)]
+mod test_support;

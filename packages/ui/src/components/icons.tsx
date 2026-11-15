@@ -151,7 +151,6 @@ import {
   RotateCcwIcon,
   RotateClockwiseIcon,
   Search01Icon,
-  SentIcon,
   Settings01Icon,
   Settings02Icon,
   Share08Icon,
@@ -649,10 +648,6 @@ export const NotePencil = /* @__PURE__ */ createIcon(
 export const Package = /* @__PURE__ */ createIcon(PackageIcon, "Package");
 export const Palette = /* @__PURE__ */ createIcon(PaletteIcon, "Palette");
 export const Paperclip = /* @__PURE__ */ createIcon(PaperclipIcon, "Paperclip");
-export const PaperPlaneTilt = /* @__PURE__ */ createIcon(
-  SentIcon,
-  "PaperPlaneTilt",
-);
 export const Pause = /* @__PURE__ */ createIcon(PauseIcon, "Pause");
 export const Pencil = /* @__PURE__ */ createIcon(PencilIcon, "Pencil");
 export const PencilSimple = /* @__PURE__ */ createIcon(

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-import { getSupabaseServerClient } from "@/functions/supabase";
+import { getCloudServerClient } from "@/functions/cloud-client";
 import {
   getSharedNoteDescription,
   parseSharedNoteDocument,
@@ -58,8 +58,8 @@ export const listMyManagedShares = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<ManagedSharesResult> => {
     setResponseHeader("Cache-Control", "no-store");
 
-    const supabase = getSupabaseServerClient();
-    const { data: rows, error } = await supabase.rpc(
+    const cloudClient = getCloudServerClient();
+    const { data: rows, error } = await cloudClient.rpc(
       "list_my_managed_share_gallery_page",
       {
         p_query: data.query ?? null,
@@ -105,8 +105,8 @@ function getSnapshotPreview(body: unknown, title: string) {
 }
 
 async function listManagedShareIds() {
-  const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase.rpc("list_my_accessible_sessions");
+  const cloudClient = getCloudServerClient();
+  const { data, error } = await cloudClient.rpc("list_my_accessible_sessions");
   if (error || !Array.isArray(data)) {
     return null;
   }
@@ -123,8 +123,8 @@ async function listManagedShareIds() {
 export const deleteMyShare = createServerFn({ method: "POST" })
   .validator(z.object({ shareId: z.string().uuid() }))
   .handler(async ({ data }) => {
-    const supabase = getSupabaseServerClient();
-    const { error } = await supabase.rpc("delete_session_share", {
+    const cloudClient = getCloudServerClient();
+    const { error } = await cloudClient.rpc("delete_session_share", {
       p_share_id: data.shareId,
     });
 
@@ -137,8 +137,8 @@ export const deleteMyShare = createServerFn({ method: "POST" })
 export const restrictMyShare = createServerFn({ method: "POST" })
   .validator(z.object({ shareId: z.string().uuid() }))
   .handler(async ({ data }) => {
-    const supabase = getSupabaseServerClient();
-    const { error } = await supabase.rpc("set_session_share_scope", {
+    const cloudClient = getCloudServerClient();
+    const { error } = await cloudClient.rpc("set_session_share_scope", {
       p_share_id: data.shareId,
       p_general_scope: "restricted",
     });
@@ -162,11 +162,11 @@ export const deleteMyShares = createServerFn({ method: "POST" }).handler(
       return { success: true as const };
     }
 
-    const supabase = getSupabaseServerClient();
+    const cloudClient = getCloudServerClient();
     let failed = 0;
 
     for (const shareId of shareIds) {
-      const { error } = await supabase.rpc("delete_session_share", {
+      const { error } = await cloudClient.rpc("delete_session_share", {
         p_share_id: shareId,
       });
       if (error) {

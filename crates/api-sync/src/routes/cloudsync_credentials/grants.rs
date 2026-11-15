@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use super::{CloudsyncWorkspace, SUPABASE_REQUEST_TIMEOUT, identity::is_valid_e2ee_key_id};
+use super::{CloudsyncWorkspace, identity::is_valid_e2ee_key_id};
 use crate::{
     error::{Result, SyncError},
     state::ReplicaState,
@@ -77,94 +77,59 @@ struct SetWorkspaceE2eeKeyRow {
     granted_member_count: i64,
 }
 
+fn workspace_key_error(error: anlg_cloud_db::Error) -> SyncError {
+    match error {
+        anlg_cloud_db::Error::Database { code, .. } if code == "42501" => {
+            SyncError::WorkspaceKeyForbidden
+        }
+        _ => SyncError::Upstream,
+    }
+}
+
 pub(super) async fn fetch_workspace_key_recipients(
     state: &ReplicaState,
-    access_token: &str,
+    auth: &anlg_api_auth::AuthContext,
     workspace_id: &str,
 ) -> Result<Vec<WorkspaceE2eeKeyRecipient>> {
     validate_workspace_id(workspace_id)?;
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/list_workspace_key_recipients",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_anon_key)
-        .bearer_auth(access_token)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&ListWorkspaceKeyRecipientsRpcRequest {
-            p_workspace_id: workspace_id,
-        })
-        .send()
+    let recipients: Vec<WorkspaceE2eeKeyRecipient> = state
+        .rpc(
+            &auth.principal().map_err(|_| SyncError::Upstream)?,
+            "list_workspace_key_recipients",
+            &ListWorkspaceKeyRecipientsRpcRequest {
+                p_workspace_id: workspace_id,
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace E2EE recipients request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase workspace E2EE recipients request was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-    let recipients = response
-        .json::<Vec<WorkspaceE2eeKeyRecipient>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace E2EE recipients response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(workspace_key_error)?;
     validate_workspace_key_recipients(recipients)
 }
 
 pub(super) async fn publish_workspace_e2ee_key(
     state: &ReplicaState,
-    access_token: &str,
+    auth: &anlg_api_auth::AuthContext,
     workspace_id: &str,
     request: SetWorkspaceE2eeKeyRequest,
 ) -> Result<SetWorkspaceE2eeKeyResult> {
     validate_workspace_id(workspace_id)?;
     validate_workspace_key_grant_uploads(&request)?;
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/set_workspace_e2ee_key",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_anon_key)
-        .bearer_auth(access_token)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&SetWorkspaceE2eeKeyRpcRequest {
-            p_workspace_id: workspace_id,
-            p_key_id: &request.key_id,
-            p_grants: &request.grants,
-        })
-        .send()
+    let mut rows: Vec<SetWorkspaceE2eeKeyRow> = state
+        .rpc(
+            &auth.principal().map_err(|_| SyncError::Upstream)?,
+            "set_workspace_e2ee_key",
+            &SetWorkspaceE2eeKeyRpcRequest {
+                p_workspace_id: workspace_id,
+                p_key_id: &request.key_id,
+                p_grants: &request.grants,
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace E2EE key publication failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase workspace E2EE key publication was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-    let mut rows = response
-        .json::<Vec<SetWorkspaceE2eeKeyRow>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace E2EE key response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(workspace_key_error)?;
     if rows.len() != 1
         || rows[0].key_id != request.key_id
         || !(1..=MAX_WORKSPACE_KEY_RECIPIENTS as i64).contains(&rows[0].granted_member_count)
     {
-        tracing::warn!("Supabase workspace E2EE key response failed validation");
+        tracing::warn!("Cloud database workspace E2EE key response failed validation");
         return Err(SyncError::Upstream);
     }
     let row = rows.pop().expect("row count was checked");
@@ -186,7 +151,7 @@ struct WorkspaceE2eeKeyGrantRow {
 
 pub(super) async fn fetch_workspace_key_grants(
     state: &ReplicaState,
-    access_token: &str,
+    auth: &anlg_api_auth::AuthContext,
     workspaces: &[CloudsyncWorkspace],
 ) -> Result<Vec<WorkspaceE2eeKeyGrant>> {
     let shared_workspace_ids = workspaces
@@ -198,36 +163,14 @@ pub(super) async fn fetch_workspace_key_grants(
         return Ok(Vec::new());
     }
 
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/list_all_my_workspace_e2ee_grants",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_anon_key)
-        .bearer_auth(access_token)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&serde_json::json!({}))
-        .send()
+    let rows: Vec<WorkspaceE2eeKeyGrantRow> = state
+        .rpc(
+            &auth.principal().map_err(|_| SyncError::Upstream)?,
+            "list_all_my_workspace_e2ee_grants",
+            &serde_json::json!({}),
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace E2EE grants request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase workspace E2EE grants request was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-    let rows = response
-        .json::<Vec<WorkspaceE2eeKeyGrantRow>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace E2EE grants response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(|_| SyncError::Upstream)?;
     validate_workspace_key_grants(rows, &shared_workspace_ids)
 }
 
@@ -250,7 +193,7 @@ fn validate_workspace_key_grants(
             || !identities.insert((row.workspace_id.clone(), row.key_id.clone()))
             || (row.is_active && !active_workspaces.insert(row.workspace_id.clone()))
         {
-            tracing::warn!("Supabase workspace E2EE grants response failed validation");
+            tracing::warn!("Cloud database workspace E2EE grants response failed validation");
             return Err(SyncError::Upstream);
         }
         grants.push(WorkspaceE2eeKeyGrant {
@@ -300,7 +243,7 @@ fn validate_workspace_key_recipients(
                 !is_valid_e2ee_key_id(key_id) || !granted_key_ids.insert(key_id.as_str())
             })
         {
-            tracing::warn!("Supabase workspace E2EE recipients response failed validation");
+            tracing::warn!("Cloud database workspace E2EE recipients response failed validation");
             return Err(SyncError::Upstream);
         }
     }

@@ -33,7 +33,7 @@ function dependencies() {
         sizeBytes: job.sizeBytes,
         sha256: job.sha256,
         signedUrl:
-          "https://project.supabase.co/storage/v1/object/sign/shared/file?token=one",
+          "https://project.example.test/storage/v1/object/sign/shared/file?token=one",
         expiresAt: "2026-07-17T12:01:00.000Z",
       }),
     },
@@ -92,7 +92,7 @@ describe("shared attachment cache runner", () => {
       {
         scopeId: job.viewerUserId,
         attachmentId: job.attachmentId,
-        signedUrl: expect.stringContaining("project.supabase.co"),
+        signedUrl: expect.stringContaining("project.example.test"),
         expectedSha256: job.sha256,
         expectedSizeBytes: job.sizeBytes,
       },

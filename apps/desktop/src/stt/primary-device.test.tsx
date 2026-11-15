@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@anlg/ui/components/ui/toast", () => ({ toast: mocks.toast }));
 vi.mock("~/auth/client", () => ({
-  supabase: { auth: { getSession: mocks.getSession } },
+  cloudClient: { auth: { getSession: mocks.getSession } },
 }));
 vi.mock("~/auth/cloudsync-credentials", () => ({
   getDeviceIdentity: () => Promise.resolve({ fingerprint: "this-device" }),
@@ -303,12 +303,16 @@ test("asks when another device is recording, and interaction claims", async () =
   expect(mocks.stop).not.toHaveBeenCalled();
 });
 
+// Load the real toast UI once at collection time. A cold import inside the
+// test body can exceed the 5 s test timeout.
+const actualToast = await vi.importActual<
+  typeof import("@anlg/ui/components/ui/toast")
+>("@anlg/ui/components/ui/toast");
+
 test.each(["Yes", "No"])(
   "clicking the recording question keeps it unanswered until %s is selected",
   async (answer) => {
-    const { toast, Toaster } = await vi.importActual<
-      typeof import("@anlg/ui/components/ui/toast")
-    >("@anlg/ui/components/ui/toast");
+    const { toast, Toaster } = actualToast;
     mocks.toast.mockImplementation(toast);
     render(<Toaster />);
     mocks.requestMeetingDevices.mockResolvedValue([

@@ -10,7 +10,6 @@ use axum::{
     routing::post,
 };
 use chrono::{SecondsFormat, TimeDelta, Utc};
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use utoipa::OpenApi;
@@ -176,11 +175,6 @@ struct FinalizedRow {
     object_key: String,
     object_state: String,
     was_finalized: bool,
-}
-
-#[derive(Deserialize)]
-struct PostgrestError {
-    code: String,
 }
 
 #[derive(OpenApi)]
@@ -355,14 +349,18 @@ async fn grant_shared_attachment_upload(
     )
     .await?;
     validate_marked(&marked, &object, &request.sha256, &upload_expires_at)?;
-    let signed = state
-        .storage
-        .create_signed_upload(BUCKET, &object_key)
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "shared attachment upload signing failed");
-            SyncError::SharedAttachmentServiceUnavailable
-        })?;
+    let upload_token = crate::uploads::grant(
+        &state,
+        &actor_user_id,
+        BUCKET,
+        &object_key,
+        &marked.content_type,
+        valid_size(marked.size_bytes)?,
+        serde_json::json!({"plaintextSha256": request.sha256}),
+        &upload_expires_at,
+    )
+    .await
+    .map_err(|_| SyncError::SharedAttachmentServiceUnavailable)?;
 
     Ok(Json(SharedAttachmentUploadGrant {
         attachment_id: marked.attachment_id,
@@ -373,7 +371,7 @@ async fn grant_shared_attachment_upload(
         size_bytes: valid_size(marked.size_bytes)?,
         sha256: marked.sha256,
         upload_expires_at: Some(marked.upload_expires_at),
-        upload_token: Some(signed.token),
+        upload_token: Some(upload_token),
     }))
 }
 
@@ -518,46 +516,27 @@ where
     RequestBody: Serialize + ?Sized,
     Row: DeserializeOwned,
 {
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/{function}",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(RPC_TIMEOUT)
-        .json(request)
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(function, %error, "shared attachment ledger request failed");
-            SyncError::SharedAttachmentServiceUnavailable
-        })?;
-    let status = response.status();
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|_| SyncError::SharedAttachmentServiceUnavailable)?;
-    if bytes.len() > MAX_RPC_RESPONSE_BYTES {
-        return Err(SyncError::SharedAttachmentServiceUnavailable);
-    }
-    if !status.is_success() {
-        let code = serde_json::from_slice::<PostgrestError>(&bytes)
-            .ok()
-            .map(|error| error.code);
-        return Err(match (status, code.as_deref()) {
-            (StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN, _) | (_, Some("42501")) => {
-                SyncError::SharedAttachmentForbidden
-            }
-            (_, Some("22023")) => invalid_request(),
-            (_, Some("40001" | "55000")) => SyncError::SharedAttachmentConflict,
-            (_, Some("54000")) => SyncError::SharedAttachmentQuotaExceeded,
+    let mut rows: Vec<Row> = tokio::time::timeout(
+        RPC_TIMEOUT,
+        state.config.database.rpc_bounded(
+            &anlg_cloud_db::Principal::Service,
+            function,
+            request,
+            MAX_RPC_RESPONSE_BYTES,
+        ),
+    )
+    .await
+    .map_err(|_| SyncError::SharedAttachmentServiceUnavailable)?
+    .map_err(|error| match error {
+        anlg_cloud_db::Error::Database { code, .. } => match code.as_str() {
+            "42501" => SyncError::SharedAttachmentForbidden,
+            "22023" => invalid_request(),
+            "40001" | "55000" => SyncError::SharedAttachmentConflict,
+            "54000" => SyncError::SharedAttachmentQuotaExceeded,
             _ => SyncError::SharedAttachmentServiceUnavailable,
-        });
-    }
-    let mut rows = serde_json::from_slice::<Vec<Row>>(&bytes)
-        .map_err(|_| SyncError::SharedAttachmentServiceUnavailable)?;
+        },
+        _ => SyncError::SharedAttachmentServiceUnavailable,
+    })?;
     match rows.len() {
         0 => Err(SyncError::SharedAttachmentNotFound),
         1 => Ok(rows.pop().expect("row count was checked")),

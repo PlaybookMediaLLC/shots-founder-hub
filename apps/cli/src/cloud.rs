@@ -4,7 +4,7 @@ use anlg_agent_access::{
     GetMeetingInput, GetMeetingTranscriptInput, GetRecurringMeetingHistoryInput, ListMeetingsInput,
     Meeting, MeetingExport, MeetingPage, TranscriptPage,
 };
-use anlg_supabase_auth::session::Session;
+use anlg_session_auth::session::Session;
 use reqwest::{Response, StatusCode};
 use serde::de::DeserializeOwned;
 

@@ -1,4 +1,4 @@
-// Ported from packages/supabase/src/jwt.ts + billing.ts — @anlg/supabase pulls
+// Ported from packages/cloud-client/src/jwt.ts + billing.ts — @anlg/cloud-client pulls
 // in jose, which does not run on Hermes. Keep semantics in sync.
 
 export type SubscriptionStatus =
@@ -11,7 +11,7 @@ export type SubscriptionStatus =
   | "unpaid"
   | "paused";
 
-export type SupabaseJwtPayload = {
+export type SessionClaims = {
   sub?: string;
   email?: string;
   entitlements?: string[];
@@ -48,9 +48,7 @@ export type BillingInfo = {
 };
 
 // Unverified decode — display/gating only, never security.
-export function decodeJwtPayload(
-  accessToken: string,
-): SupabaseJwtPayload | null {
+export function decodeJwtPayload(accessToken: string): SessionClaims | null {
   try {
     const segment = accessToken.split(".")[1];
     if (!segment) {
@@ -75,14 +73,14 @@ export function decodeJwtPayload(
     if (typeof parsed !== "object" || parsed === null) {
       return null;
     }
-    return parsed as SupabaseJwtPayload;
+    return parsed as SessionClaims;
   } catch {
     return null;
   }
 }
 
 export function deriveBillingInfo(
-  payload: SupabaseJwtPayload | null,
+  payload: SessionClaims | null,
   now = Date.now(),
 ): BillingInfo {
   const entitlements = payload?.entitlements ?? [];

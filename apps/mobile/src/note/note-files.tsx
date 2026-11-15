@@ -47,11 +47,11 @@ export function NoteFiles({
           });
         } else {
           const accessToken = auth.session?.access_token;
-          if (!accessToken || !env.supabaseUrl) return;
+          if (!accessToken || !env.cloudUrl) return;
           await restoreNoteAttachmentFromCloud(sessionId, attachment, {
             accessToken,
             apiBaseUrl: env.apiUrl,
-            supabaseUrl: env.supabaseUrl,
+            r2BaseUrl: env.r2DownloadBaseUrl,
             signal: controller.signal,
           });
           captureAnalytics("file_downloaded", {
@@ -87,7 +87,7 @@ export function NoteFiles({
       !uri &&
       (!attachment.cloudObjectKey ||
         !auth.session?.access_token ||
-        !env.supabaseUrl)
+        !env.cloudUrl)
     )
       return;
     const controller = new AbortController();
@@ -120,7 +120,7 @@ export function NoteFiles({
               attachment.cloudObjectKey &&
               auth.billing.isPro &&
               auth.session?.access_token &&
-              env.supabaseUrl,
+              env.cloudUrl,
             )}
             errorMessage={selected ? (mutation.error?.message ?? null) : null}
             filename={attachment.filename}

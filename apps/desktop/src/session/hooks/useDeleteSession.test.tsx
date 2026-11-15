@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
     clearDeletion: vi.fn(),
     pendingDeletions: {} as Record<string, { data: DeletedSessionData }>,
     getSession,
-    supabaseClient: { auth: { getSession } },
+    cloudClientMock: { auth: { getSession } },
     deleteSessionShareBySession: vi.fn(),
     emitTo: vi.fn(() => Promise.resolve()),
     finalizeSessionDeletion: vi.fn(),
@@ -68,7 +68,7 @@ vi.mock("@anlg/ui/components/ui/toast", () => ({
 }));
 
 vi.mock("~/auth/client", () => ({
-  supabase: mocks.supabaseClient,
+  cloudClient: mocks.cloudClientMock,
 }));
 
 vi.mock("~/calendar/ignored-events", () => ({
@@ -217,7 +217,7 @@ describe("useDeleteSession", () => {
       expect(mocks.deleteSessionShareBySession).toHaveBeenCalledWith(
         {
           session,
-          supabase: mocks.supabaseClient,
+          cloudClient: mocks.cloudClientMock,
         },
         { workspaceId, sessionId: "session-1" },
       );

@@ -1,7 +1,7 @@
 //! Live CRDT documents for shared notes.
 //!
 //! Each web-editable shared note may own a Yjs document that concurrent editors
-//! mutate through a WebSocket relay. Durable state lives in Supabase as a
+//! mutate through a WebSocket relay. Durable state lives in Postgres as a
 //! compacted state blob plus an ordered update log; every sync instance loads
 //! that state on demand, appends the updates it relays, and polls the log so
 //! peers connected to other Fly Machines converge without a shared broker. The
@@ -149,11 +149,6 @@ pub(crate) fn decode_hex(value: &str) -> Option<Vec<u8>> {
         .collect()
 }
 
-#[derive(Deserialize)]
-struct PostgrestError {
-    code: String,
-}
-
 async fn rpc<RequestBody, Row>(
     state: &AppState,
     function: &str,
@@ -163,50 +158,25 @@ where
     RequestBody: Serialize + ?Sized,
     Row: serde::de::DeserializeOwned,
 {
-    let mut response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/{function}",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(LIVE_RPC_TIMEOUT)
-        .json(request)
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, function, "live document RPC request failed");
-            SyncError::SnapshotServiceUnavailable
-        })?;
-    let status = response.status();
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|error| {
-        tracing::warn!(%error, function, "live document RPC response could not be read");
-        SyncError::SnapshotServiceUnavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > MAX_LIVE_RPC_RESPONSE_BYTES {
-            tracing::warn!(%status, function, "live document RPC response was too large");
-            return Err(SyncError::SnapshotServiceUnavailable);
+    tokio::time::timeout(
+        LIVE_RPC_TIMEOUT,
+        state.config.database.rpc_bounded(
+            &anlg_cloud_db::Principal::Service,
+            function,
+            request,
+            MAX_LIVE_RPC_RESPONSE_BYTES,
+        ),
+    )
+    .await
+    .map_err(|_| SyncError::SnapshotServiceUnavailable)?
+    .map_err(|error| match error {
+        anlg_cloud_db::Error::Database { code, .. } if code == "42501" => {
+            SyncError::SnapshotPublicationForbidden
         }
-        bytes.extend_from_slice(&chunk);
-    }
-    if !status.is_success() {
-        let code = serde_json::from_slice::<PostgrestError>(&bytes)
-            .ok()
-            .map(|error| error.code);
-        tracing::warn!(%status, ?code, function, "live document RPC was rejected");
-        return match code.as_deref() {
-            Some("42501") => Err(SyncError::SnapshotPublicationForbidden),
-            Some("22023") => Err(SyncError::BadRequest(
-                "Live document update is invalid".to_string(),
-            )),
-            _ => Err(SyncError::SnapshotServiceUnavailable),
-        };
-    }
-    serde_json::from_slice::<Vec<Row>>(&bytes).map_err(|error| {
-        tracing::warn!(%error, function, "live document RPC response was invalid");
-        SyncError::SnapshotServiceUnavailable
+        anlg_cloud_db::Error::Database { code, .. } if code == "22023" => {
+            SyncError::BadRequest("Live document update is invalid".into())
+        }
+        _ => SyncError::SnapshotServiceUnavailable,
     })
 }
 

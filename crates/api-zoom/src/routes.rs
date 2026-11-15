@@ -54,7 +54,7 @@ pub async fn import_meetings(
     }
 
     let http = nango_state
-        .build_http_client(&auth.token, &auth.claims.sub, Zoom::ID, &req.connection_id)
+        .build_http_client(&auth, &auth.claims.sub, Zoom::ID, &req.connection_id)
         .await?;
     let proxy = http.clone().into_proxy();
     let client = ZoomClient::new(http);

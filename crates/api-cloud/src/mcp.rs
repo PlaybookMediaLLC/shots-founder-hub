@@ -244,7 +244,7 @@ fn user_id(auth: Option<anlg_api_auth::AuthContext>) -> Option<String> {
 }
 
 fn oauth_security_meta() -> MetaObject {
-    oauth_security_meta_for(crate::oauth::OAUTH_SCOPES)
+    oauth_security_meta_for(crate::oauth::SHOTS_SCOPES)
 }
 
 fn oauth_security_meta_for(scopes: &[&str]) -> MetaObject {
@@ -297,7 +297,11 @@ mod tests {
     #[test]
     fn server_advertises_the_current_protocol() {
         let state = AppState::new(
-            CloudApiConfig::new("https://auth.example.com", "service-role-key").unwrap(),
+            CloudApiConfig::new(
+                anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap(),
+                "https://shots.example.com",
+            )
+            .unwrap(),
         );
 
         assert_eq!(
@@ -319,7 +323,7 @@ mod tests {
                 tool.meta.unwrap().get("securitySchemes"),
                 Some(&serde_json::json!([{
                     "type": "oauth2",
-                    "scopes": [],
+                    "scopes": crate::oauth::SHOTS_SCOPES,
                 }]))
             );
             assert_eq!(tool.output_schema.unwrap().get("type").unwrap(), "object");
@@ -329,7 +333,11 @@ mod tests {
     #[test]
     fn unauthenticated_tool_result_requests_account_connection() {
         let state = AppState::new(
-            CloudApiConfig::new("https://auth.example.com", "service-role-key").unwrap(),
+            CloudApiConfig::new(
+                anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap(),
+                "https://shots.example.com",
+            )
+            .unwrap(),
         );
 
         let result = authentication_required(&state);

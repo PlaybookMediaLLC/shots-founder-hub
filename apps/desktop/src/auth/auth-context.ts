@@ -1,8 +1,9 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { createContext, useContext } from "react";
 
+import type { Session, CloudClient } from "@anlg/cloud-client";
+
 type AuthState = {
-  supabase: SupabaseClient | null;
+  cloudClient: CloudClient | null;
   // undefined = initial load in progress, null = known unauthenticated
   session: Session | null | undefined;
   isRefreshingSession: boolean;

@@ -1,10 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  AuthApiError,
-  AuthSessionMissingError,
-  type Session,
-  type SupabaseClient,
-} from "@supabase/supabase-js";
+import { useQuery } from "@tanstack/react-query";
 import {
   CryptoDigestAlgorithm,
   digest,
@@ -24,19 +19,21 @@ import {
   type ReactNode,
 } from "react";
 
-import { createShotsAuthorization } from "@anlg/supabase/shots";
+import {
+  AuthApiError,
+  AuthSessionMissingError,
+  type Session,
+  type CloudClient,
+} from "@anlg/cloud-client";
+import { createShotsAuthorization } from "@anlg/cloud-client/shots";
 
 import {
   consumeAuthCallback,
   pendingAuthStorageKey,
 } from "@/auth/auth-callback";
-import {
-  decodeJwtPayload,
-  deriveBillingInfo,
-  type BillingInfo,
-} from "@/auth/billing";
+import { deriveBillingInfo, type BillingInfo } from "@/auth/billing";
 import { refreshBillingEntitlement as retryBillingEntitlement } from "@/auth/billing-handoff";
-import { authStorageKey, supabase } from "@/auth/client";
+import { authStorageKey, cloudClient } from "@/auth/client";
 import {
   buildSignInUrl,
   lastSignInMethodStorageKey,
@@ -50,7 +47,7 @@ import {
   identifyAnalytics,
   resetAnalytics,
 } from "@/lib/analytics";
-import { env, hasSupabaseEnv } from "@/lib/env";
+import { env, hasCloudEnv } from "@/lib/env";
 import {
   addOperationalBreadcrumb,
   captureOperationalError,
@@ -90,7 +87,7 @@ function acceptAuthTokens(
   accessToken: string,
   refreshToken: string,
 ): Promise<boolean> {
-  const client = supabase;
+  const client = cloudClient;
   if (!client) {
     return Promise.resolve(false);
   }
@@ -132,7 +129,7 @@ async function handleAuthCallbackUrl(url: string): Promise<boolean> {
     url,
     scheme: env.appScheme,
     storage: AsyncStorage,
-    shots: env.shotsUrl ? { gatewayUrl: env.supabaseUrl } : undefined,
+    shots: env.shotsUrl ? { gatewayUrl: env.cloudUrl } : undefined,
     installSession: ({ accessToken, refreshToken }) =>
       acceptAuthTokens(accessToken, refreshToken),
   });
@@ -160,7 +157,7 @@ async function readPersistedSession(): Promise<Session | null> {
 }
 
 async function clearInvalidSession(
-  client: SupabaseClient,
+  client: CloudClient,
   reason: "fatal_error" | "rejected",
 ) {
   const { error } = await client.auth
@@ -176,7 +173,7 @@ async function clearInvalidSession(
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const bypass = !hasSupabaseEnv;
+  const bypass = !hasCloudEnv;
   const [session, setSessionState] = useState<Session | null | undefined>(
     bypass ? null : undefined,
   );
@@ -185,7 +182,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const sessionRef = useRef<Session | null | undefined>(session);
   const identifiedUserIdRef = useRef<string | null>(null);
-  const reportedUndecodableUserIdRef = useRef<string | null>(null);
   const billingRefreshRef = useRef<Promise<boolean> | null>(null);
   // Prevents double init in React StrictMode (refresh token races)
   const initStartedRef = useRef(false);
@@ -205,19 +201,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         : null,
     );
-    if (
-      next &&
-      !decodeJwtPayload(next.access_token) &&
-      reportedUndecodableUserIdRef.current !== userId
-    ) {
-      reportedUndecodableUserIdRef.current = userId;
-      captureOperationalError(new Error("Mobile auth token decode failed"), {
-        operation: "auth_token_decode",
-        level: "warning",
-      });
-    } else if (!next) {
-      reportedUndecodableUserIdRef.current = null;
-    }
     if (userId && userId !== identifiedUserIdRef.current) {
       identifiedUserIdRef.current = userId;
       identifyAnalytics(userId);
@@ -270,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    const client = supabase;
+    const client = cloudClient;
     if (!client) {
       return;
     }
@@ -333,7 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setSession]);
 
   useMountEffect(() => {
-    if (!supabase) {
+    if (!cloudClient) {
       return;
     }
 
@@ -361,7 +344,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(
     async (signInMethod: SignInMethod) => {
-      if (!supabase) {
+      if (!cloudClient) {
         return;
       }
 
@@ -424,7 +407,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshBilling = useCallback((): Promise<boolean> => {
-    const client = supabase;
+    const client = cloudClient;
     if (!client) return Promise.resolve(true);
     if (billingRefreshRef.current) return billingRefreshRef.current;
     const accountId = sessionRef.current?.user.id;
@@ -447,8 +430,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         )
           return false;
         setSession(nextSession);
-        return deriveBillingInfo(decodeJwtPayload(nextSession.access_token))
-          .isPro;
+        const claims = await client.claims(nextSession.access_token);
+        if (claims.error) {
+          lastError = claims.error;
+          return false;
+        }
+        return deriveBillingInfo(claims.data).isPro;
       },
     })
       .then((unlocked) => {
@@ -469,13 +456,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setSession]);
 
   const signOut = useCallback(async () => {
-    if (!supabase) {
+    if (!cloudClient) {
       return;
     }
 
     suspendMobileSync();
     captureAnalytics("user_signed_out");
-    const { error } = await supabase.auth
+    const { error } = await cloudClient.auth
       .signOut({ scope: "local" })
       .catch((error: unknown) => ({ error }));
     if (error) {
@@ -485,7 +472,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       // auth-js can early-return without clearing storage; force local cleanup
       // so the session cannot silently resurrect on next launch.
-      supabase.auth.stopAutoRefresh();
+      cloudClient.auth.stopAutoRefresh();
       await AsyncStorage.removeItem(authStorageKey).catch((storageError) => {
         captureOperationalError(storageError, {
           operation: "auth_storage_clear",
@@ -499,11 +486,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setSession]);
 
   const accessToken = session?.access_token ?? null;
-  const payload = useMemo(
-    () => (accessToken ? decodeJwtPayload(accessToken) : null),
-    [accessToken],
-  );
-  const billing = useBillingInfo(payload);
+  const claims = useQuery({
+    queryKey: ["billing-claims", session?.user.id, accessToken],
+    enabled: !!accessToken && !!cloudClient,
+    queryFn: async () => {
+      const result = await cloudClient!.claims(accessToken!);
+      if (result.error) throw result.error;
+      return result.data;
+    },
+    retry: false,
+  });
+  const billing = useBillingInfo(claims.data ?? null);
 
   const status: AuthState["status"] = bypass
     ? "signed_in"
@@ -512,11 +505,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : session
         ? "signed_in"
         : "signed_out";
-  // `payload` is derived from the session in the same render, so it is only ever
-  // null here because the token failed to decode. Gating on it would wedge the
-  // app on a loading spinner with no way out, so an undecodable token resolves
-  // as ready without entitlement instead.
-  const billingReady = bypass || status !== "loading";
+  const billingReady =
+    bypass || (!session && status !== "loading") || claims.isSuccess;
 
   const value = useMemo<AuthState>(
     () => ({

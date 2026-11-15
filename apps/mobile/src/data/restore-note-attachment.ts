@@ -11,7 +11,7 @@ export async function restoreNoteAttachmentFromCloud(
   input: {
     accessToken: string;
     apiBaseUrl: string;
-    supabaseUrl: string;
+    r2BaseUrl: string;
     signal?: AbortSignal;
   },
 ): Promise<void> {
@@ -31,7 +31,7 @@ export async function restoreNoteAttachmentFromCloud(
       objectId: download.objectId,
       objectKey: download.objectKey,
       signedUrl: download.signedUrl,
-      supabaseUrl: input.supabaseUrl,
+      r2BaseUrl: input.r2BaseUrl,
       ciphertextSha256: download.ciphertextSha256,
       ciphertextSizeBytes: download.ciphertextSizeBytes,
       formatVersion: download.formatVersion,

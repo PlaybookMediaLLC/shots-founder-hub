@@ -95,7 +95,7 @@ async fn create_live_ticket(
     let share_id = canonical_share_id(&share_id)?;
     let access = resolve_access(&state, &share_id, &auth.claims.sub).await?;
     let ticket = issue_ticket(
-        &state.config.supabase_service_role_key,
+        &state.config.signing_key,
         &auth.claims.sub,
         &access,
         now_unix(),
@@ -119,14 +119,10 @@ async fn live_socket(
     ws: WebSocketUpgrade,
 ) -> Result<Response> {
     let share_id = canonical_share_id(&share_id)?;
-    let ticket = verify_ticket(
-        &state.config.supabase_service_role_key,
-        &query.ticket,
-        now_unix(),
-    )
-    .filter(|ticket| ticket.share_id == share_id)
-    .filter(|ticket| ticket.shots_session_id.is_some() == state.replica.shots.is_some())
-    .ok_or(SyncError::SnapshotPublicationForbidden)?;
+    let ticket = verify_ticket(&state.config.signing_key, &query.ticket, now_unix())
+        .filter(|ticket| ticket.share_id == share_id)
+        .filter(|ticket| ticket.shots_session_id.is_some() == state.replica.shots.is_some())
+        .ok_or(SyncError::SnapshotPublicationForbidden)?;
     Ok(ws
         .max_message_size(MAX_LIVE_UPDATE_BYTES + 1024)
         .max_frame_size(MAX_LIVE_UPDATE_BYTES + 1024)

@@ -7,8 +7,8 @@ use owhisper_client::{CallbackSttAdapter, DeepgramAdapter, Provider, SonioxAdapt
 use owhisper_interface::ListenParams;
 use serde::{Deserialize, Serialize};
 
+use crate::jobs::{JobStore, PipelineStatus, TranscriptionJob, user_owns_object_path};
 use crate::query_params::QueryParams;
-use crate::supabase::{PipelineStatus, SupabaseClient, TranscriptionJob, user_owns_object_path};
 
 use super::super::{AppState, MAX_BATCH_AUDIO_BODY_BYTES, RouteError, parse_async_provider};
 use super::BatchAudioWriteError;
@@ -32,7 +32,7 @@ pub(super) async fn handle_callback(
     let auth = auth.ok_or(RouteError::Unauthorized("authentication required"))?;
     let user_id = auth.claims.sub.clone();
 
-    let supabase = build_supabase_client(state)?;
+    let jobs = build_job_store(state)?;
 
     let provider_str = params
         .remove_first("provider")
@@ -51,7 +51,7 @@ pub(super) async fn handle_callback(
         ));
     }
 
-    let audio_url = supabase
+    let audio_url = jobs
         .storage()
         .create_signed_url("audio-files", &file_id, 3600)
         .await
@@ -77,7 +77,7 @@ pub(super) async fn handle_callback(
         raw_result: None,
         error: None,
     };
-    supabase.insert_job(&job).await.map_err(|_| {
+    jobs.insert_job(&job).await.map_err(|_| {
         tracing::error!(error.type = "job_insert_failed", "failed to insert job");
         RouteError::Internal("failed to record job".to_string())
     })?;
@@ -108,10 +108,10 @@ pub(super) async fn handle_callback(
     let (status, provider_request_id, raw_result, error) = match outcome {
         Ok(outcome) => outcome,
         Err(error) => {
-            let _ = supabase
+            let _ = jobs
                 .update_job(
                     &id,
-                    &crate::supabase::JobUpdate {
+                    &crate::jobs::JobUpdate {
                         status: PipelineStatus::Error,
                         provider_request_id: None,
                         raw_result: None,
@@ -123,21 +123,20 @@ pub(super) async fn handle_callback(
         }
     };
 
-    supabase
-        .update_job(
-            &id,
-            &crate::supabase::JobUpdate {
-                status,
-                provider_request_id,
-                raw_result,
-                error,
-            },
-        )
-        .await
-        .map_err(|_| {
-            tracing::error!(error.type = "job_update_failed", "failed to update job");
-            RouteError::Internal("failed to update job".to_string())
-        })?;
+    jobs.update_job(
+        &id,
+        &crate::jobs::JobUpdate {
+            status,
+            provider_request_id,
+            raw_result,
+            error,
+        },
+    )
+    .await
+    .map_err(|_| {
+        tracing::error!(error.type = "job_update_failed", "failed to update job");
+        RouteError::Internal("failed to update job".to_string())
+    })?;
 
     Ok(Json(ListenCallbackResponse { request_id: id }))
 }
@@ -336,21 +335,10 @@ fn content_type_from_filename(file_id: &str) -> &'static str {
     }
 }
 
-fn build_supabase_client(state: &AppState) -> Result<SupabaseClient, RouteError> {
-    let url = state
+fn build_job_store(state: &AppState) -> Result<JobStore, RouteError> {
+    state
         .config
-        .supabase
-        .url
-        .as_deref()
-        .ok_or(RouteError::MissingConfig("supabase_url not configured"))?;
-    let key =
-        state
-            .config
-            .supabase
-            .service_role_key
-            .as_deref()
-            .ok_or(RouteError::MissingConfig(
-                "supabase_service_role_key not configured",
-            ))?;
-    Ok(SupabaseClient::new(state.client.clone(), url, key))
+        .jobs
+        .clone()
+        .ok_or(RouteError::MissingConfig("job persistence not configured"))
 }

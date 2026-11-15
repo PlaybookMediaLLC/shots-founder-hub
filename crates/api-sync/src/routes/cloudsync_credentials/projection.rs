@@ -3,13 +3,11 @@ use std::collections::HashSet;
 use anlg_api_auth::AuthContext;
 use serde::{Deserialize, Serialize};
 
-use super::SUPABASE_REQUEST_TIMEOUT;
 use crate::{
     error::{Result, SyncError},
     state::ReplicaState,
 };
 
-pub(in crate::routes) const WORKSPACE_PROJECTION_SELECT: &str = "id,user_id,role,created_at,updated_at,workspace:workspaces!inner(id,owner_user_id,kind,name,created_at,updated_at)";
 pub(in crate::routes) const MAX_TOKEN_WORKSPACES: usize = 128;
 pub(in crate::routes) const MAX_TOKEN_ATTRIBUTES_BYTES: usize = 8 * 1024;
 
@@ -52,40 +50,47 @@ pub(super) async fn fetch_workspace_projection(
     state: &ReplicaState,
     auth: &AuthContext,
 ) -> Result<Vec<WorkspaceMembershipRow>> {
-    let user_filter = format!("eq.{}", auth.claims.sub);
-    let response = state
-        .client
-        .get(format!(
-            "{}/rest/v1/workspace_memberships",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_anon_key)
-        .bearer_auth(&auth.token)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .query(&[
-            ("select", WORKSPACE_PROJECTION_SELECT),
-            ("user_id", user_filter.as_str()),
-            ("deleted_at", "is.null"),
-            ("workspace.deleted_at", "is.null"),
-        ])
-        .send()
+    use anlg_cloud_db::entities::{workspace, workspace_membership};
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
+    let user_id: uuid::Uuid = auth.claims.sub.parse().map_err(|_| SyncError::Upstream)?;
+    let tx = state
+        .config
+        .database
+        .transaction(&auth.principal().map_err(|_| SyncError::Upstream)?)
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase workspace projection request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase workspace projection request was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-
-    response.json().await.map_err(|error| {
-        tracing::warn!(%error, "Supabase workspace projection response was invalid");
-        SyncError::Upstream
-    })
+        .map_err(|_| SyncError::Upstream)?;
+    let rows = workspace_membership::Entity::find()
+        .filter(workspace_membership::Column::UserId.eq(user_id))
+        .filter(workspace_membership::Column::DeletedAt.is_null())
+        .find_also_related(workspace::Entity)
+        .filter(workspace::Column::DeletedAt.is_null())
+        .limit(MAX_TOKEN_WORKSPACES as u64 + 1)
+        .all(&tx)
+        .await
+        .map_err(|_| SyncError::Upstream)?;
+    let rows = rows
+        .into_iter()
+        .map(|(member, workspace)| {
+            let workspace = workspace.ok_or(SyncError::Upstream)?;
+            Ok(WorkspaceMembershipRow {
+                id: member.id.to_string(),
+                user_id: member.user_id.to_string(),
+                role: member.role,
+                created_at: member.created_at.to_rfc3339(),
+                updated_at: member.updated_at.to_rfc3339(),
+                workspace: WorkspaceRow {
+                    id: workspace.id.to_string(),
+                    owner_user_id: workspace.owner_user_id.to_string(),
+                    kind: workspace.kind,
+                    name: workspace.name,
+                    created_at: workspace.created_at.to_rfc3339(),
+                    updated_at: workspace.updated_at.to_rfc3339(),
+                },
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    tx.commit().await.map_err(|_| SyncError::Upstream)?;
+    Ok(rows)
 }
 
 pub(super) fn validate_workspace_projection(
@@ -174,7 +179,10 @@ pub(super) fn validate_workspace_projection(
 }
 
 fn invalid_workspace_projection<T>(reason: &'static str) -> Result<T> {
-    tracing::warn!(reason, "Supabase workspace projection failed validation");
+    tracing::warn!(
+        reason,
+        "Cloud database workspace projection failed validation"
+    );
     Err(SyncError::Upstream)
 }
 

@@ -1,4 +1,3 @@
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
@@ -11,6 +10,7 @@ import {
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { AuthChangeEvent, Session } from "@anlg/cloud-client";
 import { openUrlWithInstruction } from "@anlg/plugin-windows";
 
 import { useAuth } from "./auth-context";
@@ -61,7 +61,8 @@ vi.mock("./connect-local-library-dialog", () => ({
 vi.mock("./client", () => ({
   persistAuthSession: mocks.persistAuthSession,
   readPersistedAuthSession: mocks.readPersistedAuthSession,
-  supabase: {
+  cloudClient: {
+    claims: vi.fn().mockResolvedValue({ data: null, error: null }),
     auth: {
       getSession: mocks.getSession,
       onAuthStateChange: vi.fn(
@@ -138,7 +139,7 @@ vi.mock("@anlg/ui/components/ui/toast", () => ({
   },
 }));
 
-vi.mock("@anlg/supabase", () => ({
+vi.mock("@anlg/cloud-client", () => ({
   deriveBillingInfo: vi.fn(() => ({ plan: "free", trialEnd: null })),
 }));
 

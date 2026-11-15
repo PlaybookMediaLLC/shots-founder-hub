@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { arch, platform } from "@tauri-apps/plugin-os";
 import {
   type ReactNode,
@@ -9,73 +9,28 @@ import {
   useState,
 } from "react";
 
-import {
-  canStartTrial as canStartTrialApi,
-  startTrial as startTrialApi,
-} from "@anlg/api-client";
-import { createClient } from "@anlg/api-client/client";
+import { deriveBillingInfo, type SessionClaims } from "@anlg/cloud-client";
 import { commands as analyticsCommands } from "@anlg/plugin-analytics";
-import { commands as authCommands } from "@anlg/plugin-auth";
 import { commands as openerCommands } from "@anlg/plugin-opener2";
 import { openUrlWithInstruction } from "@anlg/plugin-windows";
-import { deriveBillingInfo, type SupabaseJwtPayload } from "@anlg/supabase";
-import type { ReferralSummary } from "@anlg/supabase/referrals";
 
-import { TrialEndedDialog } from "../billing/trial-ended-dialog";
-import { TrialPaymentReminderDialog } from "../billing/trial-payment-reminder-dialog";
-import { TrialStartedDialog } from "../billing/trial-started-dialog";
-import { env } from "../env";
-import { waitForBillingUpdate } from "../shared/billing";
 import { configurePaidSettings } from "../shared/config/configure-paid-settings";
-import { startTrialOnce, useAutoTrialHeld } from "../shared/trial-start";
 import { buildWebAppUrl } from "../shared/utils";
 import { useAuth } from "./auth-context";
 import { type BillingAccess, BillingContext } from "./billing-context";
+import { cloudClient } from "./client";
 
 import { setSettingValues } from "~/settings/queries";
-import { getWorkspaceAccess, requireTeamContext } from "~/settings/team/client";
-import { useMyWorkspacesWithMirror } from "~/settings/team/mirror";
 import { useConfigValues } from "~/shared/config";
-import { useTabs } from "~/store/zustand/tabs";
 import { getUnsupportedDesktopLocalSttRepair } from "~/stt/capabilities";
 
 async function getClaimsFromToken(
   accessToken: string,
-): Promise<SupabaseJwtPayload | null> {
-  const result = await authCommands.decodeClaims(accessToken);
-  if (result.status === "error") {
-    throw new Error(result.error);
-  }
-  return {
-    sub: result.data.sub,
-    email: result.data.email ?? undefined,
-    entitlements: result.data.entitlements,
-    subscription_status: result.data.subscription_status,
-    trial_end: result.data.trial_end,
-    has_payment_method: result.data.has_payment_method,
-    referral_extension: result.data.referral_extension ?? undefined,
-  };
-}
-
-const TRIAL_STARTED_SEEN_PREFIX = "anarlog:trial_started_seen:";
-const TRIAL_ENDED_SEEN_PREFIX = "anarlog:trial_ended_seen:";
-const TRIAL_PAYMENT_REMINDER_SEEN_PREFIX =
-  "anarlog:trial_payment_reminder_seen:";
-
-function readSeen(key: string): boolean {
-  try {
-    return localStorage.getItem(key) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markSeen(key: string): void {
-  try {
-    localStorage.setItem(key, "1");
-  } catch {
-    // ignore — modal will just show again next session
-  }
+): Promise<SessionClaims | null> {
+  if (!cloudClient) return null;
+  const { data, error } = await cloudClient.claims(accessToken);
+  if (error) throw error;
+  return data;
 }
 
 export function BillingProvider({ children }: { children: ReactNode }) {
@@ -102,115 +57,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   const isReady = !claimsQuery.isPending && !claimsQuery.isError;
   const claimsAreCurrent =
     !claimsQuery.isFetching && !claimsQuery.isPlaceholderData;
-  const workspaces = useMyWorkspacesWithMirror();
-  const workspaceAccess = useQueries({
-    // Auth supplies request credentials; scope cached access by user identity.
-    // eslint-disable-next-line @tanstack/query/exhaustive-deps
-    queries: (workspaces.data ?? []).map((workspace) => ({
-      queryKey: ["team-access", workspace.workspaceId, auth.session?.user.id],
-      enabled: !!auth.session,
-      queryFn: () =>
-        getWorkspaceAccess(requireTeamContext(auth), workspace.workspaceId),
-      retry: false,
-    })),
-  });
-  const canShowPersonalTrialDialogs =
-    !env.VITE_SHOTS_URL &&
-    !!auth.session &&
-    isReady &&
-    claimsAreCurrent &&
-    workspaces.isSuccess &&
-    workspaceAccess.every(
-      (query) => query.isSuccess && query.data.tier === "free",
-    );
-  const canUsePersonalTrial =
-    canShowPersonalTrialDialogs &&
-    workspaces.fetchStatus === "idle" &&
-    workspaceAccess.every((query) => query.fetchStatus === "idle");
-
-  // eslint-disable-next-line @tanstack/query/exhaustive-deps -- Auth supplies request headers; the user ID is the eligibility identity.
-  const canTrialQuery = useQuery({
-    enabled:
-      canUsePersonalTrial && auth?.isFingerprintSettled && !billing.isPaid,
-    queryKey: [auth?.session?.user.id ?? "", "canStartTrial"],
-    queryFn: async () => {
-      const headers = auth?.getHeaders();
-      if (!headers) {
-        return { canStartTrial: false, reason: "error" as const, offer: null };
-      }
-      const client = createClient({ baseUrl: env.VITE_API_URL, headers });
-      const { data, error } = await canStartTrialApi({ client });
-      if (error) {
-        return { canStartTrial: false, reason: "error" as const, offer: null };
-      }
-      return {
-        canStartTrial: data?.canStartTrial ?? false,
-        reason: data?.reason ?? null,
-        offer: data?.offer ?? null,
-      };
-    },
-  });
-
-  const canStartTrial = useMemo(
-    () => ({
-      data:
-        billing.isPaid || !canUsePersonalTrial
-          ? false
-          : (canTrialQuery.data?.canStartTrial ?? false),
-      isPending: canTrialQuery.isPending,
-    }),
-    [
-      billing.isPaid,
-      canUsePersonalTrial,
-      canTrialQuery.data?.canStartTrial,
-      canTrialQuery.isPending,
-    ],
-  );
-
-  // Onboarding offers a new personal-email account the switch to a work email first.
-  const awaitsWorkEmailChoice =
-    useAutoTrialHeld(auth?.session?.user.id) &&
-    canTrialQuery.data?.offer === "personal_email";
-
-  // eslint-disable-next-line @tanstack/query/exhaustive-deps -- The user ID owns one automatic attempt; a refreshed token must not trigger another start.
-  useQuery({
-    enabled:
-      !!auth?.session &&
-      auth?.isFingerprintSettled &&
-      isReady &&
-      claimsAreCurrent &&
-      canUsePersonalTrial &&
-      !billing.isPaid &&
-      canTrialQuery.data?.canStartTrial === true &&
-      !awaitsWorkEmailChoice,
-    queryKey: [auth?.session?.user.id ?? "", "startEligibleTrial"],
-    queryFn: async () => {
-      const userId = auth?.session?.user.id;
-      const headers = auth?.getHeaders();
-      if (!userId || !headers) {
-        throw new Error("No authentication headers available");
-      }
-
-      return startTrialOnce(userId, async () => {
-        const client = createClient({ baseUrl: env.VITE_API_URL, headers });
-        const { data, error } = await startTrialApi({
-          client,
-          query: { interval: "monthly" },
-        });
-        if (error) {
-          throw error;
-        }
-
-        await waitForBillingUpdate(
-          () => auth.refreshSession(),
-          data?.started ? 3000 : 1500,
-        );
-        return data;
-      });
-    },
-    retry: 1,
-    refetchOnWindowFocus: false,
-  });
+  const canStartTrial = { data: false, isPending: false };
 
   const [isUpgradingToPro, setIsUpgradingToPro] = useState(false);
   // State alone cannot gate re-entry: a second click can land before the
@@ -249,19 +96,6 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   const upgradeToPro = useCallback(() => {
     void openUpgrade("feature_gate");
   }, [openUpgrade]);
-
-  const openBillingPortal = useCallback(
-    async (intent: "manage" | "payment_method_update" = "manage") => {
-      const url = await buildWebAppUrl(
-        "/app/portal",
-        intent === "manage" ? undefined : { intent },
-      );
-      await openUrlWithInstruction(url, "billing", (u) =>
-        openerCommands.openUrl(u, null),
-      );
-    },
-    [],
-  );
 
   useEffect(() => {
     if (
@@ -331,129 +165,6 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     }
   }, [billing.isPaid, isReady]);
 
-  const [trialStartedOpen, setTrialStartedOpen] = useState(false);
-  const [trialPaymentReminderOpen, setTrialPaymentReminderOpen] =
-    useState(false);
-  const [trialPaymentReminderThreshold, setTrialPaymentReminderThreshold] =
-    useState<3 | 7 | null>(null);
-  const [trialEndedOpen, setTrialEndedOpen] = useState(false);
-  const [trialEligibilityRefreshedUserId, setTrialEligibilityRefreshedUserId] =
-    useState<string | null>(null);
-  const trialEligibilityRefreshPendingRef = useRef<string | null>(null);
-  const hasTrial = billing.trialEnd !== null;
-  const trialEndTimestamp = billing.trialEnd?.getTime();
-  // eslint-disable-next-line @tanstack/query/exhaustive-deps -- Share the account-scoped referral cache; the session only supplies request credentials.
-  const referralSummary = useQuery({
-    queryKey: ["referral-summary", auth?.session?.user.id],
-    enabled:
-      trialPaymentReminderOpen &&
-      !!auth?.supabase &&
-      !!auth?.session &&
-      !auth.session.user.is_anonymous,
-    queryFn: async ({ signal }) => {
-      if (!auth.supabase || !auth.session) throw new Error("Unauthorized");
-      const { data, error } = await auth.supabase
-        .rpc("get_referral_summary")
-        .setHeader("Authorization", `Bearer ${auth.session.access_token}`)
-        .abortSignal(signal);
-      if (error) throw error;
-      return data as ReferralSummary;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
-  });
-  const canRefer =
-    referralSummary.isSuccess &&
-    referralSummary.data.enabled &&
-    referralSummary.data.eligible &&
-    referralSummary.data.remaining > 0;
-
-  useEffect(() => {
-    const userId = auth?.session?.user.id;
-    if (!userId || !canUsePersonalTrial) {
-      return;
-    }
-
-    if (billing.isTrialing) {
-      const key = TRIAL_STARTED_SEEN_PREFIX + userId;
-      if (!readSeen(key)) {
-        setTrialStartedOpen(true);
-        markSeen(key);
-        return;
-      }
-
-      const daysRemaining = billing.trialDaysRemaining;
-      const reminderThreshold =
-        daysRemaining != null && daysRemaining <= 3
-          ? 3
-          : daysRemaining != null && daysRemaining <= 7
-            ? 7
-            : null;
-
-      if (reminderThreshold && !billing.hasPaymentMethod) {
-        const reminderKey = `${TRIAL_PAYMENT_REMINDER_SEEN_PREFIX}${userId}:${trialEndTimestamp}:${reminderThreshold}`;
-        if (!readSeen(reminderKey)) {
-          setTrialPaymentReminderThreshold(reminderThreshold);
-          setTrialPaymentReminderOpen(true);
-          markSeen(reminderKey);
-          void analyticsCommands.event({
-            event: "trial_payment_reminder_shown",
-            days_remaining: daysRemaining,
-            reminder_threshold: reminderThreshold,
-          });
-        }
-      }
-      return;
-    }
-
-    const isTrialIneligible =
-      !canTrialQuery.isPending && canTrialQuery.data?.reason === "not_eligible";
-
-    if (
-      isTrialIneligible &&
-      !hasTrial &&
-      !billing.isPaid &&
-      trialEligibilityRefreshedUserId !== userId
-    ) {
-      if (trialEligibilityRefreshPendingRef.current !== userId) {
-        trialEligibilityRefreshPendingRef.current = userId;
-        void waitForBillingUpdate(() => auth.refreshSession(), 3000)
-          .catch(() => null)
-          .finally(() => {
-            setTrialEligibilityRefreshedUserId(userId);
-            trialEligibilityRefreshPendingRef.current = null;
-          });
-      }
-      return;
-    }
-
-    const hasRecentTrial =
-      hasTrial ||
-      (isTrialIneligible && trialEligibilityRefreshedUserId === userId);
-
-    if (hasRecentTrial && !billing.isPaid) {
-      const key = TRIAL_ENDED_SEEN_PREFIX + userId;
-      if (!readSeen(key)) {
-        setTrialEndedOpen(true);
-        markSeen(key);
-      }
-    }
-  }, [
-    auth?.session?.user.id,
-    billing.isTrialing,
-    billing.trialDaysRemaining,
-    trialEndTimestamp,
-    billing.hasPaymentMethod,
-    hasTrial,
-    billing.isPaid,
-    canUsePersonalTrial,
-    canTrialQuery.data?.reason,
-    canTrialQuery.isPending,
-    trialEligibilityRefreshedUserId,
-    auth.refreshSession,
-  ]);
-
   const value = useMemo<BillingAccess>(
     () => ({
       ...billing,
@@ -466,47 +177,6 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <BillingContext.Provider value={value}>
-      {children}
-      <TrialStartedDialog
-        open={canShowPersonalTrialDialogs && trialStartedOpen}
-        onOpenChange={setTrialStartedOpen}
-        trialDaysRemaining={billing.trialDaysRemaining}
-        hasPaymentMethod={billing.hasPaymentMethod}
-      />
-      <TrialPaymentReminderDialog
-        open={
-          canShowPersonalTrialDialogs &&
-          trialPaymentReminderOpen &&
-          billing.isTrialing &&
-          !billing.hasPaymentMethod &&
-          billing.trialDaysRemaining !== null &&
-          billing.trialDaysRemaining <= 7
-        }
-        onOpenChange={setTrialPaymentReminderOpen}
-        daysRemaining={billing.trialDaysRemaining ?? 0}
-        onReferFriend={
-          canRefer
-            ? () =>
-                useTabs
-                  .getState()
-                  .openNew({ type: "settings", state: { tab: "referrals" } })
-            : undefined
-        }
-        onAddPaymentMethod={() => {
-          void analyticsCommands.event({
-            event: "trial_payment_method_clicked",
-            days_remaining: billing.trialDaysRemaining,
-            reminder_threshold: trialPaymentReminderThreshold,
-          });
-          void openBillingPortal("payment_method_update");
-        }}
-      />
-      <TrialEndedDialog
-        open={canShowPersonalTrialDialogs && !billing.isPaid && trialEndedOpen}
-        onOpenChange={setTrialEndedOpen}
-        onUpgrade={() => void openUpgrade("trial_ended")}
-      />
-    </BillingContext.Provider>
+    <BillingContext.Provider value={value}>{children}</BillingContext.Provider>
   );
 }

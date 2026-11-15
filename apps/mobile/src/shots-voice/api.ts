@@ -1,4 +1,4 @@
-import { getShotsCloudUrl } from "@anlg/supabase/shots";
+import { getShotsCloudUrl } from "@anlg/cloud-client/shots";
 
 import type { VoiceRequest } from "./engine.ts";
 

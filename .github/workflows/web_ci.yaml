@@ -47,13 +47,13 @@ jobs:
       - uses: ./.github/actions/pnpm_install
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
       - run: pnpm -F ui build
-      - run: pnpm -F @anlg/supabase typecheck
-      - run: pnpm -F @anlg/supabase test
+      - run: pnpm -F @anlg/cloud-client typecheck
+      - run: pnpm -F @anlg/cloud-client test
       - run: pnpm -F web typecheck
       - run: pnpm -F web test
       # Fails when a new article has no content/articles/figures.json entry.
       # A declared-but-ungenerated figure only warns; use --strict to gate on it.
-      # Public HEAD requests only, so no Napkin or Supabase credentials needed.
+      # Public HEAD requests only, so no Napkin or database credentials needed.
       - run: pnpm -F web media:figures:check
 
   deploy:

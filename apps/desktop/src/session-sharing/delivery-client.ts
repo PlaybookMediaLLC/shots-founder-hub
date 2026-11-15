@@ -1,4 +1,4 @@
-import type { Session } from "@supabase/supabase-js";
+import type { Session } from "@anlg/cloud-client";
 
 const MAX_RECAP_BODY_BYTES = 100 * 1024;
 const MAX_SLACK_CHANNELS = 200;

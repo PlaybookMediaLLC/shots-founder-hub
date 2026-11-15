@@ -8,7 +8,7 @@ set -euo pipefail
 # delete  INTEGRATION_ID CONNECTION_ID          - delete connection
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/../.env.supabase"
+ENV_FILE="$SCRIPT_DIR/../.env.cloud"
 DATABASE_URL=$(grep '^DATABASE_URL=' "$ENV_FILE" | sed "s/^DATABASE_URL=//;s/^['\"]//;s/['\"]$//")
 
 [[ $# -lt 3 ]] && { echo "Usage: $0 {create,refresh,delete} INTEGRATION_ID CONNECTION_ID [USER_ID]"; exit 1; }
@@ -19,7 +19,7 @@ case "$OP" in
   create)
     USER_ID="${4:?Usage: $0 create INTEGRATION_ID CONNECTION_ID USER_ID}"
     psql "$DATABASE_URL" -c "
-      INSERT INTO nango_connections (user_id, integration_id, connection_id, provider, status, updated_at)
+      INSERT INTO founder_hub.nango_connections (user_id, integration_id, connection_id, provider, status, updated_at)
       VALUES ('$USER_ID', '$INTEGRATION', '$CONNECTION', '$INTEGRATION', 'connected', now())
       ON CONFLICT (integration_id, connection_id) DO UPDATE SET
         status = 'connected',
@@ -30,7 +30,7 @@ case "$OP" in
     ;;
   refresh)
     psql "$DATABASE_URL" -c "
-      UPDATE nango_connections SET
+      UPDATE founder_hub.nango_connections SET
         status = 'reconnect_required',
         last_error_type = 'refresh_token_error',
         last_error_description = 'Token expired',
@@ -40,7 +40,7 @@ case "$OP" in
     ;;
   delete)
     psql "$DATABASE_URL" -c "
-      DELETE FROM nango_connections
+      DELETE FROM founder_hub.nango_connections
       WHERE integration_id = '$INTEGRATION' AND connection_id = '$CONNECTION';"
     ;;
   *)

@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import type { BillingInfo } from "@anlg/supabase";
+import type { BillingInfo } from "@anlg/cloud-client";
 
 export type BillingAccess = BillingInfo & {
   isReady: boolean;

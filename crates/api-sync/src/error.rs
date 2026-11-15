@@ -34,6 +34,8 @@ pub enum SyncError {
 
     #[error("E2EE freshness witness access is not permitted")]
     E2eeWitnessForbidden,
+    #[error("Workspace manager access required")]
+    WorkspaceKeyForbidden,
 
     #[error("E2EE freshness witness is not initialized")]
     E2eeWitnessUninitialized,
@@ -175,6 +177,11 @@ impl IntoResponse for SyncError {
                 StatusCode::FORBIDDEN,
                 "e2ee_witness_forbidden",
                 "E2EE freshness witness access is not permitted".to_string(),
+            ),
+            Self::WorkspaceKeyForbidden => (
+                StatusCode::FORBIDDEN,
+                "workspace_key_forbidden",
+                "Workspace manager access required".to_string(),
             ),
             Self::E2eeWitnessUninitialized => (
                 StatusCode::CONFLICT,

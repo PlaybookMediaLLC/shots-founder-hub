@@ -68,13 +68,13 @@ export function requireManagementContext(
   auth: ReturnType<typeof useAuth>,
 ): ShareManagementContext {
   if (
-    !auth.supabase ||
+    !auth.cloudClient ||
     !auth.session ||
     auth.session.user.is_anonymous === true
   ) {
     throw new ShareManagementError();
   }
-  return { supabase: auth.supabase, session: auth.session };
+  return { cloudClient: auth.cloudClient, session: auth.session };
 }
 
 async function copyText(value: string) {
@@ -171,7 +171,7 @@ export async function copyInvitationOrRevoke(
 export function withoutSignal(
   context: ShareManagementContext,
 ): ShareManagementContext {
-  return { supabase: context.supabase, session: context.session };
+  return { cloudClient: context.cloudClient, session: context.session };
 }
 
 async function getSessionShareDesktopScheme(): Promise<ShareDesktopScheme> {

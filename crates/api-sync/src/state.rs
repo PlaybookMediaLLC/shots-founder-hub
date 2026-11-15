@@ -115,6 +115,20 @@ impl ReplicaState {
         }
     }
 
+    pub(crate) async fn rpc<T: serde::de::DeserializeOwned>(
+        &self,
+        principal: &anlg_cloud_db::Principal,
+        function: &str,
+        request: &impl serde::Serialize,
+    ) -> std::result::Result<T, anlg_cloud_db::Error> {
+        tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            self.config.database.rpc(principal, function, request),
+        )
+        .await
+        .map_err(|_| anlg_cloud_db::Error::InvalidResponse)?
+    }
+
     pub fn with_shots(mut self, shots: Option<anlg_api_auth::ShotsAuth>) -> Self {
         self.shots = shots;
         self
@@ -126,7 +140,7 @@ pub struct AppState {
     pub config: SyncConfig,
     pub(crate) replica: ReplicaState,
     pub client: reqwest::Client,
-    pub storage: anlg_supabase_storage::SupabaseStorage,
+    pub storage: anlg_r2_storage::Storage,
     pub attachment_verification_slots: Arc<Semaphore>,
     pub(crate) live_docs: LiveDocs,
 }
@@ -135,11 +149,7 @@ impl AppState {
     pub fn new(config: SyncConfig) -> Self {
         let replica = ReplicaState::new(config.replica_config());
         let client = replica.client.clone();
-        let storage = anlg_supabase_storage::SupabaseStorage::new(
-            client.clone(),
-            &config.supabase_url,
-            &config.supabase_service_role_key,
-        );
+        let storage = config.storage.clone();
 
         Self {
             config,

@@ -8,10 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::{
-    SUPABASE_REQUEST_TIMEOUT,
-    identity::{DEVICE_FINGERPRINT_HEADER, DEVICE_NAME_HEADER, is_valid_device_fingerprint},
-};
+use super::identity::{DEVICE_FINGERPRINT_HEADER, DEVICE_NAME_HEADER, is_valid_device_fingerprint};
 use crate::{
     error::{Result, SyncError},
     state::ReplicaState,
@@ -256,42 +253,20 @@ async fn register_enrollment(
             "E2EE device enrollment is invalid".to_string(),
         ));
     }
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/register_e2ee_device_enrollment",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&RegisterEnrollmentRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_device_fingerprint: fingerprint,
-            p_device_name: device_name,
-            p_recipient_public_key: &request.public_key,
-            p_replace_device_fingerprint: request.replace_fingerprint.as_deref(),
-        })
-        .send()
+    let mut rows: Vec<RegisterEnrollmentRpcRow> = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "register_e2ee_device_enrollment",
+            &RegisterEnrollmentRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_device_fingerprint: fingerprint,
+                p_device_name: device_name,
+                p_recipient_public_key: &request.public_key,
+                p_replace_device_fingerprint: request.replace_fingerprint.as_deref(),
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE device enrollment request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase E2EE device enrollment request was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-    let mut rows = response
-        .json::<Vec<RegisterEnrollmentRpcRow>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE device enrollment response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(|_| SyncError::Upstream)?;
     if rows.len() != 1 {
         return Err(SyncError::Upstream);
     }
@@ -343,33 +318,18 @@ async fn seal_enrollment(
 ) -> Result<()> {
     validate_request_id(request_id)?;
     validate_package(package)?;
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/seal_e2ee_device_enrollment",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&SealEnrollmentRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_request_id: request_id,
-            p_ephemeral_public_key: &package.ephemeral_public_key,
-            p_nonce: &package.nonce,
-            p_ciphertext: &package.ciphertext,
-        })
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE device enrollment seal failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
-    let mut rows = response
-        .json::<Vec<SealEnrollmentRpcRow>>()
+    let mut rows: Vec<SealEnrollmentRpcRow> = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "seal_e2ee_device_enrollment",
+            &SealEnrollmentRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_request_id: request_id,
+                p_ephemeral_public_key: &package.ephemeral_public_key,
+                p_nonce: &package.nonce,
+                p_ciphertext: &package.ciphertext,
+            },
+        )
         .await
         .map_err(|_| SyncError::Upstream)?;
     if rows.len() != 1 {
@@ -396,32 +356,17 @@ async fn consume_enrollment(
             "E2EE device enrollment is invalid".to_string(),
         ));
     }
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/consume_e2ee_device_enrollment",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&ConsumeEnrollmentRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_request_id: request_id,
-            p_device_fingerprint: fingerprint,
-            p_recipient_public_key: public_key,
-        })
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE device enrollment acknowledgement failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
-    let mut rows = response
-        .json::<Vec<ConsumeEnrollmentRpcRow>>()
+    let mut rows: Vec<ConsumeEnrollmentRpcRow> = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "consume_e2ee_device_enrollment",
+            &ConsumeEnrollmentRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_request_id: request_id,
+                p_device_fingerprint: fingerprint,
+                p_recipient_public_key: public_key,
+            },
+        )
         .await
         .map_err(|_| SyncError::Upstream)?;
     if rows.len() != 1 {
@@ -438,34 +383,36 @@ pub(super) async fn list_e2ee_device_enrollments(
     state: &ReplicaState,
     account_user_id: &str,
 ) -> Result<Vec<E2eeDeviceEnrollmentSummary>> {
-    let response = state
-        .client
-        .get(format!(
-            "{}/rest/v1/e2ee_device_enrollment_requests",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .query(&[
-            ("user_id", format!("eq.{account_user_id}")),
-            ("consumed_at", "is.null".to_string()),
-            (
-                "select",
-                "id,device_fingerprint,device_name,recipient_public_key,created_at,expires_at,sealed_at,consumed_at".to_string(),
-            ),
-            ("order", "created_at.desc".to_string()),
-        ])
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .send()
+    use anlg_cloud_db::{Principal, entities::device_enrollment};
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
+    let user_id: uuid::Uuid = account_user_id.parse().map_err(|_| SyncError::Upstream)?;
+    let tx = state
+        .config
+        .database
+        .transaction(&Principal::Service)
         .await
         .map_err(|_| SyncError::Upstream)?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
-    let rows = response
-        .json::<Vec<EnrollmentRow>>()
+    let rows = device_enrollment::Entity::find()
+        .filter(device_enrollment::Column::UserId.eq(user_id))
+        .filter(device_enrollment::Column::ConsumedAt.is_null())
+        .order_by_desc(device_enrollment::Column::CreatedAt)
+        .all(&tx)
         .await
         .map_err(|_| SyncError::Upstream)?;
+    tx.commit().await.map_err(|_| SyncError::Upstream)?;
+    let rows = rows
+        .into_iter()
+        .map(|row| EnrollmentRow {
+            id: row.id.to_string(),
+            device_fingerprint: row.device_fingerprint,
+            device_name: row.device_name,
+            recipient_public_key: row.recipient_public_key,
+            created_at: row.created_at.to_rfc3339(),
+            expires_at: row.expires_at.to_rfc3339(),
+            sealed_at: row.sealed_at.map(|value| value.to_rfc3339()),
+            consumed_at: row.consumed_at.map(|value| value.to_rfc3339()),
+        })
+        .collect();
     validate_enrollment_rows(rows)
 }
 

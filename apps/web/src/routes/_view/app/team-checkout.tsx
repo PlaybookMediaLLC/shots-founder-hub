@@ -1,13 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { createTeamCheckoutSession } from "@/functions/billing";
+import { getShotsSettingsUrl } from "@anlg/cloud-client/shots";
+
+import { env } from "@/env";
 import { desktopSchemeSchema } from "@/functions/desktop-flow";
-import {
-  addInternalReturnPathSearch,
-  sanitizeInternalReturnPath,
-} from "@/lib/auth-redirect";
-import { captureOperationalError } from "@/lib/error-reporting";
 
 const validateSearch = z.object({
   workspace_id: z.string().uuid(),
@@ -19,44 +16,13 @@ const validateSearch = z.object({
 
 export const Route = createFileRoute("/_view/app/team-checkout")({
   validateSearch,
-  beforeLoad: async ({ search }) => {
-    const returnTo = sanitizeInternalReturnPath(search.return_to);
-    let url: string | null | undefined;
-    try {
-      ({ url } = await createTeamCheckoutSession({
-        data: {
-          workspaceId: search.workspace_id,
-          period: search.period,
-          quantity: search.quantity,
-          scheme: search.scheme,
-          returnTo,
-        },
-      }));
-    } catch (error) {
-      captureOperationalError(error, {
-        operation: "team_checkout_session_create",
-        context: {
-          workspace_id: search.workspace_id,
-          period: search.period,
-        },
-      });
-    }
-
-    if (url) {
-      throw redirect({ href: url } as any);
-    }
-
-    if (search.scheme) {
-      throw redirect({
-        href: `/callback/billing?scheme=${search.scheme}&checkout=failed&checkout_type=paid`,
-      } as any);
-    }
-
+  beforeLoad: ({ context }) => {
     throw redirect({
-      href: addInternalReturnPathSearch(returnTo, {
-        checkout: "failed",
-        checkout_type: "paid",
-      }),
+      href: getShotsSettingsUrl(
+        env.VITE_SHOTS_URL,
+        context.user?.shotsUserId ?? "",
+        "billing",
+      ),
     } as any);
   },
 });

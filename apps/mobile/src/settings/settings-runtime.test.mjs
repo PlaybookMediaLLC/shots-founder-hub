@@ -77,7 +77,7 @@ const modules = {
       catch (error) { fixture.db.exec('ROLLBACK'); throw error; }
     }
     export function useLiveQuery() { throw new Error('Unexpected React hook in runtime test'); }`,
-  "@/auth/client": `export const supabase = { auth: { getSession: async () => ({ data: { session: globalThis.mobileSettingsFixture.session } }) } };`,
+  "@/auth/client": `export const cloudClient = { claims: async token => ({data: globalThis.mobileSettingsFixture.session?.access_token === token ? globalThis.mobileSettingsFixture.session.claims : null, error: null}), auth: { getSession: async () => ({ data: { session: globalThis.mobileSettingsFixture.session } }) } };`,
   "@/lib/env": `export const env = { apiUrl: 'https://hosted.anarlog.test', appUrl: 'https://anarlog.test', sentryDsn: 'synthetic-dsn', posthogApiKey: 'synthetic-analytics-key', posthogHost: 'https://analytics.test' };`,
   "@/lib/ids": `import { randomUUID } from 'node:crypto'; export const id = randomUUID; export const nowIso = () => new Date().toISOString();`,
   "expo-secure-store": `const fixture = globalThis.mobileSettingsFixture;
@@ -165,7 +165,8 @@ const {
 function signedInWith(claims) {
   fixture.session = {
     user: { id: "account-a" },
-    access_token: `synthetic.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.signature`,
+    access_token: "opaque-test-token",
+    claims,
   };
 }
 

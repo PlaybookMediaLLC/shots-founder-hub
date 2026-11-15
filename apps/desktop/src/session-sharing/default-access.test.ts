@@ -36,7 +36,7 @@ const SESSION_ID = "session-1";
 
 function context() {
   return {
-    supabase: {},
+    cloudClient: {},
     session: {
       user: { id: "user-1", email: "owner@example.com" },
     },

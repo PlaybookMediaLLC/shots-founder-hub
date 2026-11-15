@@ -557,7 +557,7 @@ export function SessionSharePopoverContent({
                   canShare={
                     canPublish &&
                     sharedAttachmentsReady &&
-                    Boolean(env.VITE_SUPABASE_URL)
+                    Boolean(env.VITE_CLOUD_URL)
                   }
                   pendingAttachmentId={
                     attachmentMutation.isPending

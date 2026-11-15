@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CloudClient } from "@anlg/cloud-client";
 
 import type { BillingInfo } from "./billing";
 
@@ -7,15 +7,13 @@ export async function fetchWorkspacePlan({
   accessToken,
   signal,
 }: {
-  client: SupabaseClient;
+  client: CloudClient;
   accessToken: string;
   signal: AbortSignal;
 }): Promise<"team" | "enterprise" | null> {
   const authorization = `Bearer ${accessToken}`;
   const workspaces = await client
-    .from("workspaces")
-    .select("id")
-    .eq("kind", "shared")
+    .workspaces()
     .setHeader("Authorization", authorization)
     .abortSignal(signal);
   if (workspaces.error) throw workspaces.error;

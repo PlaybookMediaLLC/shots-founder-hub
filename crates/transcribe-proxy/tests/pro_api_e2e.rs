@@ -25,14 +25,6 @@ fn pro_env() -> Env {
     env
 }
 
-fn supabase_env() -> anlg_api_env::SupabaseEnv {
-    anlg_api_env::SupabaseEnv {
-        supabase_url: String::new(),
-        supabase_anon_key: String::new(),
-        supabase_service_role_key: String::new(),
-    }
-}
-
 async fn assert_live_transcription(addr: std::net::SocketAddr) {
     let sample_rate = 16_000;
     let client = ListenClient::builder()
@@ -192,8 +184,7 @@ async fn pro_transcription_api_supports_live_and_batch() {
     let _ = tracing_subscriber::fmt::try_init();
 
     let env = pro_env();
-    let config = SttProxyConfig::new(&env, &supabase_env())
-        .with_anarlog_routing(AnarlogRoutingConfig::default());
+    let config = SttProxyConfig::new(&env).with_anarlog_routing(AnarlogRoutingConfig::default());
     let addr = start_server(config).await;
 
     assert_live_transcription(addr).await;

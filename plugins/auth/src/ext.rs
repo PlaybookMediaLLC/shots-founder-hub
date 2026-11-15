@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anlg_supabase_auth::{client::store::AuthStore, session::find_session};
+use anlg_session_auth::{client::store::AuthStore, session::find_session};
 
 use crate::AccountInfo;
 

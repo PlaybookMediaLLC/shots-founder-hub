@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EditorView } from "prosemirror-view";
 import { useCallback, useRef, useState } from "react";
 
+import { getProviderProfileImageUrl } from "@anlg/cloud-client/profile";
 import {
   captureCommentAnchor,
   type CommentAnchor,
@@ -13,7 +14,6 @@ import {
   getCommentAnchorRanges,
   setActiveCommentAnchor,
 } from "@anlg/editor/note";
-import { getProviderProfileImageUrl } from "@anlg/supabase/profile";
 import { Avatar } from "@anlg/ui/components/avatar";
 import { CircleNotch, Trash } from "@anlg/ui/components/icons";
 import { Button } from "@anlg/ui/components/ui/button";
@@ -154,21 +154,21 @@ function useSessionComments({
     auth.session && auth.session.user.is_anonymous !== true
       ? auth.session
       : null;
-  const supabase = auth.supabase;
+  const cloudClient = auth.cloudClient;
   const enabled =
     shareId !== null &&
     session !== null &&
-    supabase !== null &&
-    supabase !== undefined;
+    cloudClient !== null &&
+    cloudClient !== undefined;
 
   const commentsQuery = useQuery({
     queryKey: sessionShareCommentsQueryKey(shareId ?? ""),
     queryFn: ({ signal }) => {
-      if (!supabase || !session || !shareId) {
+      if (!cloudClient || !session || !shareId) {
         throw new ShareManagementError();
       }
       return listSessionShareComments(
-        { supabase, session, signal },
+        { cloudClient, session, signal },
         { shareId },
       );
     },
@@ -184,11 +184,11 @@ function useSessionComments({
       anchor: SessionShareCommentAnchor;
       body: string;
     }) => {
-      if (!supabase || !session || !shareId) {
+      if (!cloudClient || !session || !shareId) {
         throw new ShareManagementError();
       }
       return createSessionShareComment(
-        { supabase, session },
+        { cloudClient, session },
         { anchor, body, shareId },
       );
     },
@@ -214,10 +214,10 @@ function useSessionComments({
 
   const deleteMutation = useMutation({
     mutationFn: (commentId: string) => {
-      if (!supabase || !session) {
+      if (!cloudClient || !session) {
         throw new ShareManagementError();
       }
-      return deleteSessionShareComment({ supabase, session }, commentId);
+      return deleteSessionShareComment({ cloudClient, session }, commentId);
     },
     onSuccess: ({ commentId }) => {
       if (!shareId) return;

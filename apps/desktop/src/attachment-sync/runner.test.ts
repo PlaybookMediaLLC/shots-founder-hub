@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AttachmentBackupGatewayError,
   type AttachmentBackupDeleteRequest,
-} from "@anlg/supabase/attachment-backups";
+} from "@anlg/cloud-client/attachment-backups";
 
 import { NativeAttachmentTransferError } from "./native";
 import {
@@ -42,7 +42,7 @@ const downloadGrant = {
   ciphertextSha256: "b".repeat(64),
   formatVersion: 1,
   signedUrl:
-    "https://project.supabase.co/storage/v1/object/sign/attachment-backups/owner/object.anb1?token=secret",
+    "https://project.example.test/storage/v1/object/sign/attachment-backups/owner/object.anb1?token=secret",
   expiresAt: "2026-07-17T12:00:00.000Z",
 };
 const restored = {
@@ -162,7 +162,7 @@ const runJob = (
   runAttachmentTransferJob(
     {
       ...deps,
-      supabaseUrl: "https://project.supabase.co",
+      cloudUrl: "https://project.example.test",
       ...extra,
     } as any,
     currentJob,
@@ -178,7 +178,7 @@ const runPassWith = (
     .mockResolvedValueOnce(undefined);
   return runAttachmentTransferPass({
     ...deps,
-    supabaseUrl: "https://project.supabase.co",
+    cloudUrl: "https://project.example.test",
   } as any);
 };
 
@@ -200,7 +200,7 @@ describe("attachment transfer runner", () => {
     try {
       const stop = startAttachmentTransferRunner({
         ...deps,
-        supabaseUrl: "https://project.supabase.co",
+        cloudUrl: "https://project.example.test",
       } as any);
       await vi.advanceTimersByTimeAsync(0);
       expect(deps.store.claimNext).toHaveBeenCalledOnce();
@@ -696,7 +696,7 @@ describe("attachment transfer runner", () => {
 
     const firstStop = startAttachmentTransferRunner({
       ...deps,
-      supabaseUrl: "https://project.supabase.co",
+      cloudUrl: "https://project.example.test",
     } as any);
     await vi.waitFor(() =>
       expect(deps.store.recoverInterrupted).toHaveBeenCalledOnce(),
@@ -715,7 +715,7 @@ describe("attachment transfer runner", () => {
 
     const secondStop = startAttachmentTransferRunner({
       ...deps,
-      supabaseUrl: "https://project.supabase.co",
+      cloudUrl: "https://project.example.test",
     } as any);
     await vi.waitFor(() =>
       expect(deps.store.recoverInterrupted).toHaveBeenCalledTimes(2),
@@ -734,7 +734,7 @@ describe("attachment transfer runner", () => {
     try {
       const stop = startAttachmentTransferRunner({
         ...deps,
-        supabaseUrl: "https://project.supabase.co",
+        cloudUrl: "https://project.example.test",
       } as any);
       await vi.advanceTimersByTimeAsync(0);
       expect(deps.native.reconcileDeleteGuards).toHaveBeenCalledOnce();
@@ -762,7 +762,7 @@ describe("attachment transfer runner", () => {
 
     const firstPass = runAttachmentTransferPass({
       ...deps,
-      supabaseUrl: "https://project.supabase.co",
+      cloudUrl: "https://project.example.test",
     } as any);
     await vi.waitFor(() =>
       expect(deps.native.describeUpload).toHaveBeenCalledOnce(),
@@ -770,7 +770,7 @@ describe("attachment transfer runner", () => {
 
     await runAttachmentTransferPass({
       ...deps,
-      supabaseUrl: "https://project.supabase.co",
+      cloudUrl: "https://project.example.test",
     } as any);
 
     expect(deps.store.recoverInterrupted).toHaveBeenNthCalledWith(2, [

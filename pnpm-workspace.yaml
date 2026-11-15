@@ -98,7 +98,6 @@ allowBuilds:
   protobufjs: true
   puppeteer: true
   sharp: true
-  supabase: true
   unix-dgram: true
   workerd: true
 

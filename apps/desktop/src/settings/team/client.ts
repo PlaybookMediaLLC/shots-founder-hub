@@ -1,7 +1,7 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 export type TeamContext = {
-  supabase: SupabaseClient;
+  cloudClient: CloudClient;
   session: Session;
 };
 
@@ -13,18 +13,6 @@ export type WorkspaceMember = {
   name: string | null;
   avatarUrl: string | null;
   role: WorkspaceRole;
-};
-
-export type WorkspaceInvitation = {
-  invitationId: string;
-  email: string;
-  expiresAt: string;
-};
-
-export type WorkspaceSeatUsage = {
-  seatLimit: number | null;
-  usedSeats: number;
-  isBilled: boolean;
 };
 
 const WORKSPACE_CAPABILITIES = [
@@ -53,8 +41,6 @@ export type WorkspaceAccess = {
   usedSeats: number;
 };
 
-export type WorkspaceShareSlugAvailability = "available" | "taken" | "invalid";
-
 export class TeamError extends Error {
   constructor(message = "Workspace request failed") {
     super(message);
@@ -66,13 +52,13 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function requireTeamContext(auth: {
-  supabase?: SupabaseClient | null;
+  cloudClient?: CloudClient | null;
   session?: Session | null;
 }): TeamContext {
-  if (!auth.supabase || !auth.session || auth.session.user.is_anonymous) {
+  if (!auth.cloudClient || !auth.session || auth.session.user.is_anonymous) {
     throw new TeamError();
   }
-  return { supabase: auth.supabase, session: auth.session };
+  return { cloudClient: auth.cloudClient, session: auth.session };
 }
 
 async function callRpc(
@@ -80,7 +66,7 @@ async function callRpc(
   functionName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  const response = await context.supabase
+  const response = await context.cloudClient
     .rpc(functionName, args)
     .setHeader("Authorization", `Bearer ${context.session.access_token}`);
   if (response.error !== null) {
@@ -108,47 +94,6 @@ function role(value: unknown): WorkspaceRole {
   return value;
 }
 
-export async function createWorkspace(context: TeamContext, name: string) {
-  const row = rows(
-    await callRpc(context, "create_workspace", { p_name: name }),
-  )[0];
-  if (!row) throw new TeamError();
-  return { workspaceId: text(row.workspace_id) };
-}
-
-export async function renameWorkspace(
-  context: TeamContext,
-  workspaceId: string,
-  name: string,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "rename_workspace", {
-    p_workspace_id: workspaceId,
-    p_name: name,
-  });
-}
-
-export async function setWorkspaceLogo(
-  context: TeamContext,
-  workspaceId: string,
-  logoDataUrl: string | null,
-) {
-  assertWorkspaceId(workspaceId);
-  const row = rows(
-    await callRpc(context, "set_workspace_logo", {
-      p_workspace_id: workspaceId,
-      p_logo_data: logoDataUrl,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  return {
-    logoDataUrl:
-      typeof row.workspace_logo_data === "string"
-        ? row.workspace_logo_data
-        : null,
-  };
-}
-
 export async function listWorkspaceMembers(
   context: TeamContext,
   workspaceId: string,
@@ -168,102 +113,6 @@ export async function listWorkspaceMembers(
         typeof row.user_avatar_url === "string" ? row.user_avatar_url : null,
       role: role(row.role),
     }));
-}
-
-export async function listWorkspaceInvitations(
-  context: TeamContext,
-  workspaceId: string,
-): Promise<WorkspaceInvitation[]> {
-  assertWorkspaceId(workspaceId);
-  return rows(
-    await callRpc(context, "list_workspace_invitations", {
-      p_workspace_id: workspaceId,
-    }),
-  )
-    .filter((row) => row.accepted_at === null && row.revoked_at === null)
-    .map((row) => ({
-      invitationId: text(row.invitation_id),
-      email: text(row.invitee_email),
-      expiresAt: text(row.expires_at),
-    }));
-}
-
-export type MyWorkspaceInvitation = {
-  invitationId: string;
-  workspaceId: string;
-  workspaceName: string;
-  workspaceLogoDataUrl: string | null;
-  invitedByEmail: string | null;
-  expiresAt: string;
-};
-
-export async function listMyWorkspaceInvitations(
-  context: TeamContext,
-): Promise<MyWorkspaceInvitation[]> {
-  return rows(await callRpc(context, "list_my_workspace_invitations", {})).map(
-    (row) => {
-      const invitationId = text(row.invitation_id);
-      const workspaceId = text(row.workspace_id);
-      assertWorkspaceId(invitationId);
-      assertWorkspaceId(workspaceId);
-      return {
-        invitationId,
-        workspaceId,
-        workspaceName: text(row.workspace_name),
-        workspaceLogoDataUrl:
-          typeof row.workspace_logo_data === "string"
-            ? row.workspace_logo_data
-            : null,
-        invitedByEmail:
-          typeof row.invited_by_email === "string"
-            ? row.invited_by_email
-            : null,
-        expiresAt: text(row.expires_at),
-      };
-    },
-  );
-}
-
-export async function acceptMyWorkspaceInvitation(
-  context: TeamContext,
-  invitationId: string,
-): Promise<{ workspaceId: string }> {
-  assertWorkspaceId(invitationId);
-  const row = rows(
-    await callRpc(context, "accept_my_workspace_invitation", {
-      p_invitation_id: invitationId,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  return { workspaceId: text(row.workspace_id) };
-}
-
-export async function declineMyWorkspaceInvitation(
-  context: TeamContext,
-  invitationId: string,
-): Promise<void> {
-  assertWorkspaceId(invitationId);
-  await callRpc(context, "decline_my_workspace_invitation", {
-    p_invitation_id: invitationId,
-  });
-}
-
-export async function getSeatUsage(
-  context: TeamContext,
-  workspaceId: string,
-): Promise<WorkspaceSeatUsage> {
-  assertWorkspaceId(workspaceId);
-  const row = rows(
-    await callRpc(context, "get_workspace_seat_usage", {
-      p_workspace_id: workspaceId,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  return {
-    seatLimit: typeof row.seat_limit === "number" ? row.seat_limit : null,
-    usedSeats: typeof row.used_seats === "number" ? row.used_seats : 0,
-    isBilled: row.is_billed === true,
-  };
 }
 
 export async function getWorkspaceAccess(
@@ -289,220 +138,6 @@ export async function getWorkspaceAccess(
   };
 }
 
-const INVITE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
-const INVITATION_EMAIL_TIMEOUT_MS = 10_000;
-
-export async function createWorkspaceInvitation(
-  context: TeamContext,
-  workspaceId: string,
-  email: string,
-) {
-  assertWorkspaceId(workspaceId);
-  const row = rows(
-    await callRpc(context, "create_workspace_invitation", {
-      p_workspace_id: workspaceId,
-      p_invitee_email: normalizeEmail(email),
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  const invitationId = text(row.invitation_id);
-  assertWorkspaceId(invitationId);
-  const inviteToken =
-    row.invite_token === null || row.invite_token === undefined
-      ? null
-      : inviteTokenValue(row.invite_token);
-  return {
-    invitationId,
-    inviteToken,
-    expiresAt: text(row.invitation_expires_at),
-    wasCreated: row.was_created === true,
-  };
-}
-
-export async function resendWorkspaceInvitation(
-  context: TeamContext,
-  invitationId: string,
-) {
-  assertWorkspaceId(invitationId);
-  const row = rows(
-    await callRpc(context, "resend_workspace_invitation", {
-      p_invitation_id: invitationId,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  const nextInvitationId = text(row.invitation_id);
-  assertWorkspaceId(nextInvitationId);
-  return {
-    invitationId: nextInvitationId,
-    inviteToken: inviteTokenValue(row.invite_token),
-    expiresAt: text(row.invitation_expires_at),
-    wasCreated: true as const,
-  };
-}
-
-export async function sendWorkspaceInvitationEmail(input: {
-  apiBaseUrl: string;
-  accessToken: string;
-  workspaceId: string;
-  invitationId: string;
-  inviteToken: string;
-  workspaceName: string;
-  senderName: string;
-  signal?: AbortSignal;
-  fetcher?: typeof fetch;
-}) {
-  assertWorkspaceId(input.workspaceId);
-  assertWorkspaceId(input.invitationId);
-  const inviteToken = inviteTokenValue(input.inviteToken);
-  const body = JSON.stringify({
-    workspaceId: input.workspaceId,
-    inviteToken,
-    workspaceName: input.workspaceName.trim(),
-    fromName: input.senderName.trim(),
-  });
-  if (new TextEncoder().encode(body).byteLength > 8 * 1024) {
-    throw new TeamError();
-  }
-  const url = invitationEmailUrl(input.apiBaseUrl, input.invitationId);
-  const controller = new AbortController();
-  const abort = () => controller.abort();
-  if (input.signal?.aborted) controller.abort();
-  else input.signal?.addEventListener("abort", abort, { once: true });
-  const timeout = setTimeout(abort, INVITATION_EMAIL_TIMEOUT_MS);
-  try {
-    const response = await (input.fetcher ?? fetch)(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${input.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body,
-      cache: "no-store",
-      credentials: "omit",
-      redirect: "error",
-      referrerPolicy: "no-referrer",
-      signal: controller.signal,
-    });
-    if (response.status !== 204) throw new TeamError();
-  } catch (error) {
-    if (error instanceof TeamError) throw error;
-    throw new TeamError();
-  } finally {
-    clearTimeout(timeout);
-    input.signal?.removeEventListener("abort", abort);
-  }
-}
-
-export async function revokeInvitation(
-  context: TeamContext,
-  invitationId: string,
-) {
-  assertWorkspaceId(invitationId);
-  await callRpc(context, "revoke_workspace_invitation", {
-    p_invitation_id: invitationId,
-  });
-}
-
-export async function removeMember(
-  context: TeamContext,
-  workspaceId: string,
-  userId: string,
-) {
-  assertWorkspaceId(workspaceId);
-  assertWorkspaceId(userId);
-  await callRpc(context, "revoke_workspace_membership", {
-    p_workspace_id: workspaceId,
-    p_user_id: userId,
-  });
-}
-
-export async function setMemberRole(
-  context: TeamContext,
-  workspaceId: string,
-  userId: string,
-  nextRole: WorkspaceRole,
-) {
-  assertWorkspaceId(workspaceId);
-  assertWorkspaceId(userId);
-  await callRpc(context, "set_workspace_membership_role", {
-    p_workspace_id: workspaceId,
-    p_user_id: userId,
-    p_role: nextRole,
-  });
-}
-
-export async function transferOwnership(
-  context: TeamContext,
-  workspaceId: string,
-  userId: string,
-) {
-  assertWorkspaceId(workspaceId);
-  assertWorkspaceId(userId);
-  await callRpc(context, "transfer_workspace_ownership", {
-    p_workspace_id: workspaceId,
-    p_user_id: userId,
-  });
-}
-
-export async function listOwnershipRequests(
-  context: TeamContext,
-  workspaceId: string,
-) {
-  assertWorkspaceId(workspaceId);
-  return rows(
-    await callRpc(context, "list_workspace_ownership_requests", {
-      p_workspace_id: workspaceId,
-    }),
-  ).map((row) => ({
-    id: text(row.id),
-    ownerUserId: text(row.owner_user_id),
-    targetUserId: text(row.target_user_id),
-  }));
-}
-
-export async function respondOwnershipRequest(
-  context: TeamContext,
-  workspaceId: string,
-  requestId: string,
-  action: "accept" | "decline" | "cancel",
-) {
-  assertWorkspaceId(workspaceId);
-  assertWorkspaceId(requestId);
-  await callRpc(context, "respond_workspace_ownership_request", {
-    p_workspace_id: workspaceId,
-    p_request_id: requestId,
-    p_action: action,
-  });
-}
-
-export async function leaveWorkspace(
-  context: TeamContext,
-  workspaceId: string,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "leave_workspace", { p_workspace_id: workspaceId });
-}
-
-export async function deleteWorkspace(
-  context: TeamContext,
-  workspaceId: string,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "delete_workspace", { p_workspace_id: workspaceId });
-}
-
-export type WorkspaceUsageOverview = {
-  memberCount: number;
-  pendingInvitations: number;
-  enrolledDevices: number;
-  sharesCreated30d: number;
-  shareAccessEvents30d: number;
-  seatLimit: number | null;
-  usedSeats: number;
-  isBilled: boolean;
-};
-
 export type WorkspacePolicy = {
   allowedShareScopes: Array<"restricted" | "workspace" | "link" | "public">;
   defaultShareScope: "restricted" | "workspace" | "link" | "public";
@@ -514,33 +149,6 @@ export type WorkspacePolicy = {
 
 function numberOrNull(value: unknown): number | null {
   return typeof value === "number" ? value : null;
-}
-
-function number(value: unknown): number {
-  return typeof value === "number" ? value : 0;
-}
-
-export async function getWorkspaceUsageOverview(
-  context: TeamContext,
-  workspaceId: string,
-): Promise<WorkspaceUsageOverview> {
-  assertWorkspaceId(workspaceId);
-  const row = rows(
-    await callRpc(context, "get_workspace_usage_overview", {
-      p_workspace_id: workspaceId,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  return {
-    memberCount: number(row.member_count),
-    pendingInvitations: number(row.pending_invitations),
-    enrolledDevices: number(row.enrolled_devices),
-    sharesCreated30d: number(row.shares_created_30d),
-    shareAccessEvents30d: number(row.share_access_events_30d),
-    seatLimit: numberOrNull(row.seat_limit),
-    usedSeats: number(row.used_seats),
-    isBilled: row.is_billed === true,
-  };
 }
 
 function shareScope(
@@ -596,159 +204,23 @@ export function intersectAllowedShareScopes(
   );
 }
 
-export async function claimWorkspaceDomain(
-  context: TeamContext,
-  workspaceId: string,
-  domain: string,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "claim_workspace_domain", {
-    p_workspace_id: workspaceId,
-    p_domain: domain,
-  });
-}
-
-export async function getWorkspaceEmailAutoJoin(
-  context: TeamContext,
-  workspaceId: string,
-) {
-  assertWorkspaceId(workspaceId);
-  const row = rows(
-    await callRpc(context, "get_workspace_email_auto_join", {
-      p_workspace_id: workspaceId,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  return {
-    domain: typeof row.domain === "string" ? row.domain : null,
-    enabled: row.enabled === true,
-  };
-}
-
-export async function setWorkspaceEmailAutoJoin(
-  context: TeamContext,
-  workspaceId: string,
-  enabled: boolean,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "set_workspace_email_auto_join", {
-    p_workspace_id: workspaceId,
-    p_enabled: enabled,
-  });
-}
-
-export async function setWorkspaceShareSlug(
-  context: TeamContext,
-  workspaceId: string,
-  slug: string,
-) {
-  assertWorkspaceId(workspaceId);
-  const row = rows(
-    await callRpc(context, "set_workspace_share_slug", {
-      p_workspace_id: workspaceId,
-      p_slug: slug,
-    }),
-  )[0];
-  if (!row) throw new TeamError();
-  return {
-    shareSlug: text(row.workspace_share_slug),
-    shareBaseUrl: text(row.share_base_url),
-  };
-}
-
-export async function checkWorkspaceShareSlugAvailability(
-  context: TeamContext,
-  workspaceId: string,
-  slug: string,
-): Promise<WorkspaceShareSlugAvailability> {
-  assertWorkspaceId(workspaceId);
-  const availability = await callRpc(
-    context,
-    "check_workspace_share_slug_availability",
-    {
-      p_workspace_id: workspaceId,
-      p_slug: slug,
-    },
-  );
-  if (
-    availability !== "available" &&
-    availability !== "taken" &&
-    availability !== "invalid"
-  ) {
-    throw new TeamError();
-  }
-  return availability;
-}
-
-export async function rotateWorkspaceScimToken(
-  context: TeamContext,
-  workspaceId: string,
-  domain: string,
-  token: string,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "rotate_workspace_scim_token", {
-    p_workspace_id: workspaceId,
-    p_domain: domain,
-    p_token: token,
-  });
-}
-
-export async function setWorkspacePolicy(
-  context: TeamContext,
-  workspaceId: string,
-  policy: WorkspacePolicy,
-) {
-  assertWorkspaceId(workspaceId);
-  await callRpc(context, "set_workspace_policy", {
-    p_workspace_id: workspaceId,
-    p_allowed_share_scopes: policy.allowedShareScopes,
-    p_default_share_scope: policy.defaultShareScope,
-    p_retention_days: policy.retentionDays,
-    p_model_training_opt_out: policy.modelTrainingOptOut,
-    p_consent_notification_enabled: policy.consentNotificationEnabled,
-    p_require_sso: policy.requireSso,
-  });
-}
-
 export async function listMyWorkspaces(context: TeamContext) {
   // RLS limits the embedded memberships to this account's own row, so the join
   // yields the caller's role without needing manager-only RPCs.
-  const response = await context.supabase
-    .from("workspaces")
-    .select(
-      "id,name,kind,owner_user_id,share_slug,logo_data,workspace_memberships(role)",
-    )
-    .eq("kind", "shared");
+  const response = await context.cloudClient.workspaces();
   if (response.error !== null) throw new TeamError(response.error.message);
   return (response.data ?? []).map((row) => {
     const memberships = Array.isArray(row.workspace_memberships)
       ? row.workspace_memberships
       : [];
-    const ownerUserId = text(row.owner_user_id);
     return {
       workspaceId: text(row.id),
       name: text(row.name),
-      ownerUserId,
-      shareSlug: typeof row.share_slug === "string" ? row.share_slug : null,
+      ownerUserId: text(row.owner_user_id),
       logoDataUrl: typeof row.logo_data === "string" ? row.logo_data : null,
       role: role(memberships[0]?.role ?? "member"),
-      isOwner: ownerUserId === context.session.user.id,
     };
   });
-}
-
-function normalizeEmail(value: string) {
-  const email = value.trim().toLowerCase();
-  if (
-    email.length === 0 ||
-    email.length > 320 ||
-    !/^[^\s@]+@[^\s@]+$/.test(email) ||
-    /[\u0000-\u001f\u007f]/.test(email)
-  ) {
-    throw new TeamError();
-  }
-  return email;
 }
 
 function isWorkspaceCapability(value: unknown): value is WorkspaceCapability {
@@ -760,35 +232,6 @@ function workspaceTier(value: unknown): WorkspaceTier {
     throw new TeamError();
   }
   return value;
-}
-
-function inviteTokenValue(value: unknown) {
-  if (typeof value !== "string" || !INVITE_TOKEN_PATTERN.test(value)) {
-    throw new TeamError();
-  }
-  return value;
-}
-
-function invitationEmailUrl(apiBaseUrl: string, invitationId: string) {
-  try {
-    const base = new URL(apiBaseUrl);
-    if (
-      !["http:", "https:"].includes(base.protocol) ||
-      base.username !== "" ||
-      base.password !== "" ||
-      base.search !== "" ||
-      base.hash !== ""
-    ) {
-      throw new TeamError();
-    }
-    return new URL(
-      `/workspaces/invitations/${invitationId}/email`,
-      base.origin,
-    );
-  } catch (error) {
-    if (error instanceof TeamError) throw error;
-    throw new TeamError();
-  }
 }
 
 function assertWorkspaceId(value: string) {

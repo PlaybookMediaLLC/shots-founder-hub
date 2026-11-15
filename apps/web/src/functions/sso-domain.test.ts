@@ -39,7 +39,7 @@ test("normalizeSsoDomain rejects incomplete hosts", () => {
   assert.equal(normalizeSsoDomain(""), null);
 });
 
-test("mapSsoAuthError explains a missing Supabase SSO provider", () => {
+test("mapSsoAuthError explains a missing SSO provider", () => {
   assert.equal(
     mapSsoAuthError("No SSO provider assigned for this domain"),
     SSO_UNAVAILABLE_MESSAGE,

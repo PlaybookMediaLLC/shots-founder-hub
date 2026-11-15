@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { File, Paths } from "expo-file-system";
 
-import { supabase } from "@/auth/client";
+import { cloudClient } from "@/auth/client";
 import { ACCOUNT_SESSION_SQL } from "@/data/account-sessions";
 import { deviceTimeZone } from "@/data/audio-catalog";
 import { transcribeSessionOnDevice } from "@/data/on-device-transcription";
@@ -51,8 +51,8 @@ export async function shotsVoiceRequest(
   workspaceId: string,
   request: VoiceRequest,
 ) {
-  const session = supabase
-    ? (await supabase.auth.getSession()).data.session
+  const session = cloudClient
+    ? (await cloudClient.auth.getSession()).data.session
     : null;
   if (!session || session.user.id !== accountId)
     return { status: 401, body: null };
@@ -440,18 +440,14 @@ export async function fetchShotsWorkspaces(
   accessToken: string,
   signal: AbortSignal,
 ): Promise<{ id: string; name: string }[]> {
-  if (!supabase) return [];
-  const result = await supabase
-    .from("workspaces")
-    .select("id, name")
-    .eq("kind", "shared")
-    .is("deleted_at", null)
-    .order("name")
+  if (!cloudClient) return [];
+  const result = await cloudClient
+    .workspaces()
     .setHeader("Authorization", `Bearer ${accessToken}`)
     .abortSignal(signal);
   if (result.error) throw result.error;
   return (Array.isArray(result.data) ? result.data : []).filter(
-    (workspace): workspace is { id: string; name: string } =>
+    (workspace) =>
       typeof workspace.id === "string" && typeof workspace.name === "string",
   );
 }

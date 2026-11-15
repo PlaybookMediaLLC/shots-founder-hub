@@ -2606,113 +2606,6 @@
         }
       }
     },
-    "/subscription/can-start-trial": {
-      "get": {
-        "tags": [
-          "subscription"
-        ],
-        "operationId": "can_start_trial",
-        "responses": {
-          "200": {
-            "description": "Check successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CanStartTrialResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
-          }
-        ]
-      }
-    },
-    "/subscription/delete-account": {
-      "delete": {
-        "tags": [
-          "subscription"
-        ],
-        "operationId": "delete_account",
-        "responses": {
-          "202": {
-            "description": "Account deletion durably accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteAccountResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal server error"
-          },
-          "503": {
-            "description": "Durable account cleanup unavailable"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
-          }
-        ]
-      }
-    },
-    "/subscription/start-trial": {
-      "post": {
-        "tags": [
-          "subscription"
-        ],
-        "operationId": "start_trial",
-        "parameters": [
-          {
-            "name": "interval",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/Interval"
-            },
-            "example": "monthly"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Trial started successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartTrialResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
-          }
-        ]
-      }
-    },
     "/sync/attachment-backups/delete": {
       "post": {
         "tags": [
@@ -5472,52 +5365,6 @@
         ]
       }
     },
-    "/workspaces/invitations/{invitation_id}/email": {
-      "post": {
-        "tags": [
-          "shared-notes"
-        ],
-        "operationId": "send_workspace_invitation_email",
-        "parameters": [
-          {
-            "name": "invitation_id",
-            "in": "path",
-            "description": "Workspace invitation ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkspaceInvitationEmailRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Invitation email sent"
-          },
-          "400": {
-            "description": "Invalid invitation email request"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "404": {
-            "description": "Invitation unavailable"
-          },
-          "502": {
-            "description": "Invitation email service unavailable"
-          }
-        }
-      }
-    },
     "/zoom/import-meetings": {
       "post": {
         "tags": [
@@ -6454,55 +6301,6 @@
           }
         }
       },
-      "CanStartTrialReason": {
-        "type": "string",
-        "enum": [
-          "eligible",
-          "not_eligible",
-          "error"
-        ]
-      },
-      "CanStartTrialResponse": {
-        "type": "object",
-        "required": [
-          "canStartTrial"
-        ],
-        "properties": {
-          "canStartTrial": {
-            "type": "boolean",
-            "example": true
-          },
-          "offer": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/TrialOffer"
-              }
-            ]
-          },
-          "reason": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/CanStartTrialReason"
-              }
-            ]
-          },
-          "trialDays": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "example": 30,
-            "minimum": 0
-          }
-        }
-      },
       "CanceledAttachmentBackupDeletion": {
         "type": "object",
         "required": [
@@ -7283,27 +7081,6 @@
           "saturday",
           "unknown"
         ]
-      },
-      "DeleteAccountResponse": {
-        "type": "object",
-        "required": [
-          "deleted",
-          "pending"
-        ],
-        "properties": {
-          "deleted": {
-            "type": "boolean"
-          },
-          "error": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "pending": {
-            "type": "boolean"
-          }
-        }
       },
       "DeleteAttachmentBackupRequest": {
         "type": "object",
@@ -9204,13 +8981,6 @@
           "normal",
           "high",
           "unknown"
-        ]
-      },
-      "Interval": {
-        "type": "string",
-        "enum": [
-          "monthly",
-          "yearly"
         ]
       },
       "ItemBody": {
@@ -12367,54 +12137,6 @@
           }
         }
       },
-      "StartTrialReason": {
-        "type": "string",
-        "enum": [
-          "started",
-          "not_eligible"
-        ]
-      },
-      "StartTrialResponse": {
-        "type": "object",
-        "required": [
-          "started"
-        ],
-        "properties": {
-          "offer": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/TrialOffer"
-              }
-            ]
-          },
-          "reason": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/StartTrialReason"
-              }
-            ]
-          },
-          "started": {
-            "type": "boolean",
-            "example": true
-          },
-          "trialDays": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "example": 30,
-            "minimum": 0
-          }
-        }
-      },
       "StreamAlternatives": {
         "type": "object",
         "required": [
@@ -13180,14 +12902,6 @@
           "unknown"
         ]
       },
-      "TrialOffer": {
-        "type": "string",
-        "enum": [
-          "referral",
-          "work_email",
-          "personal_email"
-        ]
-      },
       "UpdateSettingsBody": {
         "type": "object",
         "required": [
@@ -13501,29 +13215,6 @@
             "type": "string"
           }
         }
-      },
-      "WorkspaceInvitationEmailRequest": {
-        "type": "object",
-        "required": [
-          "workspaceId",
-          "inviteToken",
-          "workspaceName"
-        ],
-        "properties": {
-          "fromName": {
-            "type": "string"
-          },
-          "inviteToken": {
-            "type": "string"
-          },
-          "workspaceId": {
-            "type": "string"
-          },
-          "workspaceName": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
       },
       "ZoomImportMeetingsRequest": {
         "type": "object",
@@ -14814,7 +14505,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Supabase JWT token"
+        "description": "Cloud session JWT"
       },
       "cloud_api_key": {
         "type": "http",
@@ -14892,10 +14583,6 @@
     {
       "name": "cloud-api",
       "description": "Opt-in hosted access to Shots Founder Hub meeting data"
-    },
-    {
-      "name": "subscription",
-      "description": "Subscription and trial management"
     },
     {
       "name": "stt",

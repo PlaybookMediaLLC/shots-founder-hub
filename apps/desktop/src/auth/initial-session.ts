@@ -1,9 +1,9 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 import { readPersistedAuthSession } from "./client";
 
 export async function loadInitialSession(
-  client: SupabaseClient,
+  client: CloudClient,
   onRefreshError?: (error: unknown, storedSession: Session | null) => void,
 ): Promise<Session | null> {
   const storedSession = await readPersistedAuthSession();

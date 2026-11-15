@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+import { getShotsSettingsUrl } from "@anlg/cloud-client/shots";
 
 import { env } from "@/env";
 import { fetchUser } from "@/functions/auth";

@@ -6,7 +6,7 @@ import {
   oauthAuthorizationIdSchema,
 } from "./oauth-consent.ts";
 
-test("OAuth authorization IDs accept Supabase opaque identifiers", () => {
+test("OAuth authorization IDs accept opaque identifiers", () => {
   assert.equal(
     oauthAuthorizationIdSchema.parse("2golbs6lfj6pkquumjxxlhplfrpugele"),
     "2golbs6lfj6pkquumjxxlhplfrpugele",
