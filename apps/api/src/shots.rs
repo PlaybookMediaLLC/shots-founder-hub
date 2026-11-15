@@ -20,6 +20,24 @@ struct Gateway {
     shots: ShotsAuth,
     client: reqwest::Client,
     database: anlg_cloud_db::Database,
+    anonymous: std::sync::Arc<tokio::sync::Semaphore>,
+}
+
+// ponytail: one global cap on signed-out database calls, so that they cannot
+// drain the 20-connection pool. The web server makes these calls, so a per-IP
+// limit would put every visitor in one bucket. A caller waits briefly for a
+// slot, so short bursts do not fail. Give the web server its own credential
+// when one public client must not be able to fill these slots.
+const ANONYMOUS_RPC_CONCURRENCY: usize = 8;
+const ANONYMOUS_RPC_WAIT: Duration = Duration::from_secs(1);
+
+async fn anonymous_permit(
+    slots: &tokio::sync::Semaphore,
+) -> Result<tokio::sync::SemaphorePermit<'_>, Response> {
+    match tokio::time::timeout(ANONYMOUS_RPC_WAIT, slots.acquire()).await {
+        Ok(Ok(permit)) => Ok(permit),
+        _ => Err(error(StatusCode::SERVICE_UNAVAILABLE, "anonymous_capacity")),
+    }
 }
 
 pub fn router(shots: ShotsAuth, database: anlg_cloud_db::Database) -> Router {
@@ -80,6 +98,7 @@ pub fn router(shots: ShotsAuth, database: anlg_cloud_db::Database) -> Router {
         .with_state(Gateway {
             shots,
             database,
+            anonymous: std::sync::Arc::new(tokio::sync::Semaphore::new(ANONYMOUS_RPC_CONCURRENCY)),
             client: reqwest::Client::builder()
                 .redirect(reqwest::redirect::Policy::none())
                 .retry(reqwest::retry::never())
@@ -267,6 +286,10 @@ async fn rpc(
         function.as_str(),
         "workspace_share_slug_is_active" | "referral_link_available"
     ) {
+        let _permit = match anonymous_permit(&state.anonymous).await {
+            Ok(permit) => permit,
+            Err(response) => return response,
+        };
         return match state
             .database
             .rpc_bounded::<Value>(&anlg_cloud_db::Principal::Anonymous, &function, &body, 1024)
@@ -661,5 +684,26 @@ async fn logout(
     match state.shots.logout(token).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         _ => error(StatusCode::BAD_GATEWAY, "shots_unavailable"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn anonymous_calls_wait_for_a_slot_then_fail_closed() {
+        let slots = tokio::sync::Semaphore::new(1);
+        let held = anonymous_permit(&slots).await.unwrap();
+        // A slot that frees up during the wait is taken.
+        let (waited, ()) = tokio::join!(anonymous_permit(&slots), async move {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            drop(held);
+        });
+        let waited = waited.unwrap();
+        // With no free slot, the call fails closed after the wait.
+        let response = anonymous_permit(&slots).await.unwrap_err();
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        drop(waited);
     }
 }
