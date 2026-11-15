@@ -39,8 +39,8 @@ impl AuthStore {
         // server-side but the disk write fails, rolling back would leave the
         // in-memory store with the old (now-invalidated) refresh token. The next
         // auto-refresh tick would then try to use that stale token, the server
-        // would reject it with a hard auth error, and Supabase SDK would call
-        // _removeSession() → SIGNED_OUT. Keeping the new token in memory lets the
+        // would reject it with a hard auth error, and the session would end.
+        // Keeping the new token in memory lets the
         // current session survive; only a cold restart before a successful write
         // would be affected.
         if let Some(path) = &self.path {

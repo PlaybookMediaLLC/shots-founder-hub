@@ -805,11 +805,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   // Tauri's visibilitychange event is broken (always reports "visible" on Windows,
-  // only fires on minimize/maximize on macOS — not when hidden behind other windows).
-  // The Supabase SDK relies on visibilitychange to start/stop its auto-refresh ticker,
-  // which can cause sessions to expire during inactivity when the window is hidden.
-  // We bypass this by running the ticker continuously and using Tauri's native
-  // onFocusChanged for immediate recovery after sleep/hibernate.
+  // only fires on minimize/maximize on macOS — not when hidden behind other windows),
+  // so the refresh ticker runs continuously and does not depend on visibility.
+  // In the main window, Tauri's native onFocusChanged also checks the session
+  // and refreshes it when it is near expiry, to recover after sleep/hibernate.
   // See: https://github.com/tauri-apps/tauri/issues/10592
   useEffect(() => {
     if (!cloudClient) {
@@ -818,9 +817,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const client = cloudClient;
 
-    // startAutoRefresh() removes the SDK's visibilitychange listener and
-    // runs the refresh ticker continuously (checks storage every 30s,
-    // only makes a network call when the token is near expiry).
+    // startAutoRefresh() runs the refresh ticker continuously (checks storage
+    // every 30s, only makes a network call when the token is near expiry).
     console.log("[auth] startAutoRefresh: mounting continuous ticker");
     void client.auth.startAutoRefresh();
 
@@ -830,8 +828,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .onFocusChanged(({ payload: focused }) => {
         console.log(`[auth] onFocusChanged: focused=${focused}`);
         if (focused) {
-          // Restart the ticker on window focus to trigger an immediate refresh
-          // check, recovering stale sessions after sleep/hibernate.
+          // Make sure the ticker runs. The main window checks the session
+          // below for immediate recovery after sleep/hibernate.
           console.log("[auth] startAutoRefresh: window regained focus");
           void client.auth.startAutoRefresh();
           if (managesCloudsync) {
