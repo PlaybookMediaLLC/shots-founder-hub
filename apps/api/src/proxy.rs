@@ -64,6 +64,11 @@ pub fn route(
     signing_key: &str,
 ) -> Router {
     let Some(origin) = origin else { return router };
+    // A role with no routes (core without Nango) has nothing to forward, and
+    // axum panics on a route_layer over an empty router.
+    if !router.has_routes() {
+        return router;
+    }
     let state = Arc::new(Proxy {
         origin: origin.trim_end_matches('/').to_string(),
         client: reqwest::Client::builder()

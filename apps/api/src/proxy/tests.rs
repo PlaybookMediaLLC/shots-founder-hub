@@ -31,6 +31,17 @@ async fn gateway(origin: &str, gate: &SessionGate, shutdown: CancellationToken) 
     .await
 }
 
+#[test]
+fn a_role_without_routes_starts_without_forwarding() {
+    let router = route(
+        Router::new(),
+        &Some("http://core:3001".into()),
+        &SessionGate::new(),
+        "test-signing-key",
+    );
+    assert!(!router.has_routes());
+}
+
 #[tokio::test]
 async fn large_uploads_keep_auth_query_and_response_headers_without_retrying_redirects() {
     let stop = CancellationToken::new();
