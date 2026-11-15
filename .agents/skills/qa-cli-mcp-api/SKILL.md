@@ -32,7 +32,7 @@ Select lanes by behavior, not by the existence of this checklist:
 - Shared agent-access DTOs, exports, filtering, or pagination → every direct
   consumer, including hosted REST or remote MCP when affected, plus
   cross-surface parity only for the changed fields.
-- Hosted auth, snapshots, entitlements, isolation, purge, or Supabase policy →
+- Hosted auth, snapshots, entitlements, isolation, purge, or Postgres RLS policy →
   the affected hosted REST lifecycle and negative cases.
 - Local or remote MCP protocol/tool changes → that MCP lane and its direct
   transport/contract dependency.
@@ -63,7 +63,7 @@ comprehensive programmatic-interface QA.
   Load secrets into environment variables without echoing them.
 - Store transient response bodies in a directory created with `mktemp -d`.
   Remove that directory and revoke all generated keys after the run.
-- Record the exact candidate commit, app version, API deployment, Supabase
+- Record the exact candidate commit, app version, API deployment, Postgres
   migration version, operating system, and client versions.
 - In a GitButler workspace, identify the selected branch tip with `but status`
   and inspect it with `but show <branch>`; do not use the synthetic workspace
@@ -102,7 +102,8 @@ cargo test -p tauri-plugin-local-api
 cargo test -p api-cloud
 cargo test -p api openapi::tests
 cargo check -p api-client
-supabase test db
+CLOUD_DATABASE_TEST_URL=postgres://... cargo test -p cloud-db --test postgres
+# Then run the pgTAP RLS suite in postgres/tests with pg_prove, as db_ci.yaml does.
 pnpm -F desktop exec vitest run \
   src/cloud-api/client.test.ts \
   src/settings/developers/index.test.tsx
@@ -191,7 +192,7 @@ lane by invoking server handlers directly.
 
 ## Hosted Cloud API
 
-Use the deployed candidate API and Supabase migration with the Pro QA account.
+Use the deployed candidate API and Postgres migration with the Pro QA account.
 Begin with **Cloud API & Connectors** disabled.
 
 1. Before opt-in, confirm there are no server-readable snapshot rows for the

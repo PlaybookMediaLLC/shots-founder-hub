@@ -3,12 +3,8 @@ import { fetch } from "expo/fetch";
 
 import { verifyProviderCredentials } from "@anlg/provider-validation";
 
-import {
-  decodeJwtPayload,
-  deriveBillingInfo,
-  ProRequiredError,
-} from "@/auth/billing";
-import { supabase } from "@/auth/client";
+import { deriveBillingInfo, ProRequiredError } from "@/auth/billing";
+import { cloudClient } from "@/auth/client";
 import { execute, executeTransaction } from "@/db";
 
 import {
@@ -254,7 +250,7 @@ export async function removeProviderKey(
 }
 
 export async function resolveProvider(kind: ProviderKind) {
-  const auth = await supabase?.auth?.getSession();
+  const auth = await cloudClient?.auth?.getSession();
   if (auth?.error) throw new Error("Sign in again to continue.");
   const session = auth?.data.session;
   const config = await readProviderConfig(session?.user.id ?? null, kind);
@@ -271,11 +267,12 @@ export async function resolveProvider(kind: ProviderKind) {
   }
   if (config.provider === "anarlog") {
     if (session?.access_token) {
-      if (!deriveBillingInfo(decodeJwtPayload(session.access_token)).isPro)
-        throw new ProRequiredError();
+      const claims = await cloudClient!.claims(session.access_token);
+      if (claims.error) throw claims.error;
+      if (!deriveBillingInfo(claims.data).isPro) throw new ProRequiredError();
       return { ...config, apiKey: session.access_token };
     }
-    if (!supabase) return { ...config, apiKey: "" };
+    if (!cloudClient) return { ...config, apiKey: "" };
     throw new Error("Sign in to use Shots Founder Hub Pro.");
   }
   if (config.provider === "apple_speech") return { ...config, apiKey: "" };

@@ -200,13 +200,7 @@ async fn start_proxy_with(
         env.stt.soniox_api_key = Some("test-key".to_string());
     }
 
-    let supabase_env = anlg_api_env::SupabaseEnv {
-        supabase_url: String::new(),
-        supabase_anon_key: String::new(),
-        supabase_service_role_key: String::new(),
-    };
-
-    let mut config = SttProxyConfig::new(&env, &supabase_env)
+    let mut config = SttProxyConfig::new(&env)
         .with_default_provider(default_provider)
         .with_anarlog_routing(AnarlogRoutingConfig::default());
 

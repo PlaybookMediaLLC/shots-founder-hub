@@ -681,10 +681,11 @@ async function callRpc(
     assertAuthenticatedSession(context.session);
     const request = createTimedSignal(context.signal);
     try {
-      const response: { data: unknown; error: unknown } = await context.supabase
-        .rpc(functionName, args)
-        .setHeader("Authorization", `Bearer ${context.session.access_token}`)
-        .abortSignal(request.signal);
+      const response: { data: unknown; error: unknown } =
+        await context.cloudClient
+          .rpc(functionName, args)
+          .setHeader("Authorization", `Bearer ${context.session.access_token}`)
+          .abortSignal(request.signal);
       if (response.error !== null) {
         throw unavailable();
       }

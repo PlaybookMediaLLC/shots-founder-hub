@@ -2,7 +2,7 @@ import { fetch } from "@tauri-apps/plugin-http";
 
 import { commands as localApiCommands } from "@anlg/plugin-local-api";
 
-import { supabase } from "~/auth/client";
+import { cloudClient } from "~/auth/client";
 import { env } from "~/env";
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -65,13 +65,13 @@ function hasSnapshotIntent(sessionId: string, kind: SnapshotIntent["kind"]) {
 }
 
 async function session() {
-  if (!supabase) {
+  if (!cloudClient) {
     throw new CloudApiClientError(
       "not_configured",
       "Cloud API is unavailable in this build.",
     );
   }
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await cloudClient.auth.getSession();
   if (error) {
     throw error;
   }
@@ -114,8 +114,8 @@ async function request(
       headers,
     },
   );
-  if (response.status === 401 && retryAuth && supabase) {
-    const { error } = await supabase.auth.refreshSession();
+  if (response.status === 401 && retryAuth && cloudClient) {
+    const { error } = await cloudClient.auth.refreshSession();
     if (!error) {
       return request(path, init, false, retryRateLimit, expectedUserId);
     }

@@ -48,12 +48,7 @@ pub async fn list_teams(
     Json(req): Json<LinearListTeamsRequest>,
 ) -> Result<Json<CollectionPage>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Linear::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Linear::ID, &req.connection_id)
         .await?;
 
     let client = LinearClient::new(http);
@@ -113,12 +108,7 @@ pub async fn create_issue(
     Json(req): Json<LinearCreateIssueRequest>,
 ) -> Result<Json<TicketSummary>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Linear::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Linear::ID, &req.connection_id)
         .await?;
 
     let client = LinearClient::new(http);
@@ -160,12 +150,7 @@ pub async fn list_tickets(
     Json(req): Json<LinearListTicketsRequest>,
 ) -> Result<Json<TicketPage>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Linear::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Linear::ID, &req.connection_id)
         .await?;
 
     let client = LinearClient::new(http);

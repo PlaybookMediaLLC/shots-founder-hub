@@ -30,6 +30,7 @@
     "**/generated/**",
     "**/permissions/**",
     "**/migrations/**/*.sql",
+    "postgres/bootstrap.sql",
     "**/tests/*.sql",
     "**/charts/**",
     "**/helm/**/templates/**",

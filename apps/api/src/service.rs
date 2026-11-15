@@ -8,7 +8,6 @@ pub enum Service {
     Ai,
     Sync,
     Core,
-    Billing,
 }
 
 impl Service {
@@ -22,7 +21,6 @@ impl Service {
             Self::Ai => "ai",
             Self::Sync => "sync",
             Self::Core => "core",
-            Self::Billing => "billing-api",
         }
     }
 }

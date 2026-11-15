@@ -1,5 +1,6 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useMemo } from "react";
+
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 import { sharedNoteEventKey } from "./event-key";
 
@@ -35,11 +36,11 @@ type EventSqlRow = {
 };
 
 export async function syncSharedNoteEventKeys(
-  supabase: SupabaseClient,
+  cloudClient: CloudClient,
   session: Session,
   signal: AbortSignal,
 ): Promise<void> {
-  const { data, error }: { data: unknown; error: unknown } = await supabase
+  const { data, error }: { data: unknown; error: unknown } = await cloudClient
     .rpc("list_my_session_share_event_keys")
     .setHeader("Authorization", `${session.token_type} ${session.access_token}`)
     .abortSignal(signal);

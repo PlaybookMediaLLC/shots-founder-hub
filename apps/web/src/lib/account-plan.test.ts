@@ -1,6 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
 import assert from "node:assert/strict";
 import test from "node:test";
+
+import { createClient } from "@anlg/cloud-client";
 
 import {
   fetchWorkspacePlan,
@@ -156,40 +157,34 @@ function workspacePlanFixture(
   failure?: { path: string },
 ) {
   const requests: Array<{ url: URL; init?: RequestInit }> = [];
-  const client = createClient(
-    "https://example.supabase.co",
-    "public-test-key",
-    {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: async (input, init) => {
-          const url = new URL(String(input));
-          requests.push({ url, init });
-          assert.equal(
-            new Headers(init?.headers).get("Authorization"),
-            "Bearer account-a-token",
+  const client = createClient("https://cloud.example.test", {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: async (input, init) => {
+        const url = new URL(String(input));
+        requests.push({ url, init });
+        assert.equal(
+          new Headers(init?.headers).get("Authorization"),
+          "Bearer account-a-token",
+        );
+        if (failure?.path === url.pathname) {
+          return Response.json(
+            { message: "Plan lookup failed" },
+            { status: 403 },
           );
-          if (failure?.path === url.pathname) {
-            return Response.json(
-              { message: "Plan lookup failed" },
-              { status: 403 },
-            );
-          }
-          if (url.pathname === "/rest/v1/workspaces") {
-            assert.equal(url.searchParams.get("kind"), "eq.shared");
-            assert.equal(url.searchParams.get("select"), "id");
-            return Response.json(
-              workspaceTiers.map((_, index) => ({ id: `workspace-${index}` })),
-            );
-          }
-          assert.equal(url.pathname, "/rest/v1/rpc/get_workspace_access");
-          const { p_workspace_id } = JSON.parse(String(init?.body));
-          const index = Number(p_workspace_id.replace("workspace-", ""));
-          return Response.json([{ workspace_tier: workspaceTiers[index] }]);
-        },
+        }
+        if (url.pathname === "/data/workspaces") {
+          return Response.json(
+            workspaceTiers.map((_, index) => ({ id: `workspace-${index}` })),
+          );
+        }
+        assert.equal(url.pathname, "/data/rpc/get_workspace_access");
+        const { p_workspace_id } = JSON.parse(String(init?.body));
+        const index = Number(p_workspace_id.replace("workspace-", ""));
+        return Response.json([{ workspace_tier: workspaceTiers[index] }]);
       },
     },
-  );
+  });
   return {
     requests,
     load: () =>
@@ -220,10 +215,7 @@ test("an account with no shared workspaces keeps its individual plan", async () 
 });
 
 test("failed lookups do not silently mislabel a Team member as Pro", async () => {
-  for (const path of [
-    "/rest/v1/workspaces",
-    "/rest/v1/rpc/get_workspace_access",
-  ]) {
+  for (const path of ["/data/workspaces", "/data/rpc/get_workspace_access"]) {
     const { load } = workspacePlanFixture(["team"], { path });
     await assert.rejects(load(), { message: "Plan lookup failed" });
   }

@@ -6,7 +6,7 @@ use owhisper_client::{CallbackResult, CallbackSttAdapter};
 use serde::Deserialize;
 
 use super::{AppState, RouteError, parse_async_provider};
-use crate::supabase::{JobUpdate, PipelineStatus, SupabaseClient, user_owns_object_path};
+use crate::jobs::{JobStore, JobUpdate, PipelineStatus, user_owns_object_path};
 
 #[derive(Deserialize)]
 pub(crate) struct CallbackQuery {
@@ -15,7 +15,7 @@ pub(crate) struct CallbackQuery {
 
 pub async fn handler(
     State(state): State<AppState>,
-    supabase: SupabaseClient,
+    jobs: JobStore,
     Path((provider, id)): Path<(String, String)>,
     Query(query): Query<CallbackQuery>,
     body: axum::body::Bytes,
@@ -90,18 +90,17 @@ pub async fn handler(
         },
     };
 
-    supabase
-        .update_job(&id, &update)
+    jobs.update_job(&id, &update)
         .await
         .map_err(|_| RouteError::Internal("failed to update job".into()))?;
 
-    cleanup_audio(&supabase, &id).await;
+    cleanup_audio(&jobs, &id).await;
 
     Ok(StatusCode::OK)
 }
 
-async fn cleanup_audio(supabase: &SupabaseClient, job_id: &str) {
-    let job = match supabase.get_job(job_id).await {
+async fn cleanup_audio(jobs: &JobStore, job_id: &str) {
+    let job = match jobs.get_job(job_id).await {
         Ok(Some(j)) => j,
         Ok(None) => return,
         Err(e) => {
@@ -122,11 +121,7 @@ async fn cleanup_audio(supabase: &SupabaseClient, job_id: &str) {
         return;
     }
 
-    if let Err(e) = supabase
-        .storage()
-        .delete_file("audio-files", &job.file_id)
-        .await
-    {
+    if let Err(e) = jobs.delete_audio(&job.file_id).await {
         tracing::warn!(
             error.type = "audio_cleanup_failed",
             "failed to delete audio file"

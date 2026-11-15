@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   startRunner: vi.fn((_dependencies: unknown) => mocks.stopRunner),
 }));
 
-vi.mock("@anlg/supabase/attachment-backups", () => ({
+vi.mock("@anlg/cloud-client/attachment-backups", () => ({
   createAttachmentBackupClient: mocks.createClient,
 }));
 
@@ -35,7 +35,7 @@ vi.mock("~/auth/billing-context", () => ({
 vi.mock("~/env", () => ({
   env: {
     VITE_API_URL: "https://api.example.com",
-    VITE_SUPABASE_URL: "https://project.supabase.co",
+    VITE_CLOUD_URL: "https://project.example.test",
   },
 }));
 

@@ -153,7 +153,7 @@ vi.mock("@lingui/react/macro", () => ({
 }));
 
 vi.mock("~/auth", () => ({
-  useAuth: () => ({ session: mocks.session, supabase: {} }),
+  useAuth: () => ({ session: mocks.session, cloudClient: {} }),
 }));
 
 vi.mock("~/auth/billing-context", () => ({

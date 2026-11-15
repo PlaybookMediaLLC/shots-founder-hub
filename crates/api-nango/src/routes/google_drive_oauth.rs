@@ -377,13 +377,6 @@ mod tests {
             let server = MockServer::start().await;
             let connection = json!({"id":1,"connection_id":"connection","provider_config_key":"google-drive","provider":"google-drive","errors":[],"metadata":metadata,"connection_config":{},"created_at":"","updated_at":"","last_fetched_at":"","credentials":{"access_token":"old-token","refresh_token":"old-refresh"}});
             Mock::given(method("GET"))
-                .and(path("/rest/v1/nango_connections"))
-                .respond_with(
-                    ResponseTemplate::new(200).set_body_json(json!([{"status":"connected"}])),
-                )
-                .mount(&server)
-                .await;
-            Mock::given(method("GET"))
                 .and(path("/connections/connection"))
                 .respond_with(ResponseTemplate::new(200).set_body_json(connection.clone()))
                 .mount(&server)
@@ -418,22 +411,18 @@ mod tests {
                 .mount(&server)
                 .await;
             Mock::given(method("GET")).and(path("/proxy/drive/v3/files/folder")).respond_with(ResponseTemplate::new(200).set_body_json(json!({"id":"folder","name":"회의 노트","mimeType":"application/vnd.google-apps.folder","capabilities":{"canAddChildren":true},"driveId":"shared-drive"}))).mount(&server).await;
-            let config = crate::NangoConfig::for_test(&server.uri(), &server.uri());
+            let config = crate::NangoConfig::for_test(&server.uri());
+            let auth = crate::config::test_drive_auth(&config.database, true).await;
             let signed = encode_state(
                 &config.nango.nango_api_key,
                 &SelectionState {
-                    user_id: "user".into(),
+                    user_id: auth.claims.sub.clone(),
                     connection_id: "connection".into(),
                     redirect_uri: "http://localhost:3000/app/google-drive-picker".into(),
                     nonce: "nonce".into(),
                     expires_at: chrono::Utc::now().timestamp() + 600,
                 },
             );
-            let auth = AuthContext {
-                shots: None,
-                token: "user-token".into(),
-                claims: serde_json::from_value(json!({"sub":"user"})).unwrap(),
-            };
             let result = complete_with_urls(
                 AppState::new(config),
                 auth,

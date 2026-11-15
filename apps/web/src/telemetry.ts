@@ -67,7 +67,7 @@ function getPropagationTargets(): string[] {
 
   const targets = new Set<string>();
 
-  for (const value of [env.VITE_API_URL, env.VITE_SUPABASE_URL]) {
+  for (const value of [env.VITE_API_URL, env.VITE_API_URL]) {
     const origin = getOrigin(value);
     if (origin && origin !== window.location.origin) {
       targets.add(origin);

@@ -1,11 +1,9 @@
 import { Trans } from "@lingui/react/macro";
 import { useState } from "react";
 
-import { WORK_EMAIL_PRO_TRIAL_DAYS } from "@anlg/pricing";
 import { CircleNotch } from "@anlg/ui/components/icons";
 
 import { OnboardingButton } from "../shared";
-import { TrialOfferCard } from "./offer-card";
 
 import { useAuth } from "~/auth";
 
@@ -21,10 +19,6 @@ export function BeforeLogin() {
 
   return (
     <div className="flex flex-col items-start gap-4">
-      <TrialOfferCard
-        days={WORK_EMAIL_PRO_TRIAL_DAYS}
-        title={<Trans>Free Pro with a work email</Trans>}
-      />
       <OnboardingButton
         onClick={handleSignIn}
         disabled={isOpening}

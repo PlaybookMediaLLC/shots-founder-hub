@@ -1,7 +1,7 @@
-import type { Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { createAttachmentBackupClient } from "@anlg/supabase/attachment-backups";
+import type { Session } from "@anlg/cloud-client";
+import { createAttachmentBackupClient } from "@anlg/cloud-client/attachment-backups";
 import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
 
 import { startAttachmentTransferRunner } from "./runner";
@@ -18,14 +18,14 @@ export function AttachmentTransferLifecycle() {
   const billing = useBillingAccess();
   const cloudSyncEnabled = useConfigValue("cloud_sync_enabled");
   const session = auth.session;
-  const supabaseUrl = env.VITE_SUPABASE_URL;
+  const cloudUrl = env.VITE_CLOUD_URL;
 
   if (
     !session ||
     session.user.is_anonymous === true ||
     !billing.isPaid ||
     !cloudSyncEnabled ||
-    !supabaseUrl
+    !cloudUrl
   ) {
     return null;
   }
@@ -34,17 +34,17 @@ export function AttachmentTransferLifecycle() {
     <ActiveAttachmentTransferLifecycle
       key={session.user.id}
       session={session}
-      supabaseUrl={supabaseUrl}
+      cloudUrl={cloudUrl}
     />
   );
 }
 
 function ActiveAttachmentTransferLifecycle({
   session,
-  supabaseUrl,
+  cloudUrl,
 }: {
   session: Session;
-  supabaseUrl: string;
+  cloudUrl: string;
 }) {
   const queryClient = useQueryClient();
   const accessTokenRef = useLatestRef(session.access_token);
@@ -55,7 +55,7 @@ function ActiveAttachmentTransferLifecycle({
         apiBaseUrl: env.VITE_API_URL,
         getAccessToken: () => accessTokenRef.current,
       }),
-      supabaseUrl,
+      cloudUrl,
       onAttachmentRestored: ({ sessionId }) => {
         void queryClient.invalidateQueries({
           queryKey: sessionAttachmentPathsQueryKey(sessionId),

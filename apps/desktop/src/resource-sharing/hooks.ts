@@ -19,7 +19,7 @@ export function useSharedResources(resourceType: SharedResourceType) {
   const auth = useOptionalAuth();
   const userId = auth?.session?.user.id;
   const enabled = Boolean(
-    auth?.supabase && auth.session && !auth.session.user.is_anonymous,
+    auth?.cloudClient && auth.session && !auth.session.user.is_anonymous,
   );
   return useQuery({
     queryKey: sharedResourcesQueryKey(userId, resourceType),

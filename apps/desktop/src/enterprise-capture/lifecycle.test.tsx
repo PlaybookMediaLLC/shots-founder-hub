@@ -21,7 +21,7 @@ vi.mock("./sync", () => ({
 }));
 vi.mock("~/auth", () => ({
   useAuth: () => ({
-    supabase: {},
+    cloudClient: {},
     session: { access_token: "access-token", user: { id: "user-1" } },
   }),
 }));

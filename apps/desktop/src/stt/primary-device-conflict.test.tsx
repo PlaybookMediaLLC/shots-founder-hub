@@ -25,7 +25,7 @@ test("competing coordinators keep capture until a shared claim selects one winne
     vi.resetModules();
     vi.doMock("@anlg/ui/components/ui/toast", () => ({ toast: client.toast }));
     vi.doMock("~/auth/client", () => ({
-      supabase: {
+      cloudClient: {
         auth: {
           getSession: async () => ({
             data: {

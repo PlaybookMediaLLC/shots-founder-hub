@@ -15,7 +15,6 @@ ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED = "false"
 ANARLOG_AI_ORIGIN = "https://anarlog-inference.fly.dev"
 ANARLOG_SYNC_ORIGIN = "https://anarlog-sync.fly.dev"
 ANARLOG_CORE_ORIGIN = "https://anarlog-core.fly.dev"
-ANARLOG_BILLING_ORIGIN = "https://anarlog-billing-api.fly.dev"
 PORT = "3001"
 
 [http_service]

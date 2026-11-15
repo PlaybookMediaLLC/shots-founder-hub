@@ -3,7 +3,7 @@ use axum::{Extension, Json, extract::Path};
 use serde::Serialize;
 
 use super::RouteError;
-use crate::supabase::{PipelineStatus, SupabaseClient};
+use crate::jobs::{JobStore, PipelineStatus};
 
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -34,10 +34,10 @@ pub struct SttStatusResponse {
 )]
 pub async fn handler(
     Extension(auth): Extension<AuthContext>,
-    supabase: SupabaseClient,
+    jobs: JobStore,
     Path(pipeline_id): Path<String>,
 ) -> Result<Json<SttStatusResponse>, RouteError> {
-    let job = supabase
+    let job = jobs
         .get_job_for_user(&pipeline_id, &auth.claims.sub)
         .await
         .map_err(|e| {

@@ -18,7 +18,7 @@ pub enum DownloadObject<'a> {
     Shared(&'a str),
 }
 
-pub fn require_configured_supabase_url(value: Option<&str>) -> Result<&str> {
+pub fn require_configured_r2_url(value: Option<&str>) -> Result<&str> {
     value
         .filter(|value| !value.trim().is_empty())
         .ok_or(Error::InvalidDownloadUrl)
@@ -26,16 +26,15 @@ pub fn require_configured_supabase_url(value: Option<&str>) -> Result<&str> {
 
 pub fn validate_signed_download_url(
     signed_url: &str,
-    supabase_url: &str,
+    r2_base_url: &str,
     object: DownloadObject<'_>,
 ) -> Result<url::Url> {
-    let base = url::Url::parse(supabase_url).map_err(|_| Error::InvalidDownloadUrl)?;
+    let base = url::Url::parse(r2_base_url).map_err(|_| Error::InvalidDownloadUrl)?;
     let signed = url::Url::parse(signed_url).map_err(|_| Error::InvalidDownloadUrl)?;
     if !base.username().is_empty()
         || base.password().is_some()
         || base.query().is_some()
         || base.fragment().is_some()
-        || !matches!(base.path(), "" | "/")
         || !signed.username().is_empty()
         || signed.password().is_some()
         || signed.fragment().is_some()
@@ -46,21 +45,39 @@ pub fn validate_signed_download_url(
     {
         return Err(Error::InvalidDownloadUrl);
     }
-    let mut query = signed.query_pairs();
-    if !query
-        .next()
-        .is_some_and(|(name, value)| name == "token" && !value.is_empty())
-        || query.next().is_some()
+    let pairs = signed.query_pairs().collect::<Vec<_>>();
+    let param = |name: &str| {
+        let values = pairs
+            .iter()
+            .filter(|(key, _)| key == name)
+            .map(|(_, value)| value.as_ref())
+            .collect::<Vec<_>>();
+        if values.len() == 1 {
+            Some(values[0])
+        } else {
+            None
+        }
+    };
+    if param("X-Amz-Algorithm") != Some("AWS4-HMAC-SHA256")
+        || param("X-Amz-SignedHeaders") != Some("host")
+        || !param("X-Amz-Signature")
+            .is_some_and(|v| v.len() == 64 && v.bytes().all(|b| b.is_ascii_hexdigit()))
+        || !param("X-Amz-Expires")
+            .is_some_and(|v| v.parse::<u32>().is_ok_and(|n| (1..=3600).contains(&n)))
+        || param("X-Amz-Credential").is_none()
+        || param("X-Amz-Date").is_none()
     {
         return Err(Error::InvalidDownloadUrl);
     }
+    let prefix = base.path().trim_end_matches('/');
     let valid_path = match object {
         DownloadObject::Private(object_key) => {
-            signed.path() == format!("/storage/v1/object/sign/attachment-backups/{object_key}")
+            signed.path() == format!("{prefix}/attachment-backups/{object_key}")
         }
-        DownloadObject::Shared(attachment_id) => {
-            valid_shared_attachment_download_path(signed.path(), attachment_id)
-        }
+        DownloadObject::Shared(attachment_id) => signed
+            .path()
+            .strip_prefix(prefix)
+            .is_some_and(|path| valid_shared_attachment_download_path(path, attachment_id)),
     };
     if !valid_path {
         return Err(Error::InvalidDownloadUrl);
@@ -69,8 +86,7 @@ pub fn validate_signed_download_url(
 }
 
 fn valid_shared_attachment_download_path(path: &str, attachment_id: &str) -> bool {
-    let Some(object_key) = path.strip_prefix("/storage/v1/object/sign/shared-note-attachments/")
-    else {
+    let Some(object_key) = path.strip_prefix("/shared-note-attachments/") else {
         return false;
     };
     let mut parts = object_key.split('/');

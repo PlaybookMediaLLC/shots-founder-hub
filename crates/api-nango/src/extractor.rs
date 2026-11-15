@@ -9,56 +9,24 @@ use axum::{
 };
 
 use crate::integrations::NangoIntegrationId;
-use crate::supabase::SupabaseClient;
+use crate::store::ConnectionStore;
 
 #[derive(Clone)]
 pub struct NangoConnectionState {
     nango: NangoClient,
-    http_client: reqwest::Client,
-    supabase_url: String,
-    supabase_anon_key: String,
-    supabase: SupabaseClient,
+    store: ConnectionStore,
 }
 
 impl NangoConnectionState {
-    pub fn new(
-        nango: NangoClient,
-        supabase_url: impl Into<String>,
-        supabase_anon_key: impl Into<String>,
-    ) -> Self {
-        Self::with_service_role(nango, supabase_url, supabase_anon_key, None)
-    }
-
-    pub fn from_config(config: &crate::config::NangoConfig) -> Self {
-        let nango = crate::config::build_nango_client(config).expect("failed to build NangoClient");
-
-        Self::with_service_role(
-            nango,
-            &config.supabase_url,
-            &config.supabase_anon_key,
-            config.supabase_service_role_key.clone(),
-        )
-    }
-
-    fn with_service_role(
-        nango: NangoClient,
-        supabase_url: impl Into<String>,
-        supabase_anon_key: impl Into<String>,
-        supabase_service_role_key: Option<String>,
-    ) -> Self {
-        let supabase_url = supabase_url.into();
-        let supabase_anon_key = supabase_anon_key.into();
+    pub fn new(nango: NangoClient, database: anlg_cloud_db::Database) -> Self {
         Self {
             nango,
-            http_client: reqwest::Client::new(),
-            supabase_url: supabase_url.trim_end_matches('/').to_string(),
-            supabase_anon_key: supabase_anon_key.clone(),
-            supabase: SupabaseClient::new(
-                supabase_url,
-                supabase_anon_key,
-                supabase_service_role_key,
-            ),
+            store: ConnectionStore::new(database),
         }
+    }
+    pub fn from_config(config: &crate::config::NangoConfig) -> Self {
+        let nango = crate::config::build_nango_client(config).expect("failed to build NangoClient");
+        Self::new(nango, config.database.clone())
     }
 
     pub async fn mark_reconnect_required(
@@ -67,7 +35,7 @@ impl NangoConnectionState {
         connection_id: &str,
         error_description: &str,
     ) -> Result<(), NangoConnectionError> {
-        self.supabase
+        self.store
             .mark_connection_refresh_failed(
                 integration_id,
                 connection_id,
@@ -80,51 +48,18 @@ impl NangoConnectionState {
 
     pub async fn build_http_client(
         &self,
-        auth_token: &str,
+        auth: &AuthContext,
         user_id: &str,
         integration_id: &str,
         connection_id: &str,
     ) -> Result<OwnedNangoHttpClient, NangoConnectionError> {
-        let encoded_user_id = urlencoding::encode(user_id);
-        let encoded_connection_id = urlencoding::encode(connection_id);
-        let encoded_integration_id = urlencoding::encode(integration_id);
-        let url = format!(
-            "{}/rest/v1/nango_connections?select=connection_id,status&user_id=eq.{}&connection_id=eq.{}&integration_id=eq.{}",
-            self.supabase_url, encoded_user_id, encoded_connection_id, encoded_integration_id,
-        );
-
-        let response = self
-            .http_client
-            .get(&url)
-            .header("Authorization", format!("Bearer {}", auth_token))
-            .header("apikey", &self.supabase_anon_key)
-            .send()
+        let row = self
+            .store
+            .connection(auth, user_id, integration_id, Some(connection_id))
             .await
-            .map_err(|e| NangoConnectionError::Database(e.to_string()))?;
+            .map_err(connection_error)?;
 
-        if response.status() == StatusCode::UNAUTHORIZED {
-            return Err(NangoConnectionError::NotAuthenticated);
-        }
-
-        if !response.status().is_success() {
-            let status = response.status();
-            return Err(NangoConnectionError::Database(format!(
-                "query failed: {status}"
-            )));
-        }
-
-        #[derive(serde::Deserialize)]
-        struct Row {
-            #[serde(default)]
-            status: String,
-        }
-
-        let rows: Vec<Row> = response
-            .json()
-            .await
-            .map_err(|e| NangoConnectionError::Database(e.to_string()))?;
-
-        match rows.into_iter().next() {
+        match row {
             Some(row) if row.status == "reconnect_required" => {
                 return Err(NangoConnectionError::ReconnectRequired(
                     integration_id.to_string(),
@@ -148,7 +83,7 @@ impl NangoConnectionState {
 
     async fn get_connection_id(
         &self,
-        auth_token: &str,
+        auth: &AuthContext,
         user_id: &str,
         integration_id: &str,
     ) -> Result<String, NangoConnectionError> {
@@ -159,39 +94,13 @@ impl NangoConnectionState {
             return Ok(connection_id);
         }
 
-        let encoded_user_id = urlencoding::encode(user_id);
-        let encoded_integration_id = urlencoding::encode(integration_id);
-        let url = format!(
-            "{}/rest/v1/nango_connections?select=connection_id,status&user_id=eq.{}&integration_id=eq.{}",
-            self.supabase_url, encoded_user_id, encoded_integration_id,
-        );
-
-        let response = self
-            .http_client
-            .get(&url)
-            .header("Authorization", format!("Bearer {}", auth_token))
-            .header("apikey", &self.supabase_anon_key)
-            .send()
+        let row = self
+            .store
+            .lookup_connection(auth, user_id, integration_id)
             .await
-            .map_err(|e| NangoConnectionError::Database(e.to_string()))?;
+            .map_err(connection_error)?;
 
-        if response.status() == StatusCode::UNAUTHORIZED {
-            return Err(NangoConnectionError::NotAuthenticated);
-        }
-
-        if !response.status().is_success() {
-            let status = response.status();
-            return Err(NangoConnectionError::Database(format!(
-                "query failed: {status}"
-            )));
-        }
-
-        let rows: Vec<crate::supabase::NangoConnectionRow> = response
-            .json()
-            .await
-            .map_err(|e| NangoConnectionError::Database(e.to_string()))?;
-
-        match rows.into_iter().next() {
+        match row {
             Some(row) if row.status == "reconnect_required" => Err(
                 NangoConnectionError::ReconnectRequired(integration_id.to_string()),
             ),
@@ -200,6 +109,13 @@ impl NangoConnectionState {
                 integration_id.to_string(),
             )),
         }
+    }
+}
+
+fn connection_error(error: crate::error::NangoError) -> NangoConnectionError {
+    match error {
+        crate::error::NangoError::Auth(_) => NangoConnectionError::NotAuthenticated,
+        _ => NangoConnectionError::Database("connection database request failed".into()),
     }
 }
 
@@ -304,7 +220,7 @@ impl<S: Send + Sync, I: NangoIntegrationId> FromRequestParts<S> for NangoConnect
             .ok_or(NangoConnectionError::MissingState)?;
 
         let connection_id = nango_state
-            .get_connection_id(&auth.token, &auth.claims.sub, I::ID)
+            .get_connection_id(auth, &auth.claims.sub, I::ID)
             .await?;
 
         let proxy = OwnedNangoProxy::new(&nango_state.nango, I::ID.to_string(), connection_id);
@@ -321,8 +237,7 @@ impl<S: Send + Sync, I: NangoIntegrationId> FromRequestParts<S> for NangoConnect
 mod tests {
     use super::*;
     use crate::config::NangoConfig;
-    use wiremock::matchers::{method, path_regex, query_param};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
+    use wiremock::MockServer;
 
     #[test]
     fn detects_graph_expired_token() {
@@ -371,68 +286,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn connection_extractors_preserve_authentication_failures() {
-        for upstream in [401, 503] {
-            let server = MockServer::start().await;
-            Mock::given(method("GET"))
-                .respond_with(ResponseTemplate::new(upstream))
-                .expect(2)
-                .mount(&server)
-                .await;
-            let config = NangoConfig::for_test(&server.uri(), &server.uri());
-            let state = NangoConnectionState::from_config(&config);
-            let errors = [
-                state
-                    .get_connection_id("test-token", "test-user", "google-calendar")
-                    .await
-                    .err()
-                    .unwrap(),
-                state
-                    .build_http_client(
-                        "test-token",
-                        "test-user",
-                        "google-calendar",
-                        "test-connection",
-                    )
-                    .await
-                    .err()
-                    .unwrap(),
-            ];
-            for error in errors {
-                assert_eq!(
-                    error.into_response().status(),
-                    if upstream == 401 {
-                        StatusCode::UNAUTHORIZED
-                    } else {
-                        StatusCode::INTERNAL_SERVER_ERROR
-                    }
-                );
-            }
-            server.verify().await;
-        }
-    }
-
-    #[tokio::test]
-    async fn mark_reconnect_required_patches_connection() {
-        let nango_mock = MockServer::start().await;
-        let supabase_mock = MockServer::start().await;
-        let config = NangoConfig::for_test(&nango_mock.uri(), &supabase_mock.uri());
+    async fn connection_extractors_require_the_shots_identity() {
+        let server = MockServer::start().await;
+        let config = NangoConfig::for_test(&server.uri());
         let state = NangoConnectionState::from_config(&config);
-
-        Mock::given(method("PATCH"))
-            .and(path_regex("/rest/v1/nango_connections"))
-            .and(query_param("integration_id", "eq.outlook"))
-            .and(query_param("connection_id", "eq.conn-123"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(1)
-            .mount(&supabase_mock)
-            .await;
-
-        state
-            .mark_reconnect_required("outlook", "conn-123", "token is expired")
+        let auth = AuthContext {
+            shots: None,
+            token: "untrusted".into(),
+            claims: serde_json::from_value(
+                serde_json::json!({"sub":uuid::Uuid::new_v4(),"entitlements":[]}),
+            )
+            .unwrap(),
+        };
+        let error = state
+            .get_connection_id(&auth, &auth.claims.sub, "google-calendar")
             .await
+            .err()
             .unwrap();
-
-        supabase_mock.verify().await;
+        assert_eq!(error.into_response().status(), StatusCode::UNAUTHORIZED);
+        assert!(server.received_requests().await.unwrap().is_empty());
     }
 }

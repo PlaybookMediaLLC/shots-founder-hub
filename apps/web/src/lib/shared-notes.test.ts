@@ -598,14 +598,14 @@ test("validates short-lived attachment downloads", () => {
     sizeBytes: 4,
     sha256: "a".repeat(64),
     signedUrl:
-      "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=secret",
+      "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=secret",
     expiresAt: "2026-07-17T12:01:00Z",
   });
   assert.equal(download.filename, "diagram.png");
   assert.throws(() =>
     parseSharedNoteAttachmentDownload({
       ...download,
-      signedUrl: "http://project.supabase.co/file?token=secret",
+      signedUrl: "http://project.example.test/file?token=secret",
     }),
   );
 });

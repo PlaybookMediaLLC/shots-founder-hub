@@ -39,8 +39,8 @@ pub async fn whoami(
     Extension(auth): Extension<AuthContext>,
 ) -> Result<Json<WhoAmIResponse>> {
     let rows = state
-        .supabase
-        .list_user_connections(&auth.token, &auth.claims.sub)
+        .store
+        .list_user_connections(&auth, &auth.claims.sub)
         .await?;
 
     let nango_connections = state

@@ -180,11 +180,6 @@ pub(super) struct CanceledDeletionRow {
     pub(super) _was_cancelled: bool,
 }
 
-#[derive(Deserialize)]
-struct PostgrestError {
-    code: String,
-}
-
 #[derive(Debug)]
 pub(super) enum RpcFailure {
     Empty,
@@ -204,57 +199,23 @@ where
     RequestBody: Serialize + ?Sized,
     Row: DeserializeOwned,
 {
-    let mut response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/{function}",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(BACKUP_RPC_TIMEOUT)
-        .json(request)
-        .send()
-        .await
-        .map_err(|_| {
-            tracing::warn!(function, "Attachment backup ledger request failed");
-            RpcFailure::Unavailable
-        })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > MAX_BACKUP_RPC_RESPONSE_BYTES as u64)
-    {
-        tracing::warn!(function, %status, "Attachment backup ledger response was too large");
-        return Err(RpcFailure::Unavailable);
-    }
-
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|_| {
-        tracing::warn!(
+    let mut rows: Vec<Row> = tokio::time::timeout(
+        BACKUP_RPC_TIMEOUT,
+        state.config.database.rpc_bounded(
+            &anlg_cloud_db::Principal::Service,
             function,
-            "Attachment backup ledger response could not be read"
-        );
-        RpcFailure::Unavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > MAX_BACKUP_RPC_RESPONSE_BYTES {
-            tracing::warn!(function, %status, "Attachment backup ledger response was too large");
-            return Err(RpcFailure::Unavailable);
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-
-    if !status.is_success() {
-        let code = serde_json::from_slice::<PostgrestError>(&bytes)
-            .ok()
-            .map(|error| error.code);
-        tracing::warn!(function, %status, ?code, "Attachment backup ledger request was rejected");
-        return Err(RpcFailure::Rejected { status, code });
-    }
-
-    let mut rows = serde_json::from_slice::<Vec<Row>>(&bytes).map_err(|_| {
-        tracing::warn!(function, "Attachment backup ledger response was invalid");
-        RpcFailure::Unavailable
+            request,
+            MAX_BACKUP_RPC_RESPONSE_BYTES,
+        ),
+    )
+    .await
+    .map_err(|_| RpcFailure::Unavailable)?
+    .map_err(|error| match error {
+        anlg_cloud_db::Error::Database { code, .. } => RpcFailure::Rejected {
+            status: StatusCode::BAD_REQUEST,
+            code: Some(code),
+        },
+        _ => RpcFailure::Unavailable,
     })?;
     match rows.len() {
         0 => Err(RpcFailure::Empty),

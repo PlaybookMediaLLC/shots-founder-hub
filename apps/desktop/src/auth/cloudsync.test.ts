@@ -1,7 +1,7 @@
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { hostname } from "@tauri-apps/plugin-os";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import type { AuthChangeEvent, Session } from "@anlg/cloud-client";
 import {
   bindCloudsyncAccount,
   configureCloudsyncToken,
@@ -96,14 +96,14 @@ function deferred<T = void>() {
   return { promise, resolve, reject };
 }
 
-function session(accessToken = "supabase-token") {
+function session(accessToken = "cloud-token") {
   return {
     access_token: accessToken,
     user: { id: "user-id" },
   } as Session;
 }
 
-function witness(accessToken = "supabase-token", workspaceId = "user-id") {
+function witness(accessToken = "cloud-token", workspaceId = "user-id") {
   return {
     endpoint: `https://api.test/sync/e2ee/witness/${workspaceId}`,
     accessToken,
@@ -355,7 +355,7 @@ describe("CloudSync auth lifecycle", () => {
     expect(configureCloudsyncToken).toHaveBeenCalled();
     expect(startAutomaticDeviceEnrollment).toHaveBeenCalledWith(
       "user-id",
-      "supabase-token",
+      "cloud-token",
     );
   });
 
@@ -643,7 +643,7 @@ describe("CloudSync auth lifecycle", () => {
     expect(configureCloudsyncToken).toHaveBeenCalledTimes(2);
   });
 
-  test("exchanges the Supabase token and refreshes before expiry", async () => {
+  test("exchanges the cloud token and refreshes before expiry", async () => {
     const fetchMock = vi.fn(() => Promise.resolve(credentialsResponse()));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -654,7 +654,7 @@ describe("CloudSync auth lifecycle", () => {
       expect.objectContaining({
         method: "POST",
         headers: {
-          Authorization: "Bearer supabase-token",
+          Authorization: "Bearer cloud-token",
           "X-Anarlog-E2EE-Key-Id": E2EE_KEY_ID,
           "x-anarlog-e2ee-member-public-key": E2EE_MEMBER_PUBLIC_KEY,
           "x-anarlog-cloudsync-transports": "replica",
@@ -1367,7 +1367,7 @@ describe("CloudSync auth lifecycle", () => {
     expect(getCloudsyncCredentialBlock()).toBe("identity_mismatch");
   });
 
-  test("rejects credentials for a different Supabase user", async () => {
+  test("rejects credentials for a different cloud user", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => Promise.resolve(credentialsResponse("different-user"))),
@@ -1517,26 +1517,25 @@ describe("CloudSync auth lifecycle", () => {
     expect(rejectAccountMismatch).toHaveBeenCalledTimes(1);
   });
 
-  test.each<AuthChangeEvent>([
-    "USER_UPDATED",
-    "PASSWORD_RECOVERY",
-    "MFA_CHALLENGE_VERIFIED",
-  ])("restarts sync after %s", async (event) => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() => Promise.resolve(credentialsResponse())),
-    );
+  test.each<AuthChangeEvent>(["USER_UPDATED", "PASSWORD_RECOVERY"])(
+    "restarts sync after %s",
+    async (event) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => Promise.resolve(credentialsResponse())),
+      );
 
-    await handleCloudsyncAuthChange(event, session());
+      await handleCloudsyncAuthChange(event, session());
 
-    expect(configureCloudsyncToken).toHaveBeenCalledWith(
-      "database-id",
-      "sqlite-token",
-      "user-id",
-      witness(),
-    );
-    expect(suspendCloudsync).toHaveBeenCalledTimes(1);
-  });
+      expect(configureCloudsyncToken).toHaveBeenCalledWith(
+        "database-id",
+        "sqlite-token",
+        "user-id",
+        witness(),
+      );
+      expect(suspendCloudsync).toHaveBeenCalledTimes(1);
+    },
+  );
 
   test("suspends sync without deleting local rows before signing out", async () => {
     const fetchMock = vi.fn(() => Promise.resolve(credentialsResponse()));

@@ -24,7 +24,7 @@ export const MY_WORKSPACES_QUERY_KEY = "team-workspaces";
  */
 export function useMyWorkspacesWithMirror() {
   const auth = useAuth();
-  const signedIn = Boolean(auth.supabase && auth.session);
+  const signedIn = Boolean(auth.cloudClient && auth.session);
 
   // Credentials are request context; the user ID owns this cache entry.
   // eslint-disable-next-line @tanstack/query/exhaustive-deps

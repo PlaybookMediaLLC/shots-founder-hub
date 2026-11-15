@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
 
+import { getCustomProfileImageUrl } from "@anlg/cloud-client/profile";
 import { commands as openerCommands } from "@anlg/plugin-opener2";
 import { openUrlWithInstruction } from "@anlg/plugin-windows";
-import { getCustomProfileImageUrl } from "@anlg/supabase/profile";
 import { Avatar } from "@anlg/ui/components/avatar";
 import {
   CircleNotch,
@@ -125,7 +125,7 @@ function LegacySettingsTeam() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const signedIn = Boolean(auth.supabase && auth.session);
+  const signedIn = Boolean(auth.cloudClient && auth.session);
 
   // Shares the query (and therefore the mirror refresh) with the app-level
   // mount, so opening this page is never what makes sharing scopes appear.
@@ -544,7 +544,7 @@ function WorkspacePanel({
     queryFn: () => listWorkspaceMembers(requireTeamContext(auth), workspaceId),
     retry: false,
   });
-  // Credentials and the Supabase client are not serializable cache identity.
+  // Credentials and the cloud client are not serializable cache identity.
   // eslint-disable-next-line @tanstack/query/exhaustive-deps
   const ownershipRequests = useQuery({
     queryKey: ["team-ownership-requests", workspaceId, auth.session?.user.id],

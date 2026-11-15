@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   auth: {
     session: null as any,
-    supabase: null as any,
+    cloudClient: null as any,
   },
   abortSignal: vi.fn(),
   captureCacheMutationVersion: vi.fn(() => 7),
@@ -68,7 +68,7 @@ describe("DurableSharedNoteCacheSync", () => {
       token_type: "bearer",
       user: { id: "viewer-1", is_anonymous: false },
     };
-    mocks.auth.supabase = { rpc: mocks.rpc };
+    mocks.auth.cloudClient = { rpc: mocks.rpc };
     mocks.rpc.mockReturnValue({ setHeader: mocks.setHeader });
     mocks.setHeader.mockReturnValue({ abortSignal: mocks.abortSignal });
     mocks.abortSignal.mockResolvedValue({ data: [], error: null });
@@ -204,7 +204,7 @@ describe("DurableSharedNoteCacheSync", () => {
 
     await expect(
       syncDurableSharedNoteCache(
-        mocks.auth.supabase,
+        mocks.auth.cloudClient,
         mocks.auth.session,
         controller.signal,
       ),
@@ -302,7 +302,7 @@ describe("DurableSharedNoteCacheSync", () => {
     mocks.tabs = [{ type: "shared_sessions", id: "other-share" }];
     const controller = new AbortController();
     const reconciliation = syncDurableSharedNoteCache(
-      mocks.auth.supabase,
+      mocks.auth.cloudClient,
       mocks.auth.session,
       controller.signal,
     );
@@ -326,7 +326,7 @@ describe("DurableSharedNoteCacheSync", () => {
 
     await expect(
       syncDurableSharedNoteCache(
-        mocks.auth.supabase,
+        mocks.auth.cloudClient,
         mocks.auth.session,
         new AbortController().signal,
       ),

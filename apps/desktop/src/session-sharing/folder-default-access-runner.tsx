@@ -56,7 +56,7 @@ type FolderShareCandidateSqlRow = {
 };
 
 export function FolderDefaultAccessRunner() {
-  const { supabase, session } = useAuth();
+  const { cloudClient, session } = useAuth();
   const ownerUserId =
     session && session.user.is_anonymous !== true ? session.user.id : null;
   const rules = useFolderDefaultAccessRules();
@@ -134,7 +134,7 @@ export function FolderDefaultAccessRunner() {
     queries: candidates.flatMap((candidate) => {
       const rule = folderDefaultAccessRule(rules, candidate.folderPath);
       if (
-        !supabase ||
+        !cloudClient ||
         !session ||
         !ownerUserId ||
         !rule ||
@@ -169,7 +169,7 @@ export function FolderDefaultAccessRunner() {
           queryFn: async ({ signal }: { signal: AbortSignal }) => {
             await abortableDelay(SHARE_DEBOUNCE_MS, signal);
             await shareWithFolderDefaultAccess({
-              context: { supabase, session, signal },
+              context: { cloudClient, session, signal },
               ownerUserId,
               sessionId: candidate.sessionId,
               rule,

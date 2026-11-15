@@ -7,14 +7,14 @@ import { useState } from "react";
 import { Platform, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+import { getShotsSettingsUrl } from "@anlg/cloud-client/shots";
 
 import type { BillingInfo } from "@/auth/billing";
 import {
   buildMobileBillingReturnUrl,
   parseBillingCallbackUrl,
 } from "@/auth/billing-handoff";
-import { supabase } from "@/auth/client";
+import { cloudClient } from "@/auth/client";
 import { isAppleSignInAvailable, type SignInMethod } from "@/auth/sign-in";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -263,7 +263,7 @@ export function ProScreen({
       }
 
       if (env.shotsUrl) {
-        const current = await supabase?.auth.getSession();
+        const current = await cloudClient?.auth.getSession();
         if (current?.error) throw current.error;
         const userId = current?.data.session?.user.app_metadata.shots_user_id;
         if (typeof userId !== "string")

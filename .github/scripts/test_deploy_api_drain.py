@@ -644,7 +644,6 @@ def test_desired_runtime_replaces_stale_machine_settings():
         "ANARLOG_AI_ORIGIN": "https://anarlog-inference.fly.dev",
         "ANARLOG_SYNC_ORIGIN": "https://anarlog-sync.fly.dev",
         "ANARLOG_CORE_ORIGIN": "https://anarlog-core.fly.dev",
-        "ANARLOG_BILLING_ORIGIN": "https://anarlog-billing-api.fly.dev",
         "PORT": "3001",
         "PRIMARY_REGION": "sjc",
     }
@@ -703,9 +702,9 @@ def test_drain_adoption_only_marks_the_verified_image():
         mark.assert_called_once_with("anarlog-inference", "verified")
 
 
-def test_billing_replacement_migrates_process_group_and_keeps_capacity():
+def test_core_replacement_migrates_process_group_and_keeps_capacity():
     desired = deploy_api_drain.desired_runtime_config(
-        "anarlog-billing-api", "apps/api/fly.billing.toml"
+        "anarlog-core", "apps/api/fly.core.toml"
     )
     old = {"config": {"metadata": {"fly_process_group": "web", "custom": "keep"}}}
     result = replacement_config(old, "new", {"signal": "SIGTERM"}, desired)
@@ -716,7 +715,7 @@ def test_billing_replacement_migrates_process_group_and_keeps_capacity():
     assert service["internal_port"] == 3001
     assert service["min_machines_running"] == 2
     assert service["autostop"] == "off"
-    assert service["checks"][0]["path"] == "/health/ready/billing-unified"
+    assert service["checks"][0]["path"] == "/health/ready/core"
 
 
 def test_invalid_config_fails_before_any_machine_mutation():
@@ -749,9 +748,9 @@ def test_invalid_config_fails_before_any_machine_mutation():
             fly.assert_not_called()
 
 
-def test_billing_replacements_use_the_image_entrypoint():
+def test_core_replacements_use_the_image_entrypoint():
     runtime = deploy_api_drain.desired_runtime_config(
-        "anarlog-billing-api", "apps/api/fly.billing.toml"
+        "anarlog-core", "apps/api/fly.core.toml"
     )
     for override in ["exec", "cmd", "entrypoint"]:
         old = {"config": {"init": {override: ["/usr/local/bin/api"]}}}
@@ -764,7 +763,6 @@ def test_standalone_profiles_have_role_checks_and_no_duplicate_cleanup():
         ("ai", "anarlog-inference", "ai"),
         ("sync", "anarlog-sync", "sync"),
         ("core", "anarlog-core", "core"),
-        ("billing", "anarlog-billing-api", "billing-unified"),
     ]:
         config = deploy_api_drain.desired_runtime_config(
             app, f"apps/api/fly.{role}.toml"
@@ -1143,11 +1141,11 @@ if __name__ == "__main__":
     test_idle_legacy_stripe_retirement_requires_cordon_and_healthy_capacity()
     test_bootstrap_preserves_source_revision_and_marks_healthy_machines()
     test_drain_adoption_only_marks_the_verified_image()
-    test_billing_replacement_migrates_process_group_and_keeps_capacity()
+    test_core_replacement_migrates_process_group_and_keeps_capacity()
     test_rollback_requires_an_immutable_api_image_before_mutating_machines()
     test_deploy_restores_minimum_primary_region_capacity()
     test_cutover_preflight_rechecks_candidate_readiness()
-    test_billing_replacements_use_the_image_entrypoint()
+    test_core_replacements_use_the_image_entrypoint()
     test_standalone_profiles_have_role_checks_and_no_duplicate_cleanup()
     test_desired_runtime_replaces_stale_machine_settings()
     test_invalid_config_fails_before_any_machine_mutation()

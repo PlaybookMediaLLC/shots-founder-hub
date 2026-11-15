@@ -52,7 +52,7 @@ const TOKEN = "A".repeat(43);
 
 function context(): TeamContext {
   return {
-    supabase: {} as TeamContext["supabase"],
+    cloudClient: {} as TeamContext["cloudClient"],
     session: {
       access_token: "token",
       user: { id: "user-1" },

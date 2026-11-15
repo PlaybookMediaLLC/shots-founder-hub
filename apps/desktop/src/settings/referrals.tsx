@@ -4,8 +4,8 @@ import { isTauri } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { z } from "zod";
 
+import { referralSupportUrl } from "@anlg/cloud-client/referrals";
 import { commands as analyticsCommands } from "@anlg/plugin-analytics";
-import { referralSupportUrl } from "@anlg/supabase/referrals";
 import { ArrowsClockwise, Check, Copy } from "@anlg/ui/components/icons";
 import { Button } from "@anlg/ui/components/ui/button";
 import { toast } from "@anlg/ui/components/ui/toast";
@@ -95,12 +95,12 @@ function ReferralInvites() {
   // eslint-disable-next-line @tanstack/query/exhaustive-deps
   const summary = useQuery({
     queryKey: ["referral-summary", userId],
-    enabled: signedIn && !!auth.supabase,
+    enabled: signedIn && !!auth.cloudClient,
     queryFn: async ({ signal }) => {
-      const { supabase, session } = auth;
-      if (!supabase || !session || session.user.is_anonymous)
+      const { cloudClient, session } = auth;
+      if (!cloudClient || !session || session.user.is_anonymous)
         throw new Error("Unauthorized");
-      const { data, error } = await supabase
+      const { data, error } = await cloudClient
         .rpc("get_referral_summary")
         .setHeader("Authorization", `Bearer ${session.access_token}`)
         .abortSignal(signal);
@@ -169,7 +169,7 @@ function ReferralInvites() {
         )}
       </div>
     );
-  if (!auth.supabase || summary.isError)
+  if (!auth.cloudClient || summary.isError)
     return (
       <div role="alert" className="flex flex-col items-start gap-3">
         <p>

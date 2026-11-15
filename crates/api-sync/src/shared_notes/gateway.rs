@@ -148,50 +148,18 @@ where
     RequestBody: Serialize + ?Sized,
     Row: DeserializeOwned,
 {
-    let mut response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/{function}",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SHARED_NOTE_TIMEOUT)
-        .json(request)
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "shared-note gateway request failed");
-            SyncError::SnapshotServiceUnavailable
-        })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > max_response_bytes as u64)
-    {
-        tracing::warn!(%status, "shared-note gateway response was too large");
-        return Err(SyncError::SnapshotServiceUnavailable);
-    }
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|error| {
-        tracing::warn!(%error, "shared-note gateway response could not be read");
-        SyncError::SnapshotServiceUnavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > max_response_bytes {
-            tracing::warn!(%status, "shared-note gateway response was too large");
-            return Err(SyncError::SnapshotServiceUnavailable);
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    if !status.is_success() {
-        tracing::warn!(%status, "shared-note gateway request was rejected");
-        return Err(SyncError::SnapshotServiceUnavailable);
-    }
-
-    let mut rows = serde_json::from_slice::<Vec<Row>>(&bytes).map_err(|error| {
-        tracing::warn!(%error, "shared-note gateway response was invalid");
-        SyncError::SnapshotServiceUnavailable
-    })?;
+    let mut rows: Vec<Row> = tokio::time::timeout(
+        SHARED_NOTE_TIMEOUT,
+        state.config.database.rpc_bounded(
+            &anlg_cloud_db::Principal::Service,
+            function,
+            request,
+            max_response_bytes,
+        ),
+    )
+    .await
+    .map_err(|_| SyncError::SnapshotServiceUnavailable)?
+    .map_err(|_| SyncError::SnapshotServiceUnavailable)?;
     match rows.len() {
         0 => Err(SyncError::SharedNoteNotFound),
         1 => Ok(rows.pop().expect("row count was checked")),

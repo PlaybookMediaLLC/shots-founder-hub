@@ -34,7 +34,7 @@ vi.mock("~/db", () => ({
 }));
 
 vi.mock("~/auth/client", () => ({
-  supabase: { auth: { getSession: mocks.getSession } },
+  cloudClient: { auth: { getSession: mocks.getSession } },
 }));
 
 vi.mock("~/env", () => ({

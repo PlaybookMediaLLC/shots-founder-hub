@@ -6,8 +6,10 @@ edition = "2024"
 [dependencies]
 anlg-api-auth = { workspace = true }
 anlg-api-error = { workspace = true }
+anlg-cloud-db = { workspace = true }
 anlg-loops = { workspace = true }
-anlg-supabase-storage = { workspace = true }
+anlg-r2-storage = { workspace = true }
+sea-orm = { workspace = true }
 
 utoipa = { workspace = true }
 
@@ -24,7 +26,7 @@ tracing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
-uuid = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
 yrs = { workspace = true }
 
 [dev-dependencies]

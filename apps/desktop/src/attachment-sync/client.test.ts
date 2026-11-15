@@ -5,7 +5,7 @@ import {
   createAttachmentBackupClient,
   isAttachmentBackupDependencyAppeared,
   isAttachmentBackupDeleteCancelled,
-} from "@anlg/supabase/attachment-backups";
+} from "@anlg/cloud-client/attachment-backups";
 
 const deleteRequest = {
   objectKey: "owner/object.anb1",

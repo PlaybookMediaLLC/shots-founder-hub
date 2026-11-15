@@ -29,9 +29,11 @@ export function EnterpriseCaptureSync() {
       session?.user.id,
       workspaces.data?.map((workspace) => workspace.workspaceId).sort(),
     ],
-    enabled: Boolean(serverUrl && auth.supabase && session && workspaces.data),
+    enabled: Boolean(
+      serverUrl && auth.cloudClient && session && workspaces.data,
+    ),
     queryFn: async () => {
-      if (!serverUrl || !auth.supabase || !session || !workspaces.data) {
+      if (!serverUrl || !auth.cloudClient || !session || !workspaces.data) {
         return null;
       }
       const context = requireTeamContext(auth);

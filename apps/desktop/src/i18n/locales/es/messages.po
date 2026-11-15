@@ -1028,10 +1028,6 @@ msgstr ""
 msgid "Checking migration..."
 msgstr ""
 
-#: src/onboarding/account/after-login.tsx
-msgid "Checking trial eligibility..."
-msgstr ""
-
 #: src/settings/developers/cli.tsx
 msgid "Checking…"
 msgstr ""
@@ -1569,16 +1565,13 @@ msgid "Context"
 msgstr ""
 
 #: src/imports/screen.tsx
+#: src/onboarding/account/after-login.tsx
 #: src/onboarding/calendar.tsx
 msgid "Continue"
 msgstr ""
 
 #: src/settings/team/index.tsx
 msgid "Continue to Pro checkout"
-msgstr ""
-
-#: src/onboarding/account/after-login.tsx
-msgid "Continuing without trial"
 msgstr ""
 
 #: src/settings/general/meeting-settings.tsx
@@ -1786,10 +1779,6 @@ msgstr ""
 msgid "Could not start the integration setup. Try again."
 msgstr ""
 
-#: src/onboarding/account/after-login.tsx
-msgid "Could not start trial"
-msgstr ""
-
 #: src/chat/components/input/use-dictation.ts
 msgid "Could not start voice input"
 msgstr ""
@@ -1868,10 +1857,6 @@ msgstr ""
 #: src/contacts/profile-photo.tsx
 #: src/settings/general/account-profile.tsx
 msgid "Couldn't save your profile. Try again."
-msgstr ""
-
-#: src/onboarding/account/after-login.tsx
-msgid "Couldn't switch accounts. Please try again."
 msgstr ""
 
 #: src/folders/sidebar.tsx
@@ -2625,7 +2610,6 @@ msgstr ""
 msgid "Free months earned"
 msgstr ""
 
-#: src/onboarding/account/before-login.tsx
 #: src/onboarding/index.tsx
 msgid "Free Pro with a work email"
 msgstr ""
@@ -3087,10 +3071,6 @@ msgstr ""
 #. placeholder {0}: invitation.workspaceName
 #: src/settings/team/index.tsx
 msgid "Joined {0}"
-msgstr ""
-
-#: src/onboarding/account/after-login.tsx
-msgid "Keep {PRO_TRIAL_DAYS} days"
 msgstr ""
 
 #: src/session-sharing/management-panel.tsx
@@ -4338,10 +4318,6 @@ msgstr "Permisos"
 msgid "Permissions for {0}"
 msgstr ""
 
-#: src/onboarding/account/after-login.tsx
-msgid "Personal email"
-msgstr ""
-
 #: src/crm/enrich-contact.tsx
 msgid "phone"
 msgstr ""
@@ -4482,10 +4458,6 @@ msgstr ""
 
 #: src/settings/general/billing.tsx
 msgid "Pro trial"
-msgstr ""
-
-#: src/onboarding/account/after-login.tsx
-msgid "Pro trial started"
 msgstr ""
 
 #: src/settings/appearance/app-icon.tsx
@@ -5892,10 +5864,6 @@ msgstr ""
 msgid "Starting voice input"
 msgstr ""
 
-#: src/onboarding/account/after-login.tsx
-msgid "Starting your trial..."
-msgstr ""
-
 #: src/chat/components/input/index.tsx
 msgid "Starting…"
 msgstr ""
@@ -6447,10 +6415,6 @@ msgstr ""
 msgid "Unpin"
 msgstr ""
 
-#: src/onboarding/account/after-login.tsx
-msgid "Until {endsOn}"
-msgstr ""
-
 #: src/session/components/note-input/raw.tsx
 #: src/session/components/outer-header/overflow/export-modal.tsx
 #: src/session/components/title-input.tsx
@@ -6627,10 +6591,6 @@ msgstr ""
 
 #: src/lock/screen.tsx
 msgid "Use Windows Hello face, PIN, or password to view."
-msgstr ""
-
-#: src/onboarding/account/after-login.tsx
-msgid "Use work email"
 msgstr ""
 
 #: src/onboarding/permissions.tsx
@@ -6825,10 +6785,6 @@ msgstr ""
 msgid "You can use up to three example summaries."
 msgstr ""
 
-#: src/onboarding/account/after-login.tsx
-msgid "You have an active plan"
-msgstr ""
-
 #: src/settings/team/index.tsx
 msgid "You will become the Primary owner of {workspaceName}, with control over its members, billing, and deletion. The current Primary owner will remain an Owner."
 msgstr ""
@@ -6839,10 +6795,6 @@ msgstr ""
 
 #: src/onboarding/index.tsx
 msgid "You're all set"
-msgstr ""
-
-#: src/onboarding/account/after-login.tsx
-msgid "You're on a Pro trial"
 msgstr ""
 
 #: src/settings/general/billing.tsx

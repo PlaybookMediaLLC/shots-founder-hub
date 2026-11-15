@@ -13,8 +13,8 @@ pub(crate) fn router(
             .with_analytics(analytics.clone());
     let stt_config = anlg_transcribe_proxy::SttProxyConfig::new(
         env.stt.as_ref().expect("AI configuration resolved"),
-        &env.supabase,
     )
+    .with_job_store(env.database.clone(), env.storage.clone())
     .with_anarlog_routing(anlg_transcribe_proxy::AnarlogRoutingConfig::default())
     .with_analytics(analytics.clone());
 

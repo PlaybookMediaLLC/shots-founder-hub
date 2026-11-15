@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createShotsAuthorization } from "@anlg/supabase/shots";
+import { createShotsAuthorization } from "@anlg/cloud-client/shots";
 
 import { consumeAuthCallback, pendingAuthStorageKey } from "./auth-callback.ts";
 import { buildSignInUrl } from "./sign-in.ts";

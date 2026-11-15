@@ -52,7 +52,7 @@ pub async fn list_calendars(
 ) -> Result<Json<ListCalendarsResponse>> {
     let http = nango_state
         .build_http_client(
-            &auth.token,
+            &auth,
             &auth.claims.sub,
             GoogleCalendar::ID,
             &req.connection_id,
@@ -98,7 +98,7 @@ pub async fn list_events(
 ) -> Result<Json<ListEventsResponse>> {
     let http = nango_state
         .build_http_client(
-            &auth.token,
+            &auth,
             &auth.claims.sub,
             GoogleCalendar::ID,
             &req.connection_id,

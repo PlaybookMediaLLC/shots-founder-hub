@@ -1,5 +1,6 @@
-import type { Session } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
+
+import type { Session } from "@anlg/cloud-client";
 
 import {
   createSharedAttachmentClient,
@@ -22,7 +23,7 @@ function response(overrides: Record<string, unknown> = {}) {
       sizeBytes: 42,
       sha256: "a".repeat(64),
       signedUrl:
-        "https://project.supabase.co/storage/v1/object/sign/shared/file?token=one",
+        "https://project.example.test/storage/v1/object/sign/shared/file?token=one",
       expiresAt: "2026-07-17T12:01:00.000Z",
       ...overrides,
     }),
@@ -62,9 +63,9 @@ describe("shared attachment client", () => {
 
   it("rejects non-HTTPS or credential-bearing signed URLs", async () => {
     for (const signedUrl of [
-      "http://project.supabase.co/storage/file",
-      "https://user:secret@project.supabase.co/storage/file",
-      "https://project.supabase.co/storage/file#fragment",
+      "http://project.example.test/storage/file",
+      "https://user:secret@project.example.test/storage/file",
+      "https://project.example.test/storage/file#fragment",
     ]) {
       const client = createSharedAttachmentClient({
         apiBaseUrl: "https://api.anarlog.so",

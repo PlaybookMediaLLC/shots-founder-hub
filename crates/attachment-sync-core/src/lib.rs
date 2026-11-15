@@ -17,7 +17,7 @@ pub use cache::{
 };
 pub use control::{DownloadControl, DownloadOperation, SharedScopeClear, SharedScopePrefixClear};
 pub use download::{
-    DownloadObject, download_to_path, persist_staged_attachment, require_configured_supabase_url,
+    DownloadObject, download_to_path, persist_staged_attachment, require_configured_r2_url,
     stage_attachment_restore, validate_signed_download_url,
 };
 pub use error::{Error, Result};

@@ -27,7 +27,7 @@ describe("resource sharing client", () => {
     );
     expect(() =>
       requireResourceSharingContext({
-        supabase: {} as never,
+        cloudClient: {} as never,
         session: { user: { is_anonymous: true } } as never,
       }),
     ).toThrow(ResourceSharingError);
@@ -39,7 +39,7 @@ describe("resource sharing client", () => {
 
     await moveSharedResource(
       {
-        supabase: { rpc } as never,
+        cloudClient: { rpc } as never,
         session: { access_token: "access-token" } as never,
       },
       {

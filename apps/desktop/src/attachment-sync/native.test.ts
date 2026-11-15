@@ -24,7 +24,7 @@ const privateInput = {
   jobId: "job-1",
   attemptCount: 1,
   objectId: "11111111-1111-4111-8111-111111111111",
-  signedUrl: "https://project.supabase.co/private?token=one",
+  signedUrl: "https://project.example.test/private?token=one",
   ciphertextSha256: "a".repeat(64),
   ciphertextSizeBytes: 42,
   formatVersion: 1,
@@ -234,7 +234,7 @@ describe("native attachment operation cancellation", () => {
     await attachmentTransferNative.downloadSharedAttachment({
       scopeId: "viewer-1",
       attachmentId: "22222222-2222-4222-8222-222222222222",
-      signedUrl: "https://project.supabase.co/shared?token=one",
+      signedUrl: "https://project.example.test/shared?token=one",
       expectedSha256: "b".repeat(64),
       expectedSizeBytes: 42,
     });

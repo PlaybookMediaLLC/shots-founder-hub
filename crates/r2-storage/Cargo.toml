@@ -1,0 +1,20 @@
+[package]
+name = "r2-storage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anlg-cloud-db = { workspace = true }
+aws-credential-types = { version = "1.2.1", features = ["hardcoded-credentials"] }
+aws-sdk-s3 = { version = "1.66.0", features = ["behavior-version-latest"] }
+sea-orm = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["time"] }
+url = { workspace = true }
+
+[dev-dependencies]
+reqwest = { workspace = true, features = ["json"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

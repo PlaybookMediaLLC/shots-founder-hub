@@ -328,47 +328,16 @@ async fn list_session_share_access_as_user(
     auth: &AuthContext,
     share_id: &str,
 ) -> Result<Vec<SessionShareAccessRow>> {
-    let mut response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/list_session_share_access",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&auth.token)
-        .json(&ListSessionShareAccessRequest {
+    user_rpc(
+        state,
+        auth,
+        "list_session_share_access",
+        &ListSessionShareAccessRequest {
             p_share_id: share_id,
-        })
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "shared-note access verification failed");
-            SyncError::InvitationEmailUnavailable
-        })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > MAX_ACCESS_LIST_RESPONSE_BYTES as u64)
-    {
-        return Err(SyncError::InvitationEmailUnavailable);
-    }
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|error| {
-        tracing::warn!(%error, "shared-note access verification response failed");
-        SyncError::InvitationEmailUnavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > MAX_ACCESS_LIST_RESPONSE_BYTES {
-            return Err(SyncError::InvitationEmailUnavailable);
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    if !status.is_success() {
-        return Err(SyncError::SharedNoteNotFound);
-    }
-    serde_json::from_slice(&bytes).map_err(|error| {
-        tracing::warn!(%error, "shared-note access verification response was invalid");
-        SyncError::InvitationEmailUnavailable
-    })
+        },
+        MAX_ACCESS_LIST_RESPONSE_BYTES,
+    )
+    .await
 }
 
 async fn list_workspace_invitations_as_user(
@@ -376,47 +345,16 @@ async fn list_workspace_invitations_as_user(
     auth: &AuthContext,
     workspace_id: &str,
 ) -> Result<Vec<WorkspaceInvitationRow>> {
-    let mut response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/list_workspace_invitations",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&auth.token)
-        .json(&ListWorkspaceInvitationsRequest {
+    user_rpc(
+        state,
+        auth,
+        "list_workspace_invitations",
+        &ListWorkspaceInvitationsRequest {
             p_workspace_id: workspace_id,
-        })
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "workspace invitation verification failed");
-            SyncError::InvitationEmailUnavailable
-        })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > MAX_ACCESS_LIST_RESPONSE_BYTES as u64)
-    {
-        return Err(SyncError::InvitationEmailUnavailable);
-    }
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|error| {
-        tracing::warn!(%error, "workspace invitation verification response failed");
-        SyncError::InvitationEmailUnavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > MAX_ACCESS_LIST_RESPONSE_BYTES {
-            return Err(SyncError::InvitationEmailUnavailable);
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    if !status.is_success() {
-        return Err(SyncError::SharedNoteNotFound);
-    }
-    serde_json::from_slice(&bytes).map_err(|error| {
-        tracing::warn!(%error, "workspace invitation verification response was invalid");
-        SyncError::InvitationEmailUnavailable
-    })
+        },
+        MAX_ACCESS_LIST_RESPONSE_BYTES,
+    )
+    .await
 }
 
 #[derive(serde::Serialize)]
@@ -438,48 +376,16 @@ async fn get_session_share_workspace_slug_as_user(
     auth: &AuthContext,
     share_id: &str,
 ) -> Result<Option<String>> {
-    let mut response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/get_session_share_workspace_slug",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&auth.token)
-        .json(&GetSessionShareWorkspaceSlugRequest {
+    let mut rows: Vec<SessionShareWorkspaceSlugRow> = user_rpc(
+        state,
+        auth,
+        "get_session_share_workspace_slug",
+        &GetSessionShareWorkspaceSlugRequest {
             p_share_id: share_id,
-        })
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "shared-note workspace subdomain lookup failed");
-            SyncError::InvitationEmailUnavailable
-        })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > 1024)
-    {
-        return Err(SyncError::InvitationEmailUnavailable);
-    }
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|error| {
-        tracing::warn!(%error, "shared-note workspace subdomain response failed");
-        SyncError::InvitationEmailUnavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > 1024 {
-            return Err(SyncError::InvitationEmailUnavailable);
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    if !status.is_success() {
-        return Err(SyncError::SharedNoteNotFound);
-    }
-    let mut rows: Vec<SessionShareWorkspaceSlugRow> =
-        serde_json::from_slice(&bytes).map_err(|error| {
-            tracing::warn!(%error, "shared-note workspace subdomain response was invalid");
-            SyncError::InvitationEmailUnavailable
-        })?;
+        },
+        1024,
+    )
+    .await?;
     if rows.len() != 1 {
         return Err(SyncError::InvitationEmailUnavailable);
     }
@@ -521,4 +427,31 @@ fn workspace_share_origin(slug: Option<&str>) -> Result<String> {
         return Err(SyncError::InvitationEmailUnavailable);
     }
     Ok(format!("https://{slug}.anarlog.so"))
+}
+
+async fn user_rpc<T: serde::de::DeserializeOwned>(
+    state: &SharedNotesState,
+    auth: &AuthContext,
+    function: &str,
+    request: &impl serde::Serialize,
+    limit: usize,
+) -> Result<T> {
+    let principal = auth
+        .principal()
+        .map_err(|_| SyncError::SharedNoteNotFound)?;
+    tokio::time::timeout(
+        super::SHARED_NOTE_TIMEOUT,
+        state
+            .config
+            .database
+            .rpc_bounded(&principal, function, request, limit),
+    )
+    .await
+    .map_err(|_| SyncError::InvitationEmailUnavailable)?
+    .map_err(|error| match error {
+        anlg_cloud_db::Error::Database { code, .. } if code == "42501" => {
+            SyncError::SharedNoteNotFound
+        }
+        _ => SyncError::InvitationEmailUnavailable,
+    })
 }

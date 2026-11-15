@@ -4,13 +4,13 @@ use anlg_api_auth::{AuthState, ShotsAuth, ShotsSession};
 use axum::{
     Json, Router,
     body::Body,
-    extract::{DefaultBodyLimit, OriginalUri, Query, Request, State},
+    extract::{DefaultBodyLimit, OriginalUri, Query, State},
     http::{
         HeaderMap, HeaderValue, StatusCode,
         header::{CACHE_CONTROL, CONTENT_TYPE},
     },
     response::{IntoResponse, Response},
-    routing::{any, get, post},
+    routing::{get, post},
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -19,13 +19,13 @@ use serde_json::{Value, json};
 struct Gateway {
     shots: ShotsAuth,
     client: reqwest::Client,
-    storage_origin: reqwest::Url,
-    anon_key: String,
+    database: anlg_cloud_db::Database,
 }
 
-pub fn router(shots: ShotsAuth, storage_origin: &str, anon_key: &str) -> Router {
+pub fn router(shots: ShotsAuth, database: anlg_cloud_db::Database) -> Router {
     Router::new()
         .route("/auth/v1/user", get(user))
+        .route("/auth/v1/claims", get(claims))
         .route("/auth/v1/token", post(token))
         .route("/auth/v1/logout", post(logout))
         .route(
@@ -63,13 +63,23 @@ pub fn router(shots: ShotsAuth, storage_origin: &str, anon_key: &str) -> Router 
                 .delete(voice)
                 .layer(DefaultBodyLimit::max(1024 * 1024)),
         )
-        .route("/rest/v1/{*path}", any(data))
-        .route("/storage/v1/{*path}", any(data))
+        .route("/data/rpc/{function}", post(rpc))
+        .route("/data/workspaces", get(workspaces))
+        .route("/data/devices", get(devices))
+        .route("/data/devices/{id}", axum::routing::delete(delete_device))
+        .route("/data/profile", get(profile))
         .layer(DefaultBodyLimit::max(16 * 1024))
+        .layer(axum::middleware::map_response(
+            |mut response: Response| async move {
+                response
+                    .headers_mut()
+                    .insert(CACHE_CONTROL, HeaderValue::from_static("private, no-store"));
+                response
+            },
+        ))
         .with_state(Gateway {
             shots,
-            storage_origin: reqwest::Url::parse(storage_origin).expect("validated storage origin"),
-            anon_key: anon_key.to_owned(),
+            database,
             client: reqwest::Client::builder()
                 .redirect(reqwest::redirect::Policy::none())
                 .retry(reqwest::retry::never())
@@ -204,142 +214,210 @@ async fn voice(
     }
 }
 
-async fn data(State(state): State<Gateway>, request: Request) -> Response {
-    let path = request.uri().path();
-    let path = path.strip_prefix("/cloud").unwrap_or(path);
-    let lower = path.to_ascii_lowercase();
-    if lower.contains("%2f")
-        || lower.contains("%5c")
-        || lower.contains("%2e")
-        || path.contains('\\')
-    {
-        return error(StatusCode::BAD_REQUEST, "invalid_storage_path");
-    }
-    let storage = path.starts_with("/storage/v1/");
-    if !storage && !rest_path_allowed(path) {
-        return error(StatusCode::FORBIDDEN, "shots_operation_required");
-    }
-    let mut url = match state.storage_origin.join(path) {
-        Ok(url) => url,
-        Err(_) => return error(StatusCode::BAD_REQUEST, "invalid_storage_path"),
-    };
-    if url.path() != path {
-        return error(StatusCode::BAD_REQUEST, "invalid_storage_path");
-    }
-    url.set_query(request.uri().query());
-    let token = if request.headers().contains_key("authorization") {
-        let token = match access_token(request.headers()) {
-            Ok(token) => token,
-            Err(response) => return response,
-        };
-        match state.shots.authenticate(token).await {
-            Ok(auth) => auth.token,
-            Err(anlg_supabase_auth::server::Error::InvalidToken) => {
-                return error(StatusCode::UNAUTHORIZED, "invalid_token");
+async fn principal(
+    state: &Gateway,
+    headers: &HeaderMap,
+) -> Result<anlg_cloud_db::Principal, Response> {
+    let token = access_token(headers)?;
+    state
+        .shots
+        .authenticate(token)
+        .await
+        .map_err(|error| match error {
+            anlg_session_auth::server::Error::InvalidToken => {
+                error_response(StatusCode::UNAUTHORIZED, "invalid_token")
             }
-            Err(_) => return error(StatusCode::BAD_GATEWAY, "shots_storage_unavailable"),
-        }
-    } else {
-        let signed = storage
-            && (path.starts_with("/storage/v1/object/sign/")
-                || path.starts_with("/storage/v1/object/upload/sign/")
-                || path.starts_with("/storage/v1/upload/resumable/")
-                    && request.headers().contains_key("x-signature"));
-        let public_read = path.starts_with("/storage/v1/object/public/")
-            && matches!(
-                *request.method(),
-                axum::http::Method::GET | axum::http::Method::HEAD
-            );
-        if !signed && !public_read {
-            return error(StatusCode::UNAUTHORIZED, "invalid_token");
-        }
-        state.anon_key.clone()
-    };
-    let (parts, body) = request.into_parts();
-    let mut headers = HeaderMap::new();
-    for name in [
-        "accept",
-        "content-type",
-        "content-length",
-        "prefer",
-        "range",
-        "range-unit",
-        "content-range",
-        "if-match",
-        "if-none-match",
-        "cache-control",
-        "x-upsert",
-        "tus-resumable",
-        "upload-length",
-        "upload-offset",
-        "upload-metadata",
-        "upload-defer-length",
-        "upload-concat",
-        "x-signature",
-    ] {
-        if let Some(value) = parts.headers.get(name) {
-            headers.insert(name, value.clone());
-        }
-    }
-    let response = state
-        .client
-        .request(parts.method, url)
-        .headers(headers)
-        .timeout(Duration::from_secs(600))
-        .header("apikey", &state.anon_key)
-        .bearer_auth(token)
-        .body(reqwest::Body::wrap_stream(body.into_data_stream()))
-        .send()
-        .await;
-    let response = match response {
-        Ok(response) => response,
-        Err(_) => return error(StatusCode::BAD_GATEWAY, "storage_unavailable"),
-    };
-    let status = response.status();
-    let mut headers = response.headers().clone();
-    crate::proxy::strip_hop_headers(&mut headers);
-    headers.remove("set-cookie");
-    headers.insert(
-        "cache-control",
-        axum::http::HeaderValue::from_static("no-store"),
-    );
-    if let Some(location) = headers.get("location") {
-        let target = location
-            .to_str()
-            .ok()
-            .and_then(|location| state.storage_origin.join(location).ok());
-        let Some(target) = target.filter(|target| {
-            target.origin() == state.storage_origin.origin()
-                && target.path().starts_with("/storage/v1/")
-        }) else {
-            return error(StatusCode::BAD_GATEWAY, "invalid_storage_redirect");
-        };
-        let rewritten = format!(
-            "/cloud{}{}",
-            target.path(),
-            target.query().map(|q| format!("?{q}")).unwrap_or_default()
-        );
-        let Ok(value) = rewritten.parse() else {
-            return error(StatusCode::BAD_GATEWAY, "invalid_storage_redirect");
-        };
-        headers.insert("location", value);
-    }
-    (status, headers, Body::from_stream(response.bytes_stream())).into_response()
+            _ => error_response(StatusCode::BAD_GATEWAY, "session_authority_unavailable"),
+        })?
+        .principal()
+        .map_err(IntoResponse::into_response)
 }
 
-fn rest_path_allowed(path: &str) -> bool {
-    if matches!(
-        path,
-        "/rest/v1/profiles"
-            | "/rest/v1/workspaces"
-            | "/rest/v1/workspace_memberships"
-            | "/rest/v1/sync_devices"
-    ) {
-        return true;
-    }
-    let Some(function) = path.strip_prefix("/rest/v1/rpc/") else {
-        return false;
+fn error_response(status: StatusCode, code: &str) -> Response {
+    error(status, code)
+}
+
+fn database_error(error: anlg_cloud_db::Error) -> Response {
+    let (status, code) = match &error {
+        anlg_cloud_db::Error::Database { code, .. } if code == "42501" => {
+            (StatusCode::FORBIDDEN, code.as_str())
+        }
+        anlg_cloud_db::Error::Database { code, .. }
+            if code.starts_with("22") || code == "23514" =>
+        {
+            (StatusCode::BAD_REQUEST, code.as_str())
+        }
+        anlg_cloud_db::Error::Database { code, .. } if code == "23505" || code == "40001" => {
+            (StatusCode::CONFLICT, code.as_str())
+        }
+        anlg_cloud_db::Error::InvalidOperation => (StatusCode::BAD_REQUEST, "invalid_operation"),
+        _ => (StatusCode::BAD_GATEWAY, "database_unavailable"),
     };
+    error_response(status, code)
+}
+
+async fn rpc(
+    State(state): State<Gateway>,
+    axum::extract::Path(function): axum::extract::Path<String>,
+    headers: HeaderMap,
+    Json(body): Json<Value>,
+) -> Response {
+    // Signed-out visitors check share slugs and referral links.
+    if matches!(
+        function.as_str(),
+        "workspace_share_slug_is_active" | "referral_link_available"
+    ) {
+        return match state
+            .database
+            .rpc_bounded::<Value>(&anlg_cloud_db::Principal::Anonymous, &function, &body, 1024)
+            .await
+        {
+            Ok(value) => Json(value).into_response(),
+            Err(error) => database_error(error),
+        };
+    }
+    if !rpc_allowed(&function) {
+        return error(StatusCode::NOT_FOUND, "unknown_operation");
+    }
+    let principal = match principal(&state, &headers).await {
+        Ok(principal) => principal,
+        Err(response) => return response,
+    };
+    match state
+        .database
+        .rpc_bounded::<Value>(&principal, &function, &body, 16 * 1024 * 1024)
+        .await
+    {
+        Ok(data) => Json(data).into_response(),
+        Err(error) => database_error(error),
+    }
+}
+
+async fn workspaces(State(state): State<Gateway>, headers: HeaderMap) -> Response {
+    use anlg_cloud_db::entities::{workspace, workspace_membership as membership};
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
+    let principal = match principal(&state, &headers).await {
+        Ok(principal) => principal,
+        Err(response) => return response,
+    };
+    let anlg_cloud_db::Principal::User { user_id, .. } = &principal else {
+        return error(StatusCode::UNAUTHORIZED, "invalid_token");
+    };
+    let result = async {
+        let tx = state.database.transaction(&principal).await?;
+        let rows = membership::Entity::find()
+            .filter(membership::Column::UserId.eq(*user_id))
+            .filter(membership::Column::DeletedAt.is_null())
+            .find_also_related(workspace::Entity)
+            .filter(workspace::Column::Kind.eq("shared"))
+            .filter(workspace::Column::DeletedAt.is_null())
+            .order_by_asc(workspace::Column::Name)
+            .limit(1000)
+            .all(&tx)
+            .await?;
+        let rows: Vec<Value> = rows
+            .into_iter()
+            .filter_map(|(member, workspace)| {
+                workspace.map(|row| json!({
+            "id": row.id, "name": row.name, "kind": row.kind, "owner_user_id": row.owner_user_id,
+            "share_slug": row.share_slug, "logo_data": row.logo_data,
+            "workspace_memberships": [{"role":member.role}]
+        }))
+            })
+            .collect();
+        tx.commit().await?;
+        Ok::<_, anlg_cloud_db::Error>(rows)
+    }
+    .await;
+    match result {
+        Ok(rows) => Json(rows).into_response(),
+        Err(error) => database_error(error),
+    }
+}
+
+async fn devices(State(state): State<Gateway>, headers: HeaderMap) -> Response {
+    use anlg_cloud_db::entities::sync_device;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
+    let principal = match principal(&state, &headers).await {
+        Ok(principal) => principal,
+        Err(response) => return response,
+    };
+    let anlg_cloud_db::Principal::User { user_id, .. } = &principal else {
+        return error(StatusCode::UNAUTHORIZED, "invalid_token");
+    };
+    let result = async {
+        let tx = state.database.transaction(&principal).await?;
+        let rows = sync_device::Entity::find()
+            .filter(sync_device::Column::UserId.eq(*user_id))
+            .order_by_desc(sync_device::Column::LastSeenAt)
+            .limit(1000)
+            .all(&tx)
+            .await?;
+        tx.commit().await?;
+        Ok::<_, anlg_cloud_db::Error>(rows)
+    }
+    .await;
+    match result {
+        Ok(rows) => Json(rows).into_response(),
+        Err(error) => database_error(error),
+    }
+}
+
+async fn delete_device(
+    State(state): State<Gateway>,
+    axum::extract::Path(id): axum::extract::Path<uuid::Uuid>,
+    headers: HeaderMap,
+) -> Response {
+    use anlg_cloud_db::entities::sync_device;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+    let principal = match principal(&state, &headers).await {
+        Ok(principal) => principal,
+        Err(response) => return response,
+    };
+    let anlg_cloud_db::Principal::User { user_id, .. } = &principal else {
+        return error(StatusCode::UNAUTHORIZED, "invalid_token");
+    };
+    let result = async {
+        let tx = state.database.transaction(&principal).await?;
+        sync_device::Entity::delete_by_id(id)
+            .filter(sync_device::Column::UserId.eq(*user_id))
+            .exec(&tx)
+            .await?;
+        tx.commit().await?;
+        Ok::<_, anlg_cloud_db::Error>(())
+    }
+    .await;
+    match result {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(error) => database_error(error),
+    }
+}
+
+async fn profile(State(state): State<Gateway>, headers: HeaderMap) -> Response {
+    use sea_orm::EntityTrait;
+    let principal = match principal(&state, &headers).await {
+        Ok(principal) => principal,
+        Err(response) => return response,
+    };
+    let anlg_cloud_db::Principal::User { user_id, .. } = &principal else {
+        return error(StatusCode::UNAUTHORIZED, "invalid_token");
+    };
+    let result = async {
+        let tx = state.database.transaction(&principal).await?;
+        let row = anlg_cloud_db::entities::profile::Entity::find_by_id(*user_id)
+            .one(&tx)
+            .await?;
+        tx.commit().await?;
+        Ok::<_, anlg_cloud_db::Error>(row)
+    }
+    .await;
+    match result {
+        Ok(row) => Json(row).into_response(),
+        Err(error) => database_error(error),
+    }
+}
+
+fn rpc_allowed(function: &str) -> bool {
     matches!(
         function,
         "get_workspace_access"
@@ -347,6 +425,8 @@ fn rest_path_allowed(path: &str) -> bool {
             | "get_workspace_seat_usage"
             | "get_referral_summary"
             | "get_pro_trial_offer"
+            | "claim_referral"
+            | "get_workspace_policy"
             | "create_session_share"
             | "delete_session_share"
             | "delete_session_share_by_session"
@@ -420,7 +500,7 @@ fn user_json(session: &ShotsSession) -> Value {
 
 async fn session(state: &Gateway, token: &str) -> Result<ShotsSession, Response> {
     state.shots.session(token).await.map_err(|err| match err {
-        anlg_supabase_auth::server::Error::InvalidToken => {
+        anlg_session_auth::server::Error::InvalidToken => {
             error(StatusCode::UNAUTHORIZED, "invalid_token")
         }
         _ => error(StatusCode::BAD_GATEWAY, "shots_unavailable"),
@@ -434,6 +514,17 @@ async fn user(State(state): State<Gateway>, headers: HeaderMap) -> Response {
     };
     match session(&state, token).await {
         Ok(current) => Json(user_json(&current)).into_response(),
+        Err(response) => response,
+    }
+}
+
+async fn claims(State(state): State<Gateway>, headers: HeaderMap) -> Response {
+    let token = match access_token(&headers) {
+        Ok(token) => token,
+        Err(response) => return response,
+    };
+    match session(&state, token).await {
+        Ok(current) => Json(current.claims()).into_response(),
         Err(response) => response,
     }
 }

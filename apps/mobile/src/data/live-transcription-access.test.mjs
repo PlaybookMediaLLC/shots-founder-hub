@@ -27,7 +27,7 @@ const mocks = {
     return native;
   }`,
   "react-native": `export const Platform = { OS: "ios" };`,
-  "@/auth/client": `const f = globalThis.liveAccessFixture; export const supabase = { auth: {
+  "@/auth/client": `const f = globalThis.liveAccessFixture; export const cloudClient = { claims: async token => ({data: f.session?.access_token === token ? f.session.claims : null, error: null}), auth: {
     getSession: async () => ({ data: { session: f.session } }),
     onAuthStateChange: listener => { f.listeners.add(listener); return { data: { subscription: { unsubscribe: () => f.listeners.delete(listener) } } }; }
   } };`,
@@ -65,7 +65,8 @@ const { SessionLiveTranscription } = await import("./live-transcription.ts");
 function session(claims) {
   return {
     user: { id: "account-a" },
-    access_token: `test.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.signature`,
+    access_token: `opaque-session-${Math.random()}`,
+    claims,
   };
 }
 function emitAuth(next) {
@@ -110,7 +111,7 @@ beforeEach(() => {
   };
 });
 
-test("free and expired accounts record locally without opening a hosted socket or reporting a failure", async () => {
+test("free and expired accounts record locally without opening a hosted socket or reporting a failure", async (t) => {
   for (const claims of [
     {},
     {
@@ -124,6 +125,7 @@ test("free and expired accounts record locally without opening a hosted socket o
     const live = new SessionLiveTranscription("note-a", 16000, 1, (update) =>
       updates.push(update),
     );
+    t.after(() => live.stop());
     await settle();
     live.sendAudio(new ArrayBuffer(16));
     assert.equal(updates.at(-1).status, "fallback");
@@ -144,11 +146,13 @@ test("trial expiry closes an active socket and stops sending audio while preserv
   const live = new SessionLiveTranscription("note-a", 16000, 1, (update) =>
     updates.push(update),
   );
+  t.after(() => live.stop());
   await settle();
   const socket = fixture.sockets[0];
   socket.open();
   live.sendAudio(new ArrayBuffer(16));
   assert.equal(updates.at(-1).status, "live");
+  await settle();
   t.mock.timers.tick(2000);
   live.sendAudio(new ArrayBuffer(16));
   assert.equal(socket.readyState, 3);
@@ -167,12 +171,14 @@ test("renewal during recording clears the trial deadline; sign-out still closes 
     trial_end: (now + 2000) / 1000,
   });
   const live = new SessionLiveTranscription("note-a", 16000, 1, () => {});
+  t.after(() => live.stop());
   await settle();
   const socket = fixture.sockets[0];
   socket.open();
   emitAuth(
     session({ subscription_status: "active", entitlements: ["hyprnote_pro"] }),
   );
+  await settle();
   t.mock.timers.tick(2000);
   live.sendAudio(new ArrayBuffer(16));
   assert.equal(socket.readyState, 1);

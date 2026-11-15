@@ -1,7 +1,7 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 export type TeamContext = {
-  supabase: SupabaseClient;
+  cloudClient: CloudClient;
   session: Session;
 };
 
@@ -66,13 +66,13 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function requireTeamContext(auth: {
-  supabase?: SupabaseClient | null;
+  cloudClient?: CloudClient | null;
   session?: Session | null;
 }): TeamContext {
-  if (!auth.supabase || !auth.session || auth.session.user.is_anonymous) {
+  if (!auth.cloudClient || !auth.session || auth.session.user.is_anonymous) {
     throw new TeamError();
   }
-  return { supabase: auth.supabase, session: auth.session };
+  return { cloudClient: auth.cloudClient, session: auth.session };
 }
 
 async function callRpc(
@@ -80,7 +80,7 @@ async function callRpc(
   functionName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  const response = await context.supabase
+  const response = await context.cloudClient
     .rpc(functionName, args)
     .setHeader("Authorization", `Bearer ${context.session.access_token}`);
   if (response.error !== null) {
@@ -714,12 +714,7 @@ export async function setWorkspacePolicy(
 export async function listMyWorkspaces(context: TeamContext) {
   // RLS limits the embedded memberships to this account's own row, so the join
   // yields the caller's role without needing manager-only RPCs.
-  const response = await context.supabase
-    .from("workspaces")
-    .select(
-      "id,name,kind,owner_user_id,share_slug,logo_data,workspace_memberships(role)",
-    )
-    .eq("kind", "shared");
+  const response = await context.cloudClient.workspaces();
   if (response.error !== null) throw new TeamError(response.error.message);
   return (response.data ?? []).map((row) => {
     const memberships = Array.isArray(row.workspace_memberships)

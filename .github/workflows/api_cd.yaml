@@ -4,7 +4,7 @@ on:
       service:
         type: choice
         default: gateway
-        options: [ai, sync, core, billing, gateway]
+        options: [ai, sync, core, gateway]
       image:
         description: Existing image digest for a verified rollback or shared build
         type: string
@@ -73,7 +73,6 @@ jobs:
             ai) app=anarlog-inference; config=apps/api/fly.ai.toml; health=/health/ready/ai ;;
             sync) app=anarlog-sync; config=apps/api/fly.sync.toml; health=/health/ready/sync ;;
             core) app=anarlog-core; config=apps/api/fly.core.toml; health=/health/ready/core ;;
-            billing) app=anarlog-billing-api; config=apps/api/fly.billing.toml; health=/health/ready/billing-unified ;;
             gateway) app=anarlog-gateway; config=apps/api/fly.gateway.toml; health=/health/ready/api ;;
             *) exit 1 ;;
           esac
@@ -134,9 +133,8 @@ jobs:
 
           ai_secrets_json="$(mktemp)"
           cloudsync_secrets_json="$(mktemp)"
-          webhook_secrets_json="$(mktemp)"
           secrets_file="$(mktemp)"
-          trap 'rm -f "$ai_secrets_json" "$cloudsync_secrets_json" "$webhook_secrets_json" "$secrets_file"' EXIT
+          trap 'rm -f "$ai_secrets_json" "$cloudsync_secrets_json" "$secrets_file"' EXIT
 
           infisical export \
             --token="$INFISICAL_TOKEN" \
@@ -154,16 +152,9 @@ jobs:
             --format=json \
             --output-file="$cloudsync_secrets_json"
 
-          printf '[]' > "$webhook_secrets_json"
-          if [ "$SERVICE" = billing ]; then
-            infisical export --token="$INFISICAL_TOKEN" --env=prod \
-              --projectId="$INFISICAL_PROJECT_ID" --path=/anarlog/stripe-sync \
-              --format=json --output-file="$webhook_secrets_json"
-          fi
-
           python3 .github/scripts/prepare_api_service_secrets.py \
             --service "$SERVICE" --api "$ai_secrets_json" \
-            --cloudsync "$cloudsync_secrets_json" --webhooks "$webhook_secrets_json" --output "$secrets_file"
+            --cloudsync "$cloudsync_secrets_json"  --output "$secrets_file"
 
           if [ -s "$secrets_file" ]; then
             flyctl secrets import --app "$FLY_APP" --stage < "$secrets_file"
@@ -176,7 +167,7 @@ jobs:
       - if: inputs.service == 'gateway'
         run: |
           set -euo pipefail
-          for entry in anarlog-inference:ai anarlog-sync:sync anarlog-core:core anarlog-billing-api:billing-api; do
+          for entry in anarlog-inference:ai anarlog-sync:sync anarlog-core:core; do
             app="${entry%%:*}"
             role="${entry#*:}"
             curl --fail --silent --show-error --retry 3 "https://${app}.fly.dev/health/ready/${role}"

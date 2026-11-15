@@ -34,7 +34,7 @@ function context(data: unknown, error: { message: string } | null = null) {
   }));
   return {
     context: {
-      supabase: { rpc },
+      cloudClient: { rpc },
       session: { access_token: "token", user: { id: USER_ID } },
     } as unknown as TeamContext,
     rpc,
@@ -46,7 +46,7 @@ describe("requireTeamContext", () => {
     expect(() => requireTeamContext({})).toThrow(TeamError);
     expect(() =>
       requireTeamContext({
-        supabase: {} as never,
+        cloudClient: {} as never,
         session: { user: { is_anonymous: true } } as never,
       }),
     ).toThrow(TeamError);

@@ -9,7 +9,7 @@ export const MY_INVITATIONS_QUERY_KEY = "team-my-invitations";
 
 export function useMyWorkspaceInvitations() {
   const auth = useAuth();
-  const signedIn = Boolean(auth.supabase && auth.session);
+  const signedIn = Boolean(auth.cloudClient && auth.session);
 
   return useQuery({
     queryKey: [MY_INVITATIONS_QUERY_KEY, auth.session?.user.id],

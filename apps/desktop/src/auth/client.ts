@@ -1,20 +1,20 @@
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
+
 import {
   createClient,
   processLock,
   type Session,
-  type SupabaseClient,
+  type CloudClient,
   type SupportedStorage,
-} from "@supabase/supabase-js";
-import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
-
+} from "@anlg/cloud-client";
 import { commands as authCommands } from "@anlg/plugin-auth";
 
 import { createRefreshFetch } from "./refresh-fetch";
 
 import { env } from "~/env";
 
-const authStorageKey = env.VITE_SUPABASE_URL
-  ? `sb-${new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0]}-auth-token`
+const authStorageKey = env.VITE_CLOUD_URL
+  ? `sb-${new URL(env.VITE_CLOUD_URL).hostname.split(".")[0]}-auth-token`
   : null;
 
 export const tauriStorage: SupportedStorage = {
@@ -77,13 +77,13 @@ export async function persistAuthSession(session: Session): Promise<void> {
   await tauriStorage.setItem(authStorageKey, JSON.stringify(session));
 }
 
-export const supabase: SupabaseClient | null =
-  env.VITE_SUPABASE_URL && env.VITE_SUPABASE_ANON_KEY
-    ? createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, {
+export const cloudClient: CloudClient | null =
+  env.VITE_CLOUD_URL && env.VITE_SHOTS_URL
+    ? createClient(env.VITE_CLOUD_URL, {
         global: {
           fetch: createRefreshFetch({
             fetch: tauriFetch,
-            supabaseUrl: env.VITE_SUPABASE_URL,
+            cloudUrl: env.VITE_CLOUD_URL,
             beginRefresh: (refreshToken) =>
               authCommands.beginRefresh(refreshToken),
             finishRefresh: (leaseId, status, retryAfterMs) =>

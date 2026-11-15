@@ -83,4 +83,4 @@ export function consumeAuthCallback(
   callbackQueue = next;
   return next;
 }
-import { exchangeShotsCallback } from "@anlg/supabase/shots";
+import { exchangeShotsCallback } from "@anlg/cloud-client/shots";

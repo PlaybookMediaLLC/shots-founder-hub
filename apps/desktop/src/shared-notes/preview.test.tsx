@@ -41,7 +41,7 @@ vi.mock("~/auth", () => ({
 vi.mock("~/env", () => ({
   env: {
     VITE_API_URL: "https://api.test",
-    VITE_SUPABASE_URL: "https://project.supabase.co",
+    VITE_CLOUD_URL: "https://project.example.test",
   },
 }));
 
@@ -136,7 +136,7 @@ describe("ephemeral shared-note previews", () => {
           {
             ...attachment,
             signedUrl:
-              "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=one",
+              "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=one",
             expiresAt: "2026-07-17T10:01:00.000Z",
           },
         ],
@@ -239,7 +239,7 @@ describe("ephemeral shared-note previews", () => {
           JSON.stringify({
             ...attachment,
             signedUrl:
-              "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=one",
+              "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=one",
             expiresAt: "2099-07-17T10:01:00.000Z",
           }),
           { status: 200 },
@@ -331,7 +331,7 @@ describe("ephemeral shared-note previews", () => {
     const downloadAttachment = vi.fn().mockResolvedValue({
       ...attachment,
       signedUrl:
-        "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=one",
+        "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=one",
       expiresAt: "2099-07-17T10:05:00.000Z",
     });
     const preview = renderHook(() => useSharedNotePreview(viewId));
@@ -361,7 +361,7 @@ describe("ephemeral shared-note previews", () => {
       {
         scopeId: `preview:${viewId}`,
         attachmentId: attachment.id,
-        signedUrl: expect.stringContaining("project.supabase.co"),
+        signedUrl: expect.stringContaining("project.example.test"),
         expectedSha256: attachment.sha256,
         expectedSizeBytes: attachment.sizeBytes,
       },
@@ -402,7 +402,7 @@ describe("ephemeral shared-note previews", () => {
         downloadAttachment: vi.fn().mockResolvedValue({
           ...attachment,
           signedUrl:
-            "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=one",
+            "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=one",
           expiresAt: "2099-07-17T10:05:00.000Z",
         }),
       }),
@@ -445,7 +445,7 @@ describe("ephemeral shared-note previews", () => {
     const download = {
       ...attachment,
       signedUrl:
-        "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=one",
+        "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=one",
       expiresAt: "2099-07-17T10:05:00.000Z",
     };
     const fetcher = vi
@@ -502,7 +502,7 @@ describe("ephemeral shared-note previews", () => {
       {
         scopeId: `preview:${viewId}`,
         attachmentId: attachment.id,
-        signedUrl: expect.stringContaining("project.supabase.co"),
+        signedUrl: expect.stringContaining("project.example.test"),
         expectedSha256: attachment.sha256,
         expectedSizeBytes: attachment.sizeBytes,
       },
@@ -557,7 +557,7 @@ describe("ephemeral shared-note previews", () => {
     const downloadAttachment = vi.fn().mockResolvedValue({
       ...attachment,
       signedUrl:
-        "https://project.supabase.co/storage/v1/object/sign/shared-note-attachments/file?token=one",
+        "https://project.example.test/storage/v1/object/sign/shared-note-attachments/file?token=one",
       expiresAt: "2026-07-17T10:05:00.000Z",
     });
 

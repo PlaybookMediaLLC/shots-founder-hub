@@ -1,72 +1,28 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-import {
-  getCustomProfileImageUrl,
-  getProviderProfileImageUrl,
-} from "@anlg/supabase/profile";
-import { saveProfileAvatar } from "@anlg/supabase/profile-avatar";
 import { Button } from "@anlg/ui/components/ui/button";
 
 import { AvatarUploadButton, ContactImage } from "./contact-avatar";
-import { updateContactAvatar, usePersonalContact } from "./queries";
 import { ContactFacehash } from "./shared";
 
 import { useAuth } from "~/auth";
-import { env } from "~/env";
 
 export function useSharedProfilePhoto(userId: string) {
   const auth = useAuth();
-  const local = usePersonalContact(userId);
-  const enabled =
-    !env.VITE_SHOTS_URL && !!auth.supabase && auth.session?.user.id === userId;
-  // The environment-scoped auth client is not serializable cache data.
+  // The account ID identifies the cache; the transport must not serialize credentials into it.
   // eslint-disable-next-line @tanstack/query/exhaustive-deps
-  const profile = useQuery({
+  return useQuery({
     queryKey: ["profile-photo", userId],
-    enabled,
+    enabled: !!auth.cloudClient && auth.session?.user.id === userId,
     queryFn: async () => {
-      const { data, error } = await auth.supabase!.auth.getUser();
+      const { data, error } = await auth.cloudClient!.auth.getUser();
       if (error) throw error;
       if (data.user?.id !== userId)
         throw new Error("Account changed during photo lookup");
       return data.user;
     },
-    refetchInterval: 30_000,
   });
-  const mirror = useMutation({
-    mutationFn: (photo: string | null) =>
-      updateContactAvatar("human", userId, photo),
-    retry: 2,
-  });
-  const custom = getCustomProfileImageUrl(profile.data);
-  const localExists = !!local.data;
-  const localPhoto = local.data?.avatarDataUrl;
-  useEffect(() => {
-    if (
-      enabled &&
-      profile.isSuccess &&
-      !profile.isFetching &&
-      profile.isFetchedAfterMount &&
-      localExists &&
-      custom !== undefined &&
-      custom !== localPhoto
-    ) {
-      mirror.mutate(custom);
-    }
-  }, [
-    enabled,
-    custom,
-    localExists,
-    localPhoto,
-    profile.dataUpdatedAt,
-    profile.isSuccess,
-    profile.isFetching,
-    profile.isFetchedAfterMount,
-    mirror.mutate,
-  ]);
-  return profile;
 }
 
 export function ProfilePhoto({
@@ -81,59 +37,19 @@ export function ProfilePhoto({
   onSave: (url: string | null) => Promise<void>;
 }) {
   const { t } = useLingui();
-  const auth = useAuth();
-  const queryClient = useQueryClient();
-  const profile = useSharedProfilePhoto(userId);
-  const cloud =
-    !env.VITE_SHOTS_URL && !!auth.supabase && auth.session?.user.id === userId;
   const save = useMutation({
     scope: { id: `profile-photo:${userId}` },
     mutationFn: async (photo: string | null) => {
-      if (!cloud) {
-        await onSave(photo);
-        return photo;
-      }
-      const user = await saveProfileAvatar(auth.supabase!, userId, photo);
-      const url = getCustomProfileImageUrl(user) ?? null;
-      queryClient.setQueryData(["profile-photo", userId], user);
-      await onSave(url);
-      await queryClient.invalidateQueries({ queryKey: ["team-members"] });
-      return url;
+      await onSave(photo);
+      return photo;
     },
   });
-  const migrated = useRef(false);
-  // Publish legacy local uploads once, only after confirming no cloud override exists.
-  useEffect(() => {
-    if (
-      !migrated.current &&
-      cloud &&
-      profile.isSuccess &&
-      !profile.isFetching &&
-      profile.isFetchedAfterMount &&
-      profile.data &&
-      getCustomProfileImageUrl(profile.data) === undefined &&
-      localPhoto?.startsWith("data:image/")
-    ) {
-      migrated.current = true;
-      save.mutate(localPhoto);
-    }
-  }, [
-    cloud,
-    localPhoto,
-    profile.data,
-    profile.isSuccess,
-    profile.isFetching,
-    profile.isFetchedAfterMount,
-    save.mutate,
-  ]);
-  const custom = cloud ? getCustomProfileImageUrl(profile.data) : undefined;
   const photo =
     save.isPending || save.isError
       ? save.variables
-      : custom !== undefined
-        ? custom
-        : ((!cloud && save.isSuccess ? save.data : localPhoto) ??
-          (cloud ? getProviderProfileImageUrl(profile.data) : null));
+      : save.isSuccess
+        ? save.data
+        : localPhoto;
 
   return (
     <div className="flex flex-col gap-2">
@@ -141,7 +57,6 @@ export function ProfilePhoto({
         <AvatarUploadButton
           label={t`Change photo`}
           onUpload={(value) => {
-            migrated.current = true;
             save.mutate(value);
           }}
         >
@@ -156,7 +71,6 @@ export function ProfilePhoto({
             variant="outline"
             type="button"
             onClick={() => {
-              migrated.current = true;
               save.mutate(null);
             }}
           >
@@ -169,7 +83,7 @@ export function ProfilePhoto({
           <Trans>Saving...</Trans>
         </p>
       )}
-      {(save.isError || profile.isError) && (
+      {save.isError && (
         <div className="flex items-center gap-3">
           <p role="alert" className="text-destructive text-sm">
             <Trans>Couldn't save your profile. Try again.</Trans>
@@ -177,11 +91,7 @@ export function ProfilePhoto({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              save.isError
-                ? save.mutate(save.variables ?? null)
-                : void profile.refetch()
-            }
+            onClick={() => save.mutate(save.variables ?? null)}
           >
             <Trans>Retry</Trans>
           </Button>

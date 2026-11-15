@@ -6,7 +6,7 @@ import { useCallback, useEffect } from "react";
 import { getCurrentWebviewWindowLabel } from "@anlg/plugin-windows";
 import { toast } from "@anlg/ui/components/ui/toast";
 
-import { supabase } from "~/auth/client";
+import { cloudClient } from "~/auth/client";
 import { useIgnoredEvents } from "~/calendar/ignored-events";
 import { deleteCloudApiSnapshotBestEffort } from "~/cloud-api/client";
 import {
@@ -52,11 +52,11 @@ async function closeSessionNoteWindows(sessionId: string) {
 // the module-level client because this can run in windows (or the AppRoot
 // listener) mounted outside AuthProvider.
 async function revokeManagedShare(sessionId: string) {
-  if (!supabase) return;
-  const { data } = await supabase.auth.getSession();
+  if (!cloudClient) return;
+  const { data } = await cloudClient.auth.getSession();
   const session = data.session;
   if (!session || session.user.is_anonymous === true) return;
-  const context = { session, supabase };
+  const context = { session, cloudClient };
 
   // A failed lookup is not the same as "no share": without a warning a
   // shared link could stay live after delete with no user signal. Retry

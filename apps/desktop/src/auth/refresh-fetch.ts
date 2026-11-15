@@ -1,11 +1,11 @@
 export function createRefreshFetch({
   fetch,
-  supabaseUrl,
+  cloudUrl,
   beginRefresh,
   finishRefresh,
 }: {
   fetch: typeof globalThis.fetch;
-  supabaseUrl: string;
+  cloudUrl: string;
   beginRefresh: (refreshToken: string) => Promise<{
     leaseId: number | null;
     retryAfterMs: number;
@@ -16,10 +16,7 @@ export function createRefreshFetch({
     retryAfterMs: number | null,
   ) => Promise<unknown>;
 }): typeof globalThis.fetch {
-  const tokenUrl = new URL(
-    "auth/v1/token",
-    `${supabaseUrl.replace(/\/+$/, "")}/`,
-  );
+  const tokenUrl = new URL("auth/v1/token", `${cloudUrl.replace(/\/+$/, "")}/`);
   const inFlight = new Map<string, Promise<Response>>();
   const rejectedRefresh = new Map<string, Response>();
 

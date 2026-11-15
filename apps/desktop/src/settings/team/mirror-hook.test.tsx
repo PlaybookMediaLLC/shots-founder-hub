@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("~/auth", () => ({
   useAuth: () => ({
-    supabase: {},
+    cloudClient: {},
     session: mocks.session,
     refreshSession: mocks.refreshSession,
   }),

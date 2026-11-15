@@ -23,5 +23,6 @@ const COMMANDS: &[&str] = &[
 ];
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=VITE_R2_DOWNLOAD_BASE_URL");
     tauri_plugin::Builder::new(COMMANDS).build();
 }

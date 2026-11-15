@@ -51,12 +51,7 @@ pub async fn list_repos(
     Json(req): Json<GitHubListReposRequest>,
 ) -> Result<Json<CollectionPage>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GitHub::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GitHub::ID, &req.connection_id)
         .await?;
 
     let client = GitHubIssuesClient::new(http);
@@ -114,12 +109,7 @@ pub async fn list_tickets(
     Json(req): Json<GitHubListTicketsRequest>,
 ) -> Result<Json<TicketPage>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GitHub::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GitHub::ID, &req.connection_id)
         .await?;
 
     let client = GitHubIssuesClient::new(http);

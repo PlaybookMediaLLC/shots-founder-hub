@@ -29,7 +29,7 @@ const mocks = {
     const text = JSON.parse(row.words_json).map((word) => word.text).join(" ");
     return JSON.stringify([{ id: row.id, text, speaker: "", startMs: 0, wordCount: 0 }]);
   }`,
-  "@/auth/client": `export const supabase = { auth: { async getSession() {
+  "@/auth/client": `export const cloudClient = { auth: { async getSession() {
     return { data: { session: { user: { id: "account-a" }, access_token: "token" } } };
   } } };`,
   "@/db": `const f = globalThis.shotsVoiceRunnerFixture;

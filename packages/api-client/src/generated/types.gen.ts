@@ -197,15 +197,6 @@ export type CalendarNotification = {
     type: NotificationType;
 };
 
-export type CanStartTrialReason = 'eligible' | 'not_eligible' | 'error';
-
-export type CanStartTrialResponse = {
-    canStartTrial: boolean;
-    offer?: null | TrialOffer;
-    reason?: null | CanStartTrialReason;
-    trialDays?: number | null;
-};
-
 export type CanceledAttachmentBackupDeletion = {
     attachmentRef: string;
     deleteRequestId: string;
@@ -406,12 +397,6 @@ export type DateTimeTimeZone = {
 };
 
 export type DayOfWeek = 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'unknown';
-
-export type DeleteAccountResponse = {
-    deleted: boolean;
-    error?: string | null;
-    pending: boolean;
-};
 
 export type DeleteAttachmentBackupRequest = {
     attachmentRef: string;
@@ -986,8 +971,6 @@ export type ImportTextFile = {
 };
 
 export type Importance = 'low' | 'normal' | 'high' | 'unknown';
-
-export type Interval = 'monthly' | 'yearly';
 
 export type ItemBody = {
     content?: string | null;
@@ -1787,15 +1770,6 @@ export type StableSharedNoteSnapshot = {
     snapshot: SharedNoteSnapshot;
 };
 
-export type StartTrialReason = 'started' | 'not_eligible';
-
-export type StartTrialResponse = {
-    offer?: null | TrialOffer;
-    reason?: null | StartTrialReason;
-    started: boolean;
-    trialDays?: number | null;
-};
-
 export type StreamAlternatives = {
     confidence: number;
     languages?: Array<string>;
@@ -2011,8 +1985,6 @@ export type TranscriptionSegment = {
 };
 
 export type Transparency = 'opaque' | 'transparent' | 'unknown';
-
-export type TrialOffer = 'referral' | 'work_email' | 'personal_email';
 
 export type UpdateSettingsBody = {
     enabled: boolean;
@@ -4104,93 +4076,6 @@ export type SttStatusResponses = {
 };
 
 export type SttStatusResponse2 = SttStatusResponses[keyof SttStatusResponses];
-
-export type CanStartTrialData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/subscription/can-start-trial';
-};
-
-export type CanStartTrialErrors = {
-    /**
-     * Unauthorized
-     */
-    401: unknown;
-    /**
-     * Internal server error
-     */
-    500: unknown;
-};
-
-export type CanStartTrialResponses = {
-    /**
-     * Check successful
-     */
-    200: CanStartTrialResponse;
-};
-
-export type CanStartTrialResponse2 = CanStartTrialResponses[keyof CanStartTrialResponses];
-
-export type DeleteAccountData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/subscription/delete-account';
-};
-
-export type DeleteAccountErrors = {
-    /**
-     * Unauthorized
-     */
-    401: unknown;
-    /**
-     * Internal server error
-     */
-    500: unknown;
-    /**
-     * Durable account cleanup unavailable
-     */
-    503: unknown;
-};
-
-export type DeleteAccountResponses = {
-    /**
-     * Account deletion durably accepted
-     */
-    202: DeleteAccountResponse;
-};
-
-export type DeleteAccountResponse2 = DeleteAccountResponses[keyof DeleteAccountResponses];
-
-export type StartTrialData = {
-    body?: never;
-    path?: never;
-    query?: {
-        interval?: Interval;
-    };
-    url: '/subscription/start-trial';
-};
-
-export type StartTrialErrors = {
-    /**
-     * Unauthorized
-     */
-    401: unknown;
-    /**
-     * Internal server error
-     */
-    500: unknown;
-};
-
-export type StartTrialResponses = {
-    /**
-     * Trial started successfully
-     */
-    200: StartTrialResponse;
-};
-
-export type StartTrialResponse2 = StartTrialResponses[keyof StartTrialResponses];
 
 export type DeleteAttachmentBackupData = {
     body: DeleteAttachmentBackupRequest;

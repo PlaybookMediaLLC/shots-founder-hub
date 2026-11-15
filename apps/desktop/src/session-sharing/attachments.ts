@@ -1,7 +1,6 @@
-import type { Session } from "@supabase/supabase-js";
-
+import type { Session } from "@anlg/cloud-client";
+import { uploadSharedAttachment } from "@anlg/cloud-client/storage";
 import type { JSONContent } from "@anlg/editor/note";
-import { uploadSharedAttachment } from "@anlg/supabase/storage";
 
 import { attachmentTransferNative } from "~/attachment-sync/native";
 import { liveQueryClient, useLiveQuery } from "~/db";
@@ -119,7 +118,7 @@ export async function loadSessionShareAttachments(sessionId: string) {
 
 export async function prepareSessionShareAttachment(input: {
   apiBaseUrl: string;
-  supabaseUrl: string;
+  cloudUrl: string;
   session: Session;
   shareId: string;
   attachment: SessionShareAttachment;
@@ -241,7 +240,7 @@ export async function prepareSessionShareAttachment(input: {
         contentType,
         sha256: prepared.sha256,
         sizeBytes: prepared.sizeBytes,
-        supabaseUrl: input.supabaseUrl,
+        cloudUrl: input.cloudUrl,
         readRange,
       });
       let cancellation: Promise<void> | undefined;

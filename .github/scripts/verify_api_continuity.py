@@ -4,6 +4,7 @@
 import argparse
 import asyncio
 import json
+import os
 import re
 import time
 import tempfile
@@ -16,6 +17,7 @@ from websockets.asyncio.client import connect
 
 import deploy_api_drain as deploy
 import prepare_api_service_secrets as secrets_config
+from verify_cloudsync_e2ee import validate_https_origin
 
 
 def event(stage, **details):
@@ -27,27 +29,24 @@ async def authenticate(client, secrets_file, email):
         entry["key"]: entry["value"]
         for entry in json.loads(Path(secrets_file).read_text())
     }
-    base = secrets["SUPABASE_URL"].rstrip("/")
-    key = secrets["SUPABASE_SERVICE_ROLE_KEY"]
-    response = await client.post(
-        base + "/auth/v1/admin/generate_link",
-        headers={"apikey": key, "Authorization": "Bearer " + key},
-        json={"type": "magiclink", "email": email},
+    token = os.environ.get("SHOTS_QA_ACCESS_TOKEN", "")
+    if not token:
+        raise RuntimeError("SHOTS_QA_ACCESS_TOKEN must be an active Shots QA session")
+    origin = secrets["SHOTS_AUTH_URL"].rstrip("/")
+    validate_https_origin(origin, "SHOTS_AUTH_URL")
+    response = await client.get(
+        origin + "/api/founder-hub/session",
+        headers={
+            "Authorization": "Bearer " + token,
+            "x-shots-founder-hub-service": secrets["SHOTS_AUTH_SERVICE_TOKEN"],
+        },
+        follow_redirects=False,
     )
     if response.status_code != 200:
-        raise RuntimeError(f"QA link generation HTTP {response.status_code}")
-    link = response.json()
-    token_hash = link.get("hashed_token") or link.get("properties", {}).get(
-        "hashed_token"
-    )
-    response = await client.post(
-        base + "/auth/v1/verify",
-        headers={"apikey": secrets["SUPABASE_ANON_KEY"]},
-        json={"type": "magiclink", "token_hash": token_hash},
-    )
-    if response.status_code != 200:
-        raise RuntimeError(f"QA sign-in HTTP {response.status_code}")
-    return response.json()["access_token"]
+        raise RuntimeError(f"Shots QA session HTTP {response.status_code}")
+    if response.json().get("user", {}).get("email") != email:
+        raise RuntimeError("Shots QA session does not match the requested account")
+    return token
 
 
 class Traffic:
@@ -177,7 +176,7 @@ class Traffic:
 
             async def business_reads():
                 while not self.closing:
-                    for path in ["/nango/connections", "/subscription/can-start-trial"]:
+                    for path in ["/nango/connections", "/cloud/auth/v1/claims"]:
                         try:
                             response = await client.get(
                                 self.base + path, headers=self.headers
@@ -356,7 +355,7 @@ async def run(args):
     if args.app not in {"anarlog-inference", "anarlog-gateway", "anarlog-ai"}:
         raise RuntimeError("Continuity QA supports the AI runtime and Anarlog gateway")
     if not re.fullmatch(
-        r"registry\.fly\.io/(anarlog-gateway|anarlog-ai|anarlog-inference|anarlog-core|anarlog-sync|anarlog-billing-api|hyprnote-ai)@sha256:[0-9a-f]{64}",
+        r"registry\.fly\.io/(anarlog-gateway|anarlog-ai|anarlog-inference|anarlog-core|anarlog-sync|hyprnote-ai)@sha256:[0-9a-f]{64}",
         args.image,
     ):
         raise RuntimeError("Continuity QA requires an immutable API image")

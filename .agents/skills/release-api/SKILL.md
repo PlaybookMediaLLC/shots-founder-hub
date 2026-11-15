@@ -11,8 +11,8 @@ Review every release, including client-only changes. Inherit scope and session
 authorization from [Release a New Version](../release-new-version/SKILL.md).
 
 1. Compare changed product behavior and each service's live source SHA against
-   `apps/api`, `apps/stripe`, `crates/api-cloud`, affected auth/sync/proxy crates,
-   `supabase/`, `apps/api/openapi.gen.json`, and `packages/api-client/src/generated`.
+   `apps/api`, `crates/api-cloud`, affected auth/sync/proxy crates, `crates/cloud-db`,
+   `postgres/`, `apps/api/openapi.gen.json`, and `packages/api-client/src/generated`.
    Check auth, scopes, payloads/errors, pagination, data compatibility, and existing
    client behavior. Record required changes, concrete reuse reasons, or explicit
    deferrals before freezing the candidate.
@@ -27,11 +27,10 @@ authorization from [Release a New Version](../release-new-version/SKILL.md).
    ```
 
    Use owning generators and verify repeated generation is stable. Test hosted
-   migrations/RLS in an isolated local Supabase stack, never against production.
+   migrations/RLS in an isolated local Postgres as `db_ci.yaml` does, never against production.
 3. Inspect current service choices and live configuration before deploying.
-   Core, AI, Sync, Gateway, and billing have independent deployment decisions.
-   The billing API and `apps/stripe` ship together via `api_cd.yaml` with
-   `service=billing`. Do not treat a shared API version/tag as proof every service
+   Core, AI, Sync, and Gateway have independent deployment decisions. Shots owns
+   billing, so this repo deploys no billing service. Do not treat a shared API version/tag as proof every service
    runs that source. Hosted Postgres has its own `db_cd.yaml` deployment history.
 4. Deploy required backward-compatible hosted changes before dependent desktop
    or mobile clients. Select the exact approved environment, service and merged

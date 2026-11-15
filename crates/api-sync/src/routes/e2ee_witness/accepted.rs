@@ -68,16 +68,10 @@ pub(super) async fn read(
     Query(query): Query<ReadE2eeWitnessQuery>,
 ) -> Result<([(header::HeaderName, HeaderValue); 1], Json<AcceptedPage>)> {
     require_witness_workspace(&auth, &workspace_id, "artifact:read")?;
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/read_e2ee_replica_page",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(WITNESS_TIMEOUT)
-        .json(&ReadRpcRequest {
+    let rows: Vec<PageRow> = witness_rpc(
+        &state,
+        "read_e2ee_replica_page",
+        &ReadRpcRequest {
             p_actor_user_id: &auth.claims.sub,
             p_workspace_id: &workspace_id,
             p_after_sequence: i64::try_from(query.after_sequence)
@@ -89,16 +83,10 @@ pub(super) async fn read(
                 .map_err(|_| SyncError::BadRequest("Invalid cursor".into()))?,
             p_limit: WITNESS_PAGE_SIZE,
             p_max_bytes: MAX_WITNESS_PAGE_BYTES,
-        })
-        .send()
-        .await
-        .map_err(|e| witness_transport_error(e, "accepted read"))?;
-    let (status, bytes) = read_bounded_response(response, "accepted read").await?;
-    if !status.is_success() {
-        return Err(map_postgrest_error(status, &bytes));
-    }
-    let rows: Vec<PageRow> =
-        serde_json::from_slice(&bytes).map_err(|_| SyncError::E2eeWitnessServiceUnavailable)?;
+        },
+    )
+    .await
+    .map_err(map_database_error)?;
     let boundary = rows
         .first()
         .ok_or(SyncError::E2eeWitnessServiceUnavailable)?
@@ -166,32 +154,22 @@ pub(super) async fn accept(
         .collect::<Vec<_>>();
     let base = i64::try_from(request.base_sequence)
         .map_err(|_| SyncError::BadRequest("Invalid base".into()))?;
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/accept_e2ee_replica_batch",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(WITNESS_TIMEOUT)
-        .json(&serde_json::json!({
+    let mut rows: Vec<AcceptRow> = witness_rpc(
+        &state,
+        "accept_e2ee_replica_batch",
+        &serde_json::json!({
             "p_actor_user_id": auth.claims.sub, "p_workspace_id": workspace_id,
             "p_mutation_id": request.mutation_id, "p_base_sequence": base,
             "p_initialize": request.initialize, "p_events": events,
-        }))
-        .send()
-        .await
-        .map_err(|e| witness_transport_error(e, "acceptance"))?;
-    let (status, bytes) = read_bounded_response(response, "acceptance").await?;
-    if !status.is_success() {
-        if serde_json::from_slice::<PostgrestError>(&bytes).is_ok_and(|e| e.code == "40001") {
-            return Err(SyncError::E2eeReplicaBaseChanged);
+        }),
+    )
+    .await
+    .map_err(|error| match &error {
+        anlg_cloud_db::Error::Database { code, .. } if code == "40001" => {
+            SyncError::E2eeReplicaBaseChanged
         }
-        return Err(map_postgrest_error(status, &bytes));
-    }
-    let mut rows: Vec<AcceptRow> =
-        serde_json::from_slice(&bytes).map_err(|_| SyncError::E2eeWitnessServiceUnavailable)?;
+        _ => map_database_error(error),
+    })?;
     if rows.len() != 1 {
         return Err(SyncError::E2eeWitnessServiceUnavailable);
     }

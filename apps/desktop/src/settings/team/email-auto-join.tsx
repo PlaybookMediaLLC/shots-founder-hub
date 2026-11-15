@@ -18,7 +18,7 @@ export function WorkspaceEmailAutoJoin({
   const auth = useAuth();
   const queryClient = useQueryClient();
   const queryKey = ["team-email-auto-join", workspaceId, auth.session?.user.id];
-  // Cache by identity, without putting Supabase credentials in query keys.
+  // Cache by identity, without putting cloud credentials in query keys.
   // eslint-disable-next-line @tanstack/query/exhaustive-deps
   const setting = useQuery({
     queryKey,

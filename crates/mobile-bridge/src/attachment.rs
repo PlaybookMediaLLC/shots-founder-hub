@@ -144,7 +144,7 @@ pub(crate) struct RestoreAttachmentRequest {
     object_id: String,
     object_key: String,
     signed_url: String,
-    supabase_url: String,
+    r2_base_url: String,
     ciphertext_sha256: String,
     ciphertext_size_bytes: u64,
     format_version: u8,
@@ -521,7 +521,7 @@ pub(crate) async fn restore_attachment(
 
     let url = validate_signed_download_url(
         &request.signed_url,
-        &request.supabase_url,
+        &request.r2_base_url,
         DownloadObject::Private(&request.object_key),
     )
     .map_err(attachment_error)?;
@@ -1269,7 +1269,7 @@ mod tests {
             "signedUrl": format!(
                 "http://{address}/storage/v1/object/sign/attachment-backups/{object_key}?token=test"
             ),
-            "supabaseUrl": format!("http://{address}"),
+            "r2BaseUrl": format!("http://{address}"),
             "ciphertextSha256": blob.ciphertext.sha256_hex(),
             "ciphertextSizeBytes": blob.ciphertext.size_bytes,
             "formatVersion": blob.version,
@@ -1417,7 +1417,7 @@ mod tests {
             "signedUrl": format!(
                 "http://{address}/storage/v1/object/sign/attachment-backups/{object_key}?token=test"
             ),
-            "supabaseUrl": format!("http://{address}"),
+            "r2BaseUrl": format!("http://{address}"),
             "ciphertextSha256": blob.ciphertext.sha256_hex(),
             "ciphertextSizeBytes": blob.ciphertext.size_bytes,
             "formatVersion": blob.version,

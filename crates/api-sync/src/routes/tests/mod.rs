@@ -1,243 +1,388 @@
-use anlg_api_auth::{AuthContext, Claims};
-use axum::{
-    Extension,
-    body::{Body, to_bytes},
-    http::{HeaderValue, Method, Request, StatusCode, header as http_header},
-};
-use serde_json::{Value, json};
-use tower::ServiceExt;
-use wiremock::{
-    Mock, MockServer, ResponseTemplate,
-    matchers::{body_partial_json, header, method, path, query_param},
-};
+mod credentials;
+mod sharing;
 
-use super::*;
-use crate::{
-    SyncConfig, SyncError,
-    config::{CloudsyncProtocolMode, CloudsyncTransport},
-};
+use crate::test_support::*;
+use axum::http::StatusCode;
+use sea_orm::{ConnectionTrait, DbBackend, Statement};
+use serde_json::json;
+use sha2::{Digest, Sha256};
+use uuid::Uuid;
 
-const TEST_KEY_ID: &str = "abcdefghijklmnopqrstuv";
-
-fn test_router(server: &MockServer, api_key: &str, entitlements: &[&str]) -> Router {
-    test_router_with_protocol(
-        server,
-        api_key,
-        entitlements,
-        CloudsyncProtocolMode::E2eeEnforced,
+#[tokio::test]
+async fn multipart_capabilities_resume_rotate_and_cannot_resurrect_deleted_files() {
+    let state = state();
+    let auth = account(&state.config.database).await;
+    let owner = auth.claims.sub.clone();
+    let app = router(state.clone(), auth);
+    let key = format!("{owner}/{}.wav", Uuid::new_v4());
+    let body = json!({"bucket":"audio-files","key":key,"size":4,"contentType":"audio/wav"});
+    let grant = ok(&app, "POST", "/files/begin", body.clone(), None).await;
+    let old_token = grant["token"].as_str().unwrap();
+    let new_grant = ok(&app, "POST", "/files/begin", body, None).await;
+    let token = new_grant["token"].as_str().unwrap();
+    assert_ne!(old_token, token);
+    assert_eq!(
+        request(
+            &app,
+            "POST",
+            "/files/uploads/status",
+            json!({}),
+            Some(old_token)
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        request(
+            &app,
+            "POST",
+            "/files/uploads/part",
+            json!({"number":2}),
+            Some(token)
+        )
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+    let part = ok(
+        &app,
+        "POST",
+        "/files/uploads/part",
+        json!({"number":1}),
+        Some(token),
+    )
+    .await;
+    let result = reqwest::Client::new()
+        .put(part["url"].as_str().unwrap())
+        .body("wave")
+        .send()
+        .await
+        .unwrap();
+    assert!(result.status().is_success());
+    let status = ok(
+        &app,
+        "POST",
+        "/files/uploads/status",
+        json!({}),
+        Some(token),
+    )
+    .await;
+    assert_eq!(status["parts"][0]["size"], 4);
+    ok(
+        &app,
+        "POST",
+        "/files/uploads/complete",
+        json!({}),
+        Some(token),
+    )
+    .await;
+    ok(
+        &app,
+        "POST",
+        "/files/uploads/complete",
+        json!({}),
+        Some(token),
+    )
+    .await;
+    let signed = ok(
+        &app,
+        "POST",
+        "/files/download",
+        json!({"bucket":"audio-files","key":key}),
         None,
     )
-}
-
-fn test_router_with_protocol(
-    server: &MockServer,
-    api_key: &str,
-    entitlements: &[&str],
-    protocol_mode: CloudsyncProtocolMode,
-    legacy_database_id: Option<&str>,
-) -> Router {
-    test_router_with_transport(
-        server,
-        api_key,
-        entitlements,
-        protocol_mode,
-        legacy_database_id,
-        CloudsyncTransport::SqliteSync,
-    )
-}
-
-fn test_router_with_transport(
-    server: &MockServer,
-    api_key: &str,
-    entitlements: &[&str],
-    protocol_mode: CloudsyncProtocolMode,
-    legacy_database_id: Option<&str>,
-    desktop_transport: CloudsyncTransport,
-) -> Router {
-    let state = AppState::new(SyncConfig {
-        issuer: Some(crate::config::CloudsyncIssuer {
-            project_url: server.uri(),
-            token_issuer_api_key: api_key.to_string(),
-            database_id: "database-id".to_string(),
-        }),
-        legacy_database_id: legacy_database_id.map(ToString::to_string),
-        protocol_mode,
-        desktop_transport,
-        token_ttl_seconds: 60,
-        supabase_url: server.uri(),
-        supabase_anon_key: "anon-key".to_string(),
-        supabase_service_role_key: "service-role-key".to_string(),
-    });
-    cloudsync_router(state.clone())
-        .merge(replica_router(state.replica.clone()))
-        .merge(device_router(state.replica.clone()))
-        .merge(session_share_router(state.clone()))
-        .merge(web_edit_router(state))
-        .layer(Extension(AuthContext {
-            shots: None,
-            token: "supabase-token".to_string(),
-            claims: Claims {
-                sub: "user-123".to_string(),
-                email: None,
-                entitlements: entitlements
-                    .iter()
-                    .map(|entitlement| (*entitlement).to_string())
-                    .collect(),
-                subscription_status: None,
-                trial_end: None,
-                has_payment_method: None,
-                referral_extension: None,
-            },
-        }))
-}
-
-fn personal_workspace(id: &str) -> Value {
-    json!({
-        "id": id,
-        "user_id": "user-123",
-        "role": "owner",
-        "created_at": "2026-07-16T08:01:00Z",
-        "updated_at": "2026-07-16T08:02:00Z",
-        "workspace": {
-            "id": id,
-            "owner_user_id": id,
-            "kind": "personal",
-            "name": "Personal",
-            "created_at": "2026-07-16T08:00:00Z",
-            "updated_at": "2026-07-16T08:00:00Z"
-        }
-    })
-}
-
-fn team_membership() -> Value {
-    json!({
-        "id": "membership-team",
-        "user_id": "user-123",
-        "role": "member",
-        "created_at": "2026-07-16T09:01:00Z",
-        "updated_at": "2026-07-16T10:01:00Z",
-        "workspace": {
-            "id": "workspace-team",
-            "owner_user_id": "user-456",
-            "kind": "shared",
-            "name": "Acme",
-            "created_at": "2026-07-16T09:00:00Z",
-            "updated_at": "2026-07-16T10:00:00Z"
-        }
-    })
-}
-
-fn team_key_grant() -> Value {
-    json!({
-        "workspace_id": "workspace-team",
-        "key_id": "AAAAAAAAAAAAAAAAAAAAAA",
-        "ephemeral_public_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        "nonce": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
-        "ciphertext": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
-        "is_active": true
-    })
-}
-
-fn put_json(path: &str, payload: Value) -> Request<Body> {
-    Request::builder()
-        .method(Method::PUT)
-        .uri(path)
-        .header(http_header::CONTENT_TYPE, "application/json")
-        .body(Body::from(serde_json::to_vec(&payload).unwrap()))
-        .unwrap()
-}
-
-async fn mock_workspace_projection(server: &MockServer, body: Value) {
-    Mock::given(method("GET"))
-        .and(path("/rest/v1/workspace_memberships"))
-        .and(header("apikey", "anon-key"))
-        .and(header("authorization", "Bearer supabase-token"))
-        .and(query_param("select", WORKSPACE_PROJECTION_SELECT))
-        .and(query_param("user_id", "eq.user-123"))
-        .and(query_param("deleted_at", "is.null"))
-        .and(query_param("workspace.deleted_at", "is.null"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(body))
-        .mount(server)
-        .await;
-}
-
-async fn mock_e2ee_key_claim(server: &MockServer, returned_key_id: &str) {
-    Mock::given(method("POST"))
-        .and(path("/rest/v1/rpc/claim_personal_workspace_e2ee_key"))
-        .and(header("apikey", "service-role-key"))
-        .and(header("authorization", "Bearer service-role-key"))
-        .and(body_partial_json(json!({
-            "p_actor_user_id": "user-123",
-            "p_key_id": TEST_KEY_ID,
-        })))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(json!([{ "key_id": returned_key_id }])),
+    .await;
+    assert_eq!(
+        reqwest::get(signed["signedUrl"].as_str().unwrap())
+            .await
+            .unwrap()
+            .bytes()
+            .await
+            .unwrap(),
+        "wave"
+    );
+    let other = router(state.clone(), account(&state.config.database).await);
+    assert_eq!(
+        request(
+            &other,
+            "POST",
+            "/files/remove",
+            json!({"bucket":"audio-files","key":key}),
+            None
         )
-        .mount(server)
-        .await;
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+    ok(
+        &app,
+        "POST",
+        "/files/remove",
+        json!({"bucket":"audio-files","key":key}),
+        None,
+    )
+    .await;
+    assert_eq!(
+        request(
+            &app,
+            "POST",
+            "/files/uploads/complete",
+            json!({}),
+            Some(token)
+        )
+        .await
+        .0,
+        StatusCode::GONE
+    );
+    assert!(
+        state
+            .storage
+            .object_metadata("audio-files", &key)
+            .await
+            .is_err()
+    );
 }
 
-async fn mock_workspace_key_grants(server: &MockServer, body: Value) {
-    Mock::given(method("POST"))
-        .and(path("/rest/v1/rpc/list_all_my_workspace_e2ee_grants"))
-        .and(header("apikey", "anon-key"))
-        .and(header("authorization", "Bearer supabase-token"))
-        .and(body_partial_json(json!({})))
-        .respond_with(ResponseTemplate::new(200).set_body_json(body))
-        .mount(server)
-        .await;
+#[tokio::test]
+async fn abort_expiry_and_account_deletion_revoke_upload_capabilities() {
+    let state = state();
+    let auth = account(&state.config.database).await;
+    let owner = auth.claims.sub.clone();
+    let app = router(state.clone(), auth);
+    for mode in ["abort", "expire", "delete"] {
+        let key = format!("{owner}/{mode}.wav");
+        let body = json!({"bucket":"audio-files","key":key,"size":4,"contentType":"audio/wav"});
+        let grant = ok(&app, "POST", "/files/begin", body, None).await;
+        let token = grant["token"].as_str().unwrap();
+        if mode == "abort" {
+            ok(&app, "POST", "/files/uploads/abort", json!({}), Some(token)).await;
+        } else {
+            let tx = state.config.database.connection().await.unwrap();
+            let sql = if mode == "expire" {
+                "UPDATE founder_hub_private.file_uploads SET expires_at=now()-interval '1 second' WHERE object_key=$1"
+            } else {
+                "INSERT INTO founder_hub_private.deleted_accounts(user_id) VALUES($1::uuid)"
+            };
+            let value = if mode == "expire" { &key } else { &owner };
+            tx.execute_raw(Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                sql,
+                [value.clone().into()],
+            ))
+            .await
+            .unwrap();
+        }
+        assert_eq!(
+            request(
+                &app,
+                "POST",
+                "/files/uploads/part",
+                json!({"number":1}),
+                Some(token)
+            )
+            .await
+            .0,
+            StatusCode::GONE
+        );
+        state
+            .storage
+            .delete_catalog_file(&state.config.database, "audio-files", &key)
+            .await
+            .unwrap();
+    }
 }
 
-fn token_request() -> Request<Body> {
-    Request::post("/token")
-        .header(E2EE_KEY_ID_HEADER, TEST_KEY_ID)
-        .body(Body::empty())
-        .unwrap()
+#[tokio::test]
+async fn backup_round_trip_checks_bytes_and_preserves_immutable_identity() {
+    let state = state();
+    let auth = account(&state.config.database).await;
+    let other_auth = account(&state.config.database).await;
+    let app = router(state.clone(), auth);
+    let other = router(state.clone(), other_auth);
+    let bytes = b"encrypted backup";
+    let digest = Sha256::digest(bytes)
+        .iter()
+        .map(|v| format!("{v:02x}"))
+        .collect::<String>();
+    let attachment = "A".repeat(43);
+    let version = "B".repeat(43);
+    let reservation = json!({"attachmentRef":attachment,"versionRef":version,"ciphertextSizeBytes":bytes.len(),"formatVersion":1});
+    let reserved = ok(
+        &app,
+        "POST",
+        "/attachment-backups/reserve",
+        reservation.clone(),
+        None,
+    )
+    .await;
+    let replay = ok(
+        &app,
+        "POST",
+        "/attachment-backups/reserve",
+        reservation,
+        None,
+    )
+    .await;
+    assert_eq!(replay["objectKey"], reserved["objectKey"]);
+    let key = reserved["objectKey"].as_str().unwrap();
+    let wrong = request(
+        &other,
+        "POST",
+        "/attachment-backups/upload-grant",
+        json!({"objectKey":key,"ciphertextSha256":digest}),
+        None,
+    )
+    .await;
+    assert!(!wrong.0.is_success());
+    let grant = ok(
+        &app,
+        "POST",
+        "/attachment-backups/upload-grant",
+        json!({"objectKey":key,"ciphertextSha256":digest}),
+        None,
+    )
+    .await;
+    let token = grant["uploadToken"].as_str().unwrap();
+    let part = ok(
+        &app,
+        "POST",
+        "/files/uploads/part",
+        json!({"number":1}),
+        Some(token),
+    )
+    .await;
+    assert!(
+        reqwest::Client::new()
+            .put(part["url"].as_str().unwrap())
+            .body(bytes.to_vec())
+            .send()
+            .await
+            .unwrap()
+            .status()
+            .is_success()
+    );
+    ok(
+        &app,
+        "POST",
+        "/files/uploads/complete",
+        json!({}),
+        Some(token),
+    )
+    .await;
+    ok(
+        &app,
+        "POST",
+        "/attachment-backups/finalize",
+        json!({"objectKey":key}),
+        None,
+    )
+    .await;
+    ok(
+        &app,
+        "PUT",
+        "/attachment-backups/head",
+        json!({"objectKey":key,"expectedCurrentObjectKey":null}),
+        None,
+    )
+    .await;
+    let download = ok(
+        &app,
+        "POST",
+        "/attachment-backups/download",
+        json!({"objectKey":key}),
+        None,
+    )
+    .await;
+    assert_eq!(download["ciphertextSha256"], digest);
+    assert_eq!(
+        &reqwest::get(download["signedUrl"].as_str().unwrap())
+            .await
+            .unwrap()
+            .bytes()
+            .await
+            .unwrap()[..],
+        bytes
+    );
+    let conflict = request(
+        &app,
+        "POST",
+        "/attachment-backups/upload-grant",
+        json!({"objectKey":key,"ciphertextSha256":"f".repeat(64)}),
+        None,
+    )
+    .await;
+    assert_eq!(conflict.0, StatusCode::CONFLICT);
+    let deleted = ok(&app,"POST","/attachment-backups/delete",json!({"objectKey":key,"attachmentRef":attachment,"versionRef":version,"deleteRequestId":Uuid::new_v4()}),None).await;
+    assert_eq!(deleted["objectKey"], key);
+    state
+        .storage
+        .delete_catalog_file(&state.config.database, "attachment-backups", key)
+        .await
+        .unwrap();
+    assert_eq!(
+        request(
+            &app,
+            "POST",
+            "/files/uploads/complete",
+            json!({}),
+            Some(token)
+        )
+        .await
+        .0,
+        StatusCode::GONE
+    );
 }
 
-fn replica_capable_token_request() -> Request<Body> {
-    Request::post("/token")
-        .header(E2EE_KEY_ID_HEADER, TEST_KEY_ID)
-        .header(CLOUDSYNC_TRANSPORTS_HEADER, "replica")
-        .body(Body::empty())
-        .unwrap()
+#[tokio::test]
+async fn invalid_uploads_and_unpaid_backups_fail_before_storage() {
+    let state = state();
+    let mut auth = account(&state.config.database).await;
+    let key = format!("{}/bad.wav", auth.claims.sub);
+    auth.claims.entitlements.clear();
+    let app = router(state, auth);
+    assert_eq!(request(&app,"POST","/attachment-backups/reserve",json!({"attachmentRef":"A".repeat(43),"versionRef":"B".repeat(43),"ciphertextSizeBytes":4,"formatVersion":1}),None).await.0,StatusCode::FORBIDDEN);
+    for (bucket, size) in [
+        ("unknown", 4),
+        ("audio-files", 0),
+        ("audio-files", u64::MAX),
+    ] {
+        assert_eq!(
+            request(
+                &app,
+                "POST",
+                "/files/begin",
+                json!({"bucket":bucket,"key":key,"size":size,"contentType":"audio/wav"}),
+                None
+            )
+            .await
+            .0,
+            StatusCode::BAD_REQUEST
+        );
+    }
+    assert_eq!(
+        request(
+            &app,
+            "POST",
+            "/files/uploads/status",
+            json!({}),
+            Some("bad")
+        )
+        .await
+        .0,
+        StatusCode::UNAUTHORIZED
+    );
 }
 
-async fn mock_sync_transport_override(server: &MockServer, transport: Option<&str>) {
-    let body = match transport {
-        Some(transport) => json!([{ "transport": transport }]),
-        None => json!([]),
-    };
-    Mock::given(method("GET"))
-        .and(path("/rest/v1/sync_transport_overrides"))
-        .and(header("apikey", "service-role-key"))
-        .and(header("authorization", "Bearer service-role-key"))
-        .and(query_param("user_id", "eq.user-123"))
-        .and(query_param("select", "transport"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(body))
-        .mount(server)
-        .await;
+#[test]
+fn witness_admission_is_bounded_and_releases_slots_after_cancellation() {
+    let writes = crate::state::WitnessWrites::default();
+    let permits = (0..4)
+        .map(|i| writes.try_acquire(&i.to_string()).unwrap())
+        .collect::<Vec<_>>();
+    assert!(writes.try_acquire("fifth").is_none());
+    assert!(writes.try_acquire("0").is_none());
+    drop(permits);
+    assert!(writes.try_acquire("new").is_some());
+    assert!(writes.try_acquire("0").is_none());
 }
-
-async fn mock_sqlitecloud_token(server: &MockServer, token: &str) {
-    Mock::given(method("POST"))
-        .and(path("/v2/tokens"))
-        .and(header("authorization", "Bearer issuer-key"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "data": { "token": token }
-        })))
-        .mount(server)
-        .await;
-}
-
-async fn response_json(response: axum::response::Response) -> Value {
-    let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    serde_json::from_slice(&bytes).unwrap()
-}
-
-mod credentials;
-mod enrollment;
-mod live_docs;
-mod meeting_presence;
-mod publication;
-mod web_edits;

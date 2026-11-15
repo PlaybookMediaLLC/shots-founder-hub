@@ -4,15 +4,15 @@ Expo (SDK 57) app for Anarlog. Expo has changed significantly — read the exact
 
 ## Commands
 
-- Dev: `pnpm -F @anlg/mobile ios` (or `android`; scripts load `.env.supabase` via dotenvx)
+- Dev: `pnpm -F @anlg/mobile ios` (or `android`; scripts load `.env.cloud` via dotenvx)
 - Typecheck: `pnpm -F @anlg/mobile typecheck`
 
 ## Architecture
 
-- Local-first client on the canonical SQLite schema. Signed-in users can use local notes and recording on any plan. The shared two-week Pro trial and paid Pro entitlement enable cloud sync and Anarlog-hosted models; users can also configure their own provider keys. `src/db/` uses the UniFFI `crates/mobile-bridge` transport to implement the `@anlg/db-runtime` `LiveQueryClient`/`TransactionClient` contracts, consumed through `@anlg/db-react`'s `useLiveQuery`.
+- Local-first client on the canonical SQLite schema. Signed-in users can use local notes and recording on any plan. The Shots workspace entitlement enables cloud sync and Anarlog-hosted models; users can also configure their own provider keys. `src/db/` uses the UniFFI `crates/mobile-bridge` transport to implement the `@anlg/db-runtime` `LiveQueryClient`/`TransactionClient` contracts, consumed through `@anlg/db-react`'s `useLiveQuery`.
 - `crates/db-app` owns the canonical schema and migrations on mobile and desktop. Keep every statement semantically identical to desktop (`apps/desktop/src/session/queries.ts` is the reference for session SQL).
 - `src/data/` mirrors desktop query semantics: canonical create-session transaction, note docs as ProseMirror JSON with `id == session_id`, `session-audio:<sessionId>` attachment rows.
-- `src/auth/` is supabase-js with AsyncStorage plus the desktop browser-handoff flow (`/auth?flow=desktop&scheme=anarlog`). Pro gating uses the same JWT-claims logic as `packages/supabase/src/billing.ts` (ported, since jose does not run on Hermes). No Supabase env → bypass mode (local dev, no gate).
+- `src/auth/` uses `@anlg/cloud-client` with AsyncStorage and the desktop browser-handoff flow (`/auth?flow=desktop&scheme=anarlog`). Shots owns sessions and workspace entitlements. Missing Shots configuration leaves local notes and recording available; cloud features require sign-in.
 - Recording/import write files under `<documents>/sessions/<sessionId>/audio.<ext>` and catalog them via `src/data/audio-catalog.ts`. `src/data/transcribe.ts` uses the Anarlog batch proxy, the selected BYOK provider, or, for the built-in "Apple (on device)" provider, `src/data/on-device-transcription.ts` over the iOS `modules/on-device-speech` module (never a network recognizer). Native BYOK transcription reuses `owhisper-client` adapters through `mobile-bridge`; Custom uses the OpenAI-compatible HTTP endpoint. Recording streams PCM to Anarlog Pro or supported BYOK live models through the same `owhisper-client` adapters as desktop. Live results write canonical `live_capture` transcripts and deltas; imported audio, batch models, and live failures use `batch_transcription` with the corresponding batch model. Both paths mark completed audio as transcribed. Live-only providers keep failed recordings available for retry with another provider.
 
 ## Rules

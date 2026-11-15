@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use anlg_supabase_auth::session::Session;
+use anlg_session_auth::session::Session;
 
 use crate::{Error, Result};
 

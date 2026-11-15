@@ -249,8 +249,8 @@ jobs:
           POSTHOG_API_KEY: phc_windows_ci
           VITE_POSTHOG_API_KEY: phc_windows_ci
           SENTRY_DSN: ${{ secrets.SENTRY_DSN_HYPRNOTE_2 }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SHOTS_URL: ${{ secrets.VITE_SHOTS_URL }}
+          VITE_R2_DOWNLOAD_BASE_URL: ${{ secrets.VITE_R2_DOWNLOAD_BASE_URL }}
           VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
@@ -481,8 +481,8 @@ jobs:
           POSTHOG_API_KEY: phc_linux_ci
           VITE_POSTHOG_API_KEY: phc_linux_ci
           SENTRY_DSN: ${{ secrets.SENTRY_DSN_HYPRNOTE_2 }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SHOTS_URL: ${{ secrets.VITE_SHOTS_URL }}
+          VITE_R2_DOWNLOAD_BASE_URL: ${{ secrets.VITE_R2_DOWNLOAD_BASE_URL }}
           VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.anarlog.so
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}

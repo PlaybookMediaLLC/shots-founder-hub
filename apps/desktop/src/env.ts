@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-import { getShotsCloudUrl } from "@anlg/supabase/shots";
+import { getShotsCloudUrl } from "@anlg/cloud-client/shots";
 
 export const env = createEnv({
   clientPrefix: "VITE_",
@@ -15,8 +15,8 @@ export const env = createEnv({
       .default("https://static.anarlog.so"),
     VITE_AI_API_URL: z.string().url().optional(),
     VITE_ENTERPRISE_API_URL: z.string().url().optional(),
-    VITE_SUPABASE_URL: z.string().min(1).optional(),
-    VITE_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+    VITE_CLOUD_URL: z.string().url().optional(),
+    VITE_R2_DOWNLOAD_BASE_URL: z.string().url().optional(),
     VITE_PRO_PRODUCT_ID: z.string().min(1).optional(),
     VITE_SENTRY_DSN: z.string().min(1).optional(),
     VITE_POSTHOG_API_KEY: z.string().min(1).optional(),
@@ -25,14 +25,9 @@ export const env = createEnv({
   },
   runtimeEnv: {
     ...import.meta.env,
-    ...(import.meta.env.VITE_SHOTS_URL
-      ? {
-          VITE_SUPABASE_URL: getShotsCloudUrl(
-            import.meta.env.VITE_API_URL || "http://localhost:3001",
-          ),
-          VITE_SUPABASE_ANON_KEY: "shots-founder-hub",
-        }
-      : {}),
+    VITE_CLOUD_URL: getShotsCloudUrl(
+      import.meta.env.VITE_API_URL || "http://localhost:3001",
+    ),
   },
   emptyStringAsUndefined: true,
 });

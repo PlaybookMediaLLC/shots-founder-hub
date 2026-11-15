@@ -19,10 +19,10 @@ use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::anarlog_routing::{AnarlogRouter, RoutingMode, should_use_anarlog_routing};
 use crate::config::SttProxyConfig;
+use crate::jobs::JobStore;
 use crate::provider_selector::{ProviderSelector, SelectedProvider};
 use crate::query_params::QueryParams;
 use crate::session_gate::SessionGate;
-use crate::supabase::SupabaseClient;
 
 pub(crate) use error::{RouteError, parse_async_provider};
 
@@ -43,29 +43,18 @@ pub(crate) struct AppState {
     batch_requests: Arc<Semaphore>,
 }
 
-impl FromRequestParts<AppState> for SupabaseClient {
+impl FromRequestParts<AppState> for JobStore {
     type Rejection = RouteError;
 
     async fn from_request_parts(
         _parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let url = state
+        state
             .config
-            .supabase
-            .url
-            .as_deref()
-            .ok_or(RouteError::MissingConfig("supabase_url not configured"))?;
-        let key =
-            state
-                .config
-                .supabase
-                .service_role_key
-                .as_deref()
-                .ok_or(RouteError::MissingConfig(
-                    "supabase_service_role_key not configured",
-                ))?;
-        Ok(Self::new(state.client.clone(), url, key))
+            .jobs
+            .clone()
+            .ok_or(RouteError::MissingConfig("job persistence not configured"))
     }
 }
 
@@ -225,13 +214,7 @@ mod tests {
         let mut env = Env::default();
         env.stt.deepgram_api_key = Some("deepgram-key".to_string());
 
-        let supabase = anlg_api_env::SupabaseEnv {
-            supabase_url: String::new(),
-            supabase_anon_key: String::new(),
-            supabase_service_role_key: String::new(),
-        };
-
-        make_state(SttProxyConfig::new(&env, &supabase), SessionGate::new())
+        make_state(SttProxyConfig::new(&env), SessionGate::new())
     }
 
     #[test]
@@ -252,14 +235,9 @@ mod tests {
 
         let mut env = Env::default();
         env.stt.deepgram_api_key = Some("deepgram-key".to_string());
-        let supabase = anlg_api_env::SupabaseEnv {
-            supabase_url: String::new(),
-            supabase_anon_key: String::new(),
-            supabase_service_role_key: String::new(),
-        };
         let gate = SessionGate::new();
         gate.begin_drain();
-        let app = listen_router_with_session_gate(SttProxyConfig::new(&env, &supabase), gate);
+        let app = listen_router_with_session_gate(SttProxyConfig::new(&env), gate);
 
         let response = app
             .oneshot(

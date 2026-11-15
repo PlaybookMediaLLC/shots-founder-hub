@@ -62,8 +62,7 @@ pub fn recap_openapi() -> utoipa::openapi::OpenApi {
 #[derive(Clone)]
 pub struct SharedNotesState {
     config: SharedNotesConfig,
-    client: reqwest::Client,
-    storage: anlg_supabase_storage::SupabaseStorage,
+    storage: anlg_r2_storage::Storage,
     email_delivery: Option<email_delivery::EmailDelivery>,
 }
 
@@ -74,11 +73,7 @@ impl SharedNotesState {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .expect("shared-note HTTP client must build");
-        let storage = anlg_supabase_storage::SupabaseStorage::new(
-            client.clone(),
-            &config.supabase_url,
-            &config.supabase_service_role_key,
-        );
+        let storage = config.storage.clone();
         let email_delivery = if let (Some(api_key), Some(from_email)) = (
             config.resend_api_key.clone(),
             config.resend_from_email.clone(),
@@ -102,7 +97,6 @@ impl SharedNotesState {
         };
         Self {
             config,
-            client,
             storage,
             email_delivery,
         }
@@ -115,9 +109,8 @@ impl SharedNotesState {
             .and_then(|value| value.parse::<IpAddr>().ok())
             .map(|address| address.to_string())
             .unwrap_or_else(|| "unknown".to_string());
-        let mut mac =
-            Hmac::<Sha256>::new_from_slice(self.config.supabase_service_role_key.as_bytes())
-                .expect("HMAC accepts service-role keys of any size");
+        let mut mac = Hmac::<Sha256>::new_from_slice(self.config.handoff_signing_key.as_bytes())
+            .expect("HMAC accepts the validated signing key");
         mac.update(HANDOFF_SOURCE_DOMAIN);
         mac.update(source.as_bytes());
         let bytes = mac.finalize().into_bytes();

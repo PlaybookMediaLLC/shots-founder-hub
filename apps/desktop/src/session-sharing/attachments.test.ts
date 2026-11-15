@@ -43,7 +43,7 @@ const attachment: SessionShareAttachment = {
 
 const prepareBaseOptions = {
   apiBaseUrl: "https://api.example.com",
-  supabaseUrl: "https://project.supabase.co",
+  cloudUrl: "https://project.example.test",
   session: {
     access_token: "token",
     user: { id: "11111111-1111-4111-8111-111111111111" },

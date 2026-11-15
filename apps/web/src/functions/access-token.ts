@@ -1,8 +1,8 @@
-import { getSupabaseBrowserClient } from "@/functions/supabase";
+import { getCloudBrowserClient } from "@/functions/cloud-client";
 
 export async function getAccessToken(): Promise<string> {
-  const supabase = getSupabaseBrowserClient();
-  const { data } = await supabase.auth.getSession();
+  const cloudClient = getCloudBrowserClient();
+  const { data } = await cloudClient.auth.getSession();
   const token = data?.session?.access_token;
   if (!token) {
     throw new Error("Not authenticated");

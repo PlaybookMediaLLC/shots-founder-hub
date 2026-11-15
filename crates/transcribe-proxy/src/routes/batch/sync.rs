@@ -452,7 +452,7 @@ mod tests {
     use anlg_language::ISO639;
 
     fn test_state(providers: &[Provider]) -> AppState {
-        use crate::config::{CallbackConfig, SttProxyConfig, SupabaseConfig};
+        use crate::config::{CallbackConfig, SttProxyConfig};
 
         super::super::super::make_state(
             SttProxyConfig {
@@ -465,10 +465,7 @@ mod tests {
                 analytics: None,
                 upstream_urls: Default::default(),
                 anarlog_routing: Some(Default::default()),
-                supabase: SupabaseConfig {
-                    url: None,
-                    service_role_key: None,
-                },
+                jobs: None,
                 callback: CallbackConfig {
                     api_base_url: None,
                     secret: None,
