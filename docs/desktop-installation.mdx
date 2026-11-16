@@ -37,7 +37,27 @@ On a Mac, open **Apple menu → About This Mac** if you do not know whether it u
 
 ### APT repository
 
-The Shots Founder Hub APT repository is not available yet. Install the downloaded DEB or the AppImage instead. APT updates start after the first Linux release.
+On Debian, Ubuntu, or a compatible distribution, add Shots Founder Hub's signed repository to get updates through APT:
+
+```bash
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://shots.playbookmedia.io/apt/shots-founder-hub-archive-keyring.asc \
+  | sudo tee /etc/apt/keyrings/shots-founder-hub.asc > /dev/null
+sudo chmod a+r /etc/apt/keyrings/shots-founder-hub.asc
+
+sudo tee /etc/apt/sources.list.d/shots-founder-hub.sources > /dev/null <<'EOF'
+Types: deb
+URIs: https://shots.playbookmedia.io/apt
+Suites: stable
+Components: main
+Signed-By: /etc/apt/keyrings/shots-founder-hub.asc
+EOF
+
+sudo apt update
+sudo apt install shots-founder-hub
+```
+
+APT verifies the repository metadata with the dedicated Shots Founder Hub archive key. New stable releases become available through the normal `apt upgrade` flow.
 
 ### Downloaded DEB
 
