@@ -299,6 +299,7 @@ mod tests {
         let state = AppState::new(
             CloudApiConfig::new(
                 anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap(),
+                "https://founder-hub-api.example.com/mcp",
                 "https://shots.example.com",
             )
             .unwrap(),
@@ -335,6 +336,7 @@ mod tests {
         let state = AppState::new(
             CloudApiConfig::new(
                 anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap(),
+                "https://founder-hub-api.example.com/mcp",
                 "https://shots.example.com",
             )
             .unwrap(),
@@ -351,7 +353,7 @@ mod tests {
                 .unwrap()[0]
                 .as_str()
                 .unwrap()
-                .contains("resource_metadata=\"https://api.anarlog.so/.well-known/oauth-protected-resource/mcp\"")
+                .contains("resource_metadata=\"https://founder-hub-api.example.com/.well-known/oauth-protected-resource/mcp\"")
         );
     }
 }

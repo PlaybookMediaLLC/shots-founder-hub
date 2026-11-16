@@ -13,16 +13,17 @@ pub struct CloudApiConfig {
 }
 
 impl CloudApiConfig {
-    pub fn new(database: anlg_cloud_db::Database, shots_origin: &str) -> Result<Self, String> {
+    /// `resource` is the public MCP URL (FOUNDER_HUB_MCP_URL); Shots is the
+    /// authorization server.
+    pub fn new(
+        database: anlg_cloud_db::Database,
+        resource: &str,
+        shots_origin: &str,
+    ) -> Result<Self, String> {
         Ok(Self {
             database,
-            oauth: OAuthResourceConfig::shots(crate::oauth::MCP_RESOURCE, shots_origin)?,
+            oauth: OAuthResourceConfig::shots(resource, shots_origin)?,
         })
-    }
-
-    pub fn with_shots_oauth(mut self, resource: &str, shots_origin: &str) -> Result<Self, String> {
-        self.oauth = OAuthResourceConfig::shots(resource, shots_origin)?;
-        Ok(self)
     }
 }
 
