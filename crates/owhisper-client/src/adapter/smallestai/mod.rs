@@ -176,8 +176,8 @@ mod tests {
                 vec![("foo", "bar")],
             ),
             (
-                "https://api.anarlog.so/stt?provider=smallestai",
-                "wss://api.anarlog.so/stt/listen",
+                "https://founder-hub-api.shots.playbookmedia.io/stt?provider=smallestai",
+                "wss://founder-hub-api.shots.playbookmedia.io/stt/listen",
                 vec![("provider", "smallestai")],
             ),
             (
