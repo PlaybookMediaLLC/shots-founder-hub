@@ -9,10 +9,8 @@ export const env = createEnv({
     VITE_APP_URL: z.string().min(1).default("http://localhost:3000"),
     VITE_API_URL: z.string().min(1).default("http://localhost:3001"),
     VITE_SHOTS_URL: z.string().url().optional(),
-    VITE_STATIC_ASSETS_URL: z
-      .string()
-      .url()
-      .default("https://static.anarlog.so"),
+    // Unset by default: the app uses the provider icons it ships with.
+    VITE_STATIC_ASSETS_URL: z.string().url().optional(),
     VITE_AI_API_URL: z.string().url().optional(),
     VITE_ENTERPRISE_API_URL: z.string().url().optional(),
     VITE_CLOUD_URL: z.string().url().optional(),

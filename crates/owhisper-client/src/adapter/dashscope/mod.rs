@@ -66,8 +66,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.anarlog.so?provider=dashscope",
-                "wss://api.anarlog.so/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=dashscope",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "dashscope")],
             ),
             (

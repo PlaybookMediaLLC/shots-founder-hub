@@ -70,11 +70,11 @@ pub(super) async fn send_shared_note_invitation_email(
     } else {
         &input.from_name
     };
-    let workspace_share_slug =
-        get_session_share_workspace_slug_as_user(&state, &auth, &share_id).await?;
-    let share_origin = workspace_share_origin(workspace_share_slug.as_deref())?;
+    // The lookup confirms that the caller can see the share. Invitation links
+    // always open on Shots; there are no per-workspace share hosts.
+    get_session_share_workspace_slug_as_user(&state, &auth, &share_id).await?;
     let invitation_url = format!(
-        "{share_origin}/share/invite/{invitation_id}/#token={}",
+        "{SHARE_ORIGIN}/share/invite/{invitation_id}/#token={}",
         input.invite_token
     );
     let email_delivery = state
@@ -286,32 +286,7 @@ struct SessionShareWorkspaceSlugRow {
     workspace_share_slug: Option<String>,
 }
 
-fn workspace_share_origin(slug: Option<&str>) -> Result<String> {
-    let Some(slug) = slug else {
-        return Ok("https://shots.playbookmedia.io".to_string());
-    };
-    let reserved = [
-        "admin", "api", "app", "assets", "auth", "cdn", "dev", "docs", "mail", "staging", "static",
-        "status", "support", "www",
-    ];
-    if !(3..=63).contains(&slug.len())
-        || !slug
-            .bytes()
-            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
-        || !slug
-            .as_bytes()
-            .first()
-            .is_some_and(u8::is_ascii_alphanumeric)
-        || !slug
-            .as_bytes()
-            .last()
-            .is_some_and(u8::is_ascii_alphanumeric)
-        || reserved.contains(&slug)
-    {
-        return Err(SyncError::InvitationEmailUnavailable);
-    }
-    Ok(format!("https://{slug}.anarlog.so"))
-}
+const SHARE_ORIGIN: &str = "https://shots.playbookmedia.io";
 
 async fn user_rpc<T: serde::de::DeserializeOwned>(
     state: &SharedNotesState,

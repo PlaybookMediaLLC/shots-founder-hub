@@ -88,8 +88,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.anarlog.so?provider=mistral",
-                "wss://api.anarlog.so/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=mistral",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "mistral")],
             ),
         ] {

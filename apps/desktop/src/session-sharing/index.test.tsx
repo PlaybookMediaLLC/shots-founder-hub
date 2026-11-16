@@ -82,8 +82,8 @@ vi.mock("~/auth/billing-context", () => ({
 
 vi.mock("~/env", () => ({
   env: {
-    VITE_API_URL: "https://api.anarlog.so",
-    VITE_APP_URL: "https://anarlog.so",
+    VITE_API_URL: "https://founder-hub-api.shots.playbookmedia.io",
+    VITE_APP_URL: "https://shots.playbookmedia.io",
   },
 }));
 
@@ -1273,7 +1273,7 @@ describe("SessionShareButton", () => {
     expect(mocks.rotateSessionShareLink).not.toHaveBeenCalled();
   });
 
-  it("copies sharing links from the workspace subdomain", async () => {
+  it("copies sharing links from the configured origin with a workspace slug", async () => {
     mocks.getSessionShareWorkspaceSlug.mockResolvedValue("fastrepl");
     renderShareButton();
     await openSharePopover();
@@ -1283,7 +1283,7 @@ describe("SessionShareButton", () => {
 
     await waitFor(() =>
       expect(mocks.clipboardWriteText).toHaveBeenCalledWith(
-        `https://fastrepl.anarlog.so/share/${SHARE_ID}/`,
+        `https://shots.playbookmedia.io/share/${SHARE_ID}/`,
       ),
     );
   });

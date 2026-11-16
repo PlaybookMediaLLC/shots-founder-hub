@@ -28,13 +28,13 @@ impl GgufLlmModel {
     pub fn model_url(&self) -> &str {
         match self {
             GgufLlmModel::Llama3p2_3bQ4 => {
-                "https://models.anarlog.so/v0/lmstudio-community/Llama-3.2-3B-Instruct-GGUF/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf"
+                "https://huggingface.co/lmstudio-community/Llama-3.2-3B-Instruct-GGUF/resolve/c91307b5cf18c8106b1f8a6218c26ae4dbfee472/Llama-3.2-3B-Instruct-Q4_K_M.gguf"
             }
             GgufLlmModel::AnarlogLLM => {
-                "https://models.anarlog.so/v0/yujonglee/hypr-llm-sm/model_q4_k_m.gguf"
+                "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/models-v0/hypr-llm-sm-model_q4_k_m.gguf"
             }
             GgufLlmModel::Gemma3_4bQ4 => {
-                "https://models.anarlog.so/v0/unsloth/gemma-3-4b-it-GGUF/gemma-3-4b-it-Q4_K_M.gguf"
+                "https://huggingface.co/unsloth/gemma-3-4b-it-GGUF/resolve/5a3566e716d80f709ed7b79817eaf7733d2a1fce/gemma-3-4b-it-Q4_K_M.gguf"
             }
         }
     }

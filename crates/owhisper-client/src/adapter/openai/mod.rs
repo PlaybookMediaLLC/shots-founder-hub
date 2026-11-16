@@ -164,8 +164,8 @@ mod tests {
                 vec![("intent", "transcription")],
             ),
             (
-                "https://api.anarlog.so?provider=openai",
-                "wss://api.anarlog.so/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=openai",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "openai")],
             ),
             (

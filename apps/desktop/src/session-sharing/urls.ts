@@ -159,12 +159,6 @@ function appUrl(
     ) {
       throw invalidUrl();
     }
-    if (
-      workspaceShareSlug &&
-      (base.hostname === "anarlog.so" || base.hostname === "www.anarlog.so")
-    ) {
-      base.hostname = `${workspaceShareSlug}.anarlog.so`;
-    }
     return new URL(path, base.origin);
   } catch {
     throw invalidUrl();

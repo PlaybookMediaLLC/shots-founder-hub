@@ -118,8 +118,8 @@ mod tests {
             ),
             ("", "wss://streaming.assemblyai.com/v3/ws", vec![]),
             (
-                "https://api.anarlog.so?provider=assemblyai",
-                "wss://api.anarlog.so/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=assemblyai",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "assemblyai")],
             ),
             (
