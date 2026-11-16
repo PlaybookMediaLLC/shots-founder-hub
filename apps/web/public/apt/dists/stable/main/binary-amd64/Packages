@@ -1,0 +1,17 @@
+Package: shots-founder-hub
+Version: 1.5.0
+Architecture: amd64
+Installed-Size: 1101569
+Maintainer: you
+Priority: optional
+Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libpipewire-0.3-0, libpulse0, libasound2, libssl3, libstdc++6, ca-certificates, desktop-file-utils, xdg-utils, libayatana-appindicator3-1, libwebkit2gtk-4.1-0, libgtk-3-0
+Provides: char
+Conflicts: char
+Replaces: char
+Description: Shots Founder Hub Desktop App
+ (none)
+Filename: pool/desktop_v1.5.0/amd64/shots-founder-hub.deb
+Size: 319486198
+MD5sum: 0b1e70a0c74862d4517964d105ac85c7
+SHA1: cc17cfe219b9e85cda77581c4dacb06de02e37d1
+SHA256: 7aa611dfabb9ebe1bc7df577c994c90039c639d257931feb7fb95076867176b7

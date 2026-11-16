@@ -1,0 +1,43 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: Shots Founder Hub
+Label: Shots Founder Hub
+Suite: stable
+Codename: stable
+Version: 1.5.0
+Date: Mon, 16 Nov 2026 01:36:04 GMT
+Architectures: amd64 arm64
+Components: main
+Description: Shots Founder Hub stable desktop releases
+MD5Sum:
+ e1cd1976de1c79c391df86b2d83f0423 666 main/binary-amd64/Packages
+ 60ade5385e76aa8d8fbdc84a7a3ddd3c 448 main/binary-amd64/Packages.gz
+ 663598b4319436409285a7566fe4222f 666 main/binary-arm64/Packages
+ 1a4010a3b994c80580098875f451cb76 448 main/binary-arm64/Packages.gz
+SHA1:
+ b15fd4a038fc44bda375482831e5fb48f7605734 666 main/binary-amd64/Packages
+ b8e9cabf27ffe845ff90778afa42abfc85845175 448 main/binary-amd64/Packages.gz
+ b7ddcc1bb5b077be619a38921a9d4c5610e88aa6 666 main/binary-arm64/Packages
+ f7c92258d6a78147108e4c0432f9c036db2491dd 448 main/binary-arm64/Packages.gz
+SHA256:
+ 000ce02f15c5d1b0f6b47514f7c28063df67278a24455593356ac124eb903111 666 main/binary-amd64/Packages
+ 8c343acd9239464bdd32852b7cd518d30693cc1f8129a463f93cbae98eba2deb 448 main/binary-amd64/Packages.gz
+ 5d4f041d6c4533676c1fef5f824d61a2335b40eed5e2e290caf604e1beb1bfec 666 main/binary-arm64/Packages
+ 7b7976a8ee5b488070fa7eff14f05c8d4868a8febedf5a319d20a0ae6eb60245 448 main/binary-arm64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEm/6/ef85ucgOG6YV+OWRf93MGkgFAmr6Xi8ACgkQ+OWRf93M
+GkhGmxAAhqKhnW+fWfCzYNkNDG7aCzq+bMRHgyKqq+4gU3yfOjvnBjE4DeaAG7LA
+uS3fSG+eLInMZfWZZBPlJp7aykGxBJqbYumf/vhTuMlgHA4htbzbZkPg8ztV4WA+
+9+C5gD5dMEn2iiB1O2jOfmIqRDOOgN3rOiJei13I/U59oBYF4fqHXv5GV4oZ8I94
+7EtqZztkYKqFHabNUZ5Sbw2OzIBMDel+V3NWpknBviMHLzXD7iZH4r7eQXONovy2
+uuN1NODGVXPurgHTT368VMpf1b1VRFtLxHe9iE2lHJoxxxhe0FnE93q+aZXbNoKn
+vrjcV+Z0L4LTU4IoCEyqGwU/znF7/BPBVLj3LOdIuAcBjXXfw77Mff9qIoZYxOci
+gU1Pswq/ULR04SlYnc8Uzxu+gEdKjASlCJPRHCj5itg7o1YxkVb8kd4RSDecUm6e
+VBhk1b6sSjEr8LJirFBI9QxryJMvcCD7La6tkf2MStqXn7pGc0X6nsiMYUlX01sc
+hN1SfEpNoG2voJZv0Ch/bG8e25jjRO6Rrl3kWs3mg8PyFPZ8uClC1jVad+Mg1P84
+d8QEYHFqimVCTeHI9nN8OJgE64cQSfHC5LCLZ234lWBeOPl/MY6UdcajzPoHiYLA
+6uwA0hMtWTL4fZw2hlUm7LU8NIwYNMcnEkpxAai+kQL6Bp7Rias=
+=L9D1
+-----END PGP SIGNATURE-----
