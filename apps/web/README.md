@@ -7,11 +7,12 @@ This app is not deployed. Users reach Founder Hub through Shots
 Founder Hub management pages. `web_ci.yaml` runs the typecheck, tests, and the
 figure check; it does not deploy.
 
-The files in `public/apt` are the upstream Anarlog APT metadata, signed with the
-upstream key. No host serves them, and this fork has no Linux release yet. Before
-the first Linux release, replace the archive key with our own signing key, set
-`APT_REPOSITORY_GPG_PRIVATE_KEY` and `APT_REPOSITORY_GPG_FINGERPRINT`, and make
-Shots serve `/apt`.
+`public/apt` holds the signed APT metadata for the Linux desktop app.
+`desktop_linux_release.yaml` builds the packages, publishes the GitHub release,
+and pushes new metadata here. Shots redirects `https://shots.playbookmedia.io/apt`
+to these files on `main` and to the release assets. The signing keys are in the
+`desktop-release` GitHub environment, with a backup in Infisical
+(Desktop App Backend, `prod`, `/desktop-release`).
 
 `vercel-build-config.ts` stays because `vite.config.ts` and `src/lib/image-cdn.ts`
 use its routes and image sizes.
