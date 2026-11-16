@@ -1,0 +1,508 @@
+# Builds the desktop app and publishes it as a GitHub release, with the updater
+# manifest (latest.json) and signed APT metadata. It needs no CrabNebula.
+# - Linux: .deb and AppImage for x64 and arm64; APT metadata on main.
+# - Windows: NSIS installer for x64. It has no Authenticode signature, so
+#   SmartScreen warns on first launch.
+# - macOS: signed and notarized DMG and updater archive for Apple silicon and
+#   Intel. It runs only when the Apple secrets are in the desktop-release
+#   environment (APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID,
+#   APPLE_PASSWORD, APPLE_TEAM_ID); otherwise the release skips macOS.
+# Shots serves the APT repository at https://shots.playbookmedia.io/apt from
+# apps/web/public/apt on main. The signing keys live in the desktop-release
+# environment (main only), with backups in Infisical (/desktop-release) and
+# Azure Key Vault (fh-desktop-release-kv).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, for example 1.5.1"
+        required: true
+        type: string
+      windows:
+        description: "Build Windows"
+        type: boolean
+        default: true
+      macos:
+        description: "Build macOS (needs the Apple secrets)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+env:
+  VERSION: ${{ inputs.version }}
+  TAG: desktop_v${{ inputs.version }}
+  TAURI_CONF_PATH: ./src-tauri/tauri.conf.stable.json
+  APP_BINARY: shots-founder-hub
+  DEB_PACKAGE: shots-founder-hub
+  NODE_OPTIONS: "--max-old-space-size=4096"
+  VITE_APP_URL: https://shots.playbookmedia.io
+  VITE_SHOTS_URL: https://shots.playbookmedia.io
+  VITE_API_URL: https://founder-hub-api.shots.playbookmedia.io
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: desktop-release
+    outputs:
+      macos: ${{ steps.plan.outputs.macos }}
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Use a version such as 1.5.1"
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+            echo "::error::Run this workflow from main"
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::Release $TAG already exists"
+            exit 1
+          fi
+      - id: plan
+        env:
+          WANT_MACOS: ${{ inputs.macos }}
+          HAS_APPLE: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' }}
+        run: |
+          if [[ "$WANT_MACOS" == true && "$HAS_APPLE" == true ]]; then
+            echo "macos=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "macos=false" >> "$GITHUB_OUTPUT"
+            if [[ "$WANT_MACOS" == true ]]; then
+              echo "::notice::macOS skipped: add the Apple secrets to the desktop-release environment"
+            fi
+          fi
+
+  build-linux:
+    needs: check
+    environment: desktop-release
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            rust_platform: linux-x86_64
+            arch: x86_64
+            debian_arch: amd64
+            file_arch: x86-64
+            docker_arch: amd64
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            rust_platform: linux-aarch64
+            arch: aarch64
+            debian_arch: arm64
+            file_arch: ARM aarch64
+            docker_arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+      - run: ./scripts/version.sh "./apps/desktop/src-tauri/tauri.conf.json" "$VERSION"
+      - uses: ./.github/actions/install_desktop_deps
+        with:
+          target: linux
+      - uses: ./.github/actions/rust_install
+        with:
+          platform: ${{ matrix.rust_platform }}
+      - uses: ./.github/actions/pnpm_install
+      - run: pnpm -F ui build
+      - run: |
+          TAURI_ENV_TARGET_TRIPLE=${{ matrix.target }} cargo xtask prepare-binaries
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "binaries/char-chrome-native-host"
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/sfh"
+        env:
+          APP_VERSION: ${{ inputs.version }}
+      - run: |
+          pnpm -F desktop tauri build --ci --bundles appimage,deb \
+            --target "${{ matrix.target }}" --config "$TAURI_CONF_PATH" --verbose
+        env:
+          CARGO_PROFILE_RELEASE_DEBUG: line-tables-only
+          APP_VERSION: ${{ inputs.version }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_APP_VERSION: ${{ inputs.version }}
+      - run: node scripts/repack-linux-appimage.mjs "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage"
+        env:
+          ARCH: ${{ matrix.arch }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Check and rename the bundles
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          bundle="apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
+          appimages=("$bundle"/appimage/*.AppImage)
+          debs=("$bundle"/deb/*.deb)
+          if [[ ${#appimages[@]} -ne 1 || ${#debs[@]} -ne 1 ]]; then
+            echo "::error::Expected one AppImage and one .deb for ${{ matrix.target }}"
+            exit 1
+          fi
+          appimage=${appimages[0]}
+          deb=${debs[0]}
+          [[ "$(dpkg-deb --field "$deb" Package)" == "$DEB_PACKAGE" ]]
+          [[ "$(dpkg-deb --field "$deb" Architecture)" == "${{ matrix.debian_arch }}" ]]
+          [[ "$(dpkg-deb --field "$deb" Version)" == "$VERSION" ]]
+          file "$appimage" | grep -Fq "${{ matrix.file_arch }}"
+          for artifact in "$appimage" "$deb"; do
+            cargo run --locked -p updater-core --bin verify-updater-signature -- \
+              "$artifact" "$artifact.sig" apps/desktop/src-tauri/tauri.conf.json
+          done
+          cli_package="$RUNNER_TEMP/cli-package"
+          dpkg-deb --extract "$deb" "$cli_package"
+          python3 scripts/verify-packaged-cli.py "$cli_package" "$VERSION"
+
+          out="$RUNNER_TEMP/release"
+          mkdir -p "$out"
+          name="shots-founder-hub-linux-${{ matrix.arch }}"
+          cp "$appimage" "$out/$name.AppImage"
+          cp "$appimage.sig" "$out/$name.AppImage.sig"
+          cp "$deb" "$out/$name.deb"
+          cp "$deb.sig" "$out/$name.deb.sig"
+      - name: Install, upgrade, and start the package in Ubuntu 24.04
+        run: |
+          docker run --rm \
+            --platform linux/${{ matrix.docker_arch }} \
+            --volume "$PWD:/workspace:ro" \
+            --volume "$RUNNER_TEMP/release:/release:ro" \
+            --env DEB_PATH="/release/shots-founder-hub-linux-${{ matrix.arch }}.deb" \
+            --env BINARY_PATH="/usr/bin/$APP_BINARY" \
+            --env DEB_PACKAGE \
+            --env ANARLOG_DISABLE_SENTRY=1 \
+            --env RUST_BACKTRACE=1 \
+            ubuntu:24.04 \
+            bash -euxo pipefail -c '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              bash /workspace/scripts/verify-deb-upgrade.sh "$DEB_PATH" "$BINARY_PATH" "$DEB_PACKAGE"
+              apt-get install -y dbus-x11 xvfb
+              set +e
+              timeout --signal=TERM 20s xvfb-run -a dbus-run-session -- "$BINARY_PATH" >/tmp/app.log 2>&1
+              status=$?
+              set -e
+              cat /tmp/app.log
+              if [[ $status -ne 124 ]]; then
+                echo "The app exited before the smoke timeout with status $status"
+                exit 1
+              fi
+            '
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+          retention-days: 7
+
+  build-windows:
+    needs: check
+    if: ${{ inputs.windows }}
+    environment: desktop-release
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+      - run: ./scripts/version.sh "./apps/desktop/src-tauri/tauri.conf.json" "$VERSION"
+      - uses: ./.github/actions/rust_install
+        with:
+          platform: windows
+      - uses: ./.github/actions/pnpm_install
+      - run: pnpm -F ui build
+      - run: |
+          cargo build --locked --release -p anarlog-cli --target x86_64-pc-windows-msvc
+          cp target/x86_64-pc-windows-msvc/release/sfh.exe \
+            apps/desktop/src-tauri/resources/cli/sfh-x86_64-pc-windows-msvc.exe
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" resources/cli/sfh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+      - run: |
+          pnpm -F desktop tauri build --ci --bundles nsis --no-sign \
+            --target x86_64-pc-windows-msvc --config "$TAURI_CONF_PATH" --verbose
+        env:
+          CARGO_PROFILE_RELEASE_DEBUG: line-tables-only
+          APP_VERSION: ${{ inputs.version }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_APP_VERSION: ${{ inputs.version }}
+      - name: Sign the updater artifact
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          installers=(apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe)
+          if [[ ${#installers[@]} -ne 1 ]]; then
+            echo "::error::Expected one NSIS installer"
+            exit 1
+          fi
+          [[ "$(basename "${installers[0]}")" == *"$VERSION"* ]]
+          rm -f "${installers[0]}.sig"
+          pnpm -F desktop tauri signer sign "$(cygpath -w "$PWD/${installers[0]}")"
+          cargo run --locked -p updater-core --bin verify-updater-signature -- \
+            "${installers[0]}" "${installers[0]}.sig" apps/desktop/src-tauri/tauri.conf.json
+          out="$RUNNER_TEMP/release"
+          mkdir -p "$out"
+          cp "${installers[0]}" "$out/shots-founder-hub-windows-x86_64-setup.exe"
+          cp "${installers[0]}.sig" "$out/shots-founder-hub-windows-x86_64-setup.exe.sig"
+      - name: Install silently and check the packaged CLI
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP "release/shots-founder-hub-windows-x86_64-setup.exe"
+          $installRoot = Join-Path $env:RUNNER_TEMP "app-install"
+          $installation = Start-Process -FilePath $installer -ArgumentList @("/S", "/D=$installRoot") -PassThru
+          if (-not $installation.WaitForExit(180000)) {
+            $installation.Kill()
+            throw "Windows installation timed out"
+          }
+          if ($installation.ExitCode -ne 0) {
+            throw "Windows installation failed: $($installation.ExitCode)"
+          }
+          python scripts/verify-packaged-cli.py $installRoot $env:VERSION
+          if ($LASTEXITCODE -ne 0) {
+            throw "Packaged Windows CLI verification failed"
+          }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-x86_64
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+          retention-days: 7
+
+  build-macos:
+    needs: check
+    if: ${{ needs.check.outputs.macos == 'true' }}
+    environment: desktop-release
+    runs-on: macos-26
+    timeout-minutes: 120
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            arch: aarch64
+          - target: x86_64-apple-darwin
+            arch: x86_64
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          lfs: true
+          submodules: recursive
+          persist-credentials: false
+      - uses: ./.github/actions/macos_tcc
+      - run: ./scripts/version.sh "./apps/desktop/src-tauri/tauri.conf.json" "$VERSION"
+      - uses: ./.github/actions/install_desktop_deps
+        with:
+          target: macos
+      - uses: ./.github/actions/rust_install
+        with:
+          platform: macos
+      - run: echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/pnpm_install
+      - run: pnpm -F ui build
+      - run: |
+          TAURI_ENV_TARGET_TRIPLE=${{ matrix.target }} cargo xtask prepare-binaries
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "binaries/char-chrome-native-host"
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "binaries/check-permissions"
+          ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/sfh"
+        env:
+          APP_VERSION: ${{ inputs.version }}
+      - uses: ./.github/actions/apple_cert
+        id: apple-cert
+        with:
+          apple-certificate: ${{ secrets.APPLE_CERTIFICATE }}
+          apple-certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+      - run: |
+          dylib="../../crates/cloudsync/vendor/cloudsync/macos/${{ matrix.arch }}/cloudsync.dylib"
+          codesign --force --sign "${{ steps.apple-cert.outputs.cert-id }}" --timestamp --options runtime "$dylib"
+          codesign --verify --strict --verbose=2 "$dylib"
+        working-directory: ./apps/desktop
+      - run: |
+          args=(--target "${{ matrix.target }}" --config "$TAURI_CONF_PATH" --verbose)
+          if [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            args+=(--config ./src-tauri/tauri.conf.macos-intel.json)
+          fi
+          pnpm -F desktop tauri build "${args[@]}"
+        env:
+          CI: false
+          CARGO_PROFILE_RELEASE_DEBUG: line-tables-only
+          APP_VERSION: ${{ inputs.version }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ steps.apple-cert.outputs.cert-id }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_APP_VERSION: ${{ inputs.version }}
+      - name: Check the app and the updater archive
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          bundle="apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
+          apps=("$bundle"/macos/*.app)
+          archives=("$bundle"/macos/*.app.tar.gz)
+          dmgs=("$bundle"/dmg/*.dmg)
+          if [[ ${#apps[@]} -ne 1 || ${#archives[@]} -ne 1 || ${#dmgs[@]} -ne 1 ]]; then
+            echo "::error::Expected one app, updater archive, and DMG for ${{ matrix.target }}"
+            exit 1
+          fi
+          app_version=$(plutil -extract CFBundleShortVersionString raw -o - "${apps[0]}/Contents/Info.plist")
+          [[ "$app_version" == "$VERSION" ]]
+          cargo run --locked -p updater-core --bin verify-updater-signature -- \
+            "${archives[0]}" "${archives[0]}.sig" apps/desktop/src-tauri/tauri.conf.json
+          python3 scripts/verify-packaged-cli.py "${apps[0]}" "$VERSION"
+          echo "DMG_PATH=${dmgs[0]}" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=${archives[0]}" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/macos_notarize_dmg
+        with:
+          dmg-path: ${{ env.DMG_PATH }}
+          signing-identity: ${{ steps.apple-cert.outputs.cert-id }}
+          apple-id: ${{ secrets.APPLE_ID }}
+          apple-password: ${{ secrets.APPLE_PASSWORD }}
+          apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
+      - run: |
+          out="$RUNNER_TEMP/release"
+          mkdir -p "$out"
+          name="shots-founder-hub-macos-${{ matrix.arch }}"
+          cp "$DMG_PATH" "$out/$name.dmg"
+          cp "$ARCHIVE_PATH" "$out/$name.app.tar.gz"
+          cp "$ARCHIVE_PATH.sig" "$out/$name.app.tar.gz.sig"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: [check, build-linux, build-windows, build-macos]
+    # Skipped platforms are fine; a failed build stops the release.
+    if: >-
+      ${{ !cancelled() && needs.build-linux.result == 'success' &&
+      contains(fromJSON('["success", "skipped"]'), needs.build-windows.result) &&
+      contains(fromJSON('["success", "skipped"]'), needs.build-macos.result) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: "*-*"
+          path: release
+          merge-multiple: true
+      - name: Write the updater manifest and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: release
+        run: |
+          set -euo pipefail
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          platforms='{}'
+          add() {
+            [[ -f "$2" ]] || return 0
+            platforms=$(jq --arg key "$1" --arg url "$base/$2" --rawfile sig "$2.sig" \
+              '. + {($key): {signature: ($sig | rtrimstr("\n")), url: $url}}' <<< "$platforms")
+          }
+          for arch in x86_64 aarch64; do
+            add "linux-$arch" "shots-founder-hub-linux-$arch.AppImage"
+            add "linux-$arch-appimage" "shots-founder-hub-linux-$arch.AppImage"
+            add "linux-$arch-deb" "shots-founder-hub-linux-$arch.deb"
+            add "darwin-$arch" "shots-founder-hub-macos-$arch.app.tar.gz"
+            add "darwin-$arch-app" "shots-founder-hub-macos-$arch.app.tar.gz"
+          done
+          add windows-x86_64 shots-founder-hub-windows-x86_64-setup.exe
+          add windows-x86_64-nsis shots-founder-hub-windows-x86_64-setup.exe
+          jq -n --arg version "$VERSION" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson platforms "$platforms" \
+            '{version: $version, notes: "Shots Founder Hub \($version).", pub_date: $date, platforms: $platforms}' \
+            > latest.json
+          jq -r '.platforms | keys | join(", ")' latest.json
+          sha256sum shots-founder-hub-* > SHA256SUMS
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Shots Founder Hub $VERSION" \
+            --notes "Shots Founder Hub $VERSION. Linux: install with APT from https://shots.playbookmedia.io/apt, or download the .deb or AppImage. Windows: the installer has no Authenticode signature yet, so SmartScreen asks you to confirm. macOS builds are included only when they are signed and notarized." \
+            shots-founder-hub-* latest.json SHA256SUMS
+
+  apt:
+    needs: release
+    runs-on: ubuntu-latest
+    environment: desktop-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Sign the APT metadata and push it to main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APT_REPOSITORY_GPG_FINGERPRINT: ${{ vars.APT_REPOSITORY_GPG_FINGERPRINT }}
+          APT_REPOSITORY_GPG_PRIVATE_KEY: ${{ secrets.APT_REPOSITORY_GPG_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          packages="$RUNNER_TEMP/apt-packages"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "shots-founder-hub-linux-*.deb" --dir "$packages"
+          published_at=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json publishedAt --jq .publishedAt)
+
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          mkdir -m 700 "$GNUPGHOME"
+          printf '%s' "$APT_REPOSITORY_GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --batch --list-secret-keys "$APT_REPOSITORY_GPG_FINGERPRINT" > /dev/null
+          published=$(gpg --batch --with-colons --show-keys apps/web/public/apt/shots-founder-hub-archive-keyring.asc \
+            | awk -F: '$1 == "fpr" { print $10; exit }')
+          if [[ "$published" != "$APT_REPOSITORY_GPG_FINGERPRINT" ]]; then
+            echo "::error::The published APT key $published does not match $APT_REPOSITORY_GPG_FINGERPRINT"
+            exit 1
+          fi
+
+          node scripts/update-apt-repository.mjs --version "$VERSION" \
+            --amd64 "$packages/shots-founder-hub-linux-x86_64.deb" \
+            --arm64 "$packages/shots-founder-hub-linux-aarch64.deb" \
+            --date "$published_at"
+          dist="apps/web/public/apt/dists/stable"
+          gpg --batch --yes --armor --local-user "$APT_REPOSITORY_GPG_FINGERPRINT" \
+            --output "$dist/InRelease" --clearsign "$dist/Release"
+          gpg --batch --yes --armor --detach-sign --local-user "$APT_REPOSITORY_GPG_FINGERPRINT" \
+            --output "$dist/Release.gpg" "$dist/Release"
+          gpg --batch --verify "$dist/InRelease"
+          gpg --batch --verify "$dist/Release.gpg" "$dist/Release"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/public/apt
+          git commit -m "chore(packaging): publish APT metadata for $VERSION"
+          remote="https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+          for _ in 1 2 3; do
+            git pull --rebase "$remote" main && git push "$remote" HEAD:main && exit 0
+            sleep 5
+          done
+          echo "::error::Could not push the APT metadata to main"
+          exit 1

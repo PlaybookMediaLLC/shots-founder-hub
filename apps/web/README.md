@@ -8,11 +8,12 @@ Founder Hub management pages. `web_ci.yaml` runs the typecheck, tests, and the
 figure check; it does not deploy.
 
 `public/apt` holds the signed APT metadata for the Linux desktop app.
-`desktop_linux_release.yaml` builds the packages, publishes the GitHub release,
+`desktop_release.yaml` builds the packages, publishes the GitHub release,
 and pushes new metadata here. Shots redirects `https://shots.playbookmedia.io/apt`
 to these files on `main` and to the release assets. The signing keys are in the
-`desktop-release` GitHub environment, with a backup in Infisical
-(Desktop App Backend, `prod`, `/desktop-release`).
+`desktop-release` GitHub environment, with backups in Infisical
+(Desktop App Backend, `prod`, `/desktop-release`) and Azure Key Vault
+`fh-desktop-release-kv`.
 
 `vercel-build-config.ts` stays because `vite.config.ts` and `src/lib/image-cdn.ts`
 use its routes and image sizes.
