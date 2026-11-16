@@ -5,39 +5,39 @@ Origin: Shots Founder Hub
 Label: Shots Founder Hub
 Suite: stable
 Codename: stable
-Version: 1.5.0
-Date: Mon, 16 Nov 2026 01:36:04 GMT
+Version: 1.5.1
+Date: Mon, 16 Nov 2026 06:05:55 GMT
 Architectures: amd64 arm64
 Components: main
 Description: Shots Founder Hub stable desktop releases
 MD5Sum:
- e1cd1976de1c79c391df86b2d83f0423 666 main/binary-amd64/Packages
- 60ade5385e76aa8d8fbdc84a7a3ddd3c 448 main/binary-amd64/Packages.gz
- 663598b4319436409285a7566fe4222f 666 main/binary-arm64/Packages
- 1a4010a3b994c80580098875f451cb76 448 main/binary-arm64/Packages.gz
+ 2830f741d7cb010601f1b0bbaf113944 666 main/binary-amd64/Packages
+ 045e6502eac1e13cde38e0ab3b909805 448 main/binary-amd64/Packages.gz
+ 10489a5e73c816b0170f5f3e9699bee9 666 main/binary-arm64/Packages
+ 2ab6a36b2f7cc4dab1e0c02b9287c0a5 449 main/binary-arm64/Packages.gz
 SHA1:
- b15fd4a038fc44bda375482831e5fb48f7605734 666 main/binary-amd64/Packages
- b8e9cabf27ffe845ff90778afa42abfc85845175 448 main/binary-amd64/Packages.gz
- b7ddcc1bb5b077be619a38921a9d4c5610e88aa6 666 main/binary-arm64/Packages
- f7c92258d6a78147108e4c0432f9c036db2491dd 448 main/binary-arm64/Packages.gz
+ b66a6d7fef36edb1910ebdfb3a6aa461dcf03153 666 main/binary-amd64/Packages
+ b3df333f5ef9ac589c216034707addfa63b9e8e9 448 main/binary-amd64/Packages.gz
+ 2168629a598d260d912c5322165844cd31f7d4ab 666 main/binary-arm64/Packages
+ 96a5821fc51f49843e7ae8a2c93a134f2933e3b3 449 main/binary-arm64/Packages.gz
 SHA256:
- 000ce02f15c5d1b0f6b47514f7c28063df67278a24455593356ac124eb903111 666 main/binary-amd64/Packages
- 8c343acd9239464bdd32852b7cd518d30693cc1f8129a463f93cbae98eba2deb 448 main/binary-amd64/Packages.gz
- 5d4f041d6c4533676c1fef5f824d61a2335b40eed5e2e290caf604e1beb1bfec 666 main/binary-arm64/Packages
- 7b7976a8ee5b488070fa7eff14f05c8d4868a8febedf5a319d20a0ae6eb60245 448 main/binary-arm64/Packages.gz
+ e079baec3d077415146688f5500be135c02df4c62c02285ff05b4eec32f66b20 666 main/binary-amd64/Packages
+ cb1ad8279f3d45f835860675587d3c352e8ac453e5e85690337d68a0d9d23401 448 main/binary-amd64/Packages.gz
+ 94412e8a1dafa6ad76a6fc7440bec5842d2ae29086acaff4099e1e2f354ed4a5 666 main/binary-arm64/Packages
+ f5cc10d51e215f9daf2aa98483663d6b26f2af99994cc9ab0f1c1772c1a2d0d6 449 main/binary-arm64/Packages.gz
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEm/6/ef85ucgOG6YV+OWRf93MGkgFAmr6Xi8ACgkQ+OWRf93M
-GkhGmxAAhqKhnW+fWfCzYNkNDG7aCzq+bMRHgyKqq+4gU3yfOjvnBjE4DeaAG7LA
-uS3fSG+eLInMZfWZZBPlJp7aykGxBJqbYumf/vhTuMlgHA4htbzbZkPg8ztV4WA+
-9+C5gD5dMEn2iiB1O2jOfmIqRDOOgN3rOiJei13I/U59oBYF4fqHXv5GV4oZ8I94
-7EtqZztkYKqFHabNUZ5Sbw2OzIBMDel+V3NWpknBviMHLzXD7iZH4r7eQXONovy2
-uuN1NODGVXPurgHTT368VMpf1b1VRFtLxHe9iE2lHJoxxxhe0FnE93q+aZXbNoKn
-vrjcV+Z0L4LTU4IoCEyqGwU/znF7/BPBVLj3LOdIuAcBjXXfw77Mff9qIoZYxOci
-gU1Pswq/ULR04SlYnc8Uzxu+gEdKjASlCJPRHCj5itg7o1YxkVb8kd4RSDecUm6e
-VBhk1b6sSjEr8LJirFBI9QxryJMvcCD7La6tkf2MStqXn7pGc0X6nsiMYUlX01sc
-hN1SfEpNoG2voJZv0Ch/bG8e25jjRO6Rrl3kWs3mg8PyFPZ8uClC1jVad+Mg1P84
-d8QEYHFqimVCTeHI9nN8OJgE64cQSfHC5LCLZ234lWBeOPl/MY6UdcajzPoHiYLA
-6uwA0hMtWTL4fZw2hlUm7LU8NIwYNMcnEkpxAai+kQL6Bp7Rias=
-=L9D1
+iQIzBAEBCgAdFiEEm/6/ef85ucgOG6YV+OWRf93MGkgFAmr6nWYACgkQ+OWRf93M
+GkhhVxAAsSgud/HPSvkGU+tr3l1fYl113CyQA9eLC9fbBRmUdu+IjO435R9qpkVd
+DGDPs5GCqMGMmWSun4+ti1Pgg+0pw30TVEDSk3bTjxrLv25rWQ1IFrbVN0tUIkP7
+V6LhW7C6/vDN11ftlvZZGFqqIYNwdq6GliImD3hcLCmPpvT37BW/v6eaKBKWw3nk
+nZbltnZAPtRmsN5BzlAZ4bnfT9an20V16B6BYOyp1rIkNFMGVnkYhTo95hIfeB/Y
+UoSsfcInIA6ifX3X2UFLj0WvPislblc+R68CukUZPSZrH5IohXNF1Heb/XTP4E14
+Pepwn2nVbIsKOlO3TnY9O3xHBb3h1aliAGeMVxyEvV899CNxeEGU2Ia1sEqDgFy1
+mP/SMJ74LTZyVb1vUSsvQu73cXUVafgUiBlVCxC8VNwSn3QrnbP+ksKBNTuwE1uQ
+s91tNT/h1dRh3PglsuXY24IFg4L8VV5aWe6prdR3TJlG8RxyugC+BQh7hfLKBpYl
+o5UGmwWAmUB47ZjCjjOA2I1RMZsRDXIyolgvK8Qr7gZbpAmHDDN+euWv5rnCDjkU
+8bK2+E7qDHivN18jkbGrYTIJLhfLvPsemyTOU9oKRlt3c1upZzmbeoE/I4SjI4ez
+wydgM2AHnNqf60BAbHj5hLOGnMeaQn4mpT9hgvSbSqlmzl3Y7NY=
+=SuG6
 -----END PGP SIGNATURE-----
