@@ -677,8 +677,15 @@ mod tests {
         let shots = ShotsAuth::new(&server.uri(), &"s".repeat(32))
             .unwrap()
             .with_authority(authority);
-        let state = AppState::new(crate::CloudApiConfig::new(db, &server.uri()).unwrap())
-            .with_auth(AuthState::new().with_shots(Some(shots)));
+        let state = AppState::new(
+            crate::CloudApiConfig::new(
+                db,
+                "https://founder-hub-api.example.com/mcp",
+                &server.uri(),
+            )
+            .unwrap(),
+        )
+        .with_auth(AuthState::new().with_shots(Some(shots)));
         state.set_enabled(&id.to_string(), true).await.unwrap();
         state
             .publish_snapshot(
@@ -794,7 +801,7 @@ mod tests {
     #[tokio::test]
     async fn mcp_supports_stateless_tool_discovery_on_every_public_host() {
         // `sync:3001` is the Host the App Platform gateway sends upstream.
-        for host in ["api.anarlog.so", "sync:3001"] {
+        for host in ["founder-hub-api.example.com", "sync:3001"] {
             assert_mcp_tool_discovery(host).await;
         }
     }
@@ -908,7 +915,7 @@ mod tests {
         let response = app
             .oneshot(
                 Request::post("/mcp")
-                    .header("host", "api.anarlog.so")
+                    .header("host", "founder-hub-api.example.com")
                     .header("authorization", format!("Bearer {key}"))
                     .header("content-type", "application/json")
                     .header("accept", "application/json, text/event-stream")

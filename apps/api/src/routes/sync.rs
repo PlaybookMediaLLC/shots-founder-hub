@@ -199,23 +199,16 @@ pub(crate) fn router(env: &RuntimeConfig) -> Router {
         .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
     let cloud_api_config = anlg_api_cloud::CloudApiConfig::new(
         env.database.clone(),
-        env.shots_auth_url
+        env.founder_hub_mcp_url
             .as_deref()
-            .expect("Shots identity configured"),
+            .expect("FOUNDER_HUB_MCP_URL is required for Shots sync"),
+        env.shots
+            .as_ref()
+            .expect("Shots identity configured")
+            .origin()
+            .as_str(),
     )
     .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
-    let cloud_api_config = if let Some(shots) = &env.shots {
-        cloud_api_config
-            .with_shots_oauth(
-                env.founder_hub_mcp_url
-                    .as_deref()
-                    .expect("FOUNDER_HUB_MCP_URL is required for Shots sync"),
-                shots.origin().as_str(),
-            )
-            .unwrap_or_else(|error| panic!("Failed to load environment: {error}"))
-    } else {
-        cloud_api_config
-    };
     let cloud_api_state =
         anlg_api_cloud::AppState::new(cloud_api_config).with_auth(auth_state.clone());
 

@@ -4,7 +4,6 @@ use serde::Serialize;
 use crate::state::AppState;
 
 pub(crate) const SHOTS_SCOPES: &[&str] = &["founder-hub:meetings:read", "offline_access"];
-pub(crate) const MCP_RESOURCE: &str = "https://api.anarlog.so/mcp";
 
 #[derive(Clone)]
 pub(crate) struct OAuthResourceConfig {
@@ -121,6 +120,7 @@ mod tests {
         let state = AppState::new(
             CloudApiConfig::new(
                 anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap(),
+                "https://founder-hub-api.example.com/mcp",
                 "https://shots.example.com",
             )
             .unwrap(),
@@ -141,7 +141,10 @@ mod tests {
                 .await
                 .unwrap();
             let metadata: Value = serde_json::from_slice(&body).unwrap();
-            assert_eq!(metadata["resource"], "https://api.anarlog.so/mcp");
+            assert_eq!(
+                metadata["resource"],
+                "https://founder-hub-api.example.com/mcp"
+            );
             assert_eq!(
                 metadata["authorization_servers"][0],
                 "https://shots.example.com/api/auth"
@@ -157,10 +160,9 @@ mod tests {
     async fn shots_discovery_names_the_configured_issuer_and_read_only_scope() {
         let config = CloudApiConfig::new(
             anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap(),
+            "http://localhost:3039/mcp",
             "https://shots.example.com",
         )
-        .unwrap()
-        .with_shots_oauth("http://localhost:3039/mcp", "https://shots.example.com")
         .unwrap();
         let state = AppState::new(config);
         assert!(
