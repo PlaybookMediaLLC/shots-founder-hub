@@ -63,12 +63,12 @@ Information may be processed by the infrastructure, authentication, integration,
 
 **Repository findings — deployed use not yet verified.** The following describes configuration and integrations present in the code, not a final list of active subprocessors:
 
-The Fly/Vercel templates and other integrations below differ from the confirmed operating inventory. Their presence does not establish that Playbook uses them in production; the deployment configuration must be reconciled separately. This draft does not change infrastructure or enable any provider.
+The integrations below are present in the code. Their presence does not establish that Playbook uses them in production. This draft does not change infrastructure or enable any provider.
 
 | Area | Repository evidence | Still to confirm |
 | --- | --- | --- |
-| Hosting | Fly API templates specify `sjc`. The web targets Vercel; `vercel.json` has no region pin, while the Vite-generated Vercel function configuration specifies `sfo1`. | Actual deployed regions, replication, failover, and processing locations. |
-| Accounts, storage, sync, integrations | Supabase authentication, database, and storage; SQLite Cloud sync; Nango connected-account integrations. | Enabled projects and features, processing regions, access, and retention. |
+| Hosting | The API runs on DigitalOcean App Platform in the `nyc` region (`.github/scripts/render_api_app_spec.py`). The web app in this repository is not deployed; users reach Founder Hub through Shots (`shots.playbookmedia.io`). Hosted data is in Azure Database for PostgreSQL: the Azure account showed server `playbook-production-core` in North Central US, zone-redundant, with geo-redundant backups kept 7 days (checked 16 Nov 2026). Files are in Cloudflare R2 with the eastern North America location hint. | Replication and failover behavior, provider log locations, and the full list of processing locations. |
+| Accounts, storage, sync, integrations | Shots provides sign-in, teams, and billing. Founder Hub keeps hosted data in PostgreSQL and files in Cloudflare R2; desktop sync uses the PostgreSQL replica. SQLite Cloud sync and Nango connected-account integrations are in the code but are not configured in production. | Enabled features, access, and retention. |
 | Billing and email | Stripe, Loops, and Resend integrations. | Active products, senders, message types, and provider-side retention. |
 | AI, speech, and search | OpenRouter; twelve optional speech-to-text vendor configurations; optional Pyannote, Exa, and Jina integrations. | Enabled vendors and downstream models, routing, retention, training settings, and applicable agreements. Supplying a key can enable a speech provider; the code does not identify the production selection. |
 | Analytics and diagnostics | PostHog defaults to `us.i.posthog.com`; Google Analytics, Microsoft Clarity, Sentry, and configurable telemetry integrations are present. | Enabled tools, collection and replay settings, consent, masking, processing locations, and retention. |
@@ -87,7 +87,7 @@ Your operating system also controls microphone, system-audio, contact, and other
 
 Local notes and transcripts remain on your device until you remove them. The desktop audio-retention implementation defaults to **Forever** when no explicit or legacy setting overrides it. Available audio settings are **don't save**, **1 day**, **3 days**, **7 days**, **30 days**, and **Forever**. These settings govern local audio, not all hosted data. Deleting an account does not itself remove local copies, exports, or copies held by recipients.
 
-**Uploaded transcription audio:** the callback implementation attempts to delete the Supabase audio object after a terminal transcription callback. Lookup or deletion failures are logged; this is best-effort cleanup, not a guarantee of immediate removal or a fixed retention period.
+**Uploaded transcription audio:** the callback implementation attempts to delete the uploaded audio object in Cloudflare R2 after a terminal transcription callback. Lookup or deletion failures are logged; this is best-effort cleanup, not a guarantee of immediate removal or a fixed retention period.
 
 **Playbook-confirmed retention and deletion practice:** Playbook states that hosted data is retained indefinitely until the user deletes it or requests deletion. Deletion jobs are enabled and monitored, and deletion requests are processed the same day. No formal completion deadline is specified. Same-day processing means handling or initiating the request; it is not a promise that every hosted, provider-held, backup, or log copy is erased that day. These practices are user-confirmed operating facts, not independently observed job results.
 

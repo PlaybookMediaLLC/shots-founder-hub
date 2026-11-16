@@ -130,14 +130,14 @@ function SecurityPage() {
               Configuration evidence, not deployed guarantees
             </h2>
             <p className="text-fg-muted mt-5 text-base leading-7">
-              Fly API templates specify sjc. The web targets Vercel: vercel.json
-              has no region pin, while the Vite-generated function configuration
-              specifies sfo1. The PostHog host defaults to us.i.posthog.com.
-              These settings do not establish the actual processing regions,
-              enabled vendors, replication, or failover. The Fly/Vercel
-              templates and source-listed integrations differ from the confirmed
-              operating inventory and need reconciliation; no infrastructure has
-              been changed for this draft.
+              The API runs on DigitalOcean App Platform in the nyc region.
+              Hosted data is in Azure Database for PostgreSQL in North Central
+              US, and files are in Cloudflare R2 with the eastern North America
+              location hint. The web app in this repository is not deployed;
+              users reach Founder Hub through Shots. The PostHog host defaults
+              to us.i.posthog.com. These settings do not establish every
+              processing location, enabled vendor, replication path, or failover
+              arrangement. No infrastructure has been changed for this draft.
             </p>
             <p className="text-fg-muted mt-4 text-base leading-7">
               The core API template enables durable cleanup. Its initial
