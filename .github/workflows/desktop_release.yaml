@@ -3,10 +3,11 @@
 # - Linux: .deb and AppImage for x64 and arm64; APT metadata on main.
 # - Windows: NSIS installer for x64. It has no Authenticode signature, so
 #   SmartScreen warns on first launch.
-# - macOS: signed and notarized DMG and updater archive for Apple silicon and
-#   Intel. It runs only when the Apple secrets are in the desktop-release
-#   environment (APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID,
-#   APPLE_PASSWORD, APPLE_TEAM_ID); otherwise the release skips macOS.
+# - macOS: DMG and updater archive for Apple silicon and Intel. With the Apple
+#   secrets in the desktop-release environment (APPLE_CERTIFICATE,
+#   APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID), the
+#   build is signed and notarized. Without them it is ad-hoc signed and not
+#   notarized: users open it once from System Settings > Privacy & Security.
 # Shots serves the APT repository at https://shots.playbookmedia.io/apt from
 # apps/web/public/apt on main. The signing keys live in the desktop-release
 # environment (main only), with backups in Infisical (/desktop-release) and
@@ -23,7 +24,7 @@ on:
         type: boolean
         default: true
       macos:
-        description: "Build macOS (needs the Apple secrets)"
+        description: "Build macOS"
         type: boolean
         default: true
 
@@ -73,13 +74,13 @@ jobs:
           WANT_MACOS: ${{ inputs.macos }}
           HAS_APPLE: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' }}
         run: |
-          if [[ "$WANT_MACOS" == true && "$HAS_APPLE" == true ]]; then
-            echo "macos=true" >> "$GITHUB_OUTPUT"
+          if [[ "$WANT_MACOS" != true ]]; then
+            echo "macos=none" >> "$GITHUB_OUTPUT"
+          elif [[ "$HAS_APPLE" == true ]]; then
+            echo "macos=signed" >> "$GITHUB_OUTPUT"
           else
-            echo "macos=false" >> "$GITHUB_OUTPUT"
-            if [[ "$WANT_MACOS" == true ]]; then
-              echo "::notice::macOS skipped: add the Apple secrets to the desktop-release environment"
-            fi
+            echo "macos=adhoc" >> "$GITHUB_OUTPUT"
+            echo "::notice::macOS is ad-hoc signed and not notarized: add the Apple secrets to desktop-release to sign it"
           fi
 
   build-linux:
@@ -293,7 +294,7 @@ jobs:
 
   build-macos:
     needs: check
-    if: ${{ needs.check.outputs.macos == 'true' }}
+    if: ${{ needs.check.outputs.macos != 'none' }}
     environment: desktop-release
     runs-on: macos-26
     timeout-minutes: 120
@@ -332,7 +333,8 @@ jobs:
           ./scripts/sidecar.sh "./apps/desktop/$TAURI_CONF_PATH" "resources/cli/sfh"
         env:
           APP_VERSION: ${{ inputs.version }}
-      - uses: ./.github/actions/apple_cert
+      - if: ${{ needs.check.outputs.macos == 'signed' }}
+        uses: ./.github/actions/apple_cert
         id: apple-cert
         with:
           apple-certificate: ${{ secrets.APPLE_CERTIFICATE }}
@@ -340,10 +342,34 @@ jobs:
           keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
       - run: |
           dylib="../../crates/cloudsync/vendor/cloudsync/macos/${{ matrix.arch }}/cloudsync.dylib"
-          codesign --force --sign "${{ steps.apple-cert.outputs.cert-id }}" --timestamp --options runtime "$dylib"
+          if [[ -n "$SIGNING_IDENTITY" ]]; then
+            codesign --force --sign "$SIGNING_IDENTITY" --timestamp --options runtime "$dylib"
+          else
+            codesign --force --sign - "$dylib"
+          fi
           codesign --verify --strict --verbose=2 "$dylib"
         working-directory: ./apps/desktop
-      - run: |
+        env:
+          SIGNING_IDENTITY: ${{ steps.apple-cert.outputs.cert-id }}
+      - if: ${{ needs.check.outputs.macos == 'adhoc' }}
+        name: Build ad-hoc signed
+        run: |
+          args=(--target "${{ matrix.target }}" --config "$TAURI_CONF_PATH" --verbose)
+          if [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
+            args+=(--config ./src-tauri/tauri.conf.macos-intel.json)
+          fi
+          pnpm -F desktop tauri build "${args[@]}"
+        env:
+          CI: false
+          CARGO_PROFILE_RELEASE_DEBUG: line-tables-only
+          APP_VERSION: ${{ inputs.version }}
+          APPLE_SIGNING_IDENTITY: "-"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_APP_VERSION: ${{ inputs.version }}
+      - if: ${{ needs.check.outputs.macos == 'signed' }}
+        name: Build signed and notarized
+        run: |
           args=(--target "${{ matrix.target }}" --config "$TAURI_CONF_PATH" --verbose)
           if [[ "${{ matrix.target }}" == "x86_64-apple-darwin" ]]; then
             args+=(--config ./src-tauri/tauri.conf.macos-intel.json)
@@ -381,7 +407,8 @@ jobs:
           python3 scripts/verify-packaged-cli.py "${apps[0]}" "$VERSION"
           echo "DMG_PATH=${dmgs[0]}" >> "$GITHUB_ENV"
           echo "ARCHIVE_PATH=${archives[0]}" >> "$GITHUB_ENV"
-      - uses: ./.github/actions/macos_notarize_dmg
+      - if: ${{ needs.check.outputs.macos == 'signed' }}
+        uses: ./.github/actions/macos_notarize_dmg
         with:
           dmg-path: ${{ env.DMG_PATH }}
           signing-identity: ${{ steps.apple-cert.outputs.cert-id }}
@@ -421,6 +448,7 @@ jobs:
       - name: Write the updater manifest and publish the release
         env:
           GH_TOKEN: ${{ github.token }}
+          MACOS: ${{ needs.check.outputs.macos }}
         working-directory: release
         run: |
           set -euo pipefail
@@ -445,9 +473,18 @@ jobs:
             > latest.json
           jq -r '.platforms | keys | join(", ")' latest.json
           sha256sum shots-founder-hub-* > SHA256SUMS
+          notes="Shots Founder Hub $VERSION.
+          - Linux: install with APT from https://shots.playbookmedia.io/apt, or download the .deb or AppImage.
+          - Windows: the installer has no Authenticode signature yet, so SmartScreen asks you to confirm (More info > Run anyway)."
+          if [[ "$MACOS" == signed ]]; then
+            notes="$notes
+          - macOS: signed and notarized DMG for Apple silicon and Intel."
+          elif [[ "$MACOS" == adhoc ]]; then
+            notes="$notes
+          - macOS: the DMG is not notarized yet. After the first launch is blocked, open System Settings > Privacy & Security and click Open Anyway. macOS asks for microphone access again after each update."
+          fi
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "Shots Founder Hub $VERSION" \
-            --notes "Shots Founder Hub $VERSION. Linux: install with APT from https://shots.playbookmedia.io/apt, or download the .deb or AppImage. Windows: the installer has no Authenticode signature yet, so SmartScreen asks you to confirm. macOS builds are included only when they are signed and notarized." \
+            --title "Shots Founder Hub $VERSION" --notes "$notes" \
             shots-founder-hub-* latest.json SHA256SUMS
 
   apt:
