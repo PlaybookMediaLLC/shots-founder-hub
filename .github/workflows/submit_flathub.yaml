@@ -13,8 +13,8 @@ jobs:
 
       - name: Validate exported metadata
         run: |
-          desktop-file-validate apps/desktop/flatpak/so.anarlog.Anarlog.desktop
-          appstreamcli validate --pedantic --no-net apps/desktop/flatpak/so.anarlog.Anarlog.metainfo.xml
+          desktop-file-validate apps/desktop/flatpak/io.playbookmedia.ShotsFounderHub.desktop
+          appstreamcli validate --pedantic --no-net apps/desktop/flatpak/io.playbookmedia.ShotsFounderHub.metainfo.xml
 
       - name: Build Flatpak
         run: |
@@ -24,11 +24,11 @@ jobs:
             --force-clean \
             --repo=flatpak-repo \
             flatpak-build-dir \
-            apps/desktop/flatpak/so.anarlog.Anarlog.yml
+            apps/desktop/flatpak/io.playbookmedia.ShotsFounderHub.yml
           flatpak build-bundle \
             flatpak-repo \
             shots-founder-hub.flatpak \
-            so.anarlog.Anarlog
+            io.playbookmedia.ShotsFounderHub
 
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:

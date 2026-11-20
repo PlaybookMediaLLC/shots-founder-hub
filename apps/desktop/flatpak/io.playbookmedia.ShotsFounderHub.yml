@@ -2,7 +2,7 @@
 # Flatpak remains an internal candidate until the sandboxed audio, credentials,
 # and desktop-integration release gates in ANLG-169 pass.
 
-id: so.anarlog.Anarlog
+id: io.playbookmedia.ShotsFounderHub
 
 runtime: org.gnome.Platform
 runtime-version: "50"
@@ -25,7 +25,7 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications
   - --talk-name=org.kde.StatusNotifierWatcher
   - --talk-name=org.freedesktop.secrets
-  - --own-name=so.anarlog.Anarlog
+  - --own-name=io.playbookmedia.ShotsFounderHub
   - --env=FLATPAK=1
 
 build-options:
@@ -95,10 +95,10 @@ modules:
       - install -Dm755 apps/desktop/src-tauri/target/release/shots-founder-hub /app/bin/shots-founder-hub
       - install -Dm755 target/release/sfh /app/libexec/sfh
       - install -Dm755 apps/desktop/flatpak/sfh /app/bin/sfh
-      - install -Dm644 apps/desktop/flatpak/so.anarlog.Anarlog.desktop /app/share/applications/so.anarlog.Anarlog.desktop
-      - install -Dm644 apps/desktop/flatpak/so.anarlog.Anarlog.metainfo.xml /app/share/metainfo/so.anarlog.Anarlog.metainfo.xml
-      - install -Dm644 apps/desktop/src-tauri/icons/stable/32x32.png /app/share/icons/hicolor/32x32/apps/so.anarlog.Anarlog.png
-      - install -Dm644 apps/desktop/src-tauri/icons/stable/64x64.png /app/share/icons/hicolor/64x64/apps/so.anarlog.Anarlog.png
-      - install -Dm644 apps/desktop/src-tauri/icons/stable/128x128.png /app/share/icons/hicolor/128x128/apps/so.anarlog.Anarlog.png
-      - install -Dm644 apps/desktop/src-tauri/icons/stable/128x128@2x.png /app/share/icons/hicolor/256x256/apps/so.anarlog.Anarlog.png
-      - install -Dm644 apps/desktop/src-tauri/icons/stable/icon.png /app/share/icons/hicolor/512x512/apps/so.anarlog.Anarlog.png
+      - install -Dm644 apps/desktop/flatpak/io.playbookmedia.ShotsFounderHub.desktop /app/share/applications/io.playbookmedia.ShotsFounderHub.desktop
+      - install -Dm644 apps/desktop/flatpak/io.playbookmedia.ShotsFounderHub.metainfo.xml /app/share/metainfo/io.playbookmedia.ShotsFounderHub.metainfo.xml
+      - install -Dm644 apps/desktop/src-tauri/icons/stable/32x32.png /app/share/icons/hicolor/32x32/apps/io.playbookmedia.ShotsFounderHub.png
+      - install -Dm644 apps/desktop/src-tauri/icons/stable/64x64.png /app/share/icons/hicolor/64x64/apps/io.playbookmedia.ShotsFounderHub.png
+      - install -Dm644 apps/desktop/src-tauri/icons/stable/128x128.png /app/share/icons/hicolor/128x128/apps/io.playbookmedia.ShotsFounderHub.png
+      - install -Dm644 apps/desktop/src-tauri/icons/stable/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.playbookmedia.ShotsFounderHub.png
+      - install -Dm644 apps/desktop/src-tauri/icons/stable/icon.png /app/share/icons/hicolor/512x512/apps/io.playbookmedia.ShotsFounderHub.png

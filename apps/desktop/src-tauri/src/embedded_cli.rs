@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 const DEV_BUNDLE_ID: &str = "com.hyprnote.dev";
-const FLATPAK_BUNDLE_ID: &str = "so.anarlog.Anarlog";
+const FLATPAK_BUNDLE_ID: &str = "io.playbookmedia.ShotsFounderHub";
 const LEGACY_STABLE_BUNDLE_ID: &str = "com.hyprnote.Hyprnote";
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 const MANAGED_CLI_DIR: &str = ".sfh-cli";
