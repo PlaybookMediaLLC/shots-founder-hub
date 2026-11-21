@@ -69,3 +69,8 @@ before the new services start. The workflow reads secrets from Infisical
 (Desktop App Backend, `prod`, `/founder-hub`) through GitHub OIDC, and gives each
 service only its role's secrets. A deploy replaces instances, so it ends active
 live-transcription streams.
+
+Deploys are off unless the repository variable `API_DEPLOY_ENABLED` is `true`.
+While they are off, `api_cd.yaml` runs its `pause` job instead, which archives
+the app (App Platform maintenance `archive`) so no container runs. Setting the
+variable to `true` and dispatching `api_cd.yaml` deploys and unarchives it.

@@ -3,6 +3,8 @@
 # applies database migrations first. Secrets come from Infisical
 # (Desktop App Backend, prod, /founder-hub) through GitHub OIDC.
 # A deploy starts only after api_ci passes on main, for the commit it tested.
+# Deploys are off unless the repository variable API_DEPLOY_ENABLED is "true".
+# While they are off, the pause job archives the app so no container runs.
 # The image job accepts only push runs from this repository. A fork pull
 # request can also run api_ci from a branch named main.
 on:
@@ -28,10 +30,12 @@ env:
 jobs:
   image:
     if: >-
-      github.event_name == 'workflow_dispatch' || (
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_repository.full_name == github.repository
+      vars.API_DEPLOY_ENABLED == 'true' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
       )
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -128,3 +132,59 @@ jobs:
           curl --fail --silent --show-error --retry 6 --retry-delay 5 "$HEALTH_URL" > /dev/null \
             || echo "::warning::$HEALTH_URL is not reachable yet; check the DNS record"
           echo "API active: https://cloud.digitalocean.com/apps/$app_id" >> "$GITHUB_STEP_SUMMARY"
+
+  pause:
+    if: >-
+      vars.API_DEPLOY_ENABLED != 'true' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/infisical_install
+      - uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          no_auth: true
+          version: 1.180.0
+      # Archiving keeps the app's spec, domain, and secrets but stops every
+      # container. A deploy with API_DEPLOY_ENABLED=true replaces the spec and
+      # brings it back.
+      - name: Archive
+        env:
+          INFISICAL_IDENTITY_ID: ${{ vars.INFISICAL_IDENTITY_ID }}
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          umask 077
+          spec="$RUNNER_TEMP/spec.json"
+          trap 'rm -f "$spec"' EXIT
+          test -n "$INFISICAL_IDENTITY_ID" && test -n "$INFISICAL_PROJECT_ID"
+          jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}" | jq -r '.value')
+          token=$(infisical login --method=oidc-auth --machine-identity-id="$INFISICAL_IDENTITY_ID" \
+            --jwt="$jwt" --silent --plain)
+          echo "::add-mask::$token"
+          DIGITALOCEAN_ACCESS_TOKEN=$(infisical secrets get DIGITALOCEAN_ACCESS_TOKEN --token="$token" \
+            --projectId="$INFISICAL_PROJECT_ID" --env=prod --path=/founder-hub/deploy --plain --silent)
+          echo "::add-mask::$DIGITALOCEAN_ACCESS_TOKEN"
+          export DIGITALOCEAN_ACCESS_TOKEN
+          app_id=$(doctl apps list -o json | jq -r --arg name "$APP_NAME" '.[] | select(.spec.name == $name) | .id')
+          if test -z "$app_id"; then
+            echo "API deploys are off and $APP_NAME does not exist." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          doctl apps get "$app_id" -o json | jq '.[0].spec | .maintenance = {enabled: true, archive: true}' > "$spec"
+          doctl apps update "$app_id" --spec "$spec" -o json > /dev/null
+          test "$(doctl apps get "$app_id" -o json | jq -r '.[0].spec.maintenance.archive // false')" = true
+          echo "API deploys are off; $APP_NAME is archived: https://cloud.digitalocean.com/apps/$app_id" >> "$GITHUB_STEP_SUMMARY"
