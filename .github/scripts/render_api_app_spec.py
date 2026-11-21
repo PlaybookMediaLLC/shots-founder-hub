@@ -14,11 +14,11 @@ APP_NAME = "founder-hub-api"
 DOMAIN = "founder-hub-api.shots.playbookmedia.io"
 PORT = 3001
 ROLES = {
-    "ai": "apps-s-1vcpu-0.5gb",
-    "sync": "apps-s-1vcpu-0.5gb",
-    "core": "apps-s-1vcpu-0.5gb",
+    "ai": "apps-s-1vcpu-1gb",
+    "sync": "apps-s-1vcpu-1gb",
+    "core": "apps-s-1vcpu-1gb",
 }
-GATEWAY_SIZE = "apps-s-1vcpu-1gb"
+GATEWAY_SIZE = "apps-s-1vcpu-2gb"
 
 
 def service(name, tag, size, plain, secrets):
