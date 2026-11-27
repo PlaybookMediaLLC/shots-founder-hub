@@ -42,12 +42,16 @@ owning roles. `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` is accepted only by `core`
 and `all`. Assign cleanup to one deployment during migration.
 
 `api_cd.yaml` deploys the combined API (`ANARLOG_SERVICE=all`, with
-`ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED=true`) to Google Cloud Run in
-`shots-founder-hub-prod` (`us-west1`, service `founder-hub-api`). DigitalOcean
-App Platform remains off. `.github/scripts/render_cloud_run_spec.py` owns the
-Cloud Run manifests and syncs runtime secrets from Infisical
-(Desktop App Backend, `prod`, `/founder-hub`) into GCP Secret Manager so no raw
-secret values appear inline in revisions.
+`ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED=true`, `maxScale=5`, and
+`DATABASE_MAX_CONNECTIONS=8` — 40 connections max across all instances) to
+Google Cloud Run in `shots-founder-hub-prod` (`us-west1`, service
+`founder-hub-api`). DigitalOcean App Platform remains off.
+`.github/scripts/render_cloud_run_spec.py` owns the Cloud Run manifests and
+syncs runtime secrets from Infisical (Desktop App Backend, `prod`,
+`/founder-hub`) into GCP Secret Manager so no raw secret values appear inline in
+revisions. When `DATABASE_POOL_URL` is set in Infisical (e.g. PgBouncer port
+`6432`), runtime traffic uses it automatically with `statement-cache-capacity=0`
+while `founder-hub-api-migrate` keeps using direct `DATABASE_MIGRATION_URL`.
 
 `/health/ready/{service}` verifies the expected runtime role, configuration of
 its primary subsystems, and that it is not draining. The combined role uses

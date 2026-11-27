@@ -108,6 +108,56 @@ struct Function {
     table: bool,
 }
 
+const DEFAULT_MAX_CONNECTIONS: u32 = 10;
+const MIN_MAX_CONNECTIONS: u32 = 1;
+const MAX_ALLOWED_CONNECTIONS: u32 = 50;
+
+fn parse_max_connections(raw: Option<&str>) -> u32 {
+    raw.and_then(|value| value.trim().parse::<u32>().ok())
+        .map(|value| value.clamp(MIN_MAX_CONNECTIONS, MAX_ALLOWED_CONNECTIONS))
+        .unwrap_or(DEFAULT_MAX_CONNECTIONS)
+}
+
+fn is_transaction_pooler_url(url: &str, pooler_mode: Option<&str>) -> bool {
+    if pooler_mode.is_some_and(|mode| mode.trim().eq_ignore_ascii_case("transaction")) {
+        return true;
+    }
+    let after_scheme = url.split_once("://").map(|(_, rest)| rest).unwrap_or(url);
+    let authority = after_scheme.split(['/', '?', '#']).next().unwrap_or("");
+    let host_port = authority
+        .rsplit_once('@')
+        .map(|(_, hp)| hp)
+        .unwrap_or(authority);
+    host_port.ends_with(":6432") || host_port.ends_with(":6543")
+}
+
+fn normalize_connection_url(url: &str, pooler_mode: Option<&str>) -> String {
+    if !is_transaction_pooler_url(url, pooler_mode) {
+        return url.to_string();
+    }
+    let (base_and_query, fragment) = match url.split_once('#') {
+        Some((before, frag)) => (before, Some(frag)),
+        None => (url, None),
+    };
+    let has_statement_cache = base_and_query.split_once('?').is_some_and(|(_, query)| {
+        query.split('&').any(|pair| {
+            pair.split_once('=').map(|(k, _)| k).unwrap_or(pair) == "statement-cache-capacity"
+        })
+    });
+    if has_statement_cache {
+        return url.to_string();
+    }
+    let sep = if base_and_query.contains('?') {
+        '&'
+    } else {
+        '?'
+    };
+    match fragment {
+        Some(frag) => format!("{base_and_query}{sep}statement-cache-capacity=0#{frag}"),
+        None => format!("{base_and_query}{sep}statement-cache-capacity=0"),
+    }
+}
+
 impl Database {
     pub fn new(url: &str) -> Result<Self, Error> {
         if !(url.starts_with("postgres://") || url.starts_with("postgresql://")) {
@@ -122,9 +172,14 @@ impl Database {
     pub async fn connection(&self) -> Result<&DatabaseConnection, Error> {
         self.connection
             .get_or_try_init(|| async {
-                let mut options = ConnectOptions::new(self.url.to_string());
+                let max_connections = parse_max_connections(
+                    std::env::var("DATABASE_MAX_CONNECTIONS").ok().as_deref(),
+                );
+                let pooler_mode = std::env::var("DATABASE_POOLER_MODE").ok();
+                let url = normalize_connection_url(&self.url, pooler_mode.as_deref());
+                let mut options = ConnectOptions::new(url);
                 options
-                    .max_connections(20)
+                    .max_connections(max_connections)
                     .min_connections(0)
                     .connect_timeout(Duration::from_secs(10))
                     .acquire_timeout(Duration::from_secs(10))
@@ -263,4 +318,55 @@ fn identifier(value: &str) -> bool {
             .bytes()
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
         && !value.as_bytes()[0].is_ascii_digit()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_connection_url, parse_max_connections};
+
+    #[test]
+    fn max_connections_defaults_and_clamps() {
+        assert_eq!(parse_max_connections(None), 10);
+        assert_eq!(parse_max_connections(Some("")), 10);
+        assert_eq!(parse_max_connections(Some("not-a-number")), 10);
+        assert_eq!(parse_max_connections(Some("8")), 8);
+        assert_eq!(parse_max_connections(Some("0")), 1);
+        assert_eq!(parse_max_connections(Some("200")), 50);
+    }
+
+    #[test]
+    fn transaction_pooler_urls_disable_statement_cache() {
+        assert_eq!(
+            normalize_connection_url(
+                "postgres://u:p@db.example.com:5432/app?sslmode=require",
+                None
+            ),
+            "postgres://u:p@db.example.com:5432/app?sslmode=require"
+        );
+        assert_eq!(
+            normalize_connection_url(
+                "postgres://u:p@db.example.com:6432/app?sslmode=require",
+                None
+            ),
+            "postgres://u:p@db.example.com:6432/app?sslmode=require&statement-cache-capacity=0"
+        );
+        assert_eq!(
+            normalize_connection_url("postgres://u:p@db.example.com:6543/app", None),
+            "postgres://u:p@db.example.com:6543/app?statement-cache-capacity=0"
+        );
+        assert_eq!(
+            normalize_connection_url(
+                "postgres://u:p@db.example.com:5432/app",
+                Some("transaction")
+            ),
+            "postgres://u:p@db.example.com:5432/app?statement-cache-capacity=0"
+        );
+        assert_eq!(
+            normalize_connection_url(
+                "postgres://u:p@db.example.com:6432/app?statement-cache-capacity=16",
+                None
+            ),
+            "postgres://u:p@db.example.com:6432/app?statement-cache-capacity=16"
+        );
+    }
 }
