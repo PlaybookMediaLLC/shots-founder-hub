@@ -230,10 +230,12 @@ create_sa() {
 
 create_sa "sa-ci-runner" "Shots Founder Hub CI Runner (${ENV_NAME})"
 create_sa "sa-deploy" "Shots Founder Hub Deployer (${ENV_NAME})"
+create_sa "sa-api-runtime" "Shots Founder Hub API Runtime (${ENV_NAME})"
 create_sa "sa-meet-worker" "Shots Founder Hub Meet Capture Worker (${ENV_NAME})"
 
 SA_CI="sa-ci-runner@${PROJECT_ID}.iam.gserviceaccount.com"
 SA_DEPLOY="sa-deploy@${PROJECT_ID}.iam.gserviceaccount.com"
+SA_API_RUNTIME="sa-api-runtime@${PROJECT_ID}.iam.gserviceaccount.com"
 SA_MEET="sa-meet-worker@${PROJECT_ID}.iam.gserviceaccount.com"
 
 for role in roles/artifactregistry.writer roles/logging.logWriter roles/monitoring.metricWriter; do
@@ -243,9 +245,16 @@ for role in roles/artifactregistry.writer roles/logging.logWriter roles/monitori
     --condition=None
 done
 
-for role in roles/run.developer roles/artifactregistry.reader roles/iam.serviceAccountUser; do
+for role in roles/run.admin roles/secretmanager.admin roles/artifactregistry.reader roles/iam.serviceAccountUser; do
   run_cmd gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${SA_DEPLOY}" \
+    --role="$role" \
+    --condition=None
+done
+
+for role in roles/secretmanager.secretAccessor roles/logging.logWriter roles/monitoring.metricWriter; do
+  run_cmd gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${SA_API_RUNTIME}" \
     --role="$role" \
     --condition=None
 done
@@ -322,6 +331,13 @@ run_cmd gcloud iam service-accounts add-iam-policy-binding "$SA_DEPLOY" \
   --project="$PROJECT_ID" \
   --role="roles/iam.workloadIdentityUser" \
   --member="principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/subject/repo:PlaybookMediaLLC/shots-founder-hub:ref:${DEPLOY_REF}"
+
+if [[ "$ENV_NAME" == "prod" ]]; then
+  run_cmd gcloud iam service-accounts add-iam-policy-binding "$SA_DEPLOY" \
+    --project="$PROJECT_ID" \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/subject/repo:PlaybookMediaLLC/shots-founder-hub:environment:production"
+fi
 
 # 6. Print exact Google Auth Platform (OAuth Console) + Nango Cloud + Infisical checklist
 cat <<EOF

@@ -7,7 +7,7 @@ Anarlog is a pnpm and Rust workspace. Read the nearest `AGENTS.md` before changi
 - `apps/desktop/`: Tauri 2 with React, TypeScript, Vite, and Tailwind. Zustand owns UI state; TanStack Query/Form own queries, mutations, and forms.
 - `apps/web/`: React with TanStack Start/Router, Vite, and Tailwind. It is not deployed; users reach Founder Hub through Shots.
 - `apps/mobile/` and `apps/watch/apple/`: Expo/React Native with a Rust UniFFI bridge, plus a native watchOS app. Use the versions in `apps/mobile/package.json` and the mobile instructions.
-- `apps/api/`: Rust/Axum API backed by SeaORM and PostgreSQL, with R2 object storage. Shots owns authentication and billing. `api_cd.yaml` deploys the API to DigitalOcean App Platform.
+- `apps/api/`: Rust/Axum API backed by SeaORM and PostgreSQL, with R2 object storage. Shots owns authentication and billing. `api_cd.yaml` deploys the API to Google Cloud Run (`shots-founder-hub-prod`, `us-west1`); DigitalOcean App Platform remains off.
 - `apps/cli/`: Rust CLI/TUI and MCP entry point (`anarlog-cli` package, `anarlog` binary).
 - `crates/db-app/`: canonical SQLite schema and migrations shared by desktop and mobile. `db-core` owns runtime initialization, `db-migrate` owns migration execution, and `plugins/db/` / `crates/mobile-bridge/` expose transports. React consumes these through `packages/db-runtime`, `packages/db-react`, and `packages/db-tauri`; `packages/db` is the Drizzle adapter.
 - `postgres/`: direct PostgreSQL migrations and database tests, separate from local SQLite migrations.

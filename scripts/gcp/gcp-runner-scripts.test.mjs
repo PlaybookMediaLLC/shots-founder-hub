@@ -48,6 +48,8 @@ test("provision-gcp-runner --dry-run plans Track A + Track B for prod without Gm
   assert.match(out, /PlaybookMediaLLC\/shots-founder-hub/);
   assert.match(out, /PlaybookMediaLLC\/shots/);
   assert.match(out, /refs\/heads\/main/);
+  assert.match(out, /environment:production/);
+  assert.match(out, /sa-api-runtime/);
   assert.match(out, /shots-founder-hub-calendar/);
   assert.match(out, /shots-founder-hub-drive/);
   assert.match(out, /shots-founder-hub-meet/);
