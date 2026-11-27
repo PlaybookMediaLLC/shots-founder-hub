@@ -1,10 +1,10 @@
-# Builds the API image and deploys it to DigitalOcean App Platform. One app
-# runs the ai, sync, and core roles behind a public gateway; a PRE_DEPLOY job
-# applies database migrations first. Secrets come from Infisical
-# (Desktop App Backend, prod, /founder-hub) through GitHub OIDC.
+# Builds the API image, pushes it to Google Artifact Registry, runs the
+# Cloud Run migration job, and deploys the combined API to Google Cloud Run
+# (shots-founder-hub-prod, us-west1). DigitalOcean App Platform remains off.
+# Secrets come from Infisical (Desktop App Backend, prod, /founder-hub) through
+# GitHub OIDC and are synced into GCP Secret Manager (never embedded inline).
 # A deploy starts only after api_ci passes on main, for the commit it tested.
 # Deploys are off unless the repository variable API_DEPLOY_ENABLED is "true".
-# While they are off, the pause job archives the app so no container runs.
 # The image job accepts only push runs from this repository. A fork pull
 # request can also run api_ci from a branch named main.
 on:
@@ -22,8 +22,15 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE: ghcr.io/playbookmediallc/shots-founder-hub-api
-  APP_NAME: founder-hub-api
+  GCP_PROJECT_ID: shots-founder-hub-prod
+  GCP_PROJECT_NUMBER: "309614338372"
+  GCP_REGION: us-west1
+  GCP_WIF_PROVIDER: projects/309614338372/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
+  ARTIFACT_REGISTRY: us-west1-docker.pkg.dev
+  IMAGE: us-west1-docker.pkg.dev/shots-founder-hub-prod/shots-founder-hub/founder-hub-api
+  SERVICE_NAME: founder-hub-api
+  MIGRATE_JOB_NAME: founder-hub-api-migrate
+  RUNTIME_SERVICE_ACCOUNT: sa-api-runtime@shots-founder-hub-prod.iam.gserviceaccount.com
   HEALTH_URL: https://founder-hub-api.shots.playbookmedia.io/health
   DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
@@ -41,23 +48,30 @@ jobs:
     timeout-minutes: 90
     permissions:
       contents: read
-      packages: write
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
+      - id: gcp-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: sa-ci-runner@shots-founder-hub-prod.iam.gserviceaccount.com
+          token_format: access_token
       - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ env.ARTIFACT_REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.gcp-auth.outputs.access_token }}
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           file: apps/api/Dockerfile
           target: runtime
+          platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE }}:${{ env.DEPLOY_SHA }}
           build-args: |
@@ -80,13 +94,12 @@ jobs:
           ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
       - uses: ./.github/actions/infisical_install
-      # doctl reads the token from DIGITALOCEAN_ACCESS_TOKEN in the deploy step,
-      # so the token stays in that one step.
-      - uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          no_auth: true
-          version: 1.180.0
-      - name: Deploy
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: sa-deploy@shots-founder-hub-prod.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Deploy to Google Cloud Run
         env:
           INFISICAL_IDENTITY_ID: ${{ vars.INFISICAL_IDENTITY_ID }}
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
@@ -94,8 +107,9 @@ jobs:
           set -euo pipefail
           umask 077
           secrets="$RUNNER_TEMP/secrets.json"
-          spec="$RUNNER_TEMP/spec.json"
-          trap 'rm -f "$secrets" "$spec"' EXIT
+          migrate_spec="$RUNNER_TEMP/migrate-job.yaml"
+          service_spec="$RUNNER_TEMP/service.yaml"
+          trap 'rm -f "$secrets" "$migrate_spec" "$service_spec"' EXIT
           test -n "$INFISICAL_IDENTITY_ID" && test -n "$INFISICAL_PROJECT_ID"
           jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}" | jq -r '.value')
@@ -104,87 +118,48 @@ jobs:
           echo "::add-mask::$token"
           infisical export --token="$token" --projectId="$INFISICAL_PROJECT_ID" --env=prod \
             --path=/founder-hub --format=json --output-file="$secrets"
-          DIGITALOCEAN_ACCESS_TOKEN=$(infisical secrets get DIGITALOCEAN_ACCESS_TOKEN --token="$token" \
-            --projectId="$INFISICAL_PROJECT_ID" --env=prod --path=/founder-hub/deploy --plain --silent)
-          echo "::add-mask::$DIGITALOCEAN_ACCESS_TOKEN"
-          export DIGITALOCEAN_ACCESS_TOKEN
-          (cd .github/scripts && python3 render_api_app_spec.py --secrets "$secrets" \
-            --tag "$DEPLOY_SHA" --output "$spec")
+          (cd .github/scripts && python3 render_cloud_run_spec.py \
+            --secrets "$secrets" \
+            --image "${IMAGE}:${DEPLOY_SHA}" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --sync-secret-manager \
+            --migrate-output "$migrate_spec" \
+            --service-output "$service_spec")
           rm -f "$secrets"
-          app_id=$(doctl apps list -o json | jq -r --arg name "$APP_NAME" '.[] | select(.spec.name == $name) | .id')
-          if test -z "$app_id"; then
-            doctl apps create --spec "$spec" --wait -o json > /dev/null
-            app_id=$(doctl apps list -o json | jq -r --arg name "$APP_NAME" '.[] | select(.spec.name == $name) | .id')
-          else
-            doctl apps update "$app_id" --spec "$spec" --wait -o json > /dev/null
-          fi
-          app=$(doctl apps get "$app_id" -o json)
-          test "$(jq -r '.[0].active_deployment.phase // empty' <<< "$app")" = ACTIVE
-          for service in gateway ai sync core; do
-            test "$(jq -r --arg s "$service" '.[0].active_deployment.spec.services[] | select(.name == $s) | .image.tag' <<< "$app")" = "$DEPLOY_SHA"
-          done
-          ingress=$(jq -r '.[0].default_ingress' <<< "$app")
-          curl --fail --silent --show-error --retry 6 --retry-delay 5 "$ingress/health" > /dev/null
-          # The gateway answers /health itself; these routes prove it reaches each
-          # role. Core has no public routes until Nango is configured.
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST "$ingress/llm/chat/completions")" = 401
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$ingress/v1/cloud-api/settings")" = 401
+          gcloud run jobs replace "$migrate_spec" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION"
+          gcloud run jobs execute "$MIGRATE_JOB_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --wait
+          gcloud run services replace "$service_spec" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION"
+          gcloud run services add-iam-policy-binding "$SERVICE_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --quiet > /dev/null
+          deployed_image=$(gcloud run services describe "$SERVICE_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format='value(spec.template.spec.containers[0].image)')
+          test "$deployed_image" = "${IMAGE}:${DEPLOY_SHA}"
+          service_url=$(gcloud run services describe "$SERVICE_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format='value(status.url)')
+          test -n "$service_url"
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 "$service_url/health" > /dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST "$service_url/llm/chat/completions")" = 401
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$service_url/v1/cloud-api/settings")" = 401
           curl --fail --silent --show-error --retry 6 --retry-delay 5 "$HEALTH_URL" > /dev/null \
-            || echo "::warning::$HEALTH_URL is not reachable yet; check the DNS record"
-          echo "API active: https://cloud.digitalocean.com/apps/$app_id" >> "$GITHUB_STEP_SUMMARY"
-
-  pause:
-    if: >-
-      vars.API_DEPLOY_ENABLED != 'true' && (
-        github.event_name == 'workflow_dispatch' || (
-          github.event.workflow_run.conclusion == 'success' &&
-          github.event.workflow_run.event == 'push' &&
-          github.event.workflow_run.head_repository.full_name == github.repository
-        )
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/infisical_install
-      - uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
-        with:
-          no_auth: true
-          version: 1.180.0
-      # Archiving keeps the app's spec, domain, and secrets but stops every
-      # container. A deploy with API_DEPLOY_ENABLED=true replaces the spec and
-      # brings it back.
-      - name: Archive
-        env:
-          INFISICAL_IDENTITY_ID: ${{ vars.INFISICAL_IDENTITY_ID }}
-          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
-        run: |
-          set -euo pipefail
-          umask 077
-          spec="$RUNNER_TEMP/spec.json"
-          trap 'rm -f "$spec"' EXIT
-          test -n "$INFISICAL_IDENTITY_ID" && test -n "$INFISICAL_PROJECT_ID"
-          jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}" | jq -r '.value')
-          token=$(infisical login --method=oidc-auth --machine-identity-id="$INFISICAL_IDENTITY_ID" \
-            --jwt="$jwt" --silent --plain)
-          echo "::add-mask::$token"
-          DIGITALOCEAN_ACCESS_TOKEN=$(infisical secrets get DIGITALOCEAN_ACCESS_TOKEN --token="$token" \
-            --projectId="$INFISICAL_PROJECT_ID" --env=prod --path=/founder-hub/deploy --plain --silent)
-          echo "::add-mask::$DIGITALOCEAN_ACCESS_TOKEN"
-          export DIGITALOCEAN_ACCESS_TOKEN
-          app_id=$(doctl apps list -o json | jq -r --arg name "$APP_NAME" '.[] | select(.spec.name == $name) | .id')
-          if test -z "$app_id"; then
-            echo "API deploys are off and $APP_NAME does not exist." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          doctl apps get "$app_id" -o json | jq '.[0].spec | .maintenance = {enabled: true, archive: true}' > "$spec"
-          doctl apps update "$app_id" --spec "$spec" -o json > /dev/null
-          test "$(doctl apps get "$app_id" -o json | jq -r '.[0].spec.maintenance.archive // false')" = true
-          echo "API deploys are off; $APP_NAME is archived: https://cloud.digitalocean.com/apps/$app_id" >> "$GITHUB_STEP_SUMMARY"
+            || echo "::warning::$HEALTH_URL is not reachable yet; check the Cloud Run domain mapping / DNS record"
+          {
+            echo "API active on Google Cloud Run: $service_url"
+            echo "Console: https://console.cloud.google.com/run/detail/$GCP_REGION/$SERVICE_NAME/metrics?project=$GCP_PROJECT_ID"
+          } >> "$GITHUB_STEP_SUMMARY"

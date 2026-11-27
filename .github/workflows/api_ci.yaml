@@ -6,8 +6,8 @@ on:
     paths:
       - .github/scripts/prepare_api_service_secrets.py
       - .github/scripts/test_prepare_api_service_secrets.py
-      - .github/scripts/render_api_app_spec.py
-      - .github/scripts/test_render_api_app_spec.py
+      - .github/scripts/render_cloud_run_spec.py
+      - .github/scripts/test_render_cloud_run_spec.py
       - .github/workflows/api_cd.yaml
       - .github/workflows/api_ci.yaml
       - apps/api/**
@@ -32,8 +32,8 @@ on:
     paths:
       - .github/scripts/prepare_api_service_secrets.py
       - .github/scripts/test_prepare_api_service_secrets.py
-      - .github/scripts/render_api_app_spec.py
-      - .github/scripts/test_render_api_app_spec.py
+      - .github/scripts/render_cloud_run_spec.py
+      - .github/scripts/test_render_cloud_run_spec.py
       - .github/workflows/api_cd.yaml
       - .github/workflows/api_ci.yaml
       - apps/api/**
@@ -117,7 +117,7 @@ jobs:
       - run: cargo test --locked -p transcribe-proxy --lib
       - run: cargo test --locked -p api
       - run: python3 .github/scripts/test_prepare_api_service_secrets.py
-      - run: python3 .github/scripts/test_render_api_app_spec.py
+      - run: python3 .github/scripts/test_render_cloud_run_spec.py
       - run: |
           cargo test --locked -p api gen_openapi_json
           git diff --exit-code -- apps/api/openapi.gen.json

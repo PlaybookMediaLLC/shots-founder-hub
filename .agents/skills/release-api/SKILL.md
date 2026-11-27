@@ -29,9 +29,11 @@ authorization from [Release a New Version](../release-new-version/SKILL.md).
    Use owning generators and verify repeated generation is stable. Test hosted
    migrations/RLS in an isolated local Postgres as `db_ci.yaml` does, never against production.
 3. Inspect current service choices and live configuration before deploying.
-   One `api_cd.yaml` run deploys the gateway and the ai, sync, and core services
-   from one image, and its PRE_DEPLOY job applies the Postgres migrations. Shots
-   owns billing, so this repo deploys no billing service.
+   One `api_cd.yaml` run builds one image into GCP Artifact Registry, executes
+   the Cloud Run migration job `founder-hub-api-migrate`, and deploys the
+   combined `founder-hub-api` service to Google Cloud Run (`shots-founder-hub-prod`,
+   `us-west1`). DigitalOcean App Platform remains off. Shots owns billing, so
+   this repo deploys no billing service.
 4. Deploy required backward-compatible hosted changes before dependent desktop
    or mobile clients. Select the exact approved environment, service and merged
    source. A push to `main` that changes the API deploys it; use

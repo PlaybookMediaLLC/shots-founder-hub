@@ -19,7 +19,7 @@
 
 | Decision | Selection |
 | --- | --- |
-| **Scope** | **All** — Track A (OAuth/APIs for Calendar, Drive automation runner + OnePick, Meet, Nango Cloud, Fly/Infisical) **and** Track B (GCP CI/workload runners via Workload Identity Federation, Artifact Registry, least-privilege IAM, Secret Manager) |
+| **Scope** | **All** — Track A (OAuth/APIs for Calendar, Drive automation runner + OnePick, Meet, Nango Cloud, Infisical) **and** Track B (GCP Cloud Run API hosting + CI/workload runners via Workload Identity Federation, Artifact Registry, least-privilege IAM, Secret Manager) |
 | **Nango hosting** | **Nango Cloud** (`https://api.nango.dev`) with branded `308` callback proxy at `https://shots.playbookmedia.io/oauth/callback` |
 | **OAuth client layout** | **3 separate Web Application OAuth 2.0 clients** per GCP project (`shots-founder-hub-calendar`, `shots-founder-hub-drive`, `shots-founder-hub-meet`) |
 | **`google-meet` identity scopes** | **Added** — `openid`, `userinfo.email`, `userinfo.profile` (non-sensitive) added to `GOOGLE_MEET_OAUTH_SCOPES` so `crates/api-nango/src/routes/identity.rs` populates connected account email/name |
@@ -35,8 +35,8 @@
   - `/app/integration` — desktop/web Nango connect handoff.
   - `/app/google-drive-picker` — direct Google OnePick PKCE folder selection callback (`GOOGLE_DRIVE_PICKER_REDIRECT_URI`).
   - `/privacy` and `/terms` — public legal notices required for Google OAuth verification.
-- **Founder Hub API (`founder-hub-api.shots.playbookmedia.io` — DigitalOcean App Platform `founder-hub-api`)** handles Nango sessions, HMAC-verified webhooks (`/nango/webhook`), proxied Calendar/Drive/Meet API calls, and direct Google Drive OnePick PKCE exchange (`/nango/google-drive/picker-start`, `/nango/google-drive/picker-complete`).
-- **GCP Runner Infrastructure (Track B)** provides keyless GitHub Actions OIDC via Workload Identity Federation (WIF), Artifact Registry (`us-west1`), and least-privilege Service Accounts (`sa-ci-runner`, `sa-deploy`, `sa-meet-worker`) with zero static JSON keys.
+- **Founder Hub API (`founder-hub-api.shots.playbookmedia.io` — Google Cloud Run `founder-hub-api` in `shots-founder-hub-prod` / `us-west1`; DigitalOcean App Platform kept off)** handles Nango sessions, HMAC-verified webhooks (`/nango/webhook`), proxied Calendar/Drive/Meet API calls, and direct Google Drive OnePick PKCE exchange (`/nango/google-drive/picker-start`, `/nango/google-drive/picker-complete`).
+- **GCP Runner Infrastructure (Track B)** provides keyless GitHub Actions OIDC via Workload Identity Federation (WIF), Artifact Registry (`us-west1`), Secret Manager, and least-privilege Service Accounts (`sa-ci-runner`, `sa-deploy`, `sa-api-runtime`, `sa-meet-worker`) with zero static JSON keys.
 
 ---
 
@@ -72,7 +72,8 @@ Run the idempotent provisioning script for both environments (preview with `--dr
 - **Attribute condition:** Restricted strictly to `PlaybookMediaLLC/shots-founder-hub` and `PlaybookMediaLLC/shots`.
 - **Service Accounts (zero static JSON keys):**
   - `sa-ci-runner@<project>.iam.gserviceaccount.com` — Artifact Registry writer + logging/monitoring writer.
-  - `sa-deploy@<project>.iam.gserviceaccount.com` — Cloud Run developer + Artifact Registry reader, restricted to `refs/heads/main` (prod) or `refs/heads/develop` (dev).
+  - `sa-deploy@<project>.iam.gserviceaccount.com` — Cloud Run admin + Secret Manager admin + Artifact Registry reader + Service Account user, restricted to `refs/heads/main` / `environment:production` (prod) or `refs/heads/develop` (dev).
+  - `sa-api-runtime@<project>.iam.gserviceaccount.com` — Cloud Run runtime account for `founder-hub-api` and `founder-hub-api-migrate` with `roles/secretmanager.secretAccessor`, `roles/logging.logWriter`, and `roles/monitoring.metricWriter`.
   - `sa-meet-worker@<project>.iam.gserviceaccount.com` — minimal runtime account for `enterprise/google-meet-worker` (headless browser bot; needs no Google Workspace API credentials; bind `roles/secretmanager.secretAccessor` per secret only).
 
 ---
@@ -108,7 +109,7 @@ Complete the following in **Google Cloud Console -> Google Auth Platform** for `
 
 ---
 
-## Step 3 — Configure Nango Cloud, Infisical & Fly.io
+## Step 3 — Configure Nango Cloud, Infisical & Google Cloud Run
 
 1. **Nango Cloud (Dev & Prod environments):**
    - Set **Custom Callback URL** in Production to `https://shots.playbookmedia.io/oauth/callback`.
@@ -117,13 +118,13 @@ Complete the following in **Google Cloud Console -> Google Auth Platform** for `
      - `google-drive` -> `shots-founder-hub-drive` (scope: **strictly** `https://www.googleapis.com/auth/drive.file` alone — `google_drive_oauth.rs` rejects extra scopes)
      - `google-meet` -> `shots-founder-hub-meet` (scopes: `meetings.space.readonly`, `openid`, `userinfo.email`, `userinfo.profile`)
    - Configure **Webhook URL** -> `https://founder-hub-api.shots.playbookmedia.io/nango/webhook` (Auth + Forward webhooks) and copy the HMAC signing key.
-2. **Infisical & DigitalOcean App Platform (`founder-hub-api`):**
-   - Secrets live in Infisical `Desktop App Backend` (`04ebc1cf-0ec5-4e9e-8ab9-4c6da4252574`) -> `prod` -> `/founder-hub` (read via OIDC Machine Identity `ff0e209b-9fe1-4a6c-aeef-e78ee1623967`):
+2. **Infisical & Google Cloud Run (`founder-hub-api`, DigitalOcean off):**
+   - Secrets live in Infisical `Desktop App Backend` (`04ebc1cf-0ec5-4e9e-8ab9-4c6da4252574`) -> `prod` -> `/founder-hub` (read via OIDC Machine Identity `ff0e209b-9fe1-4a6c-aeef-e78ee1623967`) and are synced into GCP Secret Manager on deploy:
      - `NANGO_API_KEY`
      - `NANGO_WEBHOOK_SIGNING_KEY`
      - `GOOGLE_DRIVE_PICKER_REDIRECT_URI=https://shots.playbookmedia.io/app/google-drive-picker`
      - *(Leave `NANGO_API_BASE` unset to default to Nango Cloud `https://api.nango.dev`.)*
-   - Deploy `founder-hub-api` via `.github/workflows/api_cd.yaml` (with `API_DEPLOY_ENABLED=true`).
+   - Deploy `founder-hub-api` (and pre-deploy migration job `founder-hub-api-migrate`) via `.github/workflows/api_cd.yaml` (with `API_DEPLOY_ENABLED=true`). DigitalOcean App Platform remains off.
 
 ---
 

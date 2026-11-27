@@ -41,19 +41,19 @@ email configuration. Optional integration groups are validated only in their
 owning roles. `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` is accepted only by `core`
 and `all`. Assign cleanup to one deployment during migration.
 
-`api_cd.yaml` deploys one DigitalOcean App Platform app, `founder-hub-api`.
-It runs the `ai`, `sync`, and `core` roles as internal services. A public
-`gateway` service runs the combined role and forwards each role's routes to
-them, so all public URLs stay on `founder-hub-api.shots.playbookmedia.io`.
-`.github/scripts/render_api_app_spec.py` owns the app spec. Core owns durable
-cleanup; other services disable it. Never transfer cleanup ownership until the
-previous owner's worker has stopped.
+`api_cd.yaml` deploys the combined API (`ANARLOG_SERVICE=all`, with
+`ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED=true`) to Google Cloud Run in
+`shots-founder-hub-prod` (`us-west1`, service `founder-hub-api`). DigitalOcean
+App Platform remains off. `.github/scripts/render_cloud_run_spec.py` owns the
+Cloud Run manifests and syncs runtime secrets from Infisical
+(Desktop App Backend, `prod`, `/founder-hub`) into GCP Secret Manager so no raw
+secret values appear inline in revisions.
 
 `/health/ready/{service}` verifies the expected runtime role, configuration of
 its primary subsystems, and that it is not draining. The combined role uses
 `api`. These checks do not probe external providers or prove request
-continuity. App Platform health checks use `/health`, because readiness also
-requires optional integrations.
+continuity. Cloud Run startup and liveness probes use `/health`, because
+readiness also requires optional integrations.
 
 The combined compatibility runtime can forward each role through
 `ANARLOG_AI_ORIGIN`, `ANARLOG_SYNC_ORIGIN`, `ANARLOG_CORE_ORIGIN`. Unset origins keep the existing local route behavior.
@@ -63,14 +63,10 @@ upgraded connections through completion. Origins are rejected in standalone
 roles to prevent routing cycles.
 
 `api_cd.yaml` runs on pushes to `main` that change the API and on manual
-dispatch. It builds one image in GHCR, then updates every service to that tag.
-A PRE_DEPLOY job runs `/usr/local/bin/migrate` with `DATABASE_MIGRATION_URL`
-before the new services start. The workflow reads secrets from Infisical
-(Desktop App Backend, `prod`, `/founder-hub`) through GitHub OIDC, and gives each
-service only its role's secrets. A deploy replaces instances, so it ends active
-live-transcription streams.
-
-Deploys are off unless the repository variable `API_DEPLOY_ENABLED` is `true`.
-While they are off, `api_cd.yaml` runs its `pause` job instead, which archives
-the app (App Platform maintenance `archive`) so no container runs. Setting the
-variable to `true` and dispatching `api_cd.yaml` deploys and unarchives it.
+dispatch when `API_DEPLOY_ENABLED` is `true`. It authenticates to GCP via
+keyless GitHub Actions Workload Identity Federation, builds and pushes one
+`linux/amd64` image to Artifact Registry
+(`us-west1-docker.pkg.dev/shots-founder-hub-prod/shots-founder-hub/founder-hub-api`),
+runs the Cloud Run Job `founder-hub-api-migrate` (`/usr/local/bin/migrate` with
+`DATABASE_MIGRATION_URL`), and then deploys `founder-hub-api` running as
+`sa-api-runtime@shots-founder-hub-prod.iam.gserviceaccount.com`.

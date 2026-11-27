@@ -146,7 +146,7 @@ if [[ "$SKIP_GCP" != "true" ]]; then
       fail "Workload Identity Provider github-actions-pool/github-oidc missing"
     fi
 
-    for sa in sa-ci-runner sa-deploy sa-meet-worker; do
+    for sa in sa-ci-runner sa-deploy sa-api-runtime sa-meet-worker; do
       email="${sa}@${PROJECT_ID}.iam.gserviceaccount.com"
       if gcloud iam service-accounts describe "$email" --project="$PROJECT_ID" >/dev/null 2>&1; then
         pass "Service account exists: ${email}"
@@ -187,11 +187,11 @@ if [[ "$SKIP_HTTP" != "true" ]]; then
     fi
   done
 
-  core_status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "${API_ORIGIN}/health/ready/core" || echo "000")"
-  if [[ "$core_status" == "200" ]]; then
-    pass "${API_ORIGIN}/health/ready/core returned HTTP 200"
+  api_status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "${API_ORIGIN}/health/ready/api" || echo "000")"
+  if [[ "$api_status" == "200" ]]; then
+    pass "${API_ORIGIN}/health/ready/api returned HTTP 200"
   else
-    fail "${API_ORIGIN}/health/ready/core returned HTTP ${core_status} (expected 200)"
+    fail "${API_ORIGIN}/health/ready/api returned HTTP ${api_status} (expected 200)"
   fi
 fi
 
