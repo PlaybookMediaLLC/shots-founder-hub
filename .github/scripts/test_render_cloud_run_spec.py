@@ -51,9 +51,11 @@ class CloudRunSpecTests(unittest.TestCase):
         envs = self.service_envs()
         self.assertEqual(envs["ANARLOG_SERVICE"]["value"], "all")
         self.assertEqual(envs["ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED"]["value"], "true")
+        self.assertEqual(envs["DATABASE_MAX_CONNECTIONS"]["value"], "8")
         # Cloud Run reserves PORT and injects it from containerPort.
         self.assertNotIn("PORT", envs)
         self.assertNotIn("DATABASE_MIGRATION_URL", envs)
+        self.assertNotIn("DATABASE_POOL_URL", envs)
         self.assertNotIn("DIGITALOCEAN_ACCESS_TOKEN", envs)
 
         self.assertEqual(
@@ -84,9 +86,33 @@ class CloudRunSpecTests(unittest.TestCase):
         template = self.service["spec"]["template"]
         annotations = template["metadata"]["annotations"]
         self.assertEqual(annotations["autoscaling.knative.dev/minScale"], "1")
+        self.assertEqual(annotations["autoscaling.knative.dev/maxScale"], "5")
         self.assertEqual(annotations["run.googleapis.com/cpu-throttling"], "false")
         self.assertEqual(annotations["run.googleapis.com/sessionAffinity"], "true")
         self.assertEqual(template["spec"]["timeoutSeconds"], 3600)
+
+    def test_database_pool_url_overrides_runtime_database_url_only(self):
+        with_pool = self.secrets + [
+            {
+                "key": "DATABASE_POOL_URL",
+                "value": "postgres://pooler-only:6432/founder_hub?sslmode=require",
+            }
+        ]
+        migrate, service, plan = render_manifests(
+            image=self.image,
+            secrets=with_pool,
+            region="us-west1",
+        )
+        self.assertEqual(
+            plan[secret_id("DATABASE_URL")],
+            "postgres://pooler-only:6432/founder_hub?sslmode=require",
+        )
+        self.assertEqual(
+            plan[secret_id("DATABASE_MIGRATION_URL")],
+            "postgres://migrator-only",
+        )
+        self.assertNotIn("pooler-only", json.dumps(service))
+        self.assertNotIn("pooler-only", json.dumps(migrate))
 
     def test_migration_job_uses_migration_url_secret_only(self):
         serialized = json.dumps(self.migrate)

@@ -292,7 +292,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     --workload-identity-pool="$POOL_ID" \
     --display-name="GitHub OIDC Provider" \
     --issuer-uri="https://token.actions.githubusercontent.com" \
-    --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref" \
+    --attribute-mapping='google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref,attribute.repo_env=has(assertion.environment) ? assertion.repository + ":" + assertion.environment : ""' \
     --attribute-condition="$ATTRIBUTE_CONDITION"
 else
   if ! gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" --project="$PROJECT_ID" --location=global --workload-identity-pool="$POOL_ID" >/dev/null 2>&1; then
@@ -302,13 +302,14 @@ else
       --workload-identity-pool="$POOL_ID" \
       --display-name="GitHub OIDC Provider" \
       --issuer-uri="https://token.actions.githubusercontent.com" \
-      --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref" \
+      --attribute-mapping='google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref,attribute.repo_env=has(assertion.environment) ? assertion.repository + ":" + assertion.environment : ""' \
       --attribute-condition="$ATTRIBUTE_CONDITION"
   else
     run_cmd gcloud iam workload-identity-pools providers update-oidc "$PROVIDER_ID" \
       --project="$PROJECT_ID" \
       --location=global \
       --workload-identity-pool="$POOL_ID" \
+      --attribute-mapping='google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref,attribute.repo_env=has(assertion.environment) ? assertion.repository + ":" + assertion.environment : ""' \
       --attribute-condition="$ATTRIBUTE_CONDITION"
   fi
 fi
@@ -336,7 +337,7 @@ if [[ "$ENV_NAME" == "prod" ]]; then
   run_cmd gcloud iam service-accounts add-iam-policy-binding "$SA_DEPLOY" \
     --project="$PROJECT_ID" \
     --role="roles/iam.workloadIdentityUser" \
-    --member="principal://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/subject/repo:PlaybookMediaLLC/shots-founder-hub:environment:production"
+    --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/attribute.repo_env/PlaybookMediaLLC/shots-founder-hub:production"
 fi
 
 # 6. Print exact Google Auth Platform (OAuth Console) + Nango Cloud + Infisical checklist

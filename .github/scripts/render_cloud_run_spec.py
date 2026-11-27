@@ -15,6 +15,8 @@ SERVICE_NAME = "founder-hub-api"
 MIGRATE_JOB_NAME = "founder-hub-api-migrate"
 PORT = 3001
 SECRET_PREFIX = "founder-hub-api-"
+MAX_SCALE = "5"
+DATABASE_MAX_CONNECTIONS = "8"
 
 
 def secret_id(env_key):
@@ -23,6 +25,19 @@ def secret_id(env_key):
 
 def build_secret_plan(secrets):
     runtime_secrets = select("all", secrets)
+    pool_url = next(
+        (
+            item.get("value")
+            for item in secrets
+            if item["key"] == "DATABASE_POOL_URL" and item.get("value")
+        ),
+        None,
+    )
+    if pool_url:
+        # Route runtime queries through the connection pooler when configured,
+        # while keeping DATABASE_MIGRATION_URL on the direct non-pooled endpoint.
+        runtime_secrets["DATABASE_URL"] = pool_url
+
     migration_url = next(
         (
             item.get("value")
@@ -41,12 +56,18 @@ def build_secret_plan(secrets):
 
 
 def _gcloud(args, input_bytes=None, check=True):
-    return subprocess.run(
+    result = subprocess.run(
         ["gcloud", *args],
         input=input_bytes,
         capture_output=True,
-        check=check,
+        check=False,
     )
+    if check and result.returncode != 0:
+        err = result.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(
+            f"gcloud {' '.join(args[:3])} failed (exit {result.returncode}): {err}"
+        )
+    return result
 
 
 def sync_secret_manager(secret_plan, project):
@@ -145,6 +166,7 @@ def render_manifests(
     runtime_env = [
         {"name": "ANARLOG_SERVICE", "value": "all"},
         {"name": "ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED", "value": "true"},
+        {"name": "DATABASE_MAX_CONNECTIONS", "value": DATABASE_MAX_CONNECTIONS},
     ]
     for key in sorted(runtime_secrets):
         sid = secret_id(key)
@@ -178,7 +200,7 @@ def render_manifests(
                 "metadata": {
                     "annotations": {
                         "autoscaling.knative.dev/minScale": "1",
-                        "autoscaling.knative.dev/maxScale": "10",
+                        "autoscaling.knative.dev/maxScale": MAX_SCALE,
                         "run.googleapis.com/execution-environment": "gen2",
                         "run.googleapis.com/cpu-throttling": "false",
                         "run.googleapis.com/startup-cpu-boost": "true",
