@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { env } from "@/env";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { isTelemetryPrivateLocation } from "@/lib/auth-route-privacy";
 import {
@@ -13,8 +14,9 @@ import { PostHogProvider } from "@/providers/posthog";
 import { bootstrapBrowserTelemetry, stopBrowserTelemetry } from "@/telemetry";
 
 const GOOGLE_TAG_ID = "google-tag";
-const GOOGLE_ANALYTICS_ID = "G-4CDGPKJ8JB";
-const GOOGLE_ADS_ID = "AW-18481972229";
+const GOOGLE_ANALYTICS_ID = env.VITE_GOOGLE_ANALYTICS_ID;
+const GOOGLE_ADS_ID = env.VITE_GOOGLE_ADS_ID;
+const GOOGLE_PRIMARY_TAG_ID = GOOGLE_ANALYTICS_ID ?? GOOGLE_ADS_ID;
 const MICROSOFT_CLARITY_SCRIPT_ID = "microsoft-clarity-script";
 const MICROSOFT_CLARITY_TAG_ID = "wcjttoibok";
 
@@ -32,6 +34,7 @@ type AnalyticsWindow = Window &
 function GoogleAnalyticsScript() {
   useMountEffect(() => {
     if (
+      !GOOGLE_PRIMARY_TAG_ID ||
       typeof document === "undefined" ||
       import.meta.env.DEV ||
       hasGlobalPrivacyControl() ||
@@ -53,24 +56,30 @@ function GoogleAnalyticsScript() {
       };
     const gtag = analyticsWindow.gtag;
     gtag("js", new Date());
-    gtag("config", GOOGLE_ANALYTICS_ID, {
-      send_page_view: false,
-    });
-    gtag("config", GOOGLE_ADS_ID, {
-      send_page_view: false,
-    });
+    if (GOOGLE_ANALYTICS_ID) {
+      gtag("config", GOOGLE_ANALYTICS_ID, {
+        send_page_view: false,
+      });
+    }
+    if (GOOGLE_ADS_ID) {
+      gtag("config", GOOGLE_ADS_ID, {
+        send_page_view: false,
+      });
+    }
 
     setGoogleAnalyticsDisabled(false);
 
     if (!document.getElementById(GOOGLE_TAG_ID)) {
-      gtag("event", "page_view", {
-        page_location: `${window.location.origin}${window.location.pathname}`,
-        page_path: window.location.pathname,
-      });
+      if (GOOGLE_ANALYTICS_ID) {
+        gtag("event", "page_view", {
+          page_location: `${window.location.origin}${window.location.pathname}`,
+          page_path: window.location.pathname,
+        });
+      }
 
       const script = document.createElement("script");
       script.id = GOOGLE_TAG_ID;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GOOGLE_PRIMARY_TAG_ID)}`;
       script.async = true;
       document.head.appendChild(script);
     }
@@ -183,7 +192,7 @@ function PrivateAnalyticsGuard() {
 }
 
 function setGoogleAnalyticsDisabled(disabled: boolean) {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !GOOGLE_ANALYTICS_ID) {
     return;
   }
   (window as unknown as Record<string, unknown>)[

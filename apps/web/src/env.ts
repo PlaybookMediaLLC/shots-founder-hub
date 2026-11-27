@@ -27,9 +27,11 @@ export const env = createEnv({
       : z.string().min(1),
     VITE_API_URL: isDev
       ? z.string().default("http://localhost:3001")
-      : z.string().default("https://api.anarlog.so"),
+      : z.string().default("https://founder-hub-api.shots.playbookmedia.io"),
     VITE_POSTHOG_API_KEY: requiredInProd(z.string().min(1)),
     VITE_POSTHOG_HOST: z.string().default("https://us.i.posthog.com"),
+    VITE_GOOGLE_ANALYTICS_ID: z.string().min(1).optional(),
+    VITE_GOOGLE_ADS_ID: z.string().min(1).optional(),
     VITE_OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
     VITE_OTEL_SAMPLE_RATE: z.coerce.number().int().positive().default(10),
     VITE_SENTRY_DSN: z.string().min(1).optional(),

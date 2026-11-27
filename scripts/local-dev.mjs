@@ -271,6 +271,7 @@ function serviceEnv(config) {
     ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED: "false",
     RESEND_API_KEY: "local-unused",
     RESEND_FROM_EMAIL: "Founder Hub <dev@example.test>",
+    GOOGLE_DRIVE_PICKER_REDIRECT_URI: `${urls.web}/app/google-drive-picker`,
   };
 }
 

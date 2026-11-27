@@ -75,6 +75,15 @@ The integrations below are present in the code. Their presence does not establis
 
 Requests sent to providers you connect directly are governed by your arrangements with those providers. This draft does not make an unverified promise about their retention, training, or data-transfer practices.
 
+### Google API Services User Data Policy (Limited Use)
+
+When you connect Google Calendar, Google Drive, or Google Meet to Shots Founder Hub, Playbook’s use and transfer of information received from Google APIs to any other app will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements:
+
+- **Google Calendar (`calendar.readonly`, `calendar.events.readonly`):** Used solely to display upcoming meetings, reminders, and participant context in your app. Shots Founder Hub does not create, modify, or delete Google Calendar events.
+- **Google Drive (`drive.file`):** Used solely to export meeting notes and transcripts to the specific folder you explicitly select via the Google Drive folder picker. Shots Founder Hub does not read or modify unrelated Drive files.
+- **Google Meet (`meetings.space.readonly`):** Used solely to import meeting transcripts you authorize into your notes.
+- **No advertising or AI model training:** Google Workspace user data is never sold, used for serving advertisements, or used to train generalized AI/ML models.
+
 ## 7. Analytics and device controls
 
 The application includes usage-data settings. The website includes controls for non-essential tracking, including Global Privacy Control handling. Error reporting and usage analytics can have different settings and data paths; review the controls available on the surface you use.

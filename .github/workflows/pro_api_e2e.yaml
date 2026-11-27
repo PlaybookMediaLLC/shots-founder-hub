@@ -35,10 +35,11 @@ jobs:
           infisical run \
             --token="$INFISICAL_TOKEN" \
             --env=dev \
-            --projectId=87dad7b5-72a6-4791-9228-b3b86b169db1 \
+            --projectId="$INFISICAL_PROJECT_ID" \
             --path=/anarlog/stt \
             -- cargo test -p transcribe-proxy --test pro_api_e2e -- --ignored --nocapture
         env:
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID || secrets.INFISICAL_PROJECT_ID }}
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_STT_TOKEN }}
 
   pro-intelligence:
@@ -58,8 +59,9 @@ jobs:
           infisical run \
             --token="$INFISICAL_TOKEN" \
             --env=dev \
-            --projectId=87dad7b5-72a6-4791-9228-b3b86b169db1 \
+            --projectId="$INFISICAL_PROJECT_ID" \
             --path=/anarlog/llm \
             -- cargo test -p llm-proxy --test proxy_e2e proxy_e2e::openrouter -- --ignored --nocapture
         env:
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID || secrets.INFISICAL_PROJECT_ID }}
           INFISICAL_TOKEN: ${{ secrets.INFISICAL_LLM_TOKEN }}

@@ -14,7 +14,7 @@ vi.mock("@anlg/api-client", () => ({
 vi.mock("@anlg/plugin-opener2", () => ({ commands: { openUrl: mocks.open } }));
 vi.mock("~/shared/utils", () => ({
   buildWebAppUrl: async () =>
-    "https://anarlog.so/app/google-drive-picker?flow=desktop&scheme=anarlog-dev",
+    "https://shots.playbookmedia.io/app/google-drive-picker?flow=desktop&scheme=anarlog-dev",
 }));
 
 beforeEach(() => {
