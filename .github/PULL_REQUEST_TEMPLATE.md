@@ -13,11 +13,15 @@ Title: state the intended outcome with a specific action. For example, use
 ## Demo
 
 <!--
-Attach a short screen recording or GIF (drag the file into this box, or paste a Loom/YouTube link) showing the problem and the fix in action.
+Mandatory for all pull requests (see AGENTS.md and .agents/skills/pr-video-evidence/SKILL.md).
 
-Docs-only or non-functional changes (formatting, comments, CI/config with no behavior change) can skip the video: write "N/A" plus one line on why nothing user-facing changed.
+Generate narrated, visually annotated H.264/AAC 1920x1080 @ 30fps video evidence of the running application using `pnpm devx:video-evidence`, attach the playable recording in the review thread, and paste the accessible recording link plus the generated narrated verification summary below.
+
+For genuinely non-demonstrable changes (e.g. docs-only or mechanical config changes with no behavioral impact), run `pnpm devx:video-evidence exempt`, write `N/A — <reason>` here, and include equivalent verification artifacts.
 -->
 
 ## Verification
 
-<!-- List the commands and manual checks you ran. -->
+<!--
+List the automated commands and independent engineering review results executed against the current commit SHA, and include the machine-checked pr-video-evidence metadata block emitted by `pnpm devx:video-evidence`.
+-->
