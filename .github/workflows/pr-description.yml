@@ -183,7 +183,7 @@ jobs:
                 .join("\n")
                 .trim();
           const videoLinkPattern = /\bhttps?:\/\/[^\s<>"\x60]+/i;
-          const naSkipPattern = /^n\/a\b[ \t]*(?:[-,:—–][ \t]*)?[^\s,:—–-][^\r\n]*$/i;
+          const naSkipPattern = /^n\/a\b[ \t]*(?:[-,:—–][ \t]*)?[^\s,:—–-][^\r\n]*(?:\r?\n[\s\S]*)?$/i;
 
           if (demoIndex === -1 || demoText.length === 0) {
             errors.push(

@@ -31,6 +31,7 @@ test("accepts a visible demo link or an N/A reason", () => {
     "N/A docs only",
     "N/A: docs",
     "N/A — CI only",
+    "N/A — docs-only policy update\n\n### Equivalent verification artifacts\n\n- dprint check passed",
   ]) {
     const result = validate(demo);
     assert.equal(result.status, 0, `${demo}\n${result.stderr}`);
