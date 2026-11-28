@@ -118,8 +118,8 @@ mod tests {
             ),
             ("", "wss://streaming.assemblyai.com/v3/ws", vec![]),
             (
-                "https://founder-hub-api.shots.playbookmedia.io?provider=assemblyai",
-                "wss://founder-hub-api.shots.playbookmedia.io/listen",
+                "https://hub.usedante.app?provider=assemblyai",
+                "wss://hub.usedante.app/listen",
                 vec![("provider", "assemblyai")],
             ),
             (

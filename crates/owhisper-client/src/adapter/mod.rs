@@ -355,10 +355,11 @@ pub(crate) fn host_matches(base_url: &str, predicate: impl Fn(&str) -> bool) -> 
         .unwrap_or(false)
 }
 
-const ANARLOG_PROXY_HOST: &str = "founder-hub-api.shots.playbookmedia.io";
+const ANARLOG_PROXY_HOSTS: &[&str] =
+    &["hub.usedante.app", "founder-hub-api.shots.playbookmedia.io"];
 
 fn is_anarlog_cloud_host(host: &str) -> bool {
-    host == ANARLOG_PROXY_HOST
+    ANARLOG_PROXY_HOSTS.contains(&host)
 }
 
 fn is_anarlog_cloud(base_url: &str) -> bool {

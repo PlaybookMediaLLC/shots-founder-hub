@@ -206,11 +206,8 @@ mod tests {
         let url = adapter.build_ws_url(API_BASE, &params, 1);
         assert!(!url.as_str().contains("redemption_time_ms="));
 
-        let url = adapter.build_ws_url(
-            "https://founder-hub-api.shots.playbookmedia.io/stt?provider=deepgram",
-            &params,
-            1,
-        );
+        let url =
+            adapter.build_ws_url("https://hub.usedante.app/stt?provider=deepgram", &params, 1);
         assert!(url.as_str().contains("provider=deepgram"));
     }
 }

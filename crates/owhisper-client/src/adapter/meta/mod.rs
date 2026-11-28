@@ -105,8 +105,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://founder-hub-api.shots.playbookmedia.io?provider=meta",
-                "wss://founder-hub-api.shots.playbookmedia.io/listen",
+                "https://hub.usedante.app?provider=meta",
+                "wss://hub.usedante.app/listen",
                 vec![("provider", "meta")],
             ),
         ] {

@@ -176,8 +176,8 @@ mod tests {
                 vec![("foo", "bar")],
             ),
             (
-                "https://founder-hub-api.shots.playbookmedia.io/stt?provider=smallestai",
-                "wss://founder-hub-api.shots.playbookmedia.io/stt/listen",
+                "https://hub.usedante.app/stt?provider=smallestai",
+                "wss://hub.usedante.app/stt/listen",
                 vec![("provider", "smallestai")],
             ),
             (

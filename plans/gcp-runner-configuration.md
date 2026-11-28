@@ -12,7 +12,7 @@
 | **OAuth Client (`google-calendar`)** | `309614338372-bf0tmjalveh5r6muadftlai0u95ts51g.apps.googleusercontent.com` |
 | **OAuth Client (`google-drive`)** | `309614338372-fbgu65hk1152l1plu6ljpqdq3p2ofted.apps.googleusercontent.com` |
 | **OAuth Client (`google-meet`)** | `309614338372-6jlllki6bv17e8gsq8fbfn0bqv9ghaie.apps.googleusercontent.com` |
-| **Nango Cloud (`prod`)** | Environment ID `58b2a4bc-dc31-456e-af8d-6abc2fd67460` (`https://shots.playbookmedia.io/oauth/callback`, `https://founder-hub-api.shots.playbookmedia.io/nango/webhook`) |
+| **Nango Cloud (`prod`)** | Environment ID `58b2a4bc-dc31-456e-af8d-6abc2fd67460` (`https://shots.playbookmedia.io/oauth/callback`, `https://hub.usedante.app/nango/webhook`) |
 | **Infisical (`Desktop App Backend`)** | Project ID `04ebc1cf-0ec5-4e9e-8ab9-4c6da4252574`, folder `prod` -> `/founder-hub`, OIDC Machine Identity `ff0e209b-9fe1-4a6c-aeef-e78ee1623967` (`founder-hub-github-production`) |
 
 ## Confirmed Decisions
@@ -35,7 +35,7 @@
   - `/app/integration` — desktop/web Nango connect handoff.
   - `/app/google-drive-picker` — direct Google OnePick PKCE folder selection callback (`GOOGLE_DRIVE_PICKER_REDIRECT_URI`).
   - `/privacy` and `/terms` — public legal notices required for Google OAuth verification.
-- **Founder Hub API (`founder-hub-api.shots.playbookmedia.io` — Google Cloud Run `founder-hub-api` in `shots-founder-hub-prod` / `us-west1`; DigitalOcean App Platform kept off)** handles Nango sessions, HMAC-verified webhooks (`/nango/webhook`), proxied Calendar/Drive/Meet API calls, and direct Google Drive OnePick PKCE exchange (`/nango/google-drive/picker-start`, `/nango/google-drive/picker-complete`).
+- **Founder Hub API (`hub.usedante.app` — Google Cloud Run `founder-hub-api` in `shots-founder-hub-prod` / `us-west1`; DigitalOcean App Platform kept off)** handles Nango sessions, HMAC-verified webhooks (`/nango/webhook`), proxied Calendar/Drive/Meet API calls, and direct Google Drive OnePick PKCE exchange (`/nango/google-drive/picker-start`, `/nango/google-drive/picker-complete`).
 - **GCP Runner Infrastructure (Track B)** provides keyless GitHub Actions OIDC via Workload Identity Federation (WIF), Artifact Registry (`us-west1`), Secret Manager, and least-privilege Service Accounts (`sa-ci-runner`, `sa-deploy`, `sa-api-runtime`, `sa-meet-worker`) with zero static JSON keys.
 
 ---
@@ -117,7 +117,7 @@ Complete the following in **Google Cloud Console -> Google Auth Platform** for `
      - `google-calendar` -> `shots-founder-hub-calendar` (scopes: `calendar.readonly`, `calendar.events.readonly`)
      - `google-drive` -> `shots-founder-hub-drive` (scope: **strictly** `https://www.googleapis.com/auth/drive.file` alone — `google_drive_oauth.rs` rejects extra scopes)
      - `google-meet` -> `shots-founder-hub-meet` (scopes: `meetings.space.readonly`, `openid`, `userinfo.email`, `userinfo.profile`)
-   - Configure **Webhook URL** -> `https://founder-hub-api.shots.playbookmedia.io/nango/webhook` (Auth + Forward webhooks) and copy the HMAC signing key.
+   - Configure **Webhook URL** -> `https://hub.usedante.app/nango/webhook` (Auth + Forward webhooks) and copy the HMAC signing key.
 2. **Infisical & Google Cloud Run (`founder-hub-api`, DigitalOcean off):**
    - Secrets live in Infisical `Desktop App Backend` (`04ebc1cf-0ec5-4e9e-8ab9-4c6da4252574`) -> `prod` -> `/founder-hub` (read via OIDC Machine Identity `ff0e209b-9fe1-4a6c-aeef-e78ee1623967`) and are synced into GCP Secret Manager on deploy:
      - `NANGO_API_KEY`
