@@ -288,9 +288,11 @@ for review. Review-only subagents must not recursively initiate this workflow.
    produce a concise (typically 30–120 s) MP4 (`H.264` video + `AAC` audio,
    default `1920x1080` at `30 fps`, minimum enforced `1280x720` at `24 fps`,
    `+faststart`, no background music or decorative transitions) featuring:
-   - Synchronized spoken narration (Kokoro local TTS by default, with local
-     `espeak-ng` fallback or explicitly authorized cloud TTS) strictly
-     describing verified observed behavior.
+   - Natural, human-sounding synchronized spoken narration (Kokoro ONNX neural
+     TTS by default at `1.0x` cadence with natural sentence pauses and `-16 LUFS`
+     speech mastering, or an explicitly authorized neural cloud TTS such as
+     OpenAI `gpt-4o-mini-tts`; robotic formant synthesizers like `espeak-ng` are
+     disallowed) strictly describing verified observed behavior.
    - Visible cursor movements, click indicators, element bounding-box
      highlights, restrained zooms where needed for readability, and legible
      synchronized captions (burned in plus `.srt`/`.vtt`).

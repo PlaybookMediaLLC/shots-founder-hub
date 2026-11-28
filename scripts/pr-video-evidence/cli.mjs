@@ -618,7 +618,8 @@ function parseCliArgs(argv) {
       branch: { type: "string" },
       reason: { type: "string" },
       artifact: { type: "string", multiple: true, default: [] },
-      "auto-download": { type: "boolean", default: false },
+      "auto-download": { type: "boolean", default: true },
+      "no-auto-download": { type: "boolean", default: false },
     },
     strict: true,
     allowPositionals: false,
@@ -637,7 +638,7 @@ function parsePositiveIntOption(raw, flagName) {
 async function runRecord(options) {
   if (!options.plan) {
     throw new Error(
-      "Usage: pnpm devx:video-evidence --plan <plan.json> [--out-dir <dir>] [--tts-provider auto|kokoro|espeak|openai] [--video-url <https-url>] [--pr-number <N>]",
+      "Usage: pnpm devx:video-evidence --plan <plan.json> [--out-dir <dir>] [--tts-provider auto|kokoro|openai] [--video-url <https-url>] [--pr-number <N>]",
     );
   }
 
@@ -698,9 +699,9 @@ async function runRecord(options) {
     "--voice",
     options.voice || plan.voice || "af_heart",
     "--speed",
-    String(options.speed || plan.speed || 1.02),
+    String(options.speed || plan.speed || 1.0),
   ];
-  if (options["auto-download"]) ttsArgs.push("--auto-download");
+  if (options["no-auto-download"]) ttsArgs.push("--no-auto-download");
   execFileSync("python3", ttsArgs, { stdio: "inherit", timeout: 300_000 });
 
   const ttsManifestPath = path.join(audioDir, "tts-manifest.json");

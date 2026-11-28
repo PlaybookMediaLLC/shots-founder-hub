@@ -23,6 +23,8 @@ const EVIDENCE_BINARY_RE =
   /(?:^|\/)(?:trace\.zip|.*\.(?:wav|mp3|aac|flac|ogg))$/i;
 const EVIDENCE_PATH_HINT_RE =
   /(?:^|\/)(?:\.tmp|pr-video-evidence|pr-evidence|playwright-report|test-results)\//i;
+const ALLOWED_NEURAL_TTS_RE =
+  /^(?:kokoro(?:-onnx)?|openai:[a-z0-9._-]+|elevenlabs(?::[a-z0-9._-]+)?|cartesia(?::[a-z0-9._-]+)?|deepgram(?::[a-z0-9._-]+)?|piper(?::[a-z0-9._-]+)?|human-recorded)$/i;
 const AUTOMATED_RELEASE_BRANCH_RE = /^chore\/linux-packages-/;
 const AUTOMATED_RELEASE_ALLOWED_PATH_RE =
   /^(?:packaging\/aur\/shots-founder-hub-bin\/|apps\/web\/public\/apt\/)/;
@@ -713,9 +715,12 @@ export function validateEvidenceManifest(
           "video.has_captions must be true (legible synchronized captions are required).",
         );
       }
-      if (!isNonEmptyString(video.tts_provider)) {
+      if (
+        !isNonEmptyString(video.tts_provider) ||
+        !ALLOWED_NEURAL_TTS_RE.test(video.tts_provider.trim())
+      ) {
         errors.push(
-          "video.tts_provider must identify the TTS provider used (e.g. kokoro-onnx).",
+          `video.tts_provider must be a human-sounding neural TTS or recorded voice (e.g. kokoro-onnx, openai:gpt-4o-mini-tts, elevenlabs, human-recorded); robotic synthesizers such as espeak-ng are not permitted (got "${video.tts_provider ?? ""}").`,
         );
       }
       if (!isNonEmptyString(video.sha256) || !SHA256_RE.test(video.sha256)) {
