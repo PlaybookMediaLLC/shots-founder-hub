@@ -1,41 +1,43 @@
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
 
-Origin: Anarlog
-Label: Anarlog
+Origin: Shots Founder Hub
+Label: Shots Founder Hub
 Suite: stable
 Codename: stable
-Version: 1.4.34
-Date: Thu, 29 Oct 2026 07:44:18 GMT
+Version: 1.5.1
+Date: Mon, 16 Nov 2026 06:05:55 GMT
 Architectures: amd64 arm64
 Components: main
-Description: Anarlog stable desktop releases
+Description: Shots Founder Hub stable desktop releases
 MD5Sum:
- e0a3b32c0761aa32e16962efbd0e3530 638 main/binary-amd64/Packages
- 92594b03c85ca7603e8ae4b294716014 433 main/binary-amd64/Packages.gz
- f7a66b2eb3f31f44820e6455246b371c 638 main/binary-arm64/Packages
- df627eeeb45e361a3a005c699ef081da 432 main/binary-arm64/Packages.gz
+ 2830f741d7cb010601f1b0bbaf113944 666 main/binary-amd64/Packages
+ 045e6502eac1e13cde38e0ab3b909805 448 main/binary-amd64/Packages.gz
+ 10489a5e73c816b0170f5f3e9699bee9 666 main/binary-arm64/Packages
+ 2ab6a36b2f7cc4dab1e0c02b9287c0a5 449 main/binary-arm64/Packages.gz
 SHA1:
- 1acdb1aecbd23e249ad48ec93079633ff62eb025 638 main/binary-amd64/Packages
- cc5ad2deff0f2c325fee6981bf94017fba1764a2 433 main/binary-amd64/Packages.gz
- fcc1e5ef62e0a835291914de6f2a78d2c192d1f1 638 main/binary-arm64/Packages
- 69047a4ae2a1193e3fdc3f5acc8b40cb2b061bf4 432 main/binary-arm64/Packages.gz
+ b66a6d7fef36edb1910ebdfb3a6aa461dcf03153 666 main/binary-amd64/Packages
+ b3df333f5ef9ac589c216034707addfa63b9e8e9 448 main/binary-amd64/Packages.gz
+ 2168629a598d260d912c5322165844cd31f7d4ab 666 main/binary-arm64/Packages
+ 96a5821fc51f49843e7ae8a2c93a134f2933e3b3 449 main/binary-arm64/Packages.gz
 SHA256:
- 4b8769b670a3e61e2bc32e2635e49afe0dc452c46ed9d967636528ec7722542d 638 main/binary-amd64/Packages
- 8336953dd5a96cfff63cbdeaa48817e5be2edb25d0e0c2b3191b6b96f632a193 433 main/binary-amd64/Packages.gz
- be23be6d400f0cb81da7ba6fa5c6f89bdd922aacafa7a3551d55b670e918d3c2 638 main/binary-arm64/Packages
- 21acc494c6aac721756f672f5015a2296a86fdf23a0b8a5756f1b772e092499c 432 main/binary-arm64/Packages.gz
+ e079baec3d077415146688f5500be135c02df4c62c02285ff05b4eec32f66b20 666 main/binary-amd64/Packages
+ cb1ad8279f3d45f835860675587d3c352e8ac453e5e85690337d68a0d9d23401 448 main/binary-amd64/Packages.gz
+ 94412e8a1dafa6ad76a6fc7440bec5842d2ae29086acaff4099e1e2f354ed4a5 666 main/binary-arm64/Packages
+ f5cc10d51e215f9daf2aa98483663d6b26f2af99994cc9ab0f1c1772c1a2d0d6 449 main/binary-arm64/Packages.gz
 -----BEGIN PGP SIGNATURE-----
 
-iQGzBAEBCgAdFiEEJ1B7jKGV92hWmxTHGO3nP4OmCy0FAmri+bsACgkQGO3nP4Om
-Cy0+Cwv8DzEucV/qD8mPxvHVUd0gbtxl7Jxqy6hW8dVslrtg6V3yakY6vYXqPO/w
-pRpxfHuIs2K0Eia3xY4dRAP32mJLSAfYWe3tMeO6l1EfGKK0whGCmHXFCveWQ5s+
-TfiqRuFMI2xOl8xxOdt1doDptTvA8VcKU9sUcOVcbjeKZwGzC/mw00HoZeyOcVHB
-FMoZ9Paw8lIPBhT8G5XgXfLbtHiFKHWCmar8PEphvjwN5t44N210bXNFVjWf5ffO
-inXGmXDdkuGtWbEBVEeG4ZnZKvU+glO/nLEIepFrhSm2dblqHSzRA+SGyJW10RgH
-I6sxg+L1/62LDbj4Rgwp0H9aYLwBkcAr4/Ee2IvZjh1sYgyHzxFzYcAMmRRMCHRg
-GSyGOGxQaG83W/gPvx61aOM+QQtbNat79bOrI4ovg1zS5nCG/Mb3a1qkZmCfyZ15
-o+uVoPE1DOOkWapp4K8Vet5Ue0GwLiMS/lcUoUZ8u2s+pJLBLqQ4CY8nijP8+rAz
-qNVi5ISH
-=ltHX
+iQIzBAEBCgAdFiEEm/6/ef85ucgOG6YV+OWRf93MGkgFAmr6nWYACgkQ+OWRf93M
+GkhhVxAAsSgud/HPSvkGU+tr3l1fYl113CyQA9eLC9fbBRmUdu+IjO435R9qpkVd
+DGDPs5GCqMGMmWSun4+ti1Pgg+0pw30TVEDSk3bTjxrLv25rWQ1IFrbVN0tUIkP7
+V6LhW7C6/vDN11ftlvZZGFqqIYNwdq6GliImD3hcLCmPpvT37BW/v6eaKBKWw3nk
+nZbltnZAPtRmsN5BzlAZ4bnfT9an20V16B6BYOyp1rIkNFMGVnkYhTo95hIfeB/Y
+UoSsfcInIA6ifX3X2UFLj0WvPislblc+R68CukUZPSZrH5IohXNF1Heb/XTP4E14
+Pepwn2nVbIsKOlO3TnY9O3xHBb3h1aliAGeMVxyEvV899CNxeEGU2Ia1sEqDgFy1
+mP/SMJ74LTZyVb1vUSsvQu73cXUVafgUiBlVCxC8VNwSn3QrnbP+ksKBNTuwE1uQ
+s91tNT/h1dRh3PglsuXY24IFg4L8VV5aWe6prdR3TJlG8RxyugC+BQh7hfLKBpYl
+o5UGmwWAmUB47ZjCjjOA2I1RMZsRDXIyolgvK8Qr7gZbpAmHDDN+euWv5rnCDjkU
+8bK2+E7qDHivN18jkbGrYTIJLhfLvPsemyTOU9oKRlt3c1upZzmbeoE/I4SjI4ez
+wydgM2AHnNqf60BAbHj5hLOGnMeaQn4mpT9hgvSbSqlmzl3Y7NY=
+=SuG6
 -----END PGP SIGNATURE-----

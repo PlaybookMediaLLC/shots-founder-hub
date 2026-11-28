@@ -12,12 +12,6 @@ use crate::provider_selector::ProviderSelector;
 pub const DEFAULT_CONNECT_TIMEOUT_MS: u64 = 7 * 1000;
 
 #[derive(Clone)]
-pub struct SupabaseConfig {
-    pub url: Option<String>,
-    pub service_role_key: Option<String>,
-}
-
-#[derive(Clone)]
 pub struct CallbackConfig {
     pub api_base_url: Option<String>,
     pub secret: Option<String>,
@@ -31,12 +25,12 @@ pub struct SttProxyConfig {
     pub analytics: Option<Arc<dyn SttAnalyticsReporter>>,
     pub upstream_urls: HashMap<Provider, String>,
     pub anarlog_routing: Option<AnarlogRoutingConfig>,
-    pub supabase: SupabaseConfig,
+    pub jobs: Option<crate::jobs::JobStore>,
     pub callback: CallbackConfig,
 }
 
 impl SttProxyConfig {
-    pub fn new(env: &Env, supabase: &anlg_api_env::SupabaseEnv) -> Self {
+    pub fn new(env: &Env) -> Self {
         Self {
             api_keys: ApiKeys::from(&env.stt).0,
             default_provider: Provider::Deepgram,
@@ -44,15 +38,21 @@ impl SttProxyConfig {
             analytics: None,
             upstream_urls: HashMap::new(),
             anarlog_routing: None,
-            supabase: SupabaseConfig {
-                url: Some(supabase.supabase_url.clone()),
-                service_role_key: Some(supabase.supabase_service_role_key.clone()),
-            },
+            jobs: None,
             callback: CallbackConfig {
                 api_base_url: Some(env.callback.api_base_url.clone()),
                 secret: env.callback.callback_secret.clone(),
             },
         }
+    }
+
+    pub fn with_job_store(
+        mut self,
+        database: anlg_cloud_db::Database,
+        storage: anlg_r2_storage::Storage,
+    ) -> Self {
+        self.jobs = Some(crate::jobs::JobStore::new(database, storage));
+        self
     }
 
     pub fn with_default_provider(mut self, provider: Provider) -> Self {

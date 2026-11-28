@@ -49,16 +49,6 @@ use projection::{fetch_workspace_projection, validate_workspace_projection};
 use token::{E2eeCreateTokenRequest, LegacyCreateTokenRequest, mint_cloudsync_token, token_expiry};
 use transport::{client_accepts_replica_transport, resolve_desktop_transport};
 
-#[cfg(test)]
-pub(super) use identity::{DEVICE_FINGERPRINT_HEADER, DEVICE_NAME_HEADER};
-#[cfg(test)]
-pub(super) use projection::{
-    MAX_TOKEN_ATTRIBUTES_BYTES, MAX_TOKEN_WORKSPACES, WORKSPACE_PROJECTION_SELECT,
-};
-#[cfg(test)]
-pub(super) use transport::CLOUDSYNC_TRANSPORTS_HEADER;
-
-const SUPABASE_REQUEST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 const CLOUDSYNC_ENCRYPTION_VERSION: u8 = 2;
 const REPLICA_CREDENTIAL_TTL_SECONDS: u64 = 15 * 60;
 pub(super) const E2EE_KEY_ID_HEADER: &str = "x-anarlog-e2ee-key-id";
@@ -235,7 +225,7 @@ async fn get_workspace_e2ee_key_recipients(
         return Err(SyncError::ProPlanRequired);
     }
     Ok(Json(
-        fetch_workspace_key_recipients(&state, &auth.token, &workspace_id).await?,
+        fetch_workspace_key_recipients(&state, &auth, &workspace_id).await?,
     ))
 }
 
@@ -267,7 +257,7 @@ async fn set_workspace_e2ee_key(
     }
     Ok((
         [(header::CACHE_CONTROL, HeaderValue::from_static("no-store"))],
-        Json(publish_workspace_e2ee_key(&state, &auth.token, &workspace_id, request).await?),
+        Json(publish_workspace_e2ee_key(&state, &auth, &workspace_id, request).await?),
     ))
 }
 
@@ -323,7 +313,7 @@ async fn issue_replica_credentials(
     let workspace_rows = fetch_workspace_projection(state, &auth).await?;
     let (personal_workspace_id, workspaces) =
         validate_workspace_projection(workspace_rows, &auth.claims.sub)?;
-    let workspace_key_grants = fetch_workspace_key_grants(state, &auth.token, &workspaces).await?;
+    let workspace_key_grants = fetch_workspace_key_grants(state, &auth, &workspaces).await?;
     let encryption_key_id =
         claim_personal_e2ee_key(state, &auth.claims.sub, requested_key_id).await?;
     claim_sync_device(state, &auth.claims.sub, headers).await?;
@@ -591,7 +581,7 @@ async fn create_credentials(
     let (personal_workspace_id, workspaces) =
         validate_workspace_projection(workspace_rows, &auth.claims.sub)?;
     let workspace_key_grants =
-        fetch_workspace_key_grants(&state.replica, &auth.token, &workspaces).await?;
+        fetch_workspace_key_grants(&state.replica, &auth, &workspaces).await?;
     let encryption_key_id =
         claim_personal_e2ee_key(&state.replica, &auth.claims.sub, requested_key_id).await?;
     claim_sync_device(&state.replica, &auth.claims.sub, &headers).await?;
@@ -637,5 +627,5 @@ async fn publish_requested_member_identity(
     let public_key = public_key
         .to_str()
         .map_err(|_| SyncError::BadRequest("E2EE member identity is invalid".to_string()))?;
-    publish_e2ee_member_identity(state, &auth.token, public_key).await
+    publish_e2ee_member_identity(state, &auth, public_key).await
 }

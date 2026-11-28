@@ -207,7 +207,7 @@ mod tests {
         assert!(!url.as_str().contains("redemption_time_ms="));
 
         let url = adapter.build_ws_url(
-            "https://api.shots.playbookmedia.io/stt?provider=deepgram",
+            "https://founder-hub-api.shots.playbookmedia.io/stt?provider=deepgram",
             &params,
             1,
         );

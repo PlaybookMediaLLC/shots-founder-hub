@@ -18,8 +18,7 @@ pub const FATHOM_OAUTH_SCOPES: &str = "public_api";
 pub const WEBEX_OAUTH_SCOPES: &str =
     "spark:people_read meeting:schedules_read meeting:transcripts_read";
 
-pub const GOOGLE_MEET_OAUTH_SCOPES: &str =
-    "https://www.googleapis.com/auth/meetings.space.readonly";
+pub const GOOGLE_MEET_OAUTH_SCOPES: &str = "https://www.googleapis.com/auth/meetings.space.readonly openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 
 pub const MICROSOFT_TEAMS_OAUTH_SCOPES: &str =
     "offline_access User.Read Calendars.Read OnlineMeetings.Read OnlineMeetingTranscript.Read.All";
@@ -242,11 +241,18 @@ mod tests {
                 .unwrap()
                 .contains("meeting:transcripts_read")
         );
-        assert!(
-            oauth_scopes_override(GoogleMeet::ID)
-                .unwrap()
-                .contains("meetings.space.readonly")
+        let google_meet = oauth_scopes_override(GoogleMeet::ID).unwrap();
+        assert!(google_meet.contains("https://www.googleapis.com/auth/meetings.space.readonly"));
+        assert!(google_meet.contains("openid"));
+        assert!(google_meet.contains("https://www.googleapis.com/auth/userinfo.email"));
+        assert!(google_meet.contains("https://www.googleapis.com/auth/userinfo.profile"));
+        assert!(!google_meet.contains("meetings.space.created"));
+        assert!(!google_meet.contains("meetings.space.settings"));
+        assert_eq!(
+            oauth_scopes_override(GoogleDrive::ID),
+            Some("https://www.googleapis.com/auth/drive.file")
         );
+        assert!(integrations_config_defaults(GoogleMail::ID).is_none());
         let teams = oauth_scopes_override(MicrosoftTeams::ID).unwrap();
         assert!(teams.contains("OnlineMeetingTranscript.Read.All"));
         assert!(teams.contains("Calendars.Read"));

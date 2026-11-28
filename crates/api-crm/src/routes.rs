@@ -70,7 +70,7 @@ pub async fn search_contacts(
 
     let http = nango_state
         .build_http_client(
-            &auth.token,
+            &auth,
             &auth.claims.sub,
             provider.nango_integration_id,
             &req.connection_id,

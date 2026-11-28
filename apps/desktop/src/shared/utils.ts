@@ -1,6 +1,6 @@
 import { getIdentifier } from "@tauri-apps/api/app";
 
-import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+import { getShotsSettingsUrl } from "@anlg/cloud-client/shots";
 
 import { beginDesktopAuth } from "~/auth/deeplink";
 import { env } from "~/env";
@@ -65,8 +65,8 @@ export const buildWebAppUrl = async (
       "/app/portal",
     ].includes(path)
   ) {
-    const { supabase } = await import("~/auth/client");
-    const result = await supabase?.auth.getSession();
+    const { cloudClient } = await import("~/auth/client");
+    const result = await cloudClient?.auth.getSession();
     if (result?.error) throw result.error;
     const userId = result?.data.session?.user.app_metadata.shots_user_id;
     if (typeof userId !== "string")

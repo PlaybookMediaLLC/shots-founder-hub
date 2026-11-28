@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
-use anlg_supabase_auth::{refresh::AuthClient, session::Session};
+use anlg_session_auth::{refresh::AuthClient, session::Session};
 use axum::{Router, extract::RawQuery, http::StatusCode, response::IntoResponse, routing::get};
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use sha2::{Digest, Sha256};
@@ -111,7 +111,7 @@ impl Shots {
         if !session.requires_refresh(SystemTime::now(), Duration::from_secs(60)) {
             return Ok(Some(session));
         }
-        let client = AuthClient::new(self.gateway(), "shots-founder-hub");
+        let client = AuthClient::new(self.gateway());
         let mut refreshed = match client
             .refresh_session(session.refresh_token().unwrap_or(""))
             .await

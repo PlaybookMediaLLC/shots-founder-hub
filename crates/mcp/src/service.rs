@@ -5,15 +5,9 @@ use rmcp::{
     },
 };
 
-const ALLOWED_HTTP_HOSTS: [&str; 7] = [
-    "localhost",
-    "127.0.0.1",
-    "::1",
-    "api.shots.playbookmedia.io",
-    "shots-founder-hub-ai.fly.dev",
-    "shots-founder-hub-gateway.fly.dev",
-    "shots-founder-hub-sync.fly.dev",
-];
+// The gateway forwards MCP requests to the App Platform services `ai` and `sync`,
+// which are reachable only inside the app's private network.
+const ALLOWED_HTTP_HOSTS: [&str; 5] = ["localhost", "127.0.0.1", "::1", "ai", "sync"];
 
 pub fn create_service<S, F>(factory: F) -> StreamableHttpService<S, LocalSessionManager>
 where

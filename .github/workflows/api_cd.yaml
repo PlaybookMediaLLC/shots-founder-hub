@@ -1,252 +1,165 @@
+# Builds the API image, pushes it to Google Artifact Registry, runs the
+# Cloud Run migration job, and deploys the combined API to Google Cloud Run
+# (shots-founder-hub-prod, us-west1). DigitalOcean App Platform remains off.
+# Secrets come from Infisical (Desktop App Backend, prod, /founder-hub) through
+# GitHub OIDC and are synced into GCP Secret Manager (never embedded inline).
+# A deploy starts only after api_ci passes on main, for the commit it tested.
+# Deploys are off unless the repository variable API_DEPLOY_ENABLED is "true".
+# The image job accepts only push runs from this repository. A fork pull
+# request can also run api_ci from a branch named main.
 on:
+  workflow_run: # zizmor: ignore[dangerous-triggers] the image job guard limits it to pushes to main here
+    workflows: [.github/workflows/api_ci.yaml]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      service:
-        type: choice
-        default: gateway
-        options: [ai, sync, core, billing, gateway]
-      image:
-        description: Existing image digest for a verified rollback or shared build
-        type: string
-        required: false
-      continuity_user:
-        description: Optional QA account for live AI or gateway deployment and rollback (requires immutable image)
-        type: string
-        required: false
-      isolated_drain_only:
-        description: Verify the deployed image shutdown in a loopback-only container without changing traffic
-        type: boolean
-        default: false
-      continuity_rollback_image:
-        description: Optional immutable rollback image already verified on an existing machine
-        type: string
-        required: false
-      adopt_drain_image:
-        description: Verified SIGUSR1-capable image digest to adopt before deployment
-        type: string
-        required: false
-
-env:
-  INFISICAL_ENV: prod
-  SERVICE: ${{ inputs.service || 'gateway' }}
-  FLY_ORG: ${{ vars.FLY_ORG }}
 
 permissions:
   contents: read
 
-jobs:
-  compute-version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-          fetch-tags: true
-      - run: git fetch --tags --force
-      - uses: $/.github/actions/doxxer_install
-      - id: version
-        run: |
-          VERSION=$(doxxer --config doxxer.api.toml next patch)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Computed version: $VERSION"
+concurrency:
+  group: api-production
+  cancel-in-progress: false
 
-  deploy:
-    needs: compute-version
+env:
+  GCP_PROJECT_ID: shots-founder-hub-prod
+  GCP_PROJECT_NUMBER: "309614338372"
+  GCP_REGION: us-west1
+  GCP_WIF_PROVIDER: projects/309614338372/locations/global/workloadIdentityPools/github-actions-pool/providers/github-oidc
+  ARTIFACT_REGISTRY: us-west1-docker.pkg.dev
+  IMAGE: us-west1-docker.pkg.dev/shots-founder-hub-prod/shots-founder-hub/founder-hub-api
+  SERVICE_NAME: founder-hub-api
+  MIGRATE_JOB_NAME: founder-hub-api-migrate
+  RUNTIME_SERVICE_ACCOUNT: sa-api-runtime@shots-founder-hub-prod.iam.gserviceaccount.com
+  HEALTH_URL: https://founder-hub-api.shots.playbookmedia.io/health
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  image:
+    if: >-
+      vars.API_DEPLOY_ENABLED == 'true' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    concurrency:
-      group: api-fly-deploy
-      cancel-in-progress: false
+    timeout-minutes: 90
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
-      - run: |
-          set -euo pipefail
-          case "$SERVICE" in
-            ai) app=shots-founder-hub-inference; config=apps/api/fly.ai.toml; health=/health/ready/ai ;;
-            sync) app=shots-founder-hub-sync; config=apps/api/fly.sync.toml; health=/health/ready/sync ;;
-            core) app=shots-founder-hub-core; config=apps/api/fly.core.toml; health=/health/ready/core ;;
-            billing) app=shots-founder-hub-billing-api; config=apps/api/fly.billing.toml; health=/health/ready/billing-unified ;;
-            gateway) app=shots-founder-hub-gateway; config=apps/api/fly.gateway.toml; health=/health/ready/api ;;
-            *) exit 1 ;;
-          esac
-          echo "FLY_APP=$app" >> "$GITHUB_ENV"
-          echo "FLY_CONFIG=$config" >> "$GITHUB_ENV"
-          echo "HEALTH_PATH=$health" >> "$GITHUB_ENV"
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+      - id: gcp-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          python-version: "3.12"
-      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
-      - uses: $/.github/actions/rust_install
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: sa-ci-runner@shots-founder-hub-prod.iam.gserviceaccount.com
+          token_format: access_token
+      - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
-          platform: linux
-      - uses: $/.github/actions/infisical_install
-      # Machine-identity OIDC login instead of a static service token: scopes
-      # live in the identity's editable project role, so secret reorganizations
-      # never require re-minting a token into GitHub secrets.
-      - run: |
-          set -euo pipefail
-          oidc_jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}" | jq -r '.value')
-          infisical_token=$(infisical login --method=oidc-auth \
-            --machine-identity-id=7dde9440-cec4-4cf0-a13f-1588ba67feb2 \
-            --jwt="$oidc_jwt" --silent --plain)
-          echo "::add-mask::$infisical_token"
-          echo "INFISICAL_TOKEN=$infisical_token" >> "$GITHUB_ENV"
-      - run: |
-          set -euo pipefail
-
-          python3 .github/scripts/test_verify_cloudsync_e2ee.py
-
-          cloudsync_secrets_json="$(mktemp)"
-          trap 'rm -f "$cloudsync_secrets_json"' EXIT
-
-          infisical export \
-            --token="$INFISICAL_TOKEN" \
-            --env="$INFISICAL_ENV" \
-            --projectId="$INFISICAL_PROJECT_ID" \
-            --path="/anarlog/cloudsync" \
-            --format=json \
-            --output-file="$cloudsync_secrets_json"
-
-          python3 .github/scripts/verify_cloudsync_e2ee.py "$cloudsync_secrets_json"
-        env:
-          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
-      - run: |
-          set -euo pipefail
-          apps="$(flyctl apps list --org "$FLY_ORG" --json)"
-          if ! jq -e --arg app "$FLY_APP" 'any(.[]; (.Name // .name) == $app)' <<< "$apps" >/dev/null; then
-            flyctl apps create "$FLY_APP" --org "$FLY_ORG" --yes
-            flyctl ips allocate-v6 --app "$FLY_APP"
-            flyctl ips allocate-v4 --shared --app "$FLY_APP"
-          fi
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - run: |
-          set -euo pipefail
-
-          ai_secrets_json="$(mktemp)"
-          cloudsync_secrets_json="$(mktemp)"
-          webhook_secrets_json="$(mktemp)"
-          secrets_file="$(mktemp)"
-          trap 'rm -f "$ai_secrets_json" "$cloudsync_secrets_json" "$webhook_secrets_json" "$secrets_file"' EXIT
-
-          infisical export \
-            --token="$INFISICAL_TOKEN" \
-            --env="$INFISICAL_ENV" \
-            --projectId="$INFISICAL_PROJECT_ID" \
-            --path="/anarlog/ai" \
-            --format=json \
-            --output-file="$ai_secrets_json"
-
-          infisical export \
-            --token="$INFISICAL_TOKEN" \
-            --env="$INFISICAL_ENV" \
-            --projectId="$INFISICAL_PROJECT_ID" \
-            --path="/anarlog/cloudsync" \
-            --format=json \
-            --output-file="$cloudsync_secrets_json"
-
-          printf '[]' > "$webhook_secrets_json"
-          if [ "$SERVICE" = billing ]; then
-            infisical export --token="$INFISICAL_TOKEN" --env=prod \
-              --projectId="$INFISICAL_PROJECT_ID" --path=/anarlog/stripe-sync \
-              --format=json --output-file="$webhook_secrets_json"
-          fi
-
-          python3 .github/scripts/prepare_api_service_secrets.py \
-            --service "$SERVICE" --api "$ai_secrets_json" \
-            --cloudsync "$cloudsync_secrets_json" --webhooks "$webhook_secrets_json" --output "$secrets_file"
-
-          if [ -s "$secrets_file" ]; then
-            flyctl secrets import --app "$FLY_APP" --stage < "$secrets_file"
-          else
-            echo "No Infisical secrets exported; skipping Fly secret import."
-          fi
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
-      - if: inputs.service == 'gateway'
-        run: |
-          set -euo pipefail
-          for entry in shots-founder-hub-inference:ai shots-founder-hub-sync:sync shots-founder-hub-core:core shots-founder-hub-billing-api:billing-api; do
-            app="${entry%%:*}"
-            role="${entry#*:}"
-            curl --fail --silent --show-error --retry 3 "https://${app}.fly.dev/health/ready/${role}"
-          done
-      - run: |
-          set -euo pipefail
-          args=(--app "$FLY_APP" --config "$FLY_CONFIG" --dockerfile apps/api/Dockerfile --version "$API_VERSION")
-          if [ -n "$DEPLOY_IMAGE" ]; then args+=(--image "$DEPLOY_IMAGE"); fi
-          if [ -n "$ADOPT_DRAIN_IMAGE" ]; then args+=(--adopt-drain-image "$ADOPT_DRAIN_IMAGE"); fi
-          if [ "$ISOLATED_DRAIN_ONLY" = true ]; then test -n "$CONTINUITY_USER"; fi
-          if [ -n "$CONTINUITY_USER" ]; then
-            case "$SERVICE" in ai|gateway) ;; *) exit 1 ;; esac
-            test -n "$DEPLOY_IMAGE"
-            qa_secrets="$(mktemp)"
-            chmod 600 "$qa_secrets"
-            trap 'rm -f "$qa_secrets"' EXIT
-            infisical export --token="$INFISICAL_TOKEN" --env="$INFISICAL_ENV" \
-              --projectId="$INFISICAL_PROJECT_ID" --path=/anarlog/ai --format=json --output-file="$qa_secrets"
-            python3 -m venv "$RUNNER_TEMP/continuity-venv"
-            "$RUNNER_TEMP/continuity-venv/bin/pip" install httpx==0.28.1 websockets==15.0.1
-            qa_args=()
-            if [ "$SERVICE" = gateway ]; then qa_args+=(--base-url https://api.shots.playbookmedia.io); fi
-            if [ "$ISOLATED_DRAIN_ONLY" = true ]; then qa_args+=(--isolated-drain-only); fi
-            if [ -n "$CONTINUITY_ROLLBACK_IMAGE" ]; then qa_args+=(--rollback-image "$CONTINUITY_ROLLBACK_IMAGE"); fi
-            if [ -n "$ADOPT_DRAIN_IMAGE" ]; then qa_args+=(--verified-image-digest "$ADOPT_DRAIN_IMAGE"); fi
-            "$RUNNER_TEMP/continuity-venv/bin/python" .github/scripts/verify_api_continuity.py "${qa_args[@]}" \
-              --app "$FLY_APP" --config "$FLY_CONFIG" --dockerfile apps/api/Dockerfile \
-              --version "$API_VERSION" --image "$DEPLOY_IMAGE" --secrets "$qa_secrets" \
-              --email "$CONTINUITY_USER" --output "$RUNNER_TEMP/api-continuity.json"
-          else
-            python3 .github/scripts/deploy_api_drain.py "${args[@]}"
-          fi
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          API_VERSION: ${{ needs.compute-version.outputs.version }}
-          DEPLOY_IMAGE: ${{ inputs.image }}
-          CONTINUITY_USER: ${{ inputs.continuity_user }}
-          ISOLATED_DRAIN_ONLY: ${{ inputs.isolated_drain_only }}
-          CONTINUITY_ROLLBACK_IMAGE: ${{ inputs.continuity_rollback_image }}
-          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
-          ADOPT_DRAIN_IMAGE: ${{ inputs.adopt_drain_image }}
-      - run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 3 "https://${FLY_APP}.fly.dev${HEALTH_PATH}"
-          flyctl machine list --app "$FLY_APP" --json | jq '[.[] | {id, state, region, image: .config.image, image_ref}]'
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - if: always() && inputs.continuity_user != ''
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+          registry: ${{ env.ARTIFACT_REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.gcp-auth.outputs.access_token }}
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          name: api-continuity
-          path: ${{ runner.temp }}/api-continuity.json
-          retention-days: 14
-      - if: failure()
-        run: timeout 60s flyctl logs --app "$FLY_APP" --no-tail || true
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          context: .
+          file: apps/api/Dockerfile
+          target: runtime
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.DEPLOY_SHA }}
+          build-args: |
+            APP_VERSION=${{ env.DEPLOY_SHA }}
+            GH_SHA=${{ env.DEPLOY_SHA }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
 
-  tag:
-    if: ${{ (inputs.service == 'gateway' || inputs.service == '') && inputs.image == '' }}
-    needs: [compute-version, deploy]
+  deploy:
+    needs: image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
     permissions:
-      contents: write
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
-      - uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b
+      - uses: ./.github/actions/infisical_install
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_tag: api_v${{ needs.compute-version.outputs.version }}
-          tag_prefix: ""
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: sa-deploy@shots-founder-hub-prod.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Deploy to Google Cloud Run
+        env:
+          INFISICAL_IDENTITY_ID: ${{ vars.INFISICAL_IDENTITY_ID }}
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          umask 077
+          secrets="$RUNNER_TEMP/secrets.json"
+          migrate_spec="$RUNNER_TEMP/migrate-job.yaml"
+          service_spec="$RUNNER_TEMP/service.yaml"
+          trap 'rm -f "$secrets" "$migrate_spec" "$service_spec"' EXIT
+          test -n "$INFISICAL_IDENTITY_ID" && test -n "$INFISICAL_PROJECT_ID"
+          jwt=$(curl -sSf -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}" | jq -r '.value')
+          token=$(infisical login --method=oidc-auth --machine-identity-id="$INFISICAL_IDENTITY_ID" \
+            --jwt="$jwt" --silent --plain)
+          echo "::add-mask::$token"
+          infisical export --token="$token" --projectId="$INFISICAL_PROJECT_ID" --env=prod \
+            --path=/founder-hub --format=json --output-file="$secrets"
+          (cd .github/scripts && python3 render_cloud_run_spec.py \
+            --secrets "$secrets" \
+            --image "${IMAGE}:${DEPLOY_SHA}" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --sync-secret-manager \
+            --migrate-output "$migrate_spec" \
+            --service-output "$service_spec")
+          rm -f "$secrets"
+          gcloud run jobs replace "$migrate_spec" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION"
+          gcloud run jobs execute "$MIGRATE_JOB_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --wait
+          gcloud run services replace "$service_spec" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION"
+          gcloud run services add-iam-policy-binding "$SERVICE_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --quiet > /dev/null
+          deployed_image=$(gcloud run services describe "$SERVICE_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format='value(spec.template.spec.containers[0].image)')
+          test "$deployed_image" = "${IMAGE}:${DEPLOY_SHA}"
+          service_url=$(gcloud run services describe "$SERVICE_NAME" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --format='value(status.url)')
+          test -n "$service_url"
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 "$service_url/health" > /dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST "$service_url/llm/chat/completions")" = 401
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$service_url/v1/cloud-api/settings")" = 401
+          curl --fail --silent --show-error --retry 6 --retry-delay 5 "$HEALTH_URL" > /dev/null \
+            || echo "::warning::$HEALTH_URL is not reachable yet; check the Cloud Run domain mapping / DNS record"
+          {
+            echo "API active on Google Cloud Run: $service_url"
+            echo "Console: https://console.cloud.google.com/run/detail/$GCP_REGION/$SERVICE_NAME/metrics?project=$GCP_PROJECT_ID"
+          } >> "$GITHUB_STEP_SUMMARY"

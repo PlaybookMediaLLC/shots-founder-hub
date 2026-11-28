@@ -1,5 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { expect, test, vi } from "vitest";
+
+import { createClient } from "@anlg/cloud-client";
 
 import { createRefreshFetch } from "./refresh-fetch";
 
@@ -9,7 +10,7 @@ test("concurrent windows do not duplicate refreshes or receive another account's
   let sequence = 0;
   let release!: (response: Response) => void;
   const options = {
-    supabaseUrl: "https://project.supabase.co",
+    cloudUrl: "https://cloud.example.test",
     fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = input instanceof Request ? input.url : input.toString();
       if (!url.includes("grant_type=refresh_token")) {
@@ -40,7 +41,7 @@ test("concurrent windows do not duplicate refreshes or receive another account's
   const firstWindow = createRefreshFetch(options);
   const secondWindow = createRefreshFetch(options);
   const url =
-    "https://project.supabase.co/auth/v1/token?grant_type=refresh_token";
+    "https://cloud.example.test/auth/v1/token?grant_type=refresh_token";
   const request = {
     method: "POST",
     body: JSON.stringify({ refresh_token: "first-account" }),
@@ -61,7 +62,7 @@ test("concurrent windows do not duplicate refreshes or receive another account's
   });
   expect((await secondWindow(new Request(url, request))).status).toBe(429);
   const signIn = await secondWindow(
-    "https://project.supabase.co/auth/v1/token?grant_type=password",
+    "https://cloud.example.test/auth/v1/token?grant_type=password",
     { method: "POST" },
   );
   expect(await signIn.json()).toEqual({ operation: "sign-in" });
@@ -79,7 +80,7 @@ test("concurrent windows do not duplicate refreshes or receive another account's
 
 test("streaming refresh bodies reach auth unchanged", async () => {
   const fetch = createRefreshFetch({
-    supabaseUrl: "https://project.supabase.co",
+    cloudUrl: "https://cloud.example.test",
     fetch: async (input, init) => {
       const body = await new Request(input, init).json();
       return Response.json({ access_token: body.refresh_token });
@@ -88,7 +89,7 @@ test("streaming refresh bodies reach auth unchanged", async () => {
     finishRefresh: async () => {},
   });
   const response = await fetch(
-    "https://project.supabase.co/auth/v1/token?grant_type=refresh_token",
+    "https://cloud.example.test/auth/v1/token?grant_type=refresh_token",
     {
       method: "POST",
       body: new ReadableStream({
@@ -118,12 +119,19 @@ test.each(["rate-limit", "offline"])(
       access_token: "expired-token",
       refresh_token: "refresh-token",
       token_type: "bearer",
+      expires_in: 3600,
       expires_at: Math.floor(Date.now() / 1000) - 60,
-      user: { id: "test-user" },
+      user: {
+        id: "test-user",
+        aud: "authenticated",
+        created_at: "2026-01-01T00:00:00Z",
+        app_metadata: {},
+        user_metadata: {},
+      },
     };
     storage.set(storageKey, JSON.stringify(session));
     const fetch = createRefreshFetch({
-      supabaseUrl: "https://project.supabase.co/",
+      cloudUrl: "https://cloud.example.test/",
       fetch: async () => {
         upstreamAttempts += 1;
         if (upstreamAttempts === 1) {
@@ -151,7 +159,7 @@ test.each(["rate-limit", "offline"])(
           throw new Error("Gate release failed after rotation");
       },
     });
-    const client = createClient("https://project.supabase.co", "test-key", {
+    const client = createClient("https://cloud.example.test", {
       global: { fetch },
       auth: {
         autoRefreshToken: false,
@@ -193,13 +201,20 @@ test("revoked refresh tokens stay rejected across other credential failures and 
     access_token: "expired-token",
     refresh_token: "revoked-token",
     token_type: "bearer",
+    expires_in: 3600,
     expires_at: Math.floor(Date.now() / 1000) - 60,
-    user: { id: "test-user" },
+    user: {
+      id: "test-user",
+      aud: "authenticated",
+      created_at: "2026-01-01T00:00:00Z",
+      app_metadata: {},
+      user_metadata: {},
+    },
   };
   const storage = new Map([[storageKey, JSON.stringify(expired)]]);
   let upstreamAttempts = 0;
   const fetch = createRefreshFetch({
-    supabaseUrl: "https://project.supabase.co",
+    cloudUrl: "https://cloud.example.test",
     fetch: async (input, init) => {
       upstreamAttempts += 1;
       const body = await new Request(input, init).json();
@@ -211,13 +226,13 @@ test("revoked refresh tokens stay rejected across other credential failures and 
           code: "refresh_token_already_used",
           message: "Refresh token revoked",
         },
-        { status: 400, headers: { "X-Supabase-Api-Version": "2024-01-01" } },
+        { status: 400 },
       );
     },
     beginRefresh: async () => ({ leaseId: 1, retryAfterMs: 0 }),
     finishRefresh: async () => {},
   });
-  const client = createClient("https://project.supabase.co", "test-key", {
+  const client = createClient("https://cloud.example.test", {
     global: { fetch },
     auth: {
       autoRefreshToken: false,
@@ -241,7 +256,7 @@ test("revoked refresh tokens stay rejected across other credential failures and 
     expect(upstreamAttempts).toBe(1);
     expect(storage.get(storageKey)).toBe(JSON.stringify(expired));
     const url =
-      "https://project.supabase.co/auth/v1/token?grant_type=refresh_token";
+      "https://cloud.example.test/auth/v1/token?grant_type=refresh_token";
     for (const refreshToken of ["other-revoked-token", "other-valid-token"]) {
       await fetch(url, {
         method: "POST",

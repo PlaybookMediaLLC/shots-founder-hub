@@ -4,7 +4,7 @@ mod storage;
 use std::io::{IsTerminal, Read};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anlg_supabase_auth::session::{AppMetadata, Session, SessionUser, UserMetadata};
+use anlg_session_auth::session::{AppMetadata, Session, SessionUser, UserMetadata};
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -17,7 +17,7 @@ use self::shots::Shots;
 use self::storage::{AuthStore, Backend};
 
 const WEB_APP_URL: &str = "https://shots.playbookmedia.io";
-const API_URL: &str = "https://api.shots.playbookmedia.io";
+const API_URL: &str = "https://founder-hub-api.shots.playbookmedia.io";
 const MAX_CALLBACK_BYTES: usize = 32 * 1024;
 
 pub async fn run(command: &AuthCommand, json: bool) -> Result<()> {
@@ -561,7 +561,7 @@ mod tests {
         let access_token = token(serde_json::json!({
             "sub": "user-1",
             "exp": 4_000_000_000_u64,
-            "iss": "https://project-ref.supabase.co/auth/v1"
+            "iss": "https://project-ref.example.test/auth/v1"
         }));
 
         assert_eq!(
@@ -573,10 +573,10 @@ mod tests {
     #[test]
     fn rejects_non_https_or_malformed_issuers() {
         for issuer in [
-            "http://project.supabase.co/auth/v1",
-            "https://project.supabase.co/other",
-            "https://user:secret@project.supabase.co/auth/v1",
-            "https://project.supabase.co/auth/v1?key=value",
+            "http://project.example.test/auth/v1",
+            "https://project.example.test/other",
+            "https://user:secret@project.example.test/auth/v1",
+            "https://project.example.test/auth/v1?key=value",
         ] {
             assert!(validate_issuer(issuer).is_err(), "accepted {issuer}");
         }

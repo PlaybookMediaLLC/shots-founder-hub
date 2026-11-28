@@ -238,8 +238,8 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ steps.apple-cert.outputs.cert-id }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SHOTS_URL: ${{ secrets.VITE_SHOTS_URL }}
+          VITE_R2_DOWNLOAD_BASE_URL: ${{ secrets.VITE_R2_DOWNLOAD_BASE_URL }}
           VITE_APP_URL: "https://shots.playbookmedia.io"
           VITE_API_URL: "https://api.shots.playbookmedia.io"
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
@@ -438,8 +438,8 @@ jobs:
           APP_VERSION: ${{ needs.compute-version.outputs.version }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SHOTS_URL: ${{ secrets.VITE_SHOTS_URL }}
+          VITE_R2_DOWNLOAD_BASE_URL: ${{ secrets.VITE_R2_DOWNLOAD_BASE_URL }}
           VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.shots.playbookmedia.io
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}
@@ -651,8 +651,8 @@ jobs:
           APP_VERSION: ${{ needs.compute-version.outputs.version }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SHOTS_URL: ${{ secrets.VITE_SHOTS_URL }}
+          VITE_R2_DOWNLOAD_BASE_URL: ${{ secrets.VITE_R2_DOWNLOAD_BASE_URL }}
           VITE_APP_URL: https://shots.playbookmedia.io
           VITE_API_URL: https://api.shots.playbookmedia.io
           VITE_PRO_PRODUCT_ID: ${{ secrets.VITE_PRO_PRODUCT_ID }}

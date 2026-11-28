@@ -164,8 +164,8 @@ mod tests {
                 vec![("intent", "transcription")],
             ),
             (
-                "https://api.shots.playbookmedia.io?provider=openai",
-                "wss://api.shots.playbookmedia.io/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=openai",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "openai")],
             ),
             (

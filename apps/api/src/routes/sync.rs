@@ -73,16 +73,34 @@ pub(crate) fn build_sync_routes(
         ));
     let web_edit_routes = anlg_api_sync::web_edit_router(state.clone())
         .route_layer(middleware::from_fn_with_state(
-            session_share_rate_limit_state,
+            session_share_rate_limit_state.clone(),
             rate_limit::rate_limit,
         ))
         .route_layer(middleware::from_fn(auth::sentry_and_analytics))
         .route_layer(middleware::from_fn_with_state(
-            auth_state,
+            auth_state.clone(),
             auth::require_auth,
         ));
     // Authenticated by a short-lived ticket minted under bearer auth above;
     // browsers cannot attach Authorization headers to WebSocket upgrades.
+    let file_routes = anlg_api_sync::file_router(state.clone())
+        .route_layer(middleware::from_fn_with_state(
+            session_share_rate_limit_state.clone(),
+            rate_limit::rate_limit,
+        ))
+        .route_layer(middleware::from_fn_with_state(
+            auth_state,
+            auth::require_auth,
+        ));
+    let upload_routes = anlg_api_sync::file_upload_router(state.clone()).route_layer(
+        middleware::from_fn_with_state(
+            rate_limit::IpRateLimitState::new(
+                governor::Quota::per_second(NonZeroU32::new(4).unwrap())
+                    .allow_burst(NonZeroU32::new(40).unwrap()),
+            ),
+            rate_limit::rate_limit_by_ip,
+        ),
+    );
     let live_socket_routes = anlg_api_sync::live_socket_router(state);
 
     replica_routes
@@ -90,6 +108,8 @@ pub(crate) fn build_sync_routes(
         .merge(session_share_routes)
         .merge(web_edit_routes)
         .merge(live_socket_routes)
+        .merge(upload_routes)
+        .merge(file_routes)
 }
 
 pub(crate) fn router(env: &RuntimeConfig) -> Router {
@@ -145,24 +165,25 @@ pub(crate) fn router(env: &RuntimeConfig) -> Router {
     let sync_config = if env.shots.is_some() {
         Some(anlg_api_sync::SyncConfig::replica_only(
             anlg_api_sync::ReplicaConfig::new(
-                &env.supabase.supabase_url,
-                &env.supabase.supabase_anon_key,
-                &env.supabase.supabase_service_role_key,
+                env.database.clone(),
+                env.storage.clone(),
+                env.cloud_signing_key.clone(),
             )
             .unwrap_or_else(|error| panic!("Failed to load environment: {error}")),
         ))
     } else {
         anlg_api_sync::SyncConfig::from_env(
             &env.sync,
-            &env.supabase.supabase_url,
-            &env.supabase.supabase_anon_key,
-            &env.supabase.supabase_service_role_key,
+            env.database.clone(),
+            env.storage.clone(),
+            env.cloud_signing_key.clone(),
         )
         .unwrap_or_else(|error| panic!("Failed to load environment: {error}"))
     };
     let shared_notes_config = anlg_api_sync::SharedNotesConfig::new(
-        &env.supabase.supabase_url,
-        &env.supabase.supabase_service_role_key,
+        env.database.clone(),
+        env.storage.clone(),
+        env.cloud_signing_key.clone(),
     )
     .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
     let (Some(resend_api_key), Some(resend_from_email)) = (
@@ -177,30 +198,25 @@ pub(crate) fn router(env: &RuntimeConfig) -> Router {
         .with_resend_email(resend_api_key, resend_from_email)
         .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
     let cloud_api_config = anlg_api_cloud::CloudApiConfig::new(
-        &env.supabase.supabase_url,
-        &env.supabase.supabase_service_role_key,
+        env.database.clone(),
+        env.founder_hub_mcp_url
+            .as_deref()
+            .expect("FOUNDER_HUB_MCP_URL is required for Shots sync"),
+        env.shots
+            .as_ref()
+            .expect("Shots identity configured")
+            .origin()
+            .as_str(),
     )
     .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
-    let cloud_api_config = if let Some(shots) = &env.shots {
-        cloud_api_config
-            .with_shots_oauth(
-                env.founder_hub_mcp_url
-                    .as_deref()
-                    .expect("FOUNDER_HUB_MCP_URL is required for Shots sync"),
-                shots.origin().as_str(),
-            )
-            .unwrap_or_else(|error| panic!("Failed to load environment: {error}"))
-    } else {
-        cloud_api_config
-    };
     let cloud_api_state =
         anlg_api_cloud::AppState::new(cloud_api_config).with_auth(auth_state.clone());
 
     let replica_state = anlg_api_sync::ReplicaState::new(
         anlg_api_sync::ReplicaConfig::new(
-            &env.supabase.supabase_url,
-            &env.supabase.supabase_anon_key,
-            &env.supabase.supabase_service_role_key,
+            env.database.clone(),
+            env.storage.clone(),
+            env.cloud_signing_key.clone(),
         )
         .unwrap_or_else(|error| panic!("Failed to load environment: {error}")),
     )

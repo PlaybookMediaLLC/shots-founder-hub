@@ -15,7 +15,6 @@ import {
 import { recoverInterruptedRecordings } from "@/audio/recover-recordings";
 import { AuthProvider, useAuth } from "@/auth/context";
 import { SignInScreen } from "@/auth/screens";
-import { useTrial } from "@/auth/use-trial";
 import { BrandLoadingView } from "@/components/brand-loading-view";
 import { ToastHost } from "@/components/toast-host";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,6 @@ function Screens({ accountUserId }: { accountUserId: string | null }) {
 
 function Gate() {
   const auth = useAuth();
-  useTrial();
   const captureActive = useSyncExternalStore(
     subscribeMobileCapture,
     getMobileCaptureActive,

@@ -25,17 +25,8 @@ vi.mock("~/env", () => ({
 vi.mock("~/auth", () => ({
   useAuth: () => ({
     session: mocks.signedIn ? { user: { id: "account-1" } } : null,
-    supabase: { auth: { getUser: mocks.getUser } },
+    cloudClient: { auth: { getUser: mocks.getUser } },
   }),
-}));
-vi.mock("@anlg/supabase/profile-avatar", () => ({
-  saveProfileAvatar: mocks.save,
-}));
-vi.mock("./queries", () => ({
-  usePersonalContact: () => ({
-    data: { avatarDataUrl: "data:image/jpeg;base64,bGVnYWN5" },
-  }),
-  updateContactAvatar: mocks.mirror,
 }));
 vi.mock("./shared", () => ({ ContactFacehash: () => <span>No photo</span> }));
 vi.mock("./contact-avatar", () => ({
@@ -102,141 +93,29 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-it("migrates a legacy local photo after checking the authoritative account", async () => {
-  const { onSave } = view();
-  await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
-  expect(mocks.save).toHaveBeenCalledWith(
-    expect.anything(),
-    "account-1",
-    "data:image/jpeg;base64,bGVnYWN5",
-  );
-  await waitFor(() =>
-    expect(onSave).toHaveBeenCalledWith("https://storage.example/new.jpg"),
-  );
-  expect(screen.getByRole("img").getAttribute("src")).toBe(
-    "https://storage.example/new.jpg",
-  );
-});
-
-it("uses a newer remote photo without uploading stale local data and mirrors remote removal", async () => {
-  mocks.getUser.mockResolvedValue({
-    data: {
-      user: {
-        id: "account-1",
-        user_metadata: {
-          profile_avatar: { url: "https://storage.example/remote.jpg" },
-        },
-      },
-    },
-    error: null,
-  });
-  const { queryClient } = view();
-  await waitFor(() =>
-    expect(screen.getByRole("img").getAttribute("src")).toBe(
-      "https://storage.example/remote.jpg",
-    ),
-  );
-  expect(mocks.save).not.toHaveBeenCalled();
-  await waitFor(() =>
-    expect(mocks.mirror).toHaveBeenCalledWith(
-      "human",
-      "account-1",
-      "https://storage.example/remote.jpg",
-    ),
-  );
-  queryClient.setQueryData(["profile-photo", "account-1"], {
-    id: "account-1",
-    user_metadata: {
-      profile_avatar: { url: null },
-      avatar_url: "https://provider.example/old.jpg",
-    },
-  });
-  await waitFor(() => expect(screen.queryByRole("img")).toBeNull());
-  await waitFor(() =>
-    expect(mocks.mirror).toHaveBeenCalledWith("human", "account-1", null),
-  );
-});
-
-it("keeps a failed upload available to retry", async () => {
-  mocks.save.mockRejectedValueOnce(new Error("offline"));
-  view(null);
+it("saves contact photos locally", async () => {
+  const { onSave } = view(null);
   fireEvent.click(screen.getByRole("button", { name: /Change photo/ }));
-  expect(await screen.findByRole("alert")).toBeTruthy();
+  await waitFor(() =>
+    expect(onSave).toHaveBeenCalledWith("data:image/jpeg;base64,bmV3"),
+  );
   expect(screen.getByRole("img").getAttribute("src")).toBe(
     "data:image/jpeg;base64,bmV3",
   );
+  expect(mocks.getUser).not.toHaveBeenCalled();
+});
+it("keeps a failed change available for retry", async () => {
+  const { onSave } = view(null);
+  onSave.mockRejectedValueOnce(new Error("offline"));
+  fireEvent.click(screen.getByRole("button", { name: /Change photo/ }));
+  expect(await screen.findByRole("alert")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
   await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
-  expect(mocks.save).toHaveBeenCalledTimes(2);
-  expect(mocks.save).toHaveBeenNthCalledWith(
-    2,
-    expect.anything(),
-    "account-1",
-    "data:image/jpeg;base64,bmV3",
-  );
+  expect(onSave).toHaveBeenLastCalledWith("data:image/jpeg;base64,bmV3");
 });
-
-it("keeps guest photo changes local even with a cached signed-in profile", async () => {
-  mocks.signedIn = false;
-  const { onSave } = view(null, "https://storage.example/cached.jpg");
-  expect(screen.queryByRole("img")).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: /Change photo/ }));
-  await waitFor(() =>
-    expect(onSave).toHaveBeenCalledWith("data:image/jpeg;base64,bmV3"),
-  );
-  expect(mocks.save).not.toHaveBeenCalled();
-  expect(mocks.mirror).not.toHaveBeenCalled();
-});
-
-it("keeps Shots contact photos local without changing the central identity", async () => {
-  mocks.shots = "https://shots.example";
-  const { onSave } = view(null, "https://storage.example/cached.jpg");
-  fireEvent.click(screen.getByRole("button", { name: /Change photo/ }));
-  await waitFor(() =>
-    expect(onSave).toHaveBeenCalledWith("data:image/jpeg;base64,bmV3"),
-  );
-  expect(screen.getByRole("img").getAttribute("src")).toBe(
-    "data:image/jpeg;base64,bmV3",
-  );
-  expect(mocks.save).not.toHaveBeenCalled();
-  expect(mocks.mirror).not.toHaveBeenCalled();
-});
-
-it("waits for a fresh profile before migrating a cached legacy photo", async () => {
-  let finish!: (value: unknown) => void;
-  mocks.getUser.mockReturnValue(
-    new Promise((resolve) => {
-      finish = resolve;
-    }),
-  );
-  view("data:image/jpeg;base64,bGVnYWN5", "");
-  await waitFor(() => expect(mocks.getUser).toHaveBeenCalled());
-  expect(mocks.save).not.toHaveBeenCalled();
-  finish({
-    data: {
-      user: {
-        id: "account-1",
-        user_metadata: {
-          profile_avatar: { url: "https://storage.example/newer.jpg" },
-        },
-      },
-    },
-    error: null,
-  });
-  await waitFor(() =>
-    expect(screen.getByRole("img").getAttribute("src")).toBe(
-      "https://storage.example/newer.jpg",
-    ),
-  );
-  expect(mocks.save).not.toHaveBeenCalled();
-});
-
-it("does not migrate cached legacy data after a failed refetch", async () => {
-  mocks.getUser.mockResolvedValue({
-    data: { user: null },
-    error: new Error("offline"),
-  });
-  view("data:image/jpeg;base64,bGVnYWN5", "");
-  expect(await screen.findByRole("alert")).toBeTruthy();
-  expect(mocks.save).not.toHaveBeenCalled();
+it("removes the local contact photo", async () => {
+  const { onSave } = view();
+  fireEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledWith(null));
+  await waitFor(() => expect(screen.queryByRole("img")).toBeNull());
 });

@@ -2,14 +2,11 @@ use anlg_api_auth::AuthContext;
 use axum::{
     Extension, Json,
     extract::{Path, State},
-    http::{HeaderMap, StatusCode},
+    http::HeaderMap,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    SUPABASE_REQUEST_TIMEOUT,
-    identity::{DEVICE_FINGERPRINT_HEADER, is_valid_device_fingerprint},
-};
+use super::identity::{DEVICE_FINGERPRINT_HEADER, is_valid_device_fingerprint};
 use crate::{
     error::{Result, SyncError},
     state::ReplicaState,
@@ -99,48 +96,26 @@ pub(super) async fn heartbeat_meeting_device(
         .filter(|fingerprint| is_valid_device_fingerprint(fingerprint))
         .ok_or_else(|| SyncError::BadRequest("Invalid device fingerprint".to_string()))?;
 
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/heartbeat_meeting_device",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&HeartbeatMeetingDeviceRpcRequest {
-            p_actor_user_id: &auth.claims.sub,
-            p_meeting_key: &meeting_key,
-            p_device_fingerprint: fingerprint,
-            p_intent: request.intent,
-        })
-        .send()
+    let devices: Vec<MeetingDevice> = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "heartbeat_meeting_device",
+            &HeartbeatMeetingDeviceRpcRequest {
+                p_actor_user_id: &auth.claims.sub,
+                p_meeting_key: &meeting_key,
+                p_device_fingerprint: fingerprint,
+                p_intent: request.intent,
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::error!(error = %error, "meeting device heartbeat failed");
-            SyncError::Upstream
-        })?;
-
-    let status = response.status();
-    if !status.is_success() {
-        let body = response.text().await.unwrap_or_default();
-        if body.contains("\"42501\"") {
-            return Err(SyncError::MeetingDeviceNotRegistered);
-        }
-        tracing::error!(%status, "meeting device heartbeat was rejected");
-        return Err(if status == StatusCode::BAD_REQUEST {
-            SyncError::BadRequest("Invalid meeting device request".to_string())
-        } else {
-            SyncError::Upstream
-        });
-    }
-
-    let devices = response
-        .json::<Vec<MeetingDevice>>()
-        .await
-        .map_err(|error| {
-            tracing::error!(error = %error, "meeting device heartbeat returned an invalid body");
-            SyncError::Upstream
+        .map_err(|error| match error {
+            anlg_cloud_db::Error::Database { code, .. } if code == "42501" => {
+                SyncError::MeetingDeviceNotRegistered
+            }
+            anlg_cloud_db::Error::Database { code, .. } if code.starts_with("22") => {
+                SyncError::BadRequest("Invalid meeting device request".into())
+            }
+            _ => SyncError::Upstream,
         })?;
     Ok(Json(MeetingDevicesResponse { devices }))
 }

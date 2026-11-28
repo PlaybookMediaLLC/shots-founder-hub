@@ -1,4 +1,4 @@
-use anlg_supabase_auth::server::{Error as SupabaseAuthError, SupabaseAuth};
+use anlg_session_auth::server::Error as SessionAuthError;
 use axum::{
     extract::{Request, State},
     http::StatusCode,
@@ -6,11 +6,11 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-pub use anlg_supabase_auth::Claims;
+pub use anlg_session_auth::Claims;
 mod shots;
-mod shots_storage;
+mod shots_authority;
 pub use shots::{ShotsAuth, ShotsSession, ShotsUser, ShotsWorkspace};
-pub use shots_storage::ShotsStorage;
+pub use shots_authority::ShotsAuthority;
 
 #[derive(Clone)]
 pub struct AuthContext {
@@ -19,17 +19,24 @@ pub struct AuthContext {
     pub claims: Claims,
 }
 
+impl AuthContext {
+    pub fn principal(&self) -> Result<anlg_cloud_db::Principal, AuthError> {
+        self.shots
+            .as_ref()
+            .map(ShotsSession::principal)
+            .ok_or_else(|| SessionAuthError::InvalidToken.into())
+    }
+}
+
 #[derive(Clone)]
 pub struct AuthState {
-    inner: SupabaseAuth,
     shots: Option<ShotsAuth>,
     required_entitlements: Option<Vec<String>>,
 }
 
 impl AuthState {
-    pub fn new(supabase_url: &str) -> Self {
+    pub fn new() -> Self {
         Self {
-            inner: SupabaseAuth::new(supabase_url),
             shots: None,
             required_entitlements: None,
         }
@@ -55,7 +62,12 @@ impl AuthState {
     }
 
     pub fn extract_token(auth_header: &str) -> Option<&str> {
-        SupabaseAuth::extract_token(auth_header)
+        auth_header
+            .strip_prefix("Bearer ")
+            .or_else(|| auth_header.strip_prefix("bearer "))
+            .or_else(|| auth_header.strip_prefix("Token "))
+            .or_else(|| auth_header.strip_prefix("token "))
+            .filter(|token| !token.is_empty())
     }
 
     pub async fn verify_token(&self, token: &str) -> Result<Claims, AuthError> {
@@ -66,36 +78,20 @@ impl AuthState {
                 .map(|session| session.claims())
                 .map_err(AuthError);
         }
-        self.inner.verify_token(token).await.map_err(AuthError)
+        Err(SessionAuthError::AuthorityUnavailable.into())
     }
 
     pub async fn authenticate(&self, token: &str) -> Result<AuthContext, AuthError> {
         if let Some(shots) = &self.shots {
             return shots.authenticate(token).await.map_err(AuthError);
         }
-        Ok(AuthContext {
-            token: token.to_owned(),
-            claims: self.verify_token(token).await?,
-            shots: None,
-        })
+        Err(SessionAuthError::AuthorityUnavailable.into())
     }
+}
 
-    pub async fn verify_oauth_token(
-        &self,
-        token: &str,
-        resource: &str,
-        required_scopes: &[&str],
-    ) -> Result<Claims, OAuthTokenError> {
-        if self.shots.is_some() {
-            return Err(OAuthTokenError::Invalid);
-        }
-        self.inner
-            .verify_oauth_token(token, resource, required_scopes)
-            .await
-            .map_err(|error| match error {
-                SupabaseAuthError::MissingScope(_) => OAuthTokenError::InsufficientScope,
-                _ => OAuthTokenError::Invalid,
-            })
+impl Default for AuthState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -105,10 +101,12 @@ pub enum OAuthTokenError {
     InsufficientScope,
 }
 
-pub struct AuthError(SupabaseAuthError);
+#[derive(Debug, thiserror::Error)]
+#[error(transparent)]
+pub struct AuthError(SessionAuthError);
 
-impl From<SupabaseAuthError> for AuthError {
-    fn from(err: SupabaseAuthError) -> Self {
+impl From<SessionAuthError> for AuthError {
+    fn from(err: SessionAuthError) -> Self {
         Self(err)
     }
 }
@@ -116,19 +114,20 @@ impl From<SupabaseAuthError> for AuthError {
 impl IntoResponse for AuthError {
     fn into_response(self) -> Response {
         let (status, message) = match self.0 {
-            SupabaseAuthError::MissingAuthHeader => {
+            SessionAuthError::MissingAuthHeader => {
                 (StatusCode::UNAUTHORIZED, "missing_authorization_header")
             }
-            SupabaseAuthError::InvalidAuthHeader => {
+            SessionAuthError::InvalidAuthHeader => {
                 (StatusCode::UNAUTHORIZED, "invalid_authorization_header")
             }
-            SupabaseAuthError::JwksFetchFailed => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "jwks_fetch_failed")
-            }
-            SupabaseAuthError::InvalidToken => (StatusCode::UNAUTHORIZED, "invalid_token"),
-            SupabaseAuthError::MissingOAuthClient => (StatusCode::UNAUTHORIZED, "invalid_token"),
-            SupabaseAuthError::MissingScope(_) => (StatusCode::FORBIDDEN, "insufficient_scope"),
-            SupabaseAuthError::MissingEntitlement(_) => {
+            SessionAuthError::AuthorityUnavailable => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "session_authority_unavailable",
+            ),
+            SessionAuthError::InvalidToken => (StatusCode::UNAUTHORIZED, "invalid_token"),
+            SessionAuthError::MissingOAuthClient => (StatusCode::UNAUTHORIZED, "invalid_token"),
+            SessionAuthError::MissingScope(_) => (StatusCode::FORBIDDEN, "insufficient_scope"),
+            SessionAuthError::MissingEntitlement(_) => {
                 (StatusCode::FORBIDDEN, "subscription_required")
             }
         };
@@ -145,10 +144,10 @@ pub async fn require_auth(
         .headers()
         .get("Authorization")
         .and_then(|h| h.to_str().ok())
-        .ok_or(SupabaseAuthError::MissingAuthHeader)?;
+        .ok_or(SessionAuthError::MissingAuthHeader)?;
 
-    let token = SupabaseAuth::extract_token(auth_header)
-        .ok_or(SupabaseAuthError::InvalidAuthHeader)?
+    let token = AuthState::extract_token(auth_header)
+        .ok_or(SessionAuthError::InvalidAuthHeader)?
         .to_owned();
 
     let auth = state.authenticate(&token).await?;
@@ -157,7 +156,7 @@ pub async fn require_auth(
             .iter()
             .any(|entitlement| auth.claims.has_entitlement(entitlement))
         {
-            return Err(SupabaseAuthError::MissingEntitlement(entitlements.join(",")).into());
+            return Err(SessionAuthError::MissingEntitlement(entitlements.join(",")).into());
         }
     }
 
@@ -175,7 +174,7 @@ pub async fn optional_auth(
         .headers()
         .get("Authorization")
         .and_then(|h| h.to_str().ok())
-        && let Some(token) = SupabaseAuth::extract_token(auth_header)
+        && let Some(token) = AuthState::extract_token(auth_header)
     {
         let token = token.to_owned();
         if let Ok(auth) = state.authenticate(&token).await {
@@ -193,20 +192,20 @@ mod tests {
     fn auth_errors_map_to_http_status() {
         let cases = [
             (
-                SupabaseAuthError::MissingAuthHeader,
+                SessionAuthError::MissingAuthHeader,
                 StatusCode::UNAUTHORIZED,
             ),
             (
-                SupabaseAuthError::InvalidAuthHeader,
+                SessionAuthError::InvalidAuthHeader,
                 StatusCode::UNAUTHORIZED,
             ),
             (
-                SupabaseAuthError::JwksFetchFailed,
+                SessionAuthError::AuthorityUnavailable,
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            (SupabaseAuthError::InvalidToken, StatusCode::UNAUTHORIZED),
+            (SessionAuthError::InvalidToken, StatusCode::UNAUTHORIZED),
             (
-                SupabaseAuthError::MissingEntitlement("pro".to_string()),
+                SessionAuthError::MissingEntitlement("pro".to_string()),
                 StatusCode::FORBIDDEN,
             ),
         ];

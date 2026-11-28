@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import {
   deleteCookie,
@@ -9,25 +8,31 @@ import {
 } from "@tanstack/react-start/server";
 import { z } from "zod";
 
+import type { CloudClient } from "@anlg/cloud-client";
+
 import { getRequestAppOrigin } from "@/functions/app-origin";
-import { getSupabaseServerClient } from "@/functions/supabase";
+import {
+  getCloudPublicServerClient,
+  getCloudServerClient,
+} from "@/functions/cloud-client";
+import { claimReferralCode } from "@/lib/referral-claim";
 import { captureServerAnalytics } from "@/lib/server-analytics";
 
 const REFERRAL_COOKIE = "anarlog-referral";
 const REFERRAL_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 const referralCodeSchema = z.string().regex(/^[a-f0-9]{24}$/);
 
+import type { ReferralSummary } from "@anlg/cloud-client/referrals";
 import { proTrialDaysForOffer } from "@anlg/pricing/trial";
-import type { ReferralSummary } from "@anlg/supabase/referrals";
 
 export const persistReferralAttribution = createServerFn({ method: "POST" })
   .validator(referralCodeSchema)
   .handler(async ({ data: code }) => {
     setPrivateResponseHeaders();
-    const supabase = getSupabaseServerClient();
+    const cloudClient = getCloudServerClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await cloudClient.auth.getUser();
 
     const trackVisit = (entry_point: string) =>
       getRequestHeaders().get("sec-gpc") === "1"
@@ -45,7 +50,7 @@ export const persistReferralAttribution = createServerFn({ method: "POST" })
       return "existing_account" as const;
     }
 
-    const { data: available, error } = await supabase.rpc(
+    const { data: available, error } = await cloudClient.rpc(
       "referral_link_available",
       { p_code: code },
     );
@@ -67,7 +72,7 @@ export const persistReferralAttribution = createServerFn({ method: "POST" })
   });
 
 export const claimPendingReferral = createServerOnlyFn(
-  async (supabase: SupabaseClient) => {
+  async (accessToken: string, userId: string) => {
     const rawCode = getCookie(REFERRAL_COOKIE);
     const parsedCode = referralCodeSchema.safeParse(rawCode);
     if (!parsedCode.success) {
@@ -77,36 +82,40 @@ export const claimPendingReferral = createServerOnlyFn(
       return false;
     }
 
-    const { data, error } = await supabase.rpc("claim_referral", {
-      p_code: parsedCode.data,
-    });
-    if (error) {
-      throw error;
-    }
-
+    const claimed = await claimReferralCode(
+      getCloudPublicServerClient(),
+      accessToken,
+      parsedCode.data,
+    );
     deleteCookie(REFERRAL_COOKIE, { path: "/" });
-    if (data === true && getRequestHeaders().get("sec-gpc") !== "1") {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user)
-          await captureServerAnalytics({
-            userId: user.id,
-            event: "referral_claimed",
-            insertId: `referral-claim:${user.id}`,
-            timestamp: new Date(),
-            properties: { entry_point: "invite" },
-          });
-      } catch {}
+    if (claimed && getRequestHeaders().get("sec-gpc") !== "1") {
+      await captureServerAnalytics({
+        userId,
+        event: "referral_claimed",
+        insertId: `referral-claim:${userId}`,
+        timestamp: new Date(),
+        properties: { entry_point: "invite" },
+      }).catch(() => {});
     }
-    return data === true;
+    return claimed;
+  },
+);
+
+// Retries a claim that failed at sign-in. Without a referral cookie it does
+// not read the session, so a normal page load never refreshes tokens.
+export const retryPendingReferral = createServerOnlyFn(
+  async (client: CloudClient, userId: string) => {
+    if (!getCookie(REFERRAL_COOKIE)) return;
+    const { data } = await client.auth.getSession();
+    if (data.session) {
+      await claimPendingReferral(data.session.access_token, userId);
+    }
   },
 );
 
 export const getProTrialDays = createServerOnlyFn(
-  async (supabase: SupabaseClient) => {
-    const { data, error } = await supabase.rpc("get_pro_trial_offer");
+  async (cloudClient: CloudClient) => {
+    const { data, error } = await cloudClient.rpc("get_pro_trial_offer");
     if (error) {
       throw error;
     }
@@ -119,15 +128,15 @@ export const getProTrialDays = createServerOnlyFn(
 export const getReferralInvites = createServerFn({ method: "POST" }).handler(
   async () => {
     setPrivateResponseHeaders();
-    const supabase = getSupabaseServerClient();
+    const cloudClient = getCloudServerClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await cloudClient.auth.getUser();
     if (!user?.id || user.is_anonymous) {
       throw new Error("Unauthorized");
     }
 
-    const { data, error } = await supabase.rpc("get_referral_summary");
+    const { data, error } = await cloudClient.rpc("get_referral_summary");
     if (error) {
       throw error;
     }

@@ -50,11 +50,11 @@ export function useNoteAudio(sessionId: string, hasTranscript: boolean) {
           }
         } else {
           const accessToken = auth.session?.access_token;
-          if (!accessToken || !env.supabaseUrl) return;
+          if (!accessToken || !env.cloudUrl) return;
           await restoreSessionAudioFromCloud(sessionId, recording, {
             accessToken,
             apiBaseUrl: env.apiUrl,
-            supabaseUrl: env.supabaseUrl,
+            r2BaseUrl: env.r2DownloadBaseUrl,
             signal: controller.signal,
           });
           captureAnalytics("audio_restored", {
@@ -104,7 +104,7 @@ export function useNoteAudio(sessionId: string, hasTranscript: boolean) {
       action === "download" &&
       (!audio.data?.cloudObjectKey ||
         !auth.session?.access_token ||
-        !env.supabaseUrl)
+        !env.cloudUrl)
     )
       return;
     const controller = new AbortController();
@@ -129,7 +129,7 @@ export function useNoteAudio(sessionId: string, hasTranscript: boolean) {
         audio.data?.cloudObjectKey &&
         auth.billing.isPro &&
         auth.session?.access_token &&
-        env.supabaseUrl,
+        env.cloudUrl,
       ),
       loading: mutation.isPending && mutation.variables.action !== "import",
       errorMessage:

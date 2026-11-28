@@ -16,7 +16,7 @@ vi.mock("@anlg/plugin-local-api", () => ({
   },
 }));
 vi.mock("~/auth/client", () => ({
-  supabase: {
+  cloudClient: {
     auth: {
       getSession: mocks.getSession,
       refreshSession: mocks.refreshSession,

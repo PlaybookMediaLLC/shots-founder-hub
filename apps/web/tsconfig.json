@@ -1,6 +1,6 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["**/supabase/functions/**/*", "**/.vercel/**/*"],
+  "exclude": ["**/.vercel/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

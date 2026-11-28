@@ -398,7 +398,7 @@ mod tests {
         assert_eq!(url.host_str(), Some("dashscope.aliyuncs.com"));
 
         let url = adapter.build_ws_url(
-            "https://api.shots.playbookmedia.io?provider=dashscope",
+            "https://founder-hub-api.shots.playbookmedia.io?provider=dashscope",
             &params,
             1,
         );

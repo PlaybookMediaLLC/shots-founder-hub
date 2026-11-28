@@ -18,7 +18,7 @@ test("accepts a matching attachment download grant", () => {
         ciphertextSizeBytes: 123,
         ciphertextSha256: "a".repeat(64),
         formatVersion: 1,
-        signedUrl: `https://project.supabase.co/storage/v1/object/sign/attachment-backups/${objectKey}?token=one`,
+        signedUrl: `https://project.example.test/storage/v1/object/sign/attachment-backups/${objectKey}?token=one`,
       },
       objectKey,
     ),
@@ -28,7 +28,7 @@ test("accepts a matching attachment download grant", () => {
       ciphertextSizeBytes: 123,
       ciphertextSha256: "a".repeat(64),
       formatVersion: 1,
-      signedUrl: `https://project.supabase.co/storage/v1/object/sign/attachment-backups/${objectKey}?token=one`,
+      signedUrl: `https://project.example.test/storage/v1/object/sign/attachment-backups/${objectKey}?token=one`,
     },
   );
 });
@@ -40,7 +40,7 @@ test("rejects grants for another object or unsupported format", () => {
     ciphertextSizeBytes: 123,
     ciphertextSha256: "a".repeat(64),
     formatVersion: 1,
-    signedUrl: "https://project.supabase.co/download?token=one",
+    signedUrl: "https://project.example.test/download?token=one",
   };
 
   assert.throws(

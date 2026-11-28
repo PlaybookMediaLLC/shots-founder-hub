@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   error: vi.fn(),
 }));
 vi.mock("./client", () => ({
-  supabase: { auth: { getSession: mocks.getSession } },
+  cloudClient: { auth: { getSession: mocks.getSession } },
 }));
 vi.mock("@anlg/plugin-db", () => ({
   execute: mocks.execute,

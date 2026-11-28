@@ -420,8 +420,7 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     async fn nango_client(nango_mock: &MockServer) -> anlg_nango::NangoClient {
-        let supabase = MockServer::start().await;
-        AppState::new(NangoConfig::for_test(&nango_mock.uri(), &supabase.uri())).nango
+        AppState::new(NangoConfig::for_test(&nango_mock.uri())).nango
     }
 
     #[test]

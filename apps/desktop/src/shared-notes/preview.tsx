@@ -507,7 +507,7 @@ function parsePreviewAttachments(
     ids.add(attachment.id);
     return attachment;
   });
-  const expectedOrigin = requireSupabaseOrigin(downloadsValue.length > 0);
+  const expectedOrigin = requireCloudOrigin(downloadsValue.length > 0);
   const downloads = downloadsValue.map((value) => {
     const attachment = parsePreviewAttachment(value);
     if (!isRecord(value) || typeof value.signedUrl !== "string") {
@@ -575,10 +575,10 @@ function parsePreviewAttachment(value: unknown): SharedNoteAttachment {
   };
 }
 
-function requireSupabaseOrigin(required: boolean) {
+function requireCloudOrigin(required: boolean) {
   if (!required) return "";
   try {
-    const url = new URL(env.VITE_SUPABASE_URL ?? "");
+    const url = new URL(env.VITE_CLOUD_URL ?? "");
     if (url.protocol !== "https:") throw new Error();
     return url.origin;
   } catch {

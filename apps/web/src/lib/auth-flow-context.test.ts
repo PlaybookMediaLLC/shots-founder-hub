@@ -27,7 +27,7 @@ test("generic sign-in links can still reuse an authenticated browser session", (
   assert.equal(shouldReuseBrowserSession({}), true);
 });
 
-test("restores desktop recovery context from the encoded Supabase redirect", () => {
+test("restores desktop recovery context from the encoded auth redirect", () => {
   const context = resolveAuthFlowContext({
     redirectTo:
       "https://anarlog.so/callback/auth?flow=desktop&scheme=anarlog-staging&redirect=%2Fshare%2Finvite%2Fabc%2F&desktop_state=8d58e770-3a95-41ba-bfa1-ec03633a3a55",

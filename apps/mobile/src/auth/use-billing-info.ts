@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { AppState } from "react-native";
 
-import { deriveBillingInfo, type SupabaseJwtPayload } from "./billing";
+import { deriveBillingInfo, type SessionClaims } from "./billing";
 
-export function useBillingInfo(payload: SupabaseJwtPayload | null) {
+export function useBillingInfo(payload: SessionClaims | null) {
   const subscribe = useCallback(
     (notify: () => void) => {
       const remaining = (payload?.trial_end ?? 0) * 1000 - Date.now();

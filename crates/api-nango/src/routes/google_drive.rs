@@ -131,12 +131,7 @@ pub(super) async fn proxy(
 ) -> Result<OwnedNangoProxy, DriveError> {
     validate_id(connection_id)?;
     Ok(NangoConnectionState::from_config(&state.config)
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            GoogleDrive::ID,
-            connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, GoogleDrive::ID, connection_id)
         .await?
         .into_proxy()
         .base_url_override("https://www.googleapis.com")
@@ -391,24 +386,8 @@ mod tests {
 
     async fn setup(owned: bool) -> (MockServer, Router) {
         let server = MockServer::start().await;
-        Mock::given(method("GET"))
-            .and(path("/rest/v1/nango_connections"))
-            .and(query_param("user_id", "eq.user-1"))
-            .and(query_param("connection_id", "eq.connection"))
-            .and(query_param("integration_id", "eq.google-drive"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(if owned {
-                json!([{"status":"connected"}])
-            } else {
-                json!([])
-            }))
-            .mount(&server)
-            .await;
-        let config = crate::NangoConfig::for_test(&server.uri(), &server.uri());
-        let auth = AuthContext {
-            shots: None,
-            token: "user-token".into(),
-            claims: serde_json::from_value(json!({"sub":"user-1"})).unwrap(),
-        };
+        let config = crate::NangoConfig::for_test(&server.uri());
+        let auth = crate::config::test_drive_auth(&config.database, owned).await;
         (server, crate::session_router(config).layer(Extension(auth)))
     }
     async fn post(app: Router, path: &str, body: Value) -> (StatusCode, Value) {
@@ -447,7 +426,7 @@ mod tests {
         )
         .await;
         assert_eq!(status, StatusCode::BAD_REQUEST);
-        assert_eq!(server.received_requests().await.unwrap().len(), 1);
+        assert!(server.received_requests().await.unwrap().is_empty());
     }
 
     #[tokio::test]

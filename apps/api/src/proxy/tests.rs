@@ -31,6 +31,17 @@ async fn gateway(origin: &str, gate: &SessionGate, shutdown: CancellationToken) 
     .await
 }
 
+#[test]
+fn a_role_without_routes_starts_without_forwarding() {
+    let router = route(
+        Router::new(),
+        &Some("http://core:3001".into()),
+        &SessionGate::new(),
+        "test-signing-key",
+    );
+    assert!(!router.has_routes());
+}
+
 #[tokio::test]
 async fn large_uploads_keep_auth_query_and_response_headers_without_retrying_redirects() {
     let stop = CancellationToken::new();
@@ -46,13 +57,6 @@ async fn large_uploads_keep_auth_query_and_response_headers_without_retrying_red
                     );
                     assert_eq!(request.headers()["x-forwarded-host"], "api.example.test");
                     assert!(!request.headers().contains_key("x-remove-me"));
-                    for name in [
-                        "fly-force-instance-id",
-                        "fly-prefer-instance-id",
-                        "fly-force-region",
-                    ] {
-                        assert!(!request.headers().contains_key(name));
-                    }
                     let bytes = axum::body::to_bytes(request.into_body(), 8 * 1024 * 1024)
                         .await
                         .unwrap();
@@ -83,9 +87,6 @@ async fn large_uploads_keep_auth_query_and_response_headers_without_retrying_red
         .bearer_auth("test-token")
         .header(header::CONNECTION, "x-remove-me")
         .header("x-remove-me", "private")
-        .header("fly-force-instance-id", "gateway-machine")
-        .header("fly-prefer-instance-id", "gateway-machine")
-        .header("fly-force-region", "sjc")
         .body(vec![42u8; 3 * 1024 * 1024])
         .send()
         .await
@@ -234,7 +235,7 @@ async fn fly_second_hop_preserves_distinct_client_rate_limit_identities() {
                             .headers()
                             .contains_key("x-anarlog-client-ip-signature")
                     );
-                    request.headers()["fly-client-ip"]
+                    request.headers()["do-connecting-ip"]
                         .to_str()
                         .unwrap()
                         .to_owned()
@@ -248,7 +249,7 @@ async fn fly_second_hop_preserves_distinct_client_rate_limit_identities() {
                 |mut request: Request, next: Next| async move {
                     request
                         .headers_mut()
-                        .insert("fly-client-ip", HeaderValue::from_static("198.51.100.1"));
+                        .insert("do-connecting-ip", HeaderValue::from_static("198.51.100.1"));
                     next.run(request).await
                 },
             )),
@@ -260,7 +261,7 @@ async fn fly_second_hop_preserves_distinct_client_rate_limit_identities() {
     for ip in ["192.0.2.1", "192.0.2.2", "2001:db8::1"] {
         let response = client
             .get(format!("{base}/identity"))
-            .header("fly-client-ip", ip)
+            .header("do-connecting-ip", ip)
             .header("x-anarlog-client-ip", "192.0.2.99")
             .header("x-anarlog-client-ip-signature", "spoofed")
             .send()
@@ -315,7 +316,7 @@ async fn a_late_http_response_finishes_during_graceful_shutdown() {
 }
 
 #[tokio::test]
-async fn new_websocket_handshakes_are_replayed_before_forwarding_during_drain() {
+async fn new_websocket_handshakes_are_refused_before_forwarding_during_drain() {
     let stop = CancellationToken::new();
     let gate = SessionGate::new();
     gate.begin_drain();
@@ -328,7 +329,7 @@ async fn new_websocket_handshakes_are_replayed_before_forwarding_during_drain() 
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
-    assert_eq!(response.headers()["fly-replay"], "elsewhere=true");
+    assert!(!response.headers().contains_key("fly-replay"));
     assert_eq!(gate.active(), 0);
     stop.cancel();
 }

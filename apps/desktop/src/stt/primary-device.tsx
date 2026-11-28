@@ -1,7 +1,7 @@
 import type { SessionEvent } from "@anlg/store";
 import { toast } from "@anlg/ui/components/ui/toast";
 
-import { supabase } from "~/auth/client";
+import { cloudClient } from "~/auth/client";
 import { getDeviceIdentity } from "~/auth/cloudsync-credentials";
 import {
   type MeetingDevice,
@@ -79,10 +79,10 @@ async function sendHeartbeat(
   meetingKey: string,
   intent: MeetingDeviceIntent,
 ): Promise<{ devices: MeetingDevice[]; fingerprint: string } | null> {
-  if (!supabase) {
+  if (!cloudClient) {
     return null;
   }
-  const { data } = await supabase.auth.getSession();
+  const { data } = await cloudClient.auth.getSession();
   const session = data.session;
   if (!session || session.user.is_anonymous === true) {
     return null;

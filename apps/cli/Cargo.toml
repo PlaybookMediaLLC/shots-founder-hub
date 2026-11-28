@@ -11,8 +11,8 @@ path = "src/main.rs"
 anlg-agent-access = { workspace = true }
 anlg-db-app = { workspace = true }
 anlg-db-core = { workspace = true }
+anlg-session-auth = { workspace = true, features = ["refresh"] }
 anlg-storage = { workspace = true }
-anlg-supabase-auth = { workspace = true, features = ["refresh"] }
 anlg-user-error = { workspace = true }
 
 axum = { workspace = true }

@@ -168,13 +168,13 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.shots.playbookmedia.io?provider=soniox",
-                "wss://api.shots.playbookmedia.io/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=soniox",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "soniox")],
             ),
             (
-                "https://api.shots.playbookmedia.io/listen?provider=soniox",
-                "wss://api.shots.playbookmedia.io/listen",
+                "https://founder-hub-api.shots.playbookmedia.io/listen?provider=soniox",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "soniox")],
             ),
             (

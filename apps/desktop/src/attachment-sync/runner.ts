@@ -6,8 +6,8 @@ import {
   isAttachmentBackupDeleteTooLate,
   type AttachmentBackupDeleteRequest,
   type ScheduledAttachmentBackupDelete,
-} from "@anlg/supabase/attachment-backups";
-import { uploadPrivateAttachment } from "@anlg/supabase/storage";
+} from "@anlg/cloud-client/attachment-backups";
+import { uploadPrivateAttachment } from "@anlg/cloud-client/storage";
 
 import {
   attachmentTransferNative,
@@ -36,7 +36,7 @@ type AttachmentBackupClient = ReturnType<typeof createAttachmentBackupClient>;
 
 export type AttachmentTransferRunnerDependencies = {
   client: AttachmentBackupClient;
-  supabaseUrl: string;
+  cloudUrl: string;
   store?: typeof attachmentTransferStore;
   native?: typeof attachmentTransferNative;
   uploader?: typeof uploadPrivateAttachment;
@@ -404,7 +404,7 @@ async function runUpload(
         signedUploadToken: grant.uploadToken,
         ciphertextSha256: prepared.ciphertextSha256,
         ciphertextSizeBytes: prepared.ciphertextSizeBytes,
-        supabaseUrl: dependencies.supabaseUrl,
+        cloudUrl: dependencies.cloudUrl,
         readRange: (start, end) =>
           native.readUploadRange(
             job.id,

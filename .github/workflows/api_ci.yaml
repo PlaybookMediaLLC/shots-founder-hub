@@ -6,17 +6,12 @@ on:
     paths:
       - .github/scripts/prepare_api_service_secrets.py
       - .github/scripts/test_prepare_api_service_secrets.py
-      - .github/scripts/verify_api_continuity.py
-      - .github/scripts/test_verify_api_continuity.py
-      - .github/scripts/deploy_api_drain.py
-      - .github/scripts/test_deploy_api_drain.py
-      - .github/scripts/test_verify_cloudsync_e2ee.py
-      - .github/scripts/verify_cloudsync_e2ee.py
+      - .github/scripts/render_cloud_run_spec.py
+      - .github/scripts/test_render_cloud_run_spec.py
       - .github/workflows/api_cd.yaml
       - .github/workflows/api_ci.yaml
       - apps/api/**
-      - apps/stripe/**
-      - packages/supabase/**
+      - packages/cloud-client/**
       - packages/user-error/**
       - crates/agent-access/**
       - crates/api-auth/**
@@ -28,24 +23,21 @@ on:
       - crates/api-sync/**
       - crates/llm-proxy/**
       - crates/mcp/**
-      - crates/supabase-auth/**
-      - crates/supabase-storage/**
+      - crates/session-auth/**
+      - crates/r2-storage/**
+      - crates/cloud-db/**
+      - postgres/**
       - crates/transcribe-proxy/**
   pull_request:
     paths:
       - .github/scripts/prepare_api_service_secrets.py
       - .github/scripts/test_prepare_api_service_secrets.py
-      - .github/scripts/verify_api_continuity.py
-      - .github/scripts/test_verify_api_continuity.py
-      - .github/scripts/deploy_api_drain.py
-      - .github/scripts/test_deploy_api_drain.py
-      - .github/scripts/test_verify_cloudsync_e2ee.py
-      - .github/scripts/verify_cloudsync_e2ee.py
+      - .github/scripts/render_cloud_run_spec.py
+      - .github/scripts/test_render_cloud_run_spec.py
       - .github/workflows/api_cd.yaml
       - .github/workflows/api_ci.yaml
       - apps/api/**
-      - apps/stripe/**
-      - packages/supabase/**
+      - packages/cloud-client/**
       - packages/user-error/**
       - crates/agent-access/**
       - crates/api-auth/**
@@ -57,8 +49,10 @@ on:
       - crates/api-sync/**
       - crates/llm-proxy/**
       - crates/mcp/**
-      - crates/supabase-auth/**
-      - crates/supabase-storage/**
+      - crates/session-auth/**
+      - crates/r2-storage/**
+      - crates/cloud-db/**
+      - postgres/**
       - crates/transcribe-proxy/**
 
 concurrency:
@@ -71,6 +65,26 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-bookworm
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: founder_hub_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      objects:
+        image: rustfs/rustfs:1.0.1
+        env:
+          RUSTFS_ACCESS_KEY: test-access-key
+          RUSTFS_SECRET_KEY: test-secret-key
+        ports: [9000:9000]
+    env:
+      DATABASE_URL: postgres://postgres:test-only@localhost:5432/founder_hub_test
+      CLOUD_DATABASE_TEST_URL: postgres://postgres:test-only@localhost:5432/founder_hub_test
+      R2_TEST_CONFIG: '{"r2_endpoint":"http://127.0.0.1:9000","r2_bucket":"founder-hub","r2_access_key_id":"test-access-key","r2_secret_access_key":"test-secret-key"}'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -81,21 +95,29 @@ jobs:
       - uses: $/.github/actions/rust_install
         with:
           platform: linux
-      - run: cargo check -p api
-      - run: cargo test -p api-cloud
-      - run: cargo test -p api-auth
+      - env:
+          R2_INIT_ENDPOINT: http://127.0.0.1:9000
+          RUSTFS_ACCESS_KEY: test-access-key
+          RUSTFS_SECRET_KEY: test-secret-key
+          R2_BROWSER_ORIGIN: http://localhost:3000
+          HUB_BROWSER_ORIGIN: http://localhost:3001
+        run: |
+          curl --fail --retry 20 --retry-delay 2 --retry-connrefused http://127.0.0.1:9000/health
+          sh scripts/local-r2-init.sh
+          cargo run --locked -p cloud-db --bin migrate
+      - run: cargo check --locked -p api
+      - run: cargo test --locked -p api-cloud
+      - run: cargo test --locked -p api-auth
       - run: cargo test --locked -p api-calendar -p api-nango -p api-notion
-      - run: cargo test -p mcp
-      - run: cargo test -p supabase-auth --features server
-      - run: cargo test -p api-sync
-      - run: cargo test --locked -p supabase-storage --test client
+      - run: cargo test --locked -p mcp
+      - run: cargo test --locked -p session-auth
+      - run: cargo test --locked -p api-sync
+      - run: cargo test --locked -p r2-storage --lib -- --include-ignored
       - run: cargo test --locked -p api-subscription
-      - run: cargo test -p transcribe-proxy --lib
+      - run: cargo test --locked -p transcribe-proxy --lib
       - run: cargo test --locked -p api
-      - run: python3 .github/scripts/test_verify_cloudsync_e2ee.py
-      - run: python3 .github/scripts/test_verify_api_continuity.py
-      - run: python3 .github/scripts/test_deploy_api_drain.py
       - run: python3 .github/scripts/test_prepare_api_service_secrets.py
+      - run: python3 .github/scripts/test_render_cloud_run_spec.py
       - run: |
-          cargo test -p api gen_openapi_json
+          cargo test --locked -p api gen_openapi_json
           git diff --exit-code -- apps/api/openapi.gen.json

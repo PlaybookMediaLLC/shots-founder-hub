@@ -21,16 +21,6 @@ struct OptionalNangoEnv {
 }
 
 #[derive(Default, Deserialize)]
-struct OptionalStripeEnv {
-    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
-    stripe_secret_key: Option<String>,
-    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
-    stripe_monthly_price_id: Option<String>,
-    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
-    stripe_yearly_price_id: Option<String>,
-}
-
-#[derive(Default, Deserialize)]
 struct OptionalPyannoteEnv {
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pyannote_api_key: Option<String>,
@@ -38,58 +28,44 @@ struct OptionalPyannoteEnv {
     pyannote_api_base: Option<String>,
 }
 
-#[derive(Default, Deserialize)]
-struct OptionalLoopsEnv {
-    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
-    loops_key: Option<String>,
-}
-
 #[derive(Deserialize)]
 pub struct Env {
+    pub database_url: String,
+    pub cloud_signing_key: String,
+    #[serde(flatten)]
+    pub r2: anlg_r2_storage::Config,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pub shots_auth_url: Option<String>,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pub founder_hub_mcp_url: Option<String>,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     shots_auth_service_token: Option<String>,
-    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
-    supabase_jwt_secret: Option<String>,
     #[serde(default)]
     pub anarlog_service: Service,
     #[serde(flatten)]
     pub upstreams: crate::proxy::Env,
     #[serde(default = "default_port")]
     pub port: u16,
-    #[serde(default)]
-    pub anarlog_billing_webhooks: bool,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pub sentry_dsn: Option<String>,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pub posthog_api_key: Option<String>,
     #[serde(default)]
     pub anarlog_attachment_backup_gc_enabled: bool,
-    #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
-    pub sqlitecloud_cloudsync_management_api_key: Option<String>,
 
     #[serde(flatten)]
     pub observability: crate::observability::Env,
 
     #[serde(flatten)]
-    pub supabase: anlg_api_env::SupabaseEnv,
-    #[serde(flatten)]
     pub sync: anlg_api_sync::SyncEnv,
     #[serde(flatten)]
     nango: OptionalNangoEnv,
-    #[serde(flatten)]
-    stripe: OptionalStripeEnv,
     #[serde(flatten)]
     pyannote: OptionalPyannoteEnv,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pub exa_api_key: Option<String>,
     #[serde(default, deserialize_with = "anlg_api_env::filter_empty")]
     pub jina_api_key: Option<String>,
-    #[serde(flatten)]
-    loops: OptionalLoopsEnv,
 
     #[serde(flatten)]
     pub resend: anlg_api_env::ResendEnv,
@@ -108,10 +84,11 @@ pub struct Env {
 // group is either absent or completely validated, so router/state construction
 // can consume the concrete groups without re-deriving or re-validating them.
 pub struct RuntimeConfig {
+    pub database: anlg_cloud_db::Database,
+    pub storage: anlg_r2_storage::Storage,
     pub shots: Option<anlg_api_auth::ShotsAuth>,
     env: Env,
     pub nango: Option<anlg_api_env::NangoEnv>,
-    pub subscription: Option<(anlg_api_env::StripeEnv, anlg_api_env::LoopsEnv)>,
     pub pyannote: Option<anlg_api_env::PyannoteEnv>,
     pub research: Option<anlg_api_research::ResearchConfig>,
     pub llm: Option<anlg_llm_proxy::Env>,
@@ -128,17 +105,17 @@ impl std::ops::Deref for RuntimeConfig {
 
 impl RuntimeConfig {
     pub(crate) fn resolve(mut env: Env) -> Result<Self, String> {
+        if env.cloud_signing_key.len() < 32 {
+            return Err("CLOUD_SIGNING_KEY must contain at least 32 bytes".into());
+        }
+        let database =
+            anlg_cloud_db::Database::new(&env.database_url).map_err(|error| error.to_string())?;
+        let storage = anlg_r2_storage::Storage::new(&env.r2).map_err(|error| error.to_string())?;
         let shots = env
             .shots_auth_url
             .as_deref()
             .map(|origin| {
-                let storage = anlg_api_auth::ShotsStorage::new(
-                    &env.supabase.supabase_url,
-                    &env.supabase.supabase_service_role_key,
-                    env.supabase_jwt_secret
-                        .as_deref()
-                        .ok_or("SUPABASE_JWT_SECRET is required with SHOTS_AUTH_URL")?,
-                )?;
+                let authority = anlg_api_auth::ShotsAuthority::new(database.clone());
                 Ok::<_, String>(
                     anlg_api_auth::ShotsAuth::new(
                         origin,
@@ -146,28 +123,17 @@ impl RuntimeConfig {
                             .as_deref()
                             .ok_or("SHOTS_AUTH_SERVICE_TOKEN is required with SHOTS_AUTH_URL")?,
                     )?
-                    .with_storage(storage),
+                    .with_authority(authority),
                 )
             })
             .transpose()?;
-        validate_supabase_env(&env.supabase)?;
+        if shots.is_none() {
+            return Err("SHOTS_AUTH_URL and SHOTS_AUTH_SERVICE_TOKEN are required".into());
+        }
         let service = env.anarlog_service;
         env.upstreams.validate(service)?;
-        if env.anarlog_billing_webhooks && service != Service::Billing {
-            return Err("Local billing webhooks require the billing role".into());
-        }
-        if shots.is_some() && env.anarlog_billing_webhooks {
-            return Err("Shots manages billing; disable ANARLOG_BILLING_WEBHOOKS".into());
-        }
         let nango = if service.includes(Service::Core) {
             resolve_nango(&env.nango)?
-        } else {
-            None
-        };
-        let subscription = if shots.is_none()
-            && (service.includes(Service::Core) || service.includes(Service::Billing))
-        {
-            resolve_subscription(&env.stripe, &env.loops)?
         } else {
             None
         };
@@ -206,25 +172,12 @@ impl RuntimeConfig {
             );
         }
 
-        if !cfg!(debug_assertions)
-            && subscription
-                .as_ref()
-                .is_some_and(|(stripe, _)| is_stripe_test_key(&stripe.stripe_secret_key))
-        {
-            return Err("STRIPE_SECRET_KEY must be a live key in production".to_string());
-        }
-        if env.anarlog_attachment_backup_gc_enabled && shots.is_none() && subscription.is_none() {
-            return Err(
-                "Stripe and Loops configuration is required when ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED is true"
-                    .to_string(),
-            );
-        }
-
         Ok(Self {
+            database,
+            storage,
             shots,
             env,
             nango,
-            subscription,
             pyannote,
             research,
             llm,
@@ -233,7 +186,7 @@ impl RuntimeConfig {
     }
 
     pub(crate) fn auth_state(&self) -> anlg_api_auth::AuthState {
-        anlg_api_auth::AuthState::new(&self.supabase.supabase_url).with_shots(self.shots.clone())
+        anlg_api_auth::AuthState::new().with_shots(self.shots.clone())
     }
 }
 
@@ -258,53 +211,6 @@ fn resolve_nango(nango: &OptionalNangoEnv) -> Result<Option<anlg_api_env::NangoE
             "Nango is configured",
         )?,
     }))
-}
-
-fn resolve_subscription(
-    stripe: &OptionalStripeEnv,
-    loops: &OptionalLoopsEnv,
-) -> Result<Option<(anlg_api_env::StripeEnv, anlg_api_env::LoopsEnv)>, String> {
-    let stripe_configured = stripe.stripe_secret_key.is_some()
-        || stripe.stripe_monthly_price_id.is_some()
-        || stripe.stripe_yearly_price_id.is_some();
-    let stripe = stripe_configured
-        .then(|| -> Result<_, String> {
-            Ok(anlg_api_env::StripeEnv {
-                stripe_secret_key: required_integration_value(
-                    &stripe.stripe_secret_key,
-                    "STRIPE_SECRET_KEY",
-                    "subscriptions are configured",
-                )?,
-                stripe_monthly_price_id: required_integration_value(
-                    &stripe.stripe_monthly_price_id,
-                    "STRIPE_MONTHLY_PRICE_ID",
-                    "subscriptions are configured",
-                )?,
-                stripe_yearly_price_id: required_integration_value(
-                    &stripe.stripe_yearly_price_id,
-                    "STRIPE_YEARLY_PRICE_ID",
-                    "subscriptions are configured",
-                )?,
-            })
-        })
-        .transpose()?;
-    let loops = loops
-        .loops_key
-        .as_ref()
-        .map(|loops_key| anlg_api_env::LoopsEnv {
-            loops_key: loops_key.clone(),
-        });
-
-    match (stripe, loops) {
-        (None, None) => Ok(None),
-        (Some(stripe), Some(loops)) => Ok(Some((stripe, loops))),
-        (Some(_), None) => {
-            Err("LOOPS_KEY is required when subscriptions are configured".to_string())
-        }
-        (None, Some(_)) => {
-            Err("Stripe configuration is required when subscriptions are configured".to_string())
-        }
-    }
 }
 
 fn resolve_pyannote(
@@ -363,31 +269,13 @@ pub fn env() -> &'static RuntimeConfig {
             .and_then(|p| p.parent())
             .unwrap_or(manifest_dir);
 
-        let _ = dotenvy::from_path(repo_root.join(".env.supabase"));
+        let _ = dotenvy::from_path(repo_root.join(".env.cloud"));
         let _ = dotenvy::from_path(manifest_dir.join(".env"));
         let env: Env =
             envy::from_env().unwrap_or_else(|error| panic!("{}", format_env_error(error)));
         RuntimeConfig::resolve(env)
             .unwrap_or_else(|error| panic!("Failed to load environment: {error}"))
     })
-}
-
-fn validate_supabase_env(env: &anlg_api_env::SupabaseEnv) -> Result<(), String> {
-    for (value, variable) in [
-        (&env.supabase_url, "SUPABASE_URL"),
-        (&env.supabase_anon_key, "SUPABASE_ANON_KEY"),
-        (&env.supabase_service_role_key, "SUPABASE_SERVICE_ROLE_KEY"),
-    ] {
-        if value.trim().is_empty() {
-            return Err(format!("{variable} must not be empty"));
-        }
-    }
-
-    Ok(())
-}
-
-fn is_stripe_test_key(key: &str) -> bool {
-    key.starts_with("sk_test_") || key.starts_with("rk_test_")
 }
 
 fn format_env_error(error: EnvyError) -> String {
@@ -414,32 +302,32 @@ mod tests {
     fn role_config(role: &str, extra: &[(&str, &str)]) -> Result<RuntimeConfig, String> {
         let mut values = vec![
             ("ANARLOG_SERVICE", role),
-            ("SUPABASE_URL", "http://127.0.0.1:54321"),
-            ("SUPABASE_ANON_KEY", "anon"),
-            ("SUPABASE_SERVICE_ROLE_KEY", "service"),
+            ("DATABASE_URL", "postgres://localhost/founder_hub_test"),
+            (
+                "CLOUD_SIGNING_KEY",
+                "test-signing-key-with-at-least-32-bytes",
+            ),
+            ("R2_ENDPOINT", "http://127.0.0.1:9000"),
+            ("R2_BUCKET", "founder-hub-test"),
+            ("R2_ACCESS_KEY_ID", "test"),
+            ("R2_SECRET_ACCESS_KEY", "test"),
+            ("SHOTS_AUTH_URL", "http://127.0.0.1:8090"),
+            ("FOUNDER_HUB_MCP_URL", "http://127.0.0.1:3001/mcp"),
+            (
+                "SHOTS_AUTH_SERVICE_TOKEN",
+                "test-service-token-with-at-least-thirty-two-bytes",
+            ),
         ];
         values.extend_from_slice(extra);
         let raw = envy::from_iter(
             values
                 .into_iter()
+                .collect::<std::collections::BTreeMap<_, _>>()
+                .into_iter()
                 .map(|(key, value)| (key.to_string(), value.to_string())),
         )
         .map_err(|error| error.to_string())?;
         RuntimeConfig::resolve(raw)
-    }
-
-    #[test]
-    fn local_webhooks_are_billing_only() {
-        let enabled = [("ANARLOG_BILLING_WEBHOOKS", "true")];
-        assert!(role_config("billing", &enabled).is_ok());
-        for role in ["sync", "core", "ai", "all"] {
-            assert!(
-                role_config(role, &enabled)
-                    .err()
-                    .unwrap()
-                    .contains("require the billing role")
-            );
-        }
     }
 
     #[test]
@@ -476,19 +364,17 @@ mod tests {
             "sync",
             &[
                 ("NANGO_API_KEY", "partial"),
-                ("STRIPE_SECRET_KEY", "partial"),
                 ("PYANNOTE_API_BASE", "partial"),
             ],
         )
         .unwrap();
         assert!(config.nango.is_none());
-        assert!(config.subscription.is_none());
         assert!(config.pyannote.is_none());
     }
 
     #[test]
     fn only_core_can_own_cleanup_in_split_runtimes() {
-        for role in ["ai", "sync", "billing"] {
+        for role in ["ai", "sync"] {
             let error = role_config(
                 role,
                 &[
@@ -509,61 +395,12 @@ mod tests {
     }
 
     #[test]
-    fn core_supabase_configuration_remains_required() {
-        #[derive(Deserialize)]
-        struct SupabaseOnlyEnv {
-            #[serde(flatten)]
-            _supabase: anlg_api_env::SupabaseEnv,
-        }
-
-        for missing in [
-            "SUPABASE_URL",
-            "SUPABASE_ANON_KEY",
-            "SUPABASE_SERVICE_ROLE_KEY",
-        ] {
-            let values = [
-                ("SUPABASE_URL", "http://127.0.0.1:54321"),
-                ("SUPABASE_ANON_KEY", "anon-key"),
-                ("SUPABASE_SERVICE_ROLE_KEY", "service-role-key"),
-            ]
-            .into_iter()
-            .filter(|(key, _)| *key != missing)
-            .map(|(key, value)| (key.to_string(), value.to_string()));
-            let error = match envy::from_iter::<_, SupabaseOnlyEnv>(values) {
-                Ok(_) => panic!("{missing} should remain required"),
-                Err(error) => error,
-            };
-
-            assert!(matches!(
-                error,
-                EnvyError::MissingValue(field) if field == missing.to_lowercase()
-            ));
-        }
-    }
-
-    #[test]
-    fn core_supabase_configuration_rejects_empty_values() {
-        for (field, expected) in [
-            ("url", "SUPABASE_URL must not be empty"),
-            ("anon", "SUPABASE_ANON_KEY must not be empty"),
-            (
-                "service_role",
-                "SUPABASE_SERVICE_ROLE_KEY must not be empty",
-            ),
-        ] {
-            let mut env = anlg_api_env::SupabaseEnv {
-                supabase_url: "http://127.0.0.1:54321".to_string(),
-                supabase_anon_key: "anon-key".to_string(),
-                supabase_service_role_key: "service-role-key".to_string(),
-            };
-            match field {
-                "url" => env.supabase_url.clear(),
-                "anon" => env.supabase_anon_key.clear(),
-                "service_role" => env.supabase_service_role_key.clear(),
-                _ => unreachable!(),
-            }
-
-            assert_eq!(validate_supabase_env(&env), Err(expected.to_string()));
-        }
+    fn cloud_signing_key_cannot_be_empty() {
+        assert!(
+            role_config("core", &[("CLOUD_SIGNING_KEY", "")])
+                .err()
+                .unwrap()
+                .contains("CLOUD_SIGNING_KEY")
+        );
     }
 }

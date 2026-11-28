@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 
-import { getShotsCloudUrl } from "@anlg/supabase/shots";
+import { getShotsCloudUrl } from "@anlg/cloud-client/shots";
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, unknown>;
 
@@ -10,14 +10,14 @@ const read = (key: string, fallback = ""): string => {
 };
 
 const shotsUrl = read("shotsUrl");
-const apiUrl = read("apiUrl", "https://api.shots.playbookmedia.io");
+const apiUrl = read("apiUrl", "https://founder-hub-api.shots.playbookmedia.io");
 
 export const env = {
   appVariant: read("appVariant", __DEV__ ? "dev" : "stable"),
   appScheme: read("appScheme", "anarlog"),
   shotsUrl,
-  supabaseUrl: shotsUrl ? getShotsCloudUrl(apiUrl) : read("supabaseUrl"),
-  supabaseAnonKey: shotsUrl ? "shots-founder-hub" : read("supabaseAnonKey"),
+  cloudUrl: getShotsCloudUrl(apiUrl),
+  r2DownloadBaseUrl: read("r2DownloadBaseUrl"),
   apiUrl,
   appUrl: read("appUrl", "https://shots.playbookmedia.io"),
   posthogApiKey: read("posthogApiKey"),
@@ -25,4 +25,4 @@ export const env = {
   sentryDsn: read("sentryDsn"),
 };
 
-export const hasSupabaseEnv = Boolean(env.supabaseUrl && env.supabaseAnonKey);
+export const hasCloudEnv = Boolean(env.shotsUrl && env.cloudUrl);

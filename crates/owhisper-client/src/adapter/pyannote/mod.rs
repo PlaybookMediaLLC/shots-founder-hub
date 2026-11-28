@@ -86,8 +86,8 @@ mod tests {
             ("", "https://api.pyannote.ai/"),
             ("https://api.pyannote.ai", "https://api.pyannote.ai/v1"),
             (
-                "https://api.shots.playbookmedia.io/pyannote",
-                "https://api.shots.playbookmedia.io/pyannote/v1",
+                "https://founder-hub-api.shots.playbookmedia.io/pyannote",
+                "https://founder-hub-api.shots.playbookmedia.io/pyannote/v1",
             ),
         ] {
             assert_eq!(

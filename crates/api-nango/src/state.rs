@@ -2,13 +2,13 @@ use anlg_nango::NangoClient;
 
 use crate::config::{NangoConfig, build_nango_client};
 use crate::routes::webhook::ForwardHandlerRegistry;
-use crate::supabase::SupabaseClient;
+use crate::store::ConnectionStore;
 
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) config: NangoConfig,
     pub(crate) nango: NangoClient,
-    pub(crate) supabase: SupabaseClient,
+    pub(crate) store: ConnectionStore,
     pub(crate) forward_handlers: ForwardHandlerRegistry,
 }
 
@@ -23,16 +23,12 @@ impl AppState {
     ) -> Self {
         let nango = build_nango_client(&config).expect("failed to build NangoClient");
 
-        let supabase = SupabaseClient::new(
-            &config.supabase_url,
-            &config.supabase_anon_key,
-            config.supabase_service_role_key.clone(),
-        );
+        let store = ConnectionStore::new(config.database.clone());
 
         Self {
             config,
             nango,
-            supabase,
+            store,
             forward_handlers,
         }
     }

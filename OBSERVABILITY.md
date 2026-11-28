@@ -310,7 +310,6 @@ Use:
 
 Keep vendor-specific fields namespaced:
 
-- `anarlog.supabase.*`
 - `anarlog.stripe.*`
 - `anarlog.connection.*`
 - `anarlog.integration.*`

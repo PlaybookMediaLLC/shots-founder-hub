@@ -52,7 +52,7 @@ pub async fn create_session(
     Extension(auth): Extension<AuthContext>,
     Json(body): Json<CreateSessionRequest>,
 ) -> Result<Json<SessionResponse>> {
-    let user_id = auth.claims.sub;
+    let user_id = auth.claims.sub.clone();
 
     match body.mode {
         SessionMode::Connect => {
@@ -66,13 +66,8 @@ pub async fn create_session(
             })?;
 
             let owns = state
-                .supabase
-                .verify_connection_ownership(
-                    &auth.token,
-                    &user_id,
-                    connection_id,
-                    &body.integration_id,
-                )
+                .store
+                .verify_connection_ownership(&auth, &user_id, connection_id, &body.integration_id)
                 .await?;
 
             if !owns {
@@ -100,8 +95,8 @@ pub async fn create_session(
         }
         SessionMode::Auto => {
             if let Some(existing) = state
-                .supabase
-                .lookup_connection(&auth.token, &user_id, &body.integration_id)
+                .store
+                .lookup_connection(&auth, &user_id, &body.integration_id)
                 .await?
             {
                 let reconnect_req = anlg_nango::ReconnectSessionRequest {
@@ -127,7 +122,7 @@ pub async fn create_session(
                             "reconnect session failed with not found, cleaning stale local row"
                         );
                         state
-                            .supabase
+                            .store
                             .delete_connection(&user_id, &body.integration_id)
                             .await?;
                     }

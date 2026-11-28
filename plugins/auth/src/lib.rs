@@ -43,7 +43,7 @@ fn make_specta_builder<R: tauri::Runtime>() -> tauri_specta::Builder<R> {
             commands::begin_refresh,
             commands::finish_refresh,
         ])
-        .typ::<anlg_supabase_auth::Claims>()
+        .typ::<anlg_session_auth::Claims>()
         .error_handling(tauri_specta::ErrorHandlingMode::Result)
 }
 
@@ -54,18 +54,18 @@ pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
         .invoke_handler(specta_builder.invoke_handler())
         .setup(|app, _api| {
             #[cfg(all(target_os = "linux", not(test)))]
-            let auth_store = anlg_supabase_auth::client::store::AuthStore::in_memory(
+            let auth_store = anlg_session_auth::client::store::AuthStore::in_memory(
                 migrate::load_linux_auth(app)?,
             );
 
             #[cfg(all(target_os = "windows", not(test)))]
             let auth_store =
-                anlg_supabase_auth::client::store::AuthStore::in_memory(windows::load_auth(app)?);
+                anlg_session_auth::client::store::AuthStore::in_memory(windows::load_auth(app)?);
 
             #[cfg(any(not(any(target_os = "linux", target_os = "windows")), test))]
             let auth_store = {
                 let auth_path = migrate::auth_path(app)?;
-                anlg_supabase_auth::client::store::AuthStore::load(auth_path)
+                anlg_session_auth::client::store::AuthStore::load(auth_path)
             };
 
             app.manage(auth_store);

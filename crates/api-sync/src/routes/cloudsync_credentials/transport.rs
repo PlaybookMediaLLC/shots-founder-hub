@@ -1,7 +1,5 @@
 use axum::http::HeaderMap;
-use serde::Deserialize;
 
-use super::SUPABASE_REQUEST_TIMEOUT;
 use crate::{
     config::CloudsyncTransport,
     error::{Result, SyncError},
@@ -22,48 +20,26 @@ pub(super) fn client_accepts_replica_transport(headers: &HeaderMap) -> bool {
         .any(|transport| transport.trim() == "replica")
 }
 
-#[derive(Deserialize)]
-struct SyncTransportOverrideRow {
-    transport: String,
-}
-
 pub(super) async fn resolve_desktop_transport(
     state: &ReplicaState,
     account_user_id: &str,
     default: CloudsyncTransport,
 ) -> Result<CloudsyncTransport> {
-    let response = state
-        .client
-        .get(format!(
-            "{}/rest/v1/sync_transport_overrides",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .query(&[
-            ("user_id", format!("eq.{account_user_id}")),
-            ("select", "transport".to_string()),
-            ("limit", "1".to_string()),
-        ])
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .send()
+    use anlg_cloud_db::{Principal, entities::sync_transport_override};
+    use sea_orm::EntityTrait;
+    let user_id: uuid::Uuid = account_user_id.parse().map_err(|_| SyncError::Upstream)?;
+    let tx = state
+        .config
+        .database
+        .transaction(&Principal::Service)
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase sync transport override request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase sync transport override request was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-    let rows: Vec<SyncTransportOverrideRow> = response.json().await.map_err(|error| {
-        tracing::warn!(%error, "Supabase sync transport override response was invalid");
-        SyncError::Upstream
-    })?;
-    match rows.first().map(|row| row.transport.as_str()) {
+        .map_err(|_| SyncError::Upstream)?;
+    let row = sync_transport_override::Entity::find_by_id(user_id)
+        .one(&tx)
+        .await
+        .map_err(|_| SyncError::Upstream)?;
+    tx.commit().await.map_err(|_| SyncError::Upstream)?;
+    match row.as_ref().map(|row| row.transport.as_str()) {
         None => Ok(default),
         Some("replica") => Ok(CloudsyncTransport::Replica),
         Some("sqlite_sync") => Ok(CloudsyncTransport::SqliteSync),

@@ -1,5 +1,4 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
-
+import type { Session, CloudClient } from "@anlg/cloud-client";
 import type { JSONContent } from "@anlg/editor/note";
 
 import type { SharedNoteAttachment } from "~/shared-notes/cache";
@@ -30,7 +29,7 @@ type SessionShareScope = (typeof scopes)[number];
 export type SettableSessionShareScope = (typeof settableScopes)[number];
 export type SessionAccessCapability = (typeof capabilities)[number];
 export type ShareManagementContext = {
-  supabase: SupabaseClient;
+  cloudClient: CloudClient;
   session: Session;
   signal?: AbortSignal;
 };

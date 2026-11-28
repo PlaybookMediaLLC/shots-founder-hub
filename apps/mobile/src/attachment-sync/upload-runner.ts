@@ -1,8 +1,8 @@
 import {
   AttachmentBackupGatewayError,
   createAttachmentBackupClient,
-} from "@anlg/supabase/attachment-backups";
-import { uploadPrivateAttachment } from "@anlg/supabase/storage";
+} from "@anlg/cloud-client/attachment-backups";
+import { uploadPrivateAttachment } from "@anlg/cloud-client/storage";
 
 import {
   cleanupAttachmentUploadCache,
@@ -34,7 +34,7 @@ type RunnerDependencies = {
   client: AttachmentBackupClient;
   store: UploadStore;
   uploader: typeof uploadPrivateAttachment;
-  supabaseUrl: string;
+  cloudUrl: string;
 };
 
 let requestActiveRunner: (() => void) | null = null;
@@ -58,7 +58,7 @@ export function activateMobileAttachmentUploads(input: {
     }),
     store: mobileAttachmentUploadStore,
     uploader: uploadPrivateAttachment,
-    supabaseUrl: env.supabaseUrl,
+    cloudUrl: env.cloudUrl,
   };
   let enabled = false;
   let stopped = false;
@@ -250,7 +250,7 @@ async function runMobileAttachmentUpload(
         signedUploadToken: grant.uploadToken,
         ciphertextSha256: prepared.ciphertextSha256,
         ciphertextSizeBytes: prepared.ciphertextSizeBytes,
-        supabaseUrl: dependencies.supabaseUrl,
+        cloudUrl: dependencies.cloudUrl,
         readRange: (start, end) =>
           readAttachmentUploadRange(
             {

@@ -53,18 +53,13 @@ path contains spaces, set `CARGO_TARGET_DIR` to a path without spaces before
 starting the desktop app; some native dependencies use Autotools, which rejects
 build directories containing spaces.
 
-For the combined desktop, web, API, and local Supabase stack:
-
-```bash
-pnpm dev
-
-# Only local Supabase and the API
-pnpm dev:api
-```
-
-These commands require Docker and [Task](https://taskfile.dev/installation/) (`brew install go-task` on macOS), plus the API configuration described in [apps/api/AGENTS.md](apps/api/AGENTS.md). The Linux setup installs Task and process-compose. The combined stack runs `task supabase-start` to prepare local Supabase and `.env.supabase`, waits for API readiness, then starts web and desktop. Package `.env` files are still loaded by the apps; Process Compose does not inject the root `.env` into every process.
-
-Provider credentials and service-specific configuration are not required for `pnpm dev:desktop` or `pnpm dev:web`. The underlying `task supabase-start` and `cargo run -p api` commands remain available. Supabase's Docker containers persist when Process Compose exits; stop them explicitly with `task supabase-stop`.
+`pnpm dev:desktop` and `pnpm dev:web` start individual applications. Use the
+paired local stack below for PostgreSQL, S3 storage, Shots authentication, and
+billing. `pnpm dev` starts the configured desktop/web/API processes; `pnpm
+dev:api` starts the configured API. Both apply `task db-migrate` using
+`DATABASE_URL` from `.env.cloud` and require the dependencies to be running.
+Package `.env` files remain supported. See [apps/api/AGENTS.md](apps/api/AGENTS.md)
+for required server configuration.
 
 ### Shots authentication
 
@@ -92,43 +87,57 @@ The packaged desktop command currently supports macOS; browser testing works
 on macOS and Linux. Quit any older Shots Founder Hub Dev process before opening
 the new bundle so the callback reaches the correct build.
 
-This starts Shots Postgres, Redis, Temporal, PostgREST and Storage over that same
-Shots database, both API servers,
-and both web apps. Credentials and logs live under ignored
-`.local/founder-hub/`; no production credentials are required. Create a local
-Shots account at the displayed Shots URL, then sign in from Founder Hub.
-Email verification is disabled only in this local profile. Paid AI, recording
-providers, and social integrations still need their own provider configuration.
+This starts PostgreSQL, Redis, Temporal, RustFS (the local S3-compatible R2
+replacement), both API servers, and both web apps. Credentials and logs live
+under ignored `.local/founder-hub/`; no production credentials are required.
+Create a local Shots account at the displayed Shots URL, then sign in from
+Founder Hub. Email verification is disabled only in this local profile. AI,
+recording providers, and integrations still need provider configuration.
 
-Run the Shots backend and web application. The Shots migration command bootstraps
-the private storage roles, the Storage engine applies its schema, and
-`platform-migrate --founder-hub=apply` applies the Hub schema in the Shots database.
-On the Founder Hub API, set `SHOTS_AUTH_URL` to the Shots web origin,
-`SHOTS_AUTH_SERVICE_TOKEN` to a random secret of at least 32 bytes, and the local
-private REST/Storage gateway URL, anonymous key, service-role key, and JWT secret
-using the existing `SUPABASE_*` transport variables. These credentials use the
-`shots_hub_anon` and `shots_hub_service_role` database roles. There is no separate
-Hub database or GoTrue authentication server. Set the same
-`SHOTS_AUTH_SERVICE_TOKEN` on the Shots web server. This secret is only for the
-private Founder Hub authority endpoint; never put it in a `VITE_` or
-`EXPO_PUBLIC_` variable or reuse the Shots publishing service token.
+The Go migration command owns the Shots tables. The Rust `cloud-db` migration
+binary owns `founder_hub`, `founder_hub_identity`, `founder_hub_private`, and
+`founder_hub_files` in the same PostgreSQL database. Run the Go command without
+`--founder-hub=apply`; the local CLI then runs the Rust migrations. Migration
+checksums and an advisory lock prevent concurrent or altered history execution.
+The `cloud_api` runtime role uses transaction-scoped identity and PostgreSQL RLS.
+Only migration administrators create schema or roles.
 
-Set `VITE_SHOTS_URL` and `VITE_API_URL` for desktop and web. Mobile uses
-`EXPO_PUBLIC_SHOTS_URL` and `EXPO_PUBLIC_API_URL`. User requests then use the
-API's `/cloud` gateway, which checks the current Shots session and projects
-its account and workspace permissions into Supabase. Supabase remains the
-note and attachment store. Account, team, and billing changes use Shots settings.
-Shots sync uses the encrypted replica transport and does not require SQLite Cloud
-credentials; older clients without replica support must upgrade.
+Set `SHOTS_AUTH_URL` and the same random `SHOTS_AUTH_SERVICE_TOKEN` (at least 32
+bytes) on the Hub API and Shots web server. Never expose this token in a public
+build variable. Set `DATABASE_URL`, `CLOUD_SIGNING_KEY`, `R2_ENDPOINT`, `R2_BUCKET`,
+`R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` on the API. R2 uses its S3 endpoint
+and region `auto`; the bucket holds logical prefixes for audio, backups, and
+shared attachments. Grant the API credentials object access only to that bucket.
 
-For browser sign-in, set `VITE_APP_URL` to the Founder Hub web origin and run
-Shots' `platform-migrate` with `FOUNDER_HUB_WEB_ORIGIN` set to that same origin.
-It registers exactly `/callback/shots/`; HTTPS is required outside loopback
-development. Keep the web server's `SUPABASE_URL` and `SUPABASE_ANON_KEY` for
-public shared-note reads. The browser and authenticated server client use the
-gateway automatically. Legacy Stripe credentials are not required in Shots mode.
-Disable legacy billing webhooks and `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` in
-central deployments; these Stripe-based workers must not manage Shots accounts.
+Set `VITE_SHOTS_URL`, `VITE_API_URL`, and `VITE_R2_DOWNLOAD_BASE_URL` for desktop
+and web. Mobile uses `EXPO_PUBLIC_SHOTS_URL`, `EXPO_PUBLIC_API_URL`, and
+`EXPO_PUBLIC_R2_DOWNLOAD_BASE_URL`. The R2 download base is the exact endpoint
+plus bucket path; native clients reject other hosts and paths. User requests use
+`/cloud`, which checks the current Shots session and projects permissions into
+PostgreSQL. Account, team, and billing changes use Shots settings. Encrypted
+replica sync does not require SQLite Cloud credentials.
+
+Set `VITE_APP_URL` to the Hub web origin and run Shots `platform-migrate` with
+`FOUNDER_HUB_WEB_ORIGIN` set to that origin to register `/callback/shots/`.
+HTTPS is required outside loopback development. Public shared-note requests also
+use the Hub API. Enable `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` on only one core
+or combined runtime for durable attachment and account cleanup.
+
+Configure the production R2 bucket CORS rules to allow the exact web and desktop
+origins, `GET`/`PUT`/`HEAD`, request headers, and expose `ETag`. Enable a lifecycle
+rule to abort incomplete multipart uploads after one day. The local stack applies
+these settings with `scripts/local-r2-init.sh`. Browser grants expire after 15
+minutes; ordinary download URLs expire within one hour.
+
+Existing deployments require a separate data cutover. Back up the source database
+and storage first, stop writers and cleanup workers, and restore the Hub data into
+the target schemas. Preserve user/workspace UUIDs, encrypted bytes, and object
+keys. Copy each storage bucket to the matching R2 logical prefix, verify row
+counts and object sizes/checksums, then switch API and client configuration.
+Do not run the fresh-schema migrator over an existing legacy Hub schema: it
+refuses conflicting objects instead of dropping data. The old database and bucket
+must remain available for rollback until the cutover is verified. These repository
+changes do not move hosted data or modify cloud credentials.
 
 The CLI uses `ANARLOG_SHOTS_URL` and `ANARLOG_API_URL` (or the corresponding
 `VITE_` values embedded at build time). `sfh auth login` prints a PKCE
@@ -220,7 +229,7 @@ build that exposes the action.
 | `crates/*`       | Rust libraries and services                             |
 | `packages/*`     | Shared TypeScript packages                              |
 | `crates/db-app`  | SQLite schema and migrations                            |
-| `supabase`       | Hosted database schema, functions, and tests            |
+| `postgres`       | PostgreSQL schema, functions, migrations, and tests     |
 | `skills/sfh`     | Published CLI and MCP agent skill                       |
 | `enterprise`     | Commercially licensed capture and deployment components |
 | `docs`           | Mintlify product and reference documentation            |

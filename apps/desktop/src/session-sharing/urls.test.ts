@@ -17,7 +17,7 @@ describe("session share URLs", () => {
   it("places bearer link tokens only in the fragment", () => {
     const url = new URL(
       buildSessionShareLinkUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         linkId,
         linkToken: token,
       }),
@@ -31,7 +31,7 @@ describe("session share URLs", () => {
   it("places invitation tokens only in the fragment", () => {
     const url = new URL(
       buildSessionInvitationUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         invitationId,
         inviteToken: token,
       }),
@@ -45,56 +45,43 @@ describe("session share URLs", () => {
   it("builds token-free account and public URLs", () => {
     expect(
       buildAccountSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         shareId,
       }),
-    ).toBe(`https://shots.playbookmedia.io/share/${shareId}/`);
+    ).toBe(`https://anarlog.so/share/${shareId}/`);
     expect(
       buildPublicSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         publicSlug,
       }),
-    ).toBe(`https://shots.playbookmedia.io/share/public/${publicSlug}/`);
+    ).toBe(`https://anarlog.so/share/public/${publicSlug}/`);
   });
 
-  it("uses a workspace subdomain for every stable sharing route", () => {
+  it("keeps every stable sharing route on the configured origin", () => {
     const workspaceShareSlug = "fastrepl";
+    const appBaseUrl = "https://shots.playbookmedia.io";
     expect(
       buildSessionShareLinkUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl,
         linkId,
         linkToken: token,
         workspaceShareSlug,
       }),
-    ).toBe(
-      `https://fastrepl.shots.playbookmedia.io/t/${linkId}/#token=${token}`,
-    );
+    ).toBe(`${appBaseUrl}/t/${linkId}/#token=${token}`);
     expect(
       buildSessionInvitationUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl,
         invitationId,
         inviteToken: token,
         workspaceShareSlug,
       }),
-    ).toBe(
-      `https://fastrepl.shots.playbookmedia.io/share/invite/${invitationId}/#token=${token}`,
-    );
+    ).toBe(`${appBaseUrl}/share/invite/${invitationId}/#token=${token}`);
     expect(
-      buildAccountSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
-        shareId,
-        workspaceShareSlug,
-      }),
-    ).toBe(`https://fastrepl.shots.playbookmedia.io/share/${shareId}/`);
+      buildAccountSessionShareUrl({ appBaseUrl, shareId, workspaceShareSlug }),
+    ).toBe(`${appBaseUrl}/share/${shareId}/`);
     expect(
-      buildPublicSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
-        publicSlug,
-        workspaceShareSlug,
-      }),
-    ).toBe(
-      `https://fastrepl.shots.playbookmedia.io/share/public/${publicSlug}/`,
-    );
+      buildPublicSessionShareUrl({ appBaseUrl, publicSlug, workspaceShareSlug }),
+    ).toBe(`${appBaseUrl}/share/public/${publicSlug}/`);
   });
 
   it("keeps development origins unchanged and rejects malformed workspace slugs", () => {
@@ -107,14 +94,14 @@ describe("session share URLs", () => {
     ).toBe(`http://localhost:3000/share/${shareId}/`);
     expect(() =>
       buildAccountSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         shareId,
-        workspaceShareSlug: "escape.shots.playbookmedia.io",
+        workspaceShareSlug: "escape.anarlog.so",
       }),
     ).toThrow("Share URL is unavailable");
     expect(() =>
       buildAccountSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         shareId,
         workspaceShareSlug: "api",
       }),
@@ -124,7 +111,7 @@ describe("session share URLs", () => {
   it("targets non-stable builds without changing stable canonical URLs", () => {
     const linkUrl = new URL(
       buildSessionShareLinkUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         linkId,
         linkToken: token,
         desktopScheme: "anarlog-staging",
@@ -135,7 +122,7 @@ describe("session share URLs", () => {
 
     const publicUrl = new URL(
       buildPublicSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         publicSlug,
         desktopScheme: "anarlog-dev",
       }),
@@ -144,7 +131,7 @@ describe("session share URLs", () => {
 
     const stableUrl = new URL(
       buildAccountSessionShareUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         shareId,
         desktopScheme: "anarlog",
       }),
@@ -162,21 +149,21 @@ describe("session share URLs", () => {
     ).toThrow("Share URL is unavailable");
     expect(() =>
       buildSessionShareLinkUrl({
-        appBaseUrl: "https://shots.playbookmedia.io?token=old",
+        appBaseUrl: "https://anarlog.so?token=old",
         linkId,
         linkToken: token,
       }),
     ).toThrow("Share URL is unavailable");
     expect(() =>
       buildSessionShareLinkUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         linkId,
         linkToken: "bad?token",
       }),
     ).toThrow("Share URL is unavailable");
     expect(() =>
       buildSessionShareLinkUrl({
-        appBaseUrl: "https://shots.playbookmedia.io",
+        appBaseUrl: "https://anarlog.so",
         linkId: "bad-link",
         linkToken: token,
       }),

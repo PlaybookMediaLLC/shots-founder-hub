@@ -142,4 +142,4 @@ export function createAuthCallbackHandler({
 import {
   createShotsAuthorization,
   exchangeShotsCallback,
-} from "@anlg/supabase/shots";
+} from "@anlg/cloud-client/shots";

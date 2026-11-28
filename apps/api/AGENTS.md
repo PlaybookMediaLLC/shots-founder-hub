@@ -4,8 +4,8 @@ infisical export \
   --secret-overriding=false \
   --format=dotenv \
   --output-file="apps/api/.env" \
-  --projectId=87dad7b5-72a6-4791-9228-b3b86b169db1 \
-  --path="/anarlog/ai"
+  --projectId=04ebc1cf-0ec5-4e9e-8ab9-4c6da4252574 \
+  --path="/founder-hub"
 ```
 
 `/anarlog/ai` is the API runtime view. Its Nango entries should reference the
@@ -21,68 +21,56 @@ second secret path.
 | `all` (default) | Existing combined API, preserving current client URLs |
 | `ai` | Transcription, LLM, research, diarization, and STT callbacks |
 | `sync` | Sync, devices, attachments, sharing, hosted meeting API/MCP |
-| `core` | Nango and integration APIs, account deletion, SCIM |
-| `billing` | Trial/subscription API under the existing `/subscription`, `/rpc`, and `/billing` aliases |
+| `core` | Nango and integration APIs, durable Shots account cleanup |
 
-The billing image uses the `billing-runtime` Docker target: one Machine runs
-the Rust API and the existing `apps/stripe` webhook handler and seat worker.
-Rust exposes `/webhook/stripe`, preserving signed bytes through a loopback hop
-to port 8788. Only the billing role may enable `ANARLOG_BILLING_WEBHOOKS`.
-Readiness at `/health/ready/billing-unified` requires the local webhook listener.
-The deployment profile deliberately uses that path so pre-consolidation Rust-only
-images cannot pass readiness during rollback. Retain a known combined billing
-image for rollback after moving the Stripe destination. The Bun supervisor drains Rust
-requests before stopping webhooks and awaiting claimed seat work.
-Billing secrets include DATABASE_URL and STRIPE_WEBHOOK_SECRET from
-`/anarlog/stripe-sync`; LOOPS_API_KEY comes from the API view LOOPS_KEY.
-Optional SLACK_ALERT_ANARLOG_WEBHOOK_URL and SLACK_ALERT_CHAR_WEBHOOK_URL from the
-same path announce new Stripe customers in each product's channel. Deploys only
-import secrets and never unset them, so stop an alert by revoking its webhook in
-the Fastrepl Alerts Slack app or with `flyctl secrets unset`.
-Core retains the existing subscription configuration for account deletion and SCIM.
+All roles require `DATABASE_URL`, `CLOUD_SIGNING_KEY` (32 bytes minimum),
+`R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+`SHOTS_AUTH_URL`, and `SHOTS_AUTH_SERVICE_TOKEN`. SeaORM connects directly to
+PostgreSQL. Shots owns authentication, account changes, and billing; this
+repository has no Stripe service or standalone authentication server.
 
-All roles require Supabase configuration. Only `ai` and `all` require
+Run `cargo run --locked -p cloud-db --bin migrate` with a migration administrator
+before starting services. Runtime credentials should use `cloud_api`; the
+migration administrator must be able to create roles and extensions. Do not use
+runtime credentials to run migrations. Sync and combined roles also require
+`FOUNDER_HUB_MCP_URL`.
+
+Only `ai` and `all` require
 `OPENROUTER_API_KEY` and `API_BASE_URL`; the sync runtime requires its shared-note
 email configuration. Optional integration groups are validated only in their
 owning roles. `ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED` is accepted only by `core`
 and `all`. Assign cleanup to one deployment during migration.
 
-Role selection does not change Fly routing or provision applications. Keep
-existing URLs working while clients and webhook providers migrate.
-
-Standalone profiles are `fly.ai.toml` (`anarlog-inference`),
-`fly.sync.toml` (`anarlog-sync`), `fly.core.toml` (`anarlog-core`), and
-`fly.billing.toml` (`anarlog-billing-api`). The default `fly.toml` and
-`fly.gateway.toml` route public and legacy custom domains through `anarlog-gateway`
-to these services. Keep domain certificates and DNS routing on this shared gateway.
-Core owns durable cleanup; other profiles disable it. Never transfer cleanup
-ownership until the previous owner's worker has stopped.
+`api_cd.yaml` deploys the combined API (`ANARLOG_SERVICE=all`, with
+`ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED=true`, `maxScale=5`, and
+`DATABASE_MAX_CONNECTIONS=8` — 40 connections max across all instances) to
+Google Cloud Run in `shots-founder-hub-prod` (`us-west1`, service
+`founder-hub-api`). DigitalOcean App Platform remains off.
+`.github/scripts/render_cloud_run_spec.py` owns the Cloud Run manifests and
+syncs runtime secrets from Infisical (Desktop App Backend, `prod`,
+`/founder-hub`) into GCP Secret Manager so no raw secret values appear inline in
+revisions. When `DATABASE_POOL_URL` is set in Infisical (e.g. PgBouncer port
+`6432`), runtime traffic uses it automatically with `statement-cache-capacity=0`
+while `founder-hub-api-migrate` keeps using direct `DATABASE_MIGRATION_URL`.
 
 `/health/ready/{service}` verifies the expected runtime role, configuration of
 its primary subsystems, and that it is not draining. The combined role uses
-`api`; Rust billing uses `billing-api`. These checks do not probe external
-providers or prove request continuity. Keep dependency smoke tests and active
-traffic deploy/rollback tests as separate rollout gates.
-
-The drain deploy helper reconciles the supported single-process Fly profile
-into each candidate. Unsupported settings fail before machine mutations;
-extend its translation and tests before introducing additional Fly features.
-
+`api`. These checks do not probe external providers or prove request
+continuity. Cloud Run startup and liveness probes use `/health`, because
+readiness also requires optional integrations.
 
 The combined compatibility runtime can forward each role through
-`ANARLOG_AI_ORIGIN`, `ANARLOG_SYNC_ORIGIN`, `ANARLOG_CORE_ORIGIN`, and
-`ANARLOG_BILLING_ORIGIN`. Unset origins keep the existing local route behavior.
+`ANARLOG_AI_ORIGIN`, `ANARLOG_SYNC_ORIGIN`, `ANARLOG_CORE_ORIGIN`. Unset origins keep the existing local route behavior.
 The proxy preserves uploads, response streams, and WebSocket upgrades; it does
 not retry writes or follow redirects. Drain permits cover proxied requests and
 upgraded connections through completion. Origins are rejected in standalone
 roles to prevent routing cycles.
 
-`api_cd.yaml` selects one explicit service per dispatch. `gateway` retains the
-existing public URLs with its forwarding profile; deploy and verify all
-standalone services before activating this profile. The default dispatch is
-`gateway`. The optional `image` input accepts only an immutable API image digest.
-Keep the image and configuration together in the rollout record. Explicit drain
-adoption requires independent verification that the exact image handles SIGUSR1;
-health alone does not establish that capability. Secrets are filtered by the
-selected runtime before staging. Core's checked-in profile enables cleanup so
-routine deployments preserve worker ownership.
+`api_cd.yaml` runs on pushes to `main` that change the API and on manual
+dispatch when `API_DEPLOY_ENABLED` is `true`. It authenticates to GCP via
+keyless GitHub Actions Workload Identity Federation, builds and pushes one
+`linux/amd64` image to Artifact Registry
+(`us-west1-docker.pkg.dev/shots-founder-hub-prod/shots-founder-hub/founder-hub-api`),
+runs the Cloud Run Job `founder-hub-api-migrate` (`/usr/local/bin/migrate` with
+`DATABASE_MIGRATION_URL`), and then deploys `founder-hub-api` running as
+`sa-api-runtime@shots-founder-hub-prod.iam.gserviceaccount.com`.

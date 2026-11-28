@@ -1,4 +1,4 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 const SHARED_RESOURCE_TYPES = ["folder", "template", "automation"] as const;
 
@@ -25,7 +25,7 @@ export type SharedResourceGuest = {
 };
 
 export type ResourceSharingContext = {
-  supabase: SupabaseClient;
+  cloudClient: CloudClient;
   session: Session;
 };
 
@@ -37,13 +37,13 @@ export class ResourceSharingError extends Error {
 }
 
 export function requireResourceSharingContext(auth: {
-  supabase?: SupabaseClient | null;
+  cloudClient?: CloudClient | null;
   session?: Session | null;
 }): ResourceSharingContext {
-  if (!auth.supabase || !auth.session || auth.session.user.is_anonymous) {
+  if (!auth.cloudClient || !auth.session || auth.session.user.is_anonymous) {
     throw new ResourceSharingError();
   }
-  return { supabase: auth.supabase, session: auth.session };
+  return { cloudClient: auth.cloudClient, session: auth.session };
 }
 
 export async function listSharedResources(
@@ -163,7 +163,7 @@ async function callRpc(
   functionName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  const response = await context.supabase
+  const response = await context.cloudClient
     .rpc(functionName, args)
     .setHeader("Authorization", `Bearer ${context.session.access_token}`);
   if (response.error !== null) {

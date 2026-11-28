@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
+import type { AuthChangeEvent, Session } from "@anlg/cloud-client";
 import {
   bindCloudsyncAccount,
   getCloudsyncStatus,

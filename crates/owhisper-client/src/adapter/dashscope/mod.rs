@@ -66,8 +66,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.shots.playbookmedia.io?provider=dashscope",
-                "wss://api.shots.playbookmedia.io/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=dashscope",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "dashscope")],
             ),
             (

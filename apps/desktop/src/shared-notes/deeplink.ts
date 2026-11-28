@@ -33,11 +33,11 @@ export async function openAccountSharedNote({
   openNew: (tab: TabInput) => void;
   signal: AbortSignal;
 }) {
-  const { session, supabase } = auth;
+  const { session, cloudClient } = auth;
   if (
     !session ||
     session.user.is_anonymous === true ||
-    !supabase ||
+    !cloudClient ||
     signal.aborted
   ) {
     openNew({ type: "shared_sessions", id: shareId });
@@ -46,7 +46,7 @@ export async function openAccountSharedNote({
 
   let response: { data: unknown; error: unknown };
   try {
-    response = await supabase
+    response = await cloudClient
       .rpc("read_my_session_share_snapshot_v2", { p_share_id: shareId })
       .setHeader(
         "Authorization",

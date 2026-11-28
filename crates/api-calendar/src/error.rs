@@ -90,7 +90,8 @@ mod tests {
             .api_base("http://127.0.0.1:1")
             .build()
             .unwrap();
-        let state = NangoConnectionState::new(nango, "http://127.0.0.1:1", "fixture-key");
+        let database = anlg_cloud_db::Database::new("postgres://127.0.0.1:1/unavailable").unwrap();
+        let state = NangoConnectionState::new(nango, database);
         let provider_error = r#"HTTP client error: API error (404 Not Found): {"error":{"code":"MailboxNotEnabledForRESTAPI","message":"The mailbox is either inactive, soft-deleted, or is hosted on-premise."}}"#;
         let error = map_provider_error(&state, "outlook", "fixture", provider_error).await;
         assert!(matches!(error, CalendarError::MailboxUnavailable));

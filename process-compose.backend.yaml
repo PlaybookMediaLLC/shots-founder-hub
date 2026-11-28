@@ -3,10 +3,10 @@
 version: "0.5"
 
 processes:
-  supabase:
-    description: Start local Supabase, export its environment, and apply migrations
-    command: task supabase-start
-    log_location: ${PC_LOG_DIR:-.process-compose/logs}/supabase.log
+  database:
+    description: Apply migrations to the configured PostgreSQL database
+    command: task db-migrate
+    log_location: ${PC_LOG_DIR:-.process-compose/logs}/database.log
     availability:
       restart: exit_on_failure
 
@@ -19,7 +19,7 @@ processes:
       - API_BASE_URL=http://localhost:3001
     log_location: ${PC_LOG_DIR:-.process-compose/logs}/api.log
     depends_on:
-      supabase:
+      database:
         condition: process_completed_successfully
     readiness_probe:
       http_get:

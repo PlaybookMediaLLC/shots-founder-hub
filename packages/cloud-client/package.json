@@ -1,0 +1,22 @@
+{
+  "name": "@anlg/cloud-client",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./attachment-backups": "./src/attachment-backups.ts",
+    "./billing": "./src/billing.ts",
+    "./profile": "./src/profile.ts",
+    "./storage": "./src/storage.ts",
+    "./shots": "./src/shots.ts",
+    "./referrals": "./src/referrals.ts",
+    "./cookies": "./src/cookies.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "vitest": "^5.0.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  }
+}

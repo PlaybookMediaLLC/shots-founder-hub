@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   auth: {
     session: null as any,
-    supabase: {} as any,
+    cloudClient: {} as any,
     signIn: vi.fn().mockResolvedValue(undefined),
   },
   billing: {
@@ -82,7 +82,7 @@ vi.mock("~/auth/billing-context", () => ({
 
 vi.mock("~/env", () => ({
   env: {
-    VITE_API_URL: "https://api.shots.playbookmedia.io",
+    VITE_API_URL: "https://founder-hub-api.shots.playbookmedia.io",
     VITE_APP_URL: "https://shots.playbookmedia.io",
   },
 }));
@@ -447,7 +447,7 @@ describe("SessionShareButton", () => {
     mocks.workspaces = [];
     mocks.defaultMeetingShareAccess = "me";
     mocks.auth.session = createSession();
-    mocks.auth.supabase = {};
+    mocks.auth.cloudClient = {};
     mocks.billing.isReady = true;
     mocks.billing.isPaid = true;
     mocks.syncStatus = "clean";
@@ -1273,7 +1273,7 @@ describe("SessionShareButton", () => {
     expect(mocks.rotateSessionShareLink).not.toHaveBeenCalled();
   });
 
-  it("copies sharing links from the workspace subdomain", async () => {
+  it("copies sharing links from the configured origin with a workspace slug", async () => {
     mocks.getSessionShareWorkspaceSlug.mockResolvedValue("fastrepl");
     renderShareButton();
     await openSharePopover();
@@ -1283,7 +1283,7 @@ describe("SessionShareButton", () => {
 
     await waitFor(() =>
       expect(mocks.clipboardWriteText).toHaveBeenCalledWith(
-        `https://fastrepl.shots.playbookmedia.io/share/${SHARE_ID}/`,
+        `https://shots.playbookmedia.io/share/${SHARE_ID}/`,
       ),
     );
   });

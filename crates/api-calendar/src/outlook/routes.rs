@@ -45,12 +45,7 @@ pub async fn list_calendars(
     Json(req): Json<OutlookListCalendarsRequest>,
 ) -> Result<Json<ListCalendarsResponse>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Outlook::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Outlook::ID, &req.connection_id)
         .await?
         .with_retries(0)
         .with_base_url_override("https://graph.microsoft.com/v1.0");
@@ -86,12 +81,7 @@ pub async fn list_events(
     Json(req): Json<OutlookListEventsRequest>,
 ) -> Result<Json<ListEventsResponse>> {
     let http = nango_state
-        .build_http_client(
-            &auth.token,
-            &auth.claims.sub,
-            Outlook::ID,
-            &req.connection_id,
-        )
+        .build_http_client(&auth, &auth.claims.sub, Outlook::ID, &req.connection_id)
         .await?
         .with_retries(0)
         .with_base_url_override("https://graph.microsoft.com/v1.0");

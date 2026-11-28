@@ -97,13 +97,13 @@ impl AmModel {
     pub fn tar_url(&self) -> &str {
         match self {
             AmModel::ParakeetV2 => {
-                "https://models.shots.playbookmedia.io/v0/nvidia_parakeet-v2_476MB.tar"
+                "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/models-v0/nvidia_parakeet-v2_476MB.tar"
             }
             AmModel::ParakeetV3 => {
-                "https://models.shots.playbookmedia.io/v0/nvidia_parakeet-v3_494MB.tar"
+                "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/models-v0/nvidia_parakeet-v3_494MB.tar"
             }
             AmModel::WhisperLargeV3 => {
-                "https://models.shots.playbookmedia.io/v0/openai_whisper-large-v3-v20240930_626MB.tar"
+                "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/download/models-v0/openai_whisper-large-v3-v20240930_626MB.tar"
             }
         }
     }

@@ -1,6 +1,6 @@
-import type { Session } from "@supabase/supabase-js";
 import { useRef } from "react";
 
+import type { Session } from "@anlg/cloud-client";
 import { useMountEffect } from "@anlg/ui/hooks/use-mount-effect";
 
 import { startSharedAttachmentCacheRunner } from "./attachment-cache-runner";

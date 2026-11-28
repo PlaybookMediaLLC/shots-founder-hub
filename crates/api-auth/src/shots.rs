@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use anlg_supabase_auth::{Claims, SubscriptionStatus, server::Error};
+use anlg_session_auth::{Claims, SubscriptionStatus, server::Error};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -11,7 +11,7 @@ pub struct ShotsAuth {
     client: reqwest::Client,
     origin: reqwest::Url,
     service_token: reqwest::header::HeaderValue,
-    storage: Option<crate::ShotsStorage>,
+    authority: Option<crate::ShotsAuthority>,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -65,6 +65,16 @@ pub struct ShotsSession {
 }
 
 impl ShotsSession {
+    pub fn principal(&self) -> anlg_cloud_db::Principal {
+        anlg_cloud_db::Principal::User {
+            user_id: self.account_user_id,
+            session_id: self.session_id.clone(),
+            revision: self.revision.clone(),
+            email: self.user.email.clone(),
+            entitlements: self.claims().entitlements,
+        }
+    }
+
     pub fn access_token(&self) -> &str {
         &self.access_token
     }
@@ -140,25 +150,24 @@ impl ShotsAuth {
             client,
             origin,
             service_token,
-            storage: None,
+            authority: None,
         })
     }
 
-    pub fn with_storage(mut self, storage: crate::ShotsStorage) -> Self {
-        self.storage = Some(storage);
+    pub fn with_authority(mut self, authority: crate::ShotsAuthority) -> Self {
+        self.authority = Some(authority);
         self
     }
 
     pub async fn authenticate(&self, token: &str) -> Result<crate::AuthContext, Error> {
         let session = self.session(token).await?;
-        let token = self
-            .storage
+        self.authority
             .as_ref()
-            .ok_or(Error::JwksFetchFailed)?
-            .user_token(&session)
+            .ok_or(Error::AuthorityUnavailable)?
+            .project(&session)
             .await?;
         Ok(crate::AuthContext {
-            token,
+            token: token.to_owned(),
             claims: session.claims(),
             shots: Some(session),
         })
@@ -211,11 +220,11 @@ impl ShotsAuth {
             .bearer_auth(token)
             .send()
             .await
-            .map_err(|_| Error::JwksFetchFailed)?;
+            .map_err(|_| Error::AuthorityUnavailable)?;
         if response.status().is_success() || response.status().as_u16() == 401 {
             Ok(())
         } else {
-            Err(Error::JwksFetchFailed)
+            Err(Error::AuthorityUnavailable)
         }
     }
 
@@ -231,7 +240,7 @@ impl ShotsAuth {
             .header("x-shots-founder-hub-service", &self.service_token)
             .send()
             .await
-            .map_err(|_| Error::JwksFetchFailed)?;
+            .map_err(|_| Error::AuthorityUnavailable)?;
         Self::read_session(response, token).await
     }
 
@@ -251,7 +260,7 @@ impl ShotsAuth {
             .json(&serde_json::json!({ "userId": user_id, "sessionId": session_id }))
             .send()
             .await
-            .map_err(|_| Error::JwksFetchFailed)?;
+            .map_err(|_| Error::AuthorityUnavailable)?;
         let session = Self::read_session(response, "").await?;
         if session.user.id != user_id || session.session_id != session_id {
             return Err(Error::InvalidToken);
@@ -271,15 +280,15 @@ impl ShotsAuth {
             .bearer_auth(token)
             .send()
             .await
-            .map_err(|_| Error::JwksFetchFailed)?;
+            .map_err(|_| Error::AuthorityUnavailable)?;
         self.connector_context(Self::read_session(response, "").await?)
             .await
     }
 
     async fn connector_context(&self, session: ShotsSession) -> Result<crate::AuthContext, Error> {
-        self.storage
+        self.authority
             .as_ref()
-            .ok_or(Error::JwksFetchFailed)?
+            .ok_or(Error::AuthorityUnavailable)?
             .project(&session)
             .await?;
         Ok(crate::AuthContext {
@@ -294,18 +303,22 @@ impl ShotsAuth {
             return Err(Error::InvalidToken);
         }
         if !response.status().is_success() {
-            return Err(Error::JwksFetchFailed);
+            return Err(Error::AuthorityUnavailable);
         }
         let mut response = response;
         let mut body = Vec::new();
-        while let Some(chunk) = response.chunk().await.map_err(|_| Error::JwksFetchFailed)? {
+        while let Some(chunk) = response
+            .chunk()
+            .await
+            .map_err(|_| Error::AuthorityUnavailable)?
+        {
             if body.len() + chunk.len() > 1024 * 1024 {
-                return Err(Error::JwksFetchFailed);
+                return Err(Error::AuthorityUnavailable);
             }
             body.extend_from_slice(&chunk);
         }
         let mut session: ShotsSession =
-            serde_json::from_slice(&body).map_err(|_| Error::JwksFetchFailed)?;
+            serde_json::from_slice(&body).map_err(|_| Error::AuthorityUnavailable)?;
         if session.account_user_id.is_nil()
             || session.user.id.is_empty()
             || session.session_id.is_empty()
@@ -334,7 +347,7 @@ mod tests {
     #[tokio::test]
     async fn shots_rechecks_authority_and_maps_identity_without_trusting_token_claims() {
         let server = MockServer::start().await;
-        let auth = crate::AuthState::new(&server.uri()).with_shots(Some(
+        let auth = crate::AuthState::new().with_shots(Some(
             ShotsAuth::new(&server.uri(), "test-shots-service-token-thirty-two-bytes").unwrap(),
         ));
         let owner = serde_json::json!({
@@ -374,49 +387,23 @@ mod tests {
         let claims = auth.verify_token("native-token").await.ok().unwrap();
         assert_eq!(claims.sub, "dd26c713-2b48-4a8a-b3aa-91af23298eed");
         assert!(claims.is_pro());
-        Mock::given(method("POST"))
-            .and(path("/rest/v1/rpc/project_shots_authority"))
-            .and(header("authorization", "Bearer internal-service"))
-            .respond_with(ResponseTemplate::new(204))
-            .mount(&server)
-            .await;
-        let secret = "test-signing-key-at-least-thirty-two-bytes";
-        let storage = crate::ShotsStorage::new(&server.uri(), "internal-service", secret).unwrap();
-        let central = ShotsAuth::new(&server.uri(), "test-shots-service-token-thirty-two-bytes")
+        let session = auth
+            .shots()
             .unwrap()
-            .with_storage(storage);
-        let context = central.authenticate("native-token").await.ok().unwrap();
-        assert_ne!(context.token, "native-token");
-        let mut validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
-        validation.set_audience(&["authenticated"]);
-        let internal = jsonwebtoken::decode::<serde_json::Value>(
-            &context.token,
-            &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
-            &validation,
-        )
-        .unwrap()
-        .claims;
-        assert_eq!(internal["sub"], context.claims.sub);
-        assert_eq!(internal["shots_revision"], "1");
-        assert_eq!(internal["role"], "shots_hub_authenticated");
-        assert!(internal["exp"].as_i64().unwrap() <= Utc::now().timestamp() + 60);
-        assert!(!internal.to_string().contains("native-token"));
-        let session = context.shots.unwrap();
+            .session("native-token")
+            .await
+            .ok()
+            .unwrap();
         assert_eq!(session.access_token(), "native-token");
         assert!(!session.allows("db2ddcf4-8e8e-45a7-b5b2-97b5fa0a0737", "artifact:edit"));
         assert!(session.allows("db2ddcf4-8e8e-45a7-b5b2-97b5fa0a0737", "workspace:read"));
-        server.reset().await;
-        Mock::given(method("GET"))
-            .and(path("/api/founder-hub/session"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(body))
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(path("/rest/v1/rpc/project_shots_authority"))
-            .respond_with(ResponseTemplate::new(409))
-            .mount(&server)
-            .await;
-        assert!(central.authenticate("native-token").await.is_err());
+        assert!(
+            auth.shots()
+                .unwrap()
+                .authenticate("native-token")
+                .await
+                .is_err()
+        );
         server.reset().await;
         Mock::given(method("GET"))
             .and(path("/api/founder-hub/session"))
@@ -431,11 +418,6 @@ mod tests {
             .mount(&server)
             .await;
         assert!(auth.verify_token("native-token").await.is_err());
-        assert!(
-            auth.verify_oauth_token("native-token", "other-resource", &["meetings:read"])
-                .await
-                .is_err()
-        );
     }
 
     #[tokio::test]

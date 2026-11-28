@@ -1,7 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 
 import { env } from "../env";
-import { getSupabasePublicServerClient } from "../functions/supabase";
+import { getCloudPublicServerClient } from "../functions/cloud-client";
 import { getWorkspaceShareSlugFromHeaders } from "../lib/request-workspace-share-host";
 
 export const workspaceShareHostMiddleware = createMiddleware({
@@ -13,7 +13,7 @@ export const workspaceShareHostMiddleware = createMiddleware({
   );
   if (slug === null) return next();
 
-  const { data, error } = await getSupabasePublicServerClient().rpc(
+  const { data, error } = await getCloudPublicServerClient().rpc(
     "workspace_share_slug_is_active",
     { p_slug: slug },
   );

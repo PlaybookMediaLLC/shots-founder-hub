@@ -100,8 +100,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.shots.playbookmedia.io?provider=elevenlabs",
-                "wss://api.shots.playbookmedia.io/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=elevenlabs",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "elevenlabs")],
             ),
             (

@@ -76,21 +76,21 @@ Product docs live at [shots.playbookmedia.io/docs](https://shots.playbookmedia.i
 
 ## Repository map
 
-| Path               | What lives there                                                                               |
-| ------------------ | ---------------------------------------------------------------------------------------------- |
-| `apps/desktop`     | Tauri v2 desktop app: React and TypeScript UI, Rust backend                                    |
-| `apps/web`         | shots.playbookmedia.io website, account portal, and shared-note pages; not the desktop notepad |
-| `apps/api`         | Optional hosted services for AI, sync, sharing, and integrations                               |
-| `apps/cli`         | Local CLI and MCP server                                                                       |
-| `apps/mobile`      | iOS and Android client, available as a beta through TestFlight and Google Play                 |
-| `apps/stripe`      | Billing integration                                                                            |
-| `apps/watch/apple` | watchOS companion source built with the mobile app                                             |
-| `plugins/*`        | Tauri capabilities such as local STT, database access, calendar, export, and notifications     |
-| `crates/*`         | Rust libraries for audio capture, transcription, diarization, storage, and services            |
-| `packages/*`       | Shared TypeScript packages for the editor, database, UI, and plugin SDK                        |
-| `supabase/`        | Hosted authentication, sharing, sync, billing, and Cloud API data                              |
-| `skills/sfh`       | Published agent skill for the CLI and MCP server                                               |
-| `enterprise/`      | Source-visible enterprise components, commercially licensed                                    |
+| Path               | What lives there                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| `apps/desktop`     | Tauri v2 desktop app: React and TypeScript UI, Rust backend                                |
+| `apps/web`         | anarlog.so website, account portal, and shared-note pages; not the desktop notepad         |
+| `apps/api`         | Optional hosted services for AI, sync, sharing, and integrations                           |
+| `apps/cli`         | Local CLI and MCP server                                                                   |
+| `apps/mobile`      | iOS and Android client, available as a beta through TestFlight and Google Play             |
+| `apps/stripe`      | Billing integration                                                                        |
+| `apps/watch/apple` | watchOS companion source built with the mobile app                                         |
+| `plugins/*`        | Tauri capabilities such as local STT, database access, calendar, export, and notifications |
+| `crates/*`         | Rust libraries for audio capture, transcription, diarization, storage, and services        |
+| `packages/*`       | Shared TypeScript packages for the editor, database, UI, and plugin SDK                    |
+| `postgres/`        | PostgreSQL sharing, sync, Shots authority projection, and Cloud API data                          |
+| `skills/sfh`       | Published agent skill for the CLI and MCP server                                           |
+| `enterprise/`      | Source-visible enterprise components, commercially licensed                                |
 
 ## Local development
 
@@ -111,7 +111,7 @@ pnpm dev:desktop
 pnpm dev:web
 ```
 
-Process Compose builds shared UI first, manages the app processes, and saves logs under `.process-compose/`. Use `pnpm dev` for the combined desktop, web, API, and local Supabase stack after configuring the optional backend.
+Process Compose builds shared UI first, manages the app processes, and saves logs under `.process-compose/`. Use `pnpm dev` for the combined desktop, web, API, and PostgreSQL/R2 stack after configuring the backend.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for backend setup, process controls, validation commands, code ownership, and the contribution workflow. Ask [DeepWiki](https://deepwiki.com/PlaybookMediaLLC/shots-founder-hub) for a code-indexed explanation of a subsystem.
 

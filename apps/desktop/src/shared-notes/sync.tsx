@@ -1,5 +1,6 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
+
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 import {
   captureDurableSharedNoteCacheMutationVersion,
@@ -21,7 +22,7 @@ const PAGE_SIZE = 8;
 const MAX_AGGREGATE_BYTES = 64 * 1024 * 1024;
 
 async function fetchDurableSharedNoteSnapshots(
-  supabase: SupabaseClient,
+  cloudClient: CloudClient,
   session: Session,
   signal: AbortSignal,
 ) {
@@ -31,7 +32,7 @@ async function fetchDurableSharedNoteSnapshots(
 
   for (;;) {
     signal.throwIfAborted();
-    const response: { data: unknown; error: unknown } = await supabase
+    const response: { data: unknown; error: unknown } = await cloudClient
       .rpc("list_my_session_share_snapshot_page_v2", {
         p_after_share_id: afterShareId,
         p_limit: PAGE_SIZE,
@@ -76,7 +77,7 @@ async function fetchDurableSharedNoteSnapshots(
 }
 
 export async function syncDurableSharedNoteCache(
-  supabase: SupabaseClient,
+  cloudClient: CloudClient,
   session: Session,
   signal: AbortSignal,
 ) {
@@ -84,7 +85,7 @@ export async function syncDurableSharedNoteCache(
     session.user.id,
   );
   const snapshots = await fetchDurableSharedNoteSnapshots(
-    supabase,
+    cloudClient,
     session,
     signal,
   );
@@ -105,7 +106,13 @@ export async function syncDurableSharedNoteCache(
       isSessionEditorActive: isCanonicalSessionEditorActive,
       acquireSessionImportLock: tryAcquireCanonicalSessionImportLock,
       acknowledge: (shareId, contentRevision) =>
-        acknowledgeWebEdit(supabase, session, shareId, contentRevision, signal),
+        acknowledgeWebEdit(
+          cloudClient,
+          session,
+          shareId,
+          contentRevision,
+          signal,
+        ),
     });
     signal.throwIfAborted();
   }
@@ -116,7 +123,7 @@ export async function syncDurableSharedNoteCache(
   );
   signal.throwIfAborted();
   if (!cacheReplaced) return result;
-  await syncSharedNoteEventKeys(supabase, session, signal).catch((error) => {
+  await syncSharedNoteEventKeys(cloudClient, session, signal).catch((error) => {
     signal.throwIfAborted();
     console.warn("[shared-notes] failed to sync event keys", error);
   });
@@ -148,13 +155,13 @@ export async function syncDurableSharedNoteCache(
 }
 
 async function acknowledgeWebEdit(
-  supabase: SupabaseClient,
+  cloudClient: CloudClient,
   session: Session,
   shareId: string,
   contentRevision: number,
   signal: AbortSignal,
 ) {
-  const { error } = await supabase
+  const { error } = await cloudClient
     .rpc("acknowledge_session_share_web_edits", {
       p_share_id: shareId,
       p_expected_content_revision: contentRevision,
@@ -165,15 +172,15 @@ async function acknowledgeWebEdit(
 }
 
 export function DurableSharedNoteCacheSync() {
-  const { session, supabase } = useAuth();
+  const { session, cloudClient } = useAuth();
   const viewerUserId = session?.user.id ?? null;
   const isPermanentUser = session?.user.is_anonymous !== true;
 
   useQuery({
     queryKey: ["durable-shared-note-cache", viewerUserId, session?.expires_at],
-    enabled: Boolean(supabase && session && viewerUserId && isPermanentUser),
+    enabled: Boolean(cloudClient && session && viewerUserId && isPermanentUser),
     queryFn: ({ signal }) =>
-      syncDurableSharedNoteCache(supabase!, session!, signal),
+      syncDurableSharedNoteCache(cloudClient!, session!, signal),
     refetchInterval: REFRESH_INTERVAL_MS,
     refetchIntervalInBackground: false,
   });

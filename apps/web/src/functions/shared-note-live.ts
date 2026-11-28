@@ -3,7 +3,7 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import { env } from "@/env";
-import { getSupabaseServerClient } from "@/functions/supabase";
+import { getCloudServerClient } from "@/functions/cloud-client";
 import {
   MAX_SHARED_NOTE_DOCUMENT_BYTES,
   parseSharedNoteLiveTicket,
@@ -124,8 +124,8 @@ export const saveSharedNoteWebEdit = createServerFn({ method: "POST" })
   });
 
 async function currentAccessToken() {
-  const supabase = getSupabaseServerClient();
-  const { data } = await supabase.auth.getSession();
+  const cloudClient = getCloudServerClient();
+  const { data } = await cloudClient.auth.getSession();
   return data.session?.access_token ?? null;
 }
 

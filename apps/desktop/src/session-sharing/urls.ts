@@ -159,9 +159,6 @@ function appUrl(
     ) {
       throw invalidUrl();
     }
-    if (workspaceShareSlug && base.hostname === "shots.playbookmedia.io") {
-      base.hostname = `${workspaceShareSlug}.shots.playbookmedia.io`;
-    }
     return new URL(path, base.origin);
   } catch {
     throw invalidUrl();

@@ -977,14 +977,10 @@ mod tests {
         let cases = [
             (
                 core::BatchProvider::Anarlog,
-                "https://api.shots.playbookmedia.io/stt",
+                "https://founder-hub-api.shots.playbookmedia.io/stt",
                 None,
             ),
-            (
-                core::BatchProvider::Am,
-                "https://api.shots.playbookmedia.io/stt",
-                None,
-            ),
+            (core::BatchProvider::Am, "https://founder-hub-api.shots.playbookmedia.io/stt", None),
             (
                 core::BatchProvider::Am,
                 "http://localhost:50060/v1",

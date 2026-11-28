@@ -29,7 +29,6 @@ use utoipa::{Modify, OpenApi};
         (name = "sync", description = "CloudSync credential management"),
         (name = "shared-notes", description = "Public shared-note delivery"),
         (name = "cloud-api", description = "Opt-in hosted access to Shots Founder Hub meeting data"),
-        (name = "subscription", description = "Subscription and trial management")
     ),
     modifiers(&SecurityAddon)
 )]
@@ -50,7 +49,6 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     let crm_doc = with_path_prefix(anlg_api_crm::openapi(), "/crm");
     let meeting_import_doc = anlg_api_meeting_import::openapi();
     let nango_doc = with_path_prefix(anlg_api_nango::openapi(), "/nango");
-    let subscription_doc = with_path_prefix(anlg_api_subscription::openapi(), "/subscription");
     let sync_doc = with_path_prefix(anlg_api_sync::openapi(), "/sync");
     let shared_notes_doc = anlg_api_sync::shared_notes_openapi();
     let shared_note_recap_doc = anlg_api_sync::shared_note_recap_openapi();
@@ -68,7 +66,6 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     doc.merge(crm_doc);
     doc.merge(meeting_import_doc);
     doc.merge(nango_doc);
-    doc.merge(subscription_doc);
     doc.merge(sync_doc);
     doc.merge(shared_notes_doc);
     doc.merge(shared_note_recap_doc);
@@ -100,7 +97,7 @@ impl Modify for SecurityAddon {
                     Http::builder()
                         .scheme(HttpAuthScheme::Bearer)
                         .bearer_format("JWT")
-                        .description(Some("Supabase JWT token"))
+                        .description(Some("Cloud session JWT"))
                         .build(),
                 ),
             );

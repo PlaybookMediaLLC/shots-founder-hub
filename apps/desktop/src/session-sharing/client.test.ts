@@ -1,5 +1,6 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
+
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 import {
   createOrReuseSessionShare,
@@ -54,7 +55,7 @@ function rpcHarness(data: unknown, error: unknown = null) {
   return {
     abortSignal,
     context: {
-      supabase: { rpc } as unknown as SupabaseClient,
+      cloudClient: { rpc } as unknown as CloudClient,
       session: session(),
     },
     rpc,

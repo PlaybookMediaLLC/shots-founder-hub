@@ -8,7 +8,6 @@ use axum::{
     response::{IntoResponse, Response},
     routing::put,
 };
-use reqwest::StatusCode as HttpStatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::OpenApi;
@@ -173,10 +172,6 @@ struct SnapshotConflictResponse {
     snapshot: PublishedSessionShareSnapshot,
 }
 
-#[derive(Deserialize)]
-struct PostgrestError {
-    code: String,
-}
 #[derive(OpenApi)]
 #[openapi(
     paths(publish_session_share_snapshot, edit_session_share_snapshot),
@@ -267,70 +262,22 @@ async fn publish_legacy_session_share_snapshot(
     let attachment_ids = validate_attachment_ids(requested_attachment_ids.unwrap_or_default())?;
     let body = sanitize_document_with_attachments(&request.body, &attachment_ids)?;
 
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/publish_session_share_snapshot_with_attachments",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SNAPSHOT_PUBLISH_TIMEOUT)
-        .json(&LegacyPublishSnapshotRpcRequest {
+    let mut rows: Vec<LegacyPublishedSnapshotRow> = snapshot_rpc(
+        state,
+        "publish_session_share_snapshot_with_attachments",
+        &LegacyPublishSnapshotRpcRequest {
             p_share_id: &share_id,
             p_actor_user_id: actor_user_id,
             p_title: &title,
             p_body_json: &body,
             p_attachment_ids: requested_attachment_ids,
-        })
-        .send()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase legacy shared-note publication request failed");
-            SyncError::SnapshotServiceUnavailable
-        })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > MAX_SNAPSHOT_RESPONSE_BYTES as u64)
-    {
-        tracing::warn!(%status, "Supabase legacy shared-note publication response was too large");
-        return Err(SyncError::SnapshotServiceUnavailable);
-    }
-    let bytes = response.bytes().await.map_err(|error| {
-        tracing::warn!(%error, "Supabase legacy shared-note publication response could not be read");
-        SyncError::SnapshotServiceUnavailable
-    })?;
-    if bytes.len() > MAX_SNAPSHOT_RESPONSE_BYTES {
-        tracing::warn!(%status, "Supabase legacy shared-note publication response was too large");
-        return Err(SyncError::SnapshotServiceUnavailable);
-    }
-    if !status.is_success() {
-        let code = serde_json::from_slice::<PostgrestError>(&bytes)
-            .ok()
-            .map(|error| error.code);
-        tracing::warn!(%status, ?code, "Supabase legacy shared-note publication was rejected");
-        return match (status, code.as_deref()) {
-            (HttpStatusCode::UNAUTHORIZED | HttpStatusCode::FORBIDDEN, _) | (_, Some("42501")) => {
-                Err(SyncError::SnapshotPublicationForbidden)
-            }
-            (_, Some("23514")) => Err(SyncError::SnapshotChanged),
-            (_, Some("22023")) => Err(SyncError::BadRequest(
-                "Shared note snapshot is invalid".to_string(),
-            )),
-            _ => Err(SyncError::SnapshotServiceUnavailable),
-        };
-    }
-
-    let mut rows =
-        serde_json::from_slice::<Vec<LegacyPublishedSnapshotRow>>(&bytes).map_err(|error| {
-            tracing::warn!(%error, "Supabase legacy shared-note publication response was invalid");
-            SyncError::SnapshotServiceUnavailable
-        })?;
+        },
+    )
+    .await?;
     if rows.len() != 1 {
         tracing::warn!(
             row_count = rows.len(),
-            "Supabase legacy shared-note publication returned an invalid row count"
+            "Legacy shared-note publication returned an invalid row count"
         );
         return Err(SyncError::SnapshotServiceUnavailable);
     }
@@ -343,7 +290,7 @@ async fn publish_legacy_session_share_snapshot(
         || validate_shared_attachments(&row.attachments_json, requested_attachment_ids).is_err()
         || chrono::DateTime::parse_from_rfc3339(&row.published_at).is_err()
     {
-        tracing::warn!("Supabase legacy shared-note publication response failed validation");
+        tracing::warn!("Legacy shared-note publication response failed validation");
         return Err(SyncError::SnapshotServiceUnavailable);
     }
 
@@ -440,18 +387,9 @@ async fn mutate_session_share_snapshot(
         (SnapshotMutationKind::DesktopPublish, None) => "publish_session_share_snapshot_cas",
         (SnapshotMutationKind::WebEdit, _) => "edit_session_share_snapshot_cas",
     };
-    let builder = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/{rpc_name}",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SNAPSHOT_PUBLISH_TIMEOUT);
-    let builder = match (kind, preview_metadata.as_ref()) {
+    let parameters = match (kind, preview_metadata.as_ref()) {
         (SnapshotMutationKind::DesktopPublish, Some(metadata)) => {
-            builder.json(&PublishSnapshotWithPreviewCasRpcRequest {
+            serde_json::to_value(&PublishSnapshotWithPreviewCasRpcRequest {
                 p_share_id: &share_id,
                 p_actor_user_id: actor_user_id,
                 p_expected_content_revision: base_revision,
@@ -465,7 +403,7 @@ async fn mutate_session_share_snapshot(
             })
         }
         (SnapshotMutationKind::DesktopPublish, None) => {
-            builder.json(&PublishSnapshotCasRpcRequest {
+            serde_json::to_value(&PublishSnapshotCasRpcRequest {
                 p_share_id: &share_id,
                 p_actor_user_id: actor_user_id,
                 p_expected_content_revision: base_revision,
@@ -476,7 +414,7 @@ async fn mutate_session_share_snapshot(
                 p_web_editable: web_editable,
             })
         }
-        (SnapshotMutationKind::WebEdit, _) => builder.json(&EditSnapshotCasRpcRequest {
+        (SnapshotMutationKind::WebEdit, _) => serde_json::to_value(&EditSnapshotCasRpcRequest {
             p_share_id: &share_id,
             p_actor_user_id: actor_user_id,
             p_expected_content_revision: base_revision,
@@ -486,56 +424,12 @@ async fn mutate_session_share_snapshot(
             p_attachment_ids: requested_attachment_ids,
         }),
     };
-    let mut response = builder.send().await.map_err(|error| {
-        tracing::warn!(%error, rpc_name, "Supabase shared-note mutation request failed");
-        SyncError::SnapshotServiceUnavailable
-    })?;
-    let status = response.status();
-    if response
-        .content_length()
-        .is_some_and(|length| length > MAX_SNAPSHOT_RESPONSE_BYTES as u64)
-    {
-        tracing::warn!(%status, rpc_name, "Supabase shared-note mutation response was too large");
-        return Err(SyncError::SnapshotServiceUnavailable);
-    }
-
-    let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|error| {
-        tracing::warn!(%error, rpc_name, "Supabase shared-note mutation response could not be read");
-        SyncError::SnapshotServiceUnavailable
-    })? {
-        if bytes.len().saturating_add(chunk.len()) > MAX_SNAPSHOT_RESPONSE_BYTES {
-            tracing::warn!(%status, rpc_name, "Supabase shared-note mutation response was too large");
-            return Err(SyncError::SnapshotServiceUnavailable);
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    if !status.is_success() {
-        let code = serde_json::from_slice::<PostgrestError>(&bytes)
-            .ok()
-            .map(|error| error.code);
-        tracing::warn!(%status, ?code, rpc_name, "Supabase shared-note mutation was rejected");
-        return match (status, code.as_deref()) {
-            (HttpStatusCode::UNAUTHORIZED | HttpStatusCode::FORBIDDEN, _) | (_, Some("42501")) => {
-                Err(SyncError::SnapshotPublicationForbidden)
-            }
-            (_, Some("40001")) => Err(SyncError::SnapshotChanged),
-            (_, Some("22023" | "55000")) => Err(SyncError::BadRequest(
-                "Shared note snapshot is invalid".to_string(),
-            )),
-            _ => Err(SyncError::SnapshotServiceUnavailable),
-        };
-    }
-
-    let mut rows =
-        serde_json::from_slice::<Vec<PublishedSnapshotRow>>(&bytes).map_err(|error| {
-            tracing::warn!(%error, rpc_name, "Supabase shared-note mutation response was invalid");
-            SyncError::SnapshotServiceUnavailable
-        })?;
+    let parameters = parameters.map_err(|_| SyncError::SnapshotServiceUnavailable)?;
+    let mut rows: Vec<PublishedSnapshotRow> = snapshot_rpc(state, rpc_name, &parameters).await?;
     if rows.len() != 1 {
         tracing::warn!(
             row_count = rows.len(),
-            "Supabase shared-note mutation returned an invalid row count"
+            "Cloud database shared-note mutation returned an invalid row count"
         );
         return Err(SyncError::SnapshotServiceUnavailable);
     }
@@ -551,7 +445,7 @@ async fn mutate_session_share_snapshot(
     {
         tracing::warn!(
             rpc_name,
-            "Supabase shared-note mutation response failed validation"
+            "Cloud database shared-note mutation response failed validation"
         );
         return Err(SyncError::SnapshotServiceUnavailable);
     }
@@ -566,7 +460,7 @@ async fn mutate_session_share_snapshot(
     {
         tracing::warn!(
             rpc_name,
-            "Supabase shared-note mutation payload failed validation"
+            "Cloud database shared-note mutation payload failed validation"
         );
         return Err(SyncError::SnapshotServiceUnavailable);
     }
@@ -577,30 +471,16 @@ async fn mutate_session_share_snapshot(
             .as_ref()
             .and_then(|metadata| metadata.event_key.as_deref())
     {
-        let result = state
-            .client
-            .post(format!(
-                "{}/rest/v1/rpc/set_session_share_event_key",
-                state.config.supabase_url
-            ))
-            .header("apikey", &state.config.supabase_service_role_key)
-            .bearer_auth(&state.config.supabase_service_role_key)
-            .timeout(SNAPSHOT_PUBLISH_TIMEOUT)
-            .json(&serde_json::json!({
-                "p_share_id": share_id,
-                "p_actor_user_id": actor_user_id,
-                "p_event_key": event_key,
-            }))
-            .send()
-            .await;
-        match result {
-            Ok(response) if response.status().is_success() => {}
-            Ok(response) => {
-                tracing::warn!(status = %response.status(), "Supabase shared-note event key update was rejected");
-            }
-            Err(error) => {
-                tracing::warn!(%error, "Supabase shared-note event key update failed");
-            }
+        if let Err(error) = snapshot_rpc::<serde_json::Value>(
+            state,
+            "set_session_share_event_key",
+            &serde_json::json!({
+                "p_share_id": share_id, "p_actor_user_id": actor_user_id, "p_event_key": event_key,
+            }),
+        )
+        .await
+        {
+            tracing::warn!(%error, "shared-note event key update failed");
         }
     }
     let snapshot = PublishedSessionShareSnapshot {
@@ -758,4 +638,31 @@ pub(crate) fn validate_shared_attachments(
         }
     }
     Ok(())
+}
+
+async fn snapshot_rpc<T: serde::de::DeserializeOwned>(
+    state: &AppState,
+    function: &str,
+    request: &impl Serialize,
+) -> Result<T> {
+    tokio::time::timeout(
+        SNAPSHOT_PUBLISH_TIMEOUT,
+        state.config.database.rpc_bounded(
+            &anlg_cloud_db::Principal::Service,
+            function,
+            request,
+            MAX_SNAPSHOT_RESPONSE_BYTES,
+        ),
+    )
+    .await
+    .map_err(|_| SyncError::SnapshotServiceUnavailable)?
+    .map_err(|error| match error {
+        anlg_cloud_db::Error::Database { code, .. } => match code.as_str() {
+            "42501" => SyncError::SnapshotPublicationForbidden,
+            "23514" | "40001" => SyncError::SnapshotChanged,
+            "22023" | "55000" => SyncError::BadRequest("Shared note snapshot is invalid".into()),
+            _ => SyncError::SnapshotServiceUnavailable,
+        },
+        _ => SyncError::SnapshotServiceUnavailable,
+    })
 }

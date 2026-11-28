@@ -207,7 +207,7 @@ mod tests {
         let adapter = XaiAdapter::default();
         let direct = adapter.build_ws_url("https://api.x.ai/v1", &params, 2);
         let proxy = adapter.build_ws_url(
-            "https://api.shots.playbookmedia.io/stt?provider=xai",
+            "https://founder-hub-api.shots.playbookmedia.io/stt?provider=xai",
             &params,
             1,
         );
@@ -217,7 +217,7 @@ mod tests {
         assert!(direct.query().unwrap().contains("multichannel=true"));
         assert_eq!(
             proxy.as_str().split('?').next().unwrap(),
-            "wss://api.shots.playbookmedia.io/stt/listen"
+            "wss://founder-hub-api.shots.playbookmedia.io/stt/listen"
         );
         assert!(proxy.query().unwrap().contains("provider=xai"));
     }

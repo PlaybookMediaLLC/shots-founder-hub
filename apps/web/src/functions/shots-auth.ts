@@ -10,11 +10,13 @@ import {
   createShotsAuthorization,
   exchangeShotsCallback,
   getShotsCloudUrl,
-} from "@anlg/supabase/shots";
+} from "@anlg/cloud-client/shots";
 
 import { env, requireEnv } from "@/env";
-import { getSupabaseServerClient } from "@/functions/supabase";
+import { getCloudServerClient } from "@/functions/cloud-client";
+import { claimPendingReferral } from "@/functions/referrals";
 import { sanitizeInternalReturnPath } from "@/lib/auth-redirect";
+import { captureOperationalError } from "@/lib/error-reporting";
 
 const pendingSchema = z.object({
   state: z.string(),
@@ -88,8 +90,18 @@ export const finishShotsWebAuth = createServerOnlyFn(
         pending,
         gatewayUrl: getShotsCloudUrl(env.VITE_API_URL),
       });
-      const { error } = await getSupabaseServerClient().auth.setSession(tokens);
+      const { data, error } =
+        await getCloudServerClient().auth.setSession(tokens);
       if (error) throw error;
+      if (data.user) {
+        // A failed referral claim must not block sign-in.
+        await claimPendingReferral(tokens.access_token, data.user.id).catch(
+          (claimError: unknown) =>
+            captureOperationalError(claimError, {
+              operation: "referral_claim",
+            }),
+        );
+      }
       return new Response(null, {
         status: 303,
         headers: {

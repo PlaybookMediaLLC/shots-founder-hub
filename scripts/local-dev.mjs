@@ -1,6 +1,6 @@
 import * as prompts from "@clack/prompts";
 import { spawn } from "node:child_process";
-import { createHash, createHmac, randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync, watch as watchFiles } from "node:fs";
 import {
   chmod,
@@ -73,23 +73,21 @@ const baseEnv = Object.fromEntries(
 baseEnv.PATH = `${dirname(process.execPath)}:${baseEnv.PATH}`;
 
 function profile(config) {
-  const names = [
-    "web",
-    "shots",
-    "api",
-    "backend",
-    "postgres",
-    "temporal",
-    "temporalUi",
-    "redis",
-    "storageGateway",
-    "rest",
-    "storage",
-    "core",
-    "worker",
-    "objects",
-    "objectsConsole",
-  ];
+  const offsets = {
+    web: 0,
+    shots: 1,
+    api: 2,
+    backend: 3,
+    postgres: 4,
+    temporal: 5,
+    temporalUi: 6,
+    redis: 7,
+    core: 11,
+    worker: 12,
+    objects: 13,
+    objectsConsole: 14,
+  };
+  const names = Object.keys(offsets);
   if (
     !Number.isInteger(config.port) ||
     config.port < 1024 ||
@@ -97,7 +95,7 @@ function profile(config) {
   )
     throw new Error("--port must be an integer between 1024 and 65520");
   const ports = Object.fromEntries(
-    names.map((name, index) => [name, config.port + index]),
+    names.map((name) => [name, config.port + offsets[name]]),
   );
   const urls = Object.fromEntries(
     names.map((name) => [name, `http://localhost:${ports[name]}`]),
@@ -165,6 +163,12 @@ async function loadConfig() {
   if (!existsSync(configFile))
     throw new Error("Run pnpm dev:local setup --shots-path ../shots first.");
   const config = JSON.parse(await readFile(configFile, "utf8"));
+  if (!config.cloudSigningKey) {
+    config.cloudSigningKey = secret();
+    await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`, {
+      mode: 0o600,
+    });
+  }
   profile(config);
   if (
     !existsSync(join(config.shotsPath, "server/cmd/platform-migrate/main.go"))
@@ -194,10 +198,8 @@ function docker(config, args, options = {}) {
     {
       env: {
         ...baseEnv,
-        ...storageEnv(config),
+        ...cloudEnv(config),
         POSTGRES_PASSWORD: config.postgresPassword,
-        REST_PASSWORD: config.restPassword,
-        STORAGE_PASSWORD: config.storagePassword,
         RUSTFS_SECRET_KEY: config.objectPassword,
       },
       ...options,
@@ -205,32 +207,13 @@ function docker(config, args, options = {}) {
   );
 }
 
-function storageEnv(config) {
-  const sign = (role) => {
-    const encode = (value) =>
-      Buffer.from(JSON.stringify(value)).toString("base64url");
-    const payload =
-      encode({ alg: "HS256", typ: "JWT" }) +
-      "." +
-      encode({
-        role,
-        iss: "shots-local",
-        iat: 0,
-        exp: 4102444800,
-      });
-    return (
-      payload +
-      "." +
-      createHmac("sha256", config.storageJwtSecret)
-        .update(payload)
-        .digest("base64url")
-    );
-  };
+function cloudEnv(config) {
+  const { urls } = profile(config);
   return {
-    SUPABASE_URL: profile(config).urls.storageGateway,
-    SUPABASE_ANON_KEY: sign("shots_hub_anon"),
-    SUPABASE_SERVICE_ROLE_KEY: sign("shots_hub_service_role"),
-    SUPABASE_JWT_SECRET: config.storageJwtSecret,
+    CLOUD_SIGNING_KEY: config.cloudSigningKey,
+    R2_BUCKET: "founder-hub",
+    VITE_R2_DOWNLOAD_BASE_URL: `${urls.objects}/founder-hub`,
+    EXPO_PUBLIC_R2_DOWNLOAD_BASE_URL: `${urls.objects}/founder-hub`,
   };
 }
 
@@ -238,7 +221,7 @@ function serviceEnv(config) {
   const { ports, urls } = profile(config);
   return {
     ...baseEnv,
-    ...storageEnv(config),
+    ...cloudEnv(config),
     NODE_ENV: "development",
     PLATFORM_NEXT_DIST_DIR: `.next-founder-hub-${profile(config).project}`,
     PLATFORM_NEXT_TSCONFIG_PATH: `tsconfig.local-${profile(config).project}.json`,
@@ -249,8 +232,6 @@ function serviceEnv(config) {
     CARGO_PROFILE_DEV_DEBUG: "0",
     CARGO_TARGET_DIR: join(root, "apps/desktop/src-tauri/target"),
     DATABASE_URL: `postgres://shots:${config.postgresPassword}@127.0.0.1:${ports.postgres}/shots?sslmode=disable`,
-    FOUNDER_HUB_DB_REST_PASSWORD: config.restPassword,
-    FOUNDER_HUB_DB_STORAGE_PASSWORD: config.storagePassword,
     TEMPORAL_ADDRESS: `127.0.0.1:${ports.temporal}`,
     REDIS_URL: `redis://127.0.0.1:${ports.redis}`,
     R2_ENDPOINT: urls.objects,
@@ -290,6 +271,7 @@ function serviceEnv(config) {
     ANARLOG_ATTACHMENT_BACKUP_GC_ENABLED: "false",
     RESEND_API_KEY: "local-unused",
     RESEND_FROM_EMAIL: "Founder Hub <dev@example.test>",
+    GOOGLE_DRIVE_PICKER_REDIRECT_URI: `${urls.web}/app/google-drive-picker`,
   };
 }
 
@@ -388,20 +370,6 @@ async function writeConfiguration(config) {
           retries: 30,
         },
       },
-      rest: {
-        image: "postgrest/postgrest:v16.5",
-        environment: {
-          PGRST_DB_URI:
-            "postgres://shots_hub_authenticator:${REST_PASSWORD:?Required}@postgres:5432/shots",
-          PGRST_DB_SCHEMAS: "founder_hub",
-          PGRST_DB_EXTRA_SEARCH_PATH: "extensions",
-          PGRST_DB_ANON_ROLE: "shots_hub_anon",
-          PGRST_DB_PRE_REQUEST: "founder_hub_private.check_shots_request",
-          PGRST_DB_CONFIG: "false",
-          PGRST_JWT_SECRET: "${SUPABASE_JWT_SECRET:?Required}",
-        },
-        ports: [`127.0.0.1:${ports.rest}:3000`],
-      },
       rustfs: {
         image: "rustfs/rustfs:1.0.1",
         environment: {
@@ -431,51 +399,15 @@ async function writeConfiguration(config) {
           RUSTFS_SECRET_KEY: "${RUSTFS_SECRET_KEY:?Required}",
           R2_BUCKET_NAME: "shots-local",
           R2_BROWSER_ORIGIN: profile(config).urls.shots,
+          HUB_BROWSER_ORIGIN: profile(config).urls.web,
         },
         volumes: [
-          `${join(config.shotsPath, "infra/local/rustfs-init.sh")}:/rustfs-init.sh:ro`,
+          `${join(root, "scripts/local-r2-init.sh")}:/rustfs-init.sh:ro`,
         ],
         entrypoint: ["/bin/sh", "/rustfs-init.sh"],
       },
-      storage: {
-        image: "supabase/storage-api:v1.48.27",
-        environment: {
-          DATABASE_URL:
-            "postgres://shots_hub_storage:${STORAGE_PASSWORD:?Required}@postgres:5432/shots",
-          AUTH_JWT_SECRET: "${SUPABASE_JWT_SECRET:?Required}",
-          ANON_KEY: "${SUPABASE_ANON_KEY:?Required}",
-          SERVICE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:?Required}",
-          MULTI_TENANT: "false",
-          DB_INSTALL_ROLES: "false",
-          DB_ANON_ROLE: "shots_hub_anon",
-          DB_AUTHENTICATED_ROLE: "shots_hub_authenticated",
-          DB_SERVICE_ROLE: "shots_hub_service_role",
-          DB_SUPER_USER: "shots_hub_owner",
-          DATABASE_SEARCH_PATH: "founder_hub,extensions",
-          TENANT_ID: project,
-          STORAGE_BACKEND: "file",
-          FILE_STORAGE_BACKEND_PATH: "/data",
-          PG_QUEUE_ENABLE: "false",
-          S3_PROTOCOL_ENABLED: "false",
-          REGION: "local",
-          PORT: "5000",
-        },
-        ports: [`127.0.0.1:${ports.storage}:5000`],
-        volumes: ["attachments:/data"],
-        healthcheck: {
-          test: [
-            "CMD",
-            "node",
-            "-e",
-            "fetch('http://127.0.0.1:5000/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-          ],
-          interval: "2s",
-          timeout: "5s",
-          retries: 60,
-        },
-      },
     },
-    volumes: { postgres: {}, temporal: {}, attachments: {}, objects: {} },
+    volumes: { postgres: {}, temporal: {}, objects: {} },
   };
   await writeFile(
     join(state, "compose.json"),
@@ -486,7 +418,6 @@ async function writeConfiguration(config) {
     "prepare",
     "shots-api",
     "shots-web",
-    "hub-storage",
     "hub-api",
     "hub-core",
     "shots-worker",
@@ -499,13 +430,7 @@ async function writeConfiguration(config) {
       log_location: join(state, "logs", `${name}.log`),
     };
   }
-  for (const name of [
-    "shots-api",
-    "hub-api",
-    "hub-core",
-    "hub-storage",
-    "shots-worker",
-  ])
+  for (const name of ["shots-api", "hub-api", "hub-core", "shots-worker"])
     processes[name].depends_on = {
       prepare: { condition: "process_completed_successfully" },
     };
@@ -513,9 +438,6 @@ async function writeConfiguration(config) {
     "shots-api": { condition: "process_healthy" },
   };
   processes["hub-api"].depends_on["shots-web"] = {
-    condition: "process_healthy",
-  };
-  processes["hub-api"].depends_on["hub-storage"] = {
     condition: "process_healthy",
   };
   processes["hub-core"].depends_on = processes["hub-api"].depends_on;
@@ -529,7 +451,6 @@ async function writeConfiguration(config) {
     ["hub-api", ports.api, "/health"],
     ["hub-core", ports.core, "/health"],
     ["shots-worker", ports.worker, "/readyz"],
-    ["hub-storage", ports.storageGateway, "/healthz"],
     ["hub-web", ports.web, "/@vite/client"],
   ]) {
     processes[name].readiness_probe = {
@@ -570,9 +491,7 @@ async function setup(options) {
         "This checkout already has a local profile. Keep its path and port to preserve its data.",
       );
     for (const key of [
-      "storageJwtSecret",
-      "restPassword",
-      "storagePassword",
+      "cloudSigningKey",
       "objectPassword",
       "socialEncryptionKey",
       "webhookEncryptionKey",
@@ -617,9 +536,7 @@ async function setup(options) {
     serviceToken: secret(),
     authSecret: secret(),
     authorityToken: secret(),
-    storageJwtSecret: secret(),
-    restPassword: secret(),
-    storagePassword: secret(),
+    cloudSigningKey: secret(),
     objectPassword: secret(),
     socialEncryptionKey: secret(),
     webhookEncryptionKey: secret(),
@@ -730,13 +647,10 @@ async function doctor(config) {
       throw new Error(
         "Shots OAuth discovery is unavailable. Check local OAuth migrations and client registration.",
       );
-    if (
-      !(await healthy(`${urls.api}/health`)) ||
-      !(await healthy(`${urls.storageGateway}/healthz`))
-    )
-      throw new Error("Founder Hub API or storage gateway is unavailable.");
+    if (!(await healthy(`${urls.api}/health`)))
+      throw new Error("Founder Hub API is unavailable.");
     prompts.log.success(
-      "Shots OAuth, Founder Hub API, and storage gateway are ready.",
+      "Shots OAuth, Founder Hub API, and R2 storage are ready.",
     );
   } else {
     prompts.log.info(
@@ -763,7 +677,7 @@ async function doctor(config) {
       await readdir(join(config.shotsPath, "server/internal/social/migrations"))
     ).filter((name) => name.endsWith(".sql")).length;
     const founderHubMigrations = (
-      await readdir(join(config.shotsPath, "server/founderhubmigrations/sql"))
+      await readdir(join(root, "postgres/migrations"))
     ).filter((name) => name.endsWith(".sql")).length;
     const [platformApplied, socialApplied, founderHubApplied] =
       await Promise.all([
@@ -811,7 +725,7 @@ async function doctor(config) {
             "-d",
             "shots",
             "-Atc",
-            "SELECT count(*) FROM founder_hub_private.schema_migrations",
+            "SELECT count(*) FROM cloud_migrations.applied WHERE name <> 'bootstrap.sql'",
           ],
           { capture: true },
         ),
@@ -887,9 +801,7 @@ async function status(config) {
     ["Hub cleanup", urls.core, "/health"],
     ["Shots worker", urls.worker, "/readyz"],
     ["Shots API", urls.backend, "/readyz"],
-    ["Hub data API", urls.rest, "/"],
-    ["Founder Hub gateway", urls.storageGateway, "/healthz"],
-    ["Hub attachments", urls.storage, "/status"],
+    ["Hub object storage", urls.objects, "/health/live"],
   ]) {
     const available = await healthy(url + probe);
     ready &&= available;
@@ -933,45 +845,15 @@ async function runService(name, config) {
       "rustfs",
     ]);
     await docker(config, ["run", "--rm", "--no-deps", "rustfs-init"]);
-    await run(
-      "go",
-      ["run", "./cmd/platform-migrate", "--founder-hub=bootstrap"],
-      {
-        cwd: join(config.shotsPath, "server"),
-        env,
-      },
-    );
-    await docker(config, [
-      "up",
-      "-d",
-      "--wait",
-      "--wait-timeout",
-      "180",
-      "storage",
-    ]);
-    await run("go", ["run", "./cmd/platform-migrate", "--founder-hub=apply"], {
+    await run("go", ["run", "./cmd/platform-migrate"], {
       cwd: join(config.shotsPath, "server"),
       env,
     });
-    await docker(config, ["up", "-d", "rest"]);
-    const deadline = Date.now() + 60_000;
-    while (!(await healthy(profile(config).urls.rest))) {
-      if (Date.now() >= deadline)
-        throw new Error(
-          "The Shots Founder Hub schema is not ready in PostgREST.",
-        );
-      await new Promise((accept) => setTimeout(accept, 1000));
-    }
-  } else if (name === "hub-storage") {
-    await run("go", ["run", "./cmd/founder-hub-storage"], {
-      cwd: join(config.shotsPath, "server"),
-      env: {
-        ...env,
-        PORT: String(ports.storageGateway),
-        FOUNDER_HUB_REST_ORIGIN: `http://127.0.0.1:${ports.rest}`,
-        FOUNDER_HUB_STORAGE_ORIGIN: `http://127.0.0.1:${ports.storage}`,
-      },
-    });
+    await run(
+      "cargo",
+      ["run", "--locked", "-p", "cloud-db", "--bin", "migrate"],
+      { env },
+    );
   } else if (name === "shots-api") {
     await run("go", ["run", "./cmd/product-api"], {
       cwd: join(config.shotsPath, "server"),
@@ -1211,13 +1093,7 @@ async function desktopDev(config) {
 }
 
 async function restartProcess(config, name, source = false) {
-  const allowed = [
-    "shots-api",
-    "shots-worker",
-    "hub-api",
-    "hub-core",
-    "hub-storage",
-  ];
+  const allowed = ["shots-api", "shots-worker", "hub-api", "hub-core"];
   if (!allowed.includes(name))
     throw new Error(`Choose a restartable service: ${allowed.join(", ")}.`);
   await writeNangoConfiguration();
@@ -1446,7 +1322,7 @@ async function integrationTest(config) {
     },
   );
   prompts.log.info(
-    "Testing OAuth, gateway storage, token refresh, and revocation.",
+    "Testing OAuth, direct R2 storage, token refresh, and revocation.",
   );
   await run(
     "npm",
@@ -1587,7 +1463,6 @@ async function main() {
           "prepare",
           "shots-api",
           "shots-web",
-          "hub-storage",
           "hub-api",
           "hub-core",
           "shots-worker",
@@ -1601,7 +1476,6 @@ async function main() {
         "prepare",
         "shots-api",
         "shots-web",
-        "hub-storage",
         "hub-api",
         "hub-core",
         "shots-worker",
@@ -1610,7 +1484,7 @@ async function main() {
       ].includes(target)
     )
       throw new Error(
-        "Choose prepare, shots-api, shots-web, shots-worker, hub-storage, hub-api, hub-core, ui, or hub-web.",
+        "Choose prepare, shots-api, shots-web, shots-worker, hub-api, hub-core, ui, or hub-web.",
       );
     await run("tail", ["-n", "80", "-f", join(state, "logs", `${target}.log`)]);
   } else if (command === "stop") {

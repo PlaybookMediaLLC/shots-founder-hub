@@ -35,7 +35,7 @@ vi.mock("~/auth/auth-context", () => ({
   useAuth: () => ({
     session: mocks.session,
     signIn: mocks.signIn,
-    supabase: {
+    cloudClient: {
       rpc: () => ({
         setHeader: (_name: string, token: string) => ({
           abortSignal: () => mocks.response(token),

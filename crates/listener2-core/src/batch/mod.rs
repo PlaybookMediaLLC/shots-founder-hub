@@ -481,16 +481,8 @@ mod tests {
     #[test]
     fn only_local_batches_expect_progressive() {
         let cases = [
-            (
-                BatchProvider::Anarlog,
-                "https://api.shots.playbookmedia.io/stt",
-                false,
-            ),
-            (
-                BatchProvider::Am,
-                "https://api.shots.playbookmedia.io/stt",
-                false,
-            ),
+            (BatchProvider::Anarlog, "https://founder-hub-api.shots.playbookmedia.io/stt", false),
+            (BatchProvider::Am, "https://founder-hub-api.shots.playbookmedia.io/stt", false),
             (BatchProvider::Am, "http://localhost:50060/v1", true),
             (BatchProvider::OpenAI, "http://localhost:9000/v1", true),
             (

@@ -228,10 +228,10 @@ pub async fn rate_limit_by_ip(
 }
 
 fn trusted_client_ip(headers: &HeaderMap) -> Option<IpAddr> {
-    // Fly Proxy supplies the address it observed. Falling back to forwarded headers would let
-    // clients manufacture unbounded limiter keys when the app is not behind a trusted proxy.
+    // The App Platform edge sets the address it observed. Falling back to forwarded headers
+    // would let clients manufacture unbounded limiter keys.
     headers
-        .get("fly-client-ip")
+        .get("do-connecting-ip")
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.parse().ok())
 }
@@ -282,13 +282,13 @@ mod tests {
     }
 
     #[test]
-    fn limits_repeated_requests_per_normalized_fly_client_ip() {
+    fn limits_repeated_requests_per_normalized_client_ip_header() {
         let quota = Quota::with_period(std::time::Duration::from_secs(60))
             .unwrap()
             .allow_burst(std::num::NonZeroU32::new(1).unwrap());
         let state = IpRateLimitState::new(quota);
         let headers = HeaderMap::from_iter([(
-            "fly-client-ip".parse().unwrap(),
+            "do-connecting-ip".parse().unwrap(),
             "2001:0db8::1".parse().unwrap(),
         )]);
         let client_ip = trusted_client_ip(&headers);
@@ -299,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn trusted_client_ip_ignores_forwarded_headers_and_prefers_fly_client_ip() {
+    fn trusted_client_ip_ignores_forwarded_headers_and_prefers_client_ip_header() {
         let headers = HeaderMap::from_iter([
             (
                 "x-forwarded-for".parse().unwrap(),
@@ -313,7 +313,7 @@ mod tests {
 
         let headers = HeaderMap::from_iter([
             (
-                "fly-client-ip".parse().unwrap(),
+                "do-connecting-ip".parse().unwrap(),
                 "198.51.100.10".parse().unwrap(),
             ),
             (

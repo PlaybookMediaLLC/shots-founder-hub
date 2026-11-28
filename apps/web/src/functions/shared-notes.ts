@@ -3,7 +3,7 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import { env } from "@/env";
-import { getSupabaseServerClient } from "@/functions/supabase";
+import { getCloudServerClient } from "@/functions/cloud-client";
 import {
   fetchPublicSharedNoteResult,
   type SharedNoteReadResult,
@@ -193,8 +193,8 @@ export const readAuthenticatedSharedNote = createServerFn({ method: "GET" })
     async ({ data: shareId }): Promise<AuthenticatedSharedNoteReadResult> => {
       setPrivateShareResponseHeaders();
 
-      const supabase = getSupabaseServerClient();
-      const { data, error } = await supabase.rpc(
+      const cloudClient = getCloudServerClient();
+      const { data, error } = await cloudClient.rpc(
         "read_my_session_share_snapshot_v2",
         { p_share_id: shareId },
       );
@@ -236,8 +236,8 @@ export const listSharedNoteComments = createServerFn({ method: "GET" })
     > => {
       setPrivateShareResponseHeaders();
 
-      const supabase = getSupabaseServerClient();
-      const { data, error } = await supabase.rpc(
+      const cloudClient = getCloudServerClient();
+      const { data, error } = await cloudClient.rpc(
         "list_session_share_comments",
         {
           p_share_id: input.shareId,
@@ -279,8 +279,8 @@ export const createSharedNoteComment = createServerFn({ method: "POST" })
         return { status: "unavailable" };
       }
 
-      const supabase = getSupabaseServerClient();
-      const { data: commentRows, error } = await supabase.rpc(
+      const cloudClient = getCloudServerClient();
+      const { data: commentRows, error } = await cloudClient.rpc(
         "create_session_share_comment",
         {
           p_share_id: data.shareId,
@@ -315,10 +315,13 @@ export const deleteSharedNoteComment = createServerFn({ method: "POST" })
   .handler(async ({ data: commentId }): Promise<SharedNoteOperationStatus> => {
     setPrivateShareResponseHeaders();
 
-    const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase.rpc("delete_session_share_comment", {
-      p_comment_id: commentId,
-    });
+    const cloudClient = getCloudServerClient();
+    const { data, error } = await cloudClient.rpc(
+      "delete_session_share_comment",
+      {
+        p_comment_id: commentId,
+      },
+    );
     if (error) return unavailableOrError(error.code);
     if (!Array.isArray(data) || data.length === 0) {
       return { status: "unavailable" };
@@ -349,11 +352,14 @@ export const requestSharedNoteAccess = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SharedNoteAccessRequestResult> => {
     setPrivateShareResponseHeaders();
 
-    const supabase = getSupabaseServerClient();
-    const { data: rows, error } = await supabase.rpc("request_session_access", {
-      p_share_id: data.shareId,
-      p_requested_capability: data.capability,
-    });
+    const cloudClient = getCloudServerClient();
+    const { data: rows, error } = await cloudClient.rpc(
+      "request_session_access",
+      {
+        p_share_id: data.shareId,
+        p_requested_capability: data.capability,
+      },
+    );
     if (error) return unavailableOrError(error.code);
     if (!Array.isArray(rows) || rows.length !== 1) {
       return { status: "error" };
@@ -385,8 +391,8 @@ export const cancelMySharedNoteAccessRequest = createServerFn({
   .handler(async ({ data: requestId }): Promise<SharedNoteOperationStatus> => {
     setPrivateShareResponseHeaders();
 
-    const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase.rpc(
+    const cloudClient = getCloudServerClient();
+    const { data, error } = await cloudClient.rpc(
       "cancel_session_access_request",
       { p_request_id: requestId },
     );
@@ -418,8 +424,8 @@ export const listSharedNoteManagerAccess = createServerFn({ method: "GET" })
     > => {
       setPrivateShareResponseHeaders();
 
-      const supabase = getSupabaseServerClient();
-      const { data, error } = await supabase.rpc(
+      const cloudClient = getCloudServerClient();
+      const { data, error } = await cloudClient.rpc(
         "list_session_share_access_page",
         {
           p_share_id: input.shareId,
@@ -443,8 +449,8 @@ export const reviewSharedNoteAccessRequest = createServerFn({ method: "POST" })
   .handler(async ({ data: input }): Promise<SharedNoteOperationStatus> => {
     setPrivateShareResponseHeaders();
 
-    const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase.rpc(
+    const cloudClient = getCloudServerClient();
+    const { data, error } = await cloudClient.rpc(
       "review_session_access_request",
       {
         p_request_id: input.requestId,
@@ -481,8 +487,8 @@ export const inspectMySharedNoteInvitation = createServerFn({ method: "POST" })
     > => {
       setPrivateShareResponseHeaders();
 
-      const supabase = getSupabaseServerClient();
-      const { data, error } = await supabase.rpc(
+      const cloudClient = getCloudServerClient();
+      const { data, error } = await cloudClient.rpc(
         "inspect_my_session_access_invitation",
         {
           p_invitation_id: input.invitationId,
@@ -518,8 +524,8 @@ export const acceptSharedNoteInvitation = createServerFn({ method: "POST" })
     > => {
       setPrivateShareResponseHeaders();
 
-      const supabase = getSupabaseServerClient();
-      const { data, error } = await supabase.rpc(
+      const cloudClient = getCloudServerClient();
+      const { data, error } = await cloudClient.rpc(
         "accept_session_access_invitation",
         {
           p_invitation_id: input.invitationId,
@@ -547,8 +553,8 @@ export const createAuthenticatedSharedAttachmentDownload = createServerFn({
   .validator(attachmentDownloadInputSchema)
   .handler(async ({ data }) => {
     setPrivateShareResponseHeaders();
-    const supabase = getSupabaseServerClient();
-    const { data: sessionData } = await supabase.auth.getSession();
+    const cloudClient = getCloudServerClient();
+    const { data: sessionData } = await cloudClient.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) return null;
 
@@ -585,10 +591,13 @@ function setPrivateShareResponseHeaders() {
 async function loadMySharedNoteAccessRequest(
   shareId: string,
 ): Promise<SharedNoteAccessRequestResult> {
-  const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase.rpc("get_my_session_access_request", {
-    p_share_id: shareId,
-  });
+  const cloudClient = getCloudServerClient();
+  const { data, error } = await cloudClient.rpc(
+    "get_my_session_access_request",
+    {
+      p_share_id: shareId,
+    },
+  );
   if (error || !Array.isArray(data) || data.length > 1) {
     return { status: "error" };
   }

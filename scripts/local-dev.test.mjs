@@ -78,9 +78,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
     config.serviceToken,
     config.authSecret,
     config.authorityToken,
-    config.storageJwtSecret,
-    config.restPassword,
-    config.storagePassword,
+    config.cloudSigningKey,
     config.objectPassword,
     config.socialEncryptionKey,
     config.webhookEncryptionKey,
@@ -95,9 +93,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
   assert.equal(again.status, 0, again.stderr + again.stdout);
   assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), config);
   const legacy = { ...config };
-  delete legacy.storageJwtSecret;
-  delete legacy.restPassword;
-  delete legacy.storagePassword;
+  delete legacy.cloudSigningKey;
   delete legacy.objectPassword;
   delete legacy.socialEncryptionKey;
   delete legacy.webhookEncryptionKey;
@@ -108,7 +104,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
   const migrated = JSON.parse(readFileSync(path, "utf8"));
   assert.equal(migrated.postgresPassword, config.postgresPassword);
   assert.equal(migrated.authorityToken, config.authorityToken);
-  assert.equal(migrated.storageJwtSecret.length, 64);
+  assert.equal(migrated.cloudSigningKey.length, 64);
   assert.equal(migrated.objectPassword.length, 64);
   assert.equal(migrated.socialEncryptionKey.length, 64);
   assert.equal(migrated.webhookEncryptionKey.length, 64);
@@ -119,7 +115,7 @@ test("local setup preserves credentials and data ownership across reruns, includ
   const fakeBin = join(directory, "bin");
   mkdirSync(fakeBin);
   const capturedEnvPath = join(directory, "captured-nango-env.json");
-  const captureScript = `#!${process.execPath}\nrequire("node:fs").writeFileSync(${JSON.stringify(capturedEnvPath)}, JSON.stringify(Object.fromEntries(["NANGO_API_KEY", "NANGO_API_BASE", "NANGO_CONNECT_URL", "NANGO_WEBHOOK_SIGNING_KEY"].filter((key) => process.env[key]).map((key) => [key, process.env[key]]))))\n`;
+  const captureScript = `#!${process.execPath}\nrequire("node:fs").writeFileSync(${JSON.stringify(capturedEnvPath)}, JSON.stringify(Object.fromEntries(["NANGO_API_KEY", "NANGO_API_BASE", "NANGO_CONNECT_URL", "NANGO_WEBHOOK_SIGNING_KEY", "GOOGLE_DRIVE_PICKER_REDIRECT_URI"].filter((key) => process.env[key]).map((key) => [key, process.env[key]]))))\n`;
   for (const binary of ["go", "native-api"]) {
     const binaryPath = join(fakeBin, binary);
     writeFileSync(binaryPath, captureScript, { mode: 0o700 });
@@ -140,13 +136,19 @@ test("local setup preserves credentials and data ownership across reruns, includ
   migrated.apiBinary = join(fakeBin, "native-api");
   const shotsAPI = invokeWithEnv({ PATH: servicePath }, "_run", "shots-api");
   assert.equal(shotsAPI.status, 0, shotsAPI.stderr + shotsAPI.stdout);
-  assert.deepEqual(JSON.parse(readFileSync(capturedEnvPath, "utf8")), nangoEnv);
+  assert.deepEqual(JSON.parse(readFileSync(capturedEnvPath, "utf8")), {
+    ...nangoEnv,
+    GOOGLE_DRIVE_PICKER_REDIRECT_URI:
+      "http://localhost:4300/app/google-drive-picker",
+  });
   const nativeAPI = invokeWithEnv({ PATH: servicePath }, "_run", "hub-core");
   assert.equal(nativeAPI.status, 0, nativeAPI.stderr + nativeAPI.stdout);
   assert.deepEqual(JSON.parse(readFileSync(capturedEnvPath, "utf8")), {
     NANGO_API_KEY: nangoEnv.NANGO_API_KEY,
     NANGO_API_BASE: nangoEnv.NANGO_API_BASE,
     NANGO_WEBHOOK_SIGNING_KEY: nangoEnv.NANGO_WEBHOOK_SIGNING_KEY,
+    GOOGLE_DRIVE_PICKER_REDIRECT_URI:
+      "http://localhost:4300/app/google-drive-picker",
   });
   const restartedServicesPath = join(directory, "restarted-services.txt");
   const processComposePath = join(fakeBin, "process-compose");

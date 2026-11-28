@@ -2,8 +2,8 @@ import { Platform } from "react-native";
 
 import type { ProviderLiveTranscriptionLike } from "@anlg/mobile-bridge";
 
-import { decodeJwtPayload, deriveBillingInfo } from "@/auth/billing";
-import { supabase } from "@/auth/client";
+import { deriveBillingInfo } from "@/auth/billing";
+import { cloudClient } from "@/auth/client";
 import { execute, executeTransaction } from "@/db";
 import { captureAnalytics } from "@/lib/analytics";
 import { env } from "@/lib/env";
@@ -175,7 +175,7 @@ export class SessionLiveTranscription {
 
   private async connect(sampleRate: number, channels: number) {
     try {
-      const auth = await supabase?.auth.getSession();
+      const auth = await cloudClient?.auth.getSession();
       if (auth?.error) throw auth.error;
       const provider = await readProviderConfig(
         auth?.data.session?.user.id ?? null,
@@ -186,16 +186,18 @@ export class SessionLiveTranscription {
       const preferences = await readPreferences();
       const accountId = auth?.data.session?.user.id ?? null;
       if (this.stopping || this.status === "fallback") return;
-      const subscription = supabase?.auth.onAuthStateChange(
+      const subscription = cloudClient?.auth.onAuthStateChange(
         (_event, session) => {
           if ((session?.user.id ?? null) !== accountId) this.fallBack();
           else if (this.provider === "anarlog" && session)
-            this.updateBilling(session.access_token);
+            void this.updateBilling(session.access_token).catch(() =>
+              this.fallBack(),
+            );
         },
       );
       this.unsubscribeAuth = () =>
         subscription?.data.subscription.unsubscribe();
-      const currentAuth = await supabase?.auth.getSession();
+      const currentAuth = await cloudClient?.auth.getSession();
       if (currentAuth?.error) throw currentAuth.error;
       if ((currentAuth?.data.session?.user.id ?? null) !== accountId) {
         this.fallBack();
@@ -272,7 +274,7 @@ export class SessionLiveTranscription {
         this.fallBack();
         return;
       }
-      this.updateBilling(token);
+      await this.updateBilling(token);
       if (this.stopping || this.connectAbort.signal.aborted) return;
 
       const Socket = WebSocket as unknown as NativeWebSocketConstructor;
@@ -469,8 +471,20 @@ export class SessionLiveTranscription {
     return false;
   }
 
-  private updateBilling(token: string) {
-    const billing = deriveBillingInfo(decodeJwtPayload(token));
+  private async updateBilling(token: string) {
+    const claims = await cloudClient?.claims(token);
+    const current = await cloudClient?.auth.getSession();
+    if (
+      this.stopping ||
+      this.connectAbort.signal.aborted ||
+      current?.data.session?.access_token !== token
+    )
+      return;
+    if (!claims || claims.error) {
+      this.fallBack();
+      return;
+    }
+    const billing = deriveBillingInfo(claims.data);
     if (!billing.isPro) {
       this.fallBack();
       return;

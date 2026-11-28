@@ -88,8 +88,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://api.shots.playbookmedia.io?provider=mistral",
-                "wss://api.shots.playbookmedia.io/listen",
+                "https://founder-hub-api.shots.playbookmedia.io?provider=mistral",
+                "wss://founder-hub-api.shots.playbookmedia.io/listen",
                 vec![("provider", "mistral")],
             ),
         ] {

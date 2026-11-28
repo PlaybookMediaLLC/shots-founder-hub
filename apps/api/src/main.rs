@@ -1,5 +1,4 @@
 mod auth;
-mod billing_webhook;
 mod env;
 mod observability;
 mod openapi;
@@ -100,21 +99,14 @@ async fn app_with_session_gate(
     let analytics = build_analytics_client(env);
     let mut routes = Router::new();
     if let Some(shots) = &env.shots {
-        routes = routes.nest(
-            "/cloud",
-            shots::router(
-                shots.clone(),
-                &env.supabase.supabase_url,
-                &env.supabase.supabase_anon_key,
-            ),
-        );
+        routes = routes.nest("/cloud", shots::router(shots.clone(), env.database.clone()));
     }
     if service.includes(Service::Ai) {
         routes = routes.merge(proxy::route(
             routes::ai(env, session_gate.clone(), analytics.clone()),
             &env.upstreams.anarlog_ai_origin,
             &session_gate,
-            &env.supabase.supabase_service_role_key,
+            &env.cloud_signing_key,
         ));
     }
     if service.includes(Service::Sync) {
@@ -122,7 +114,7 @@ async fn app_with_session_gate(
             routes::sync(env),
             &env.upstreams.anarlog_sync_origin,
             &session_gate,
-            &env.supabase.supabase_service_role_key,
+            &env.cloud_signing_key,
         ));
     }
     if service.includes(Service::Core) {
@@ -130,29 +122,19 @@ async fn app_with_session_gate(
             routes::core(env, analytics.clone()),
             &env.upstreams.anarlog_core_origin,
             &session_gate,
-            &env.supabase.supabase_service_role_key,
-        ));
-    }
-    if service.includes(Service::Billing) {
-        routes = routes.merge(proxy::route(
-            routes::billing(env, analytics),
-            &env.upstreams.anarlog_billing_origin,
-            &session_gate,
-            &env.supabase.supabase_service_role_key,
+            &env.cloud_signing_key,
         ));
     }
     let subsystem_health_state = SubsystemHealthState {
         service,
         integrations_configured: env.nango.is_some(),
-        billing_configured: env.subscription.is_some(),
-        billing_webhooks: env.anarlog_billing_webhooks,
         cloudsync_configured: service.includes(Service::Sync)
             && (env.shots.is_some()
                 || anlg_api_sync::SyncConfig::from_env(
                     &env.sync,
-                    &env.supabase.supabase_url,
-                    &env.supabase.supabase_anon_key,
-                    &env.supabase.supabase_service_role_key,
+                    env.database.clone(),
+                    env.storage.clone(),
+                    env.cloud_signing_key.clone(),
                 )
                 .expect("sync configuration validated")
                 .is_some()),
@@ -190,7 +172,7 @@ async fn app_with_session_gate(
         .merge(drain_routes)
         .merge(routes)
         .layer(axum::middleware::from_fn_with_state(
-            Arc::<str>::from(env.supabase.supabase_service_role_key.as_str()),
+            Arc::<str>::from(env.cloud_signing_key.as_str()),
             proxy::client_ip::restore,
         ))
         .layer(
@@ -359,12 +341,11 @@ fn build_analytics_client(env: &Env) -> Arc<anlg_analytics::AnalyticsClient> {
     }
     if cfg!(debug_assertions) {
         tracing::info!("analytics: dev mode, printing events as tracing");
-    } else {
-        let key = env
-            .posthog_api_key
-            .as_ref()
-            .expect("POSTHOG_API_KEY is required in production");
+    } else if let Some(key) = env.posthog_api_key.as_ref() {
         builder = builder.with_posthog(key);
+    } else {
+        // Without PostHog the client logs only event names, so no user data leaves the API.
+        tracing::warn!("analytics: POSTHOG_API_KEY is not set, events are not sent");
     }
     Arc::new(builder.build())
 }
@@ -424,38 +405,11 @@ fn main() -> std::io::Result<()> {
             let app = app_with_session_gate(env, session_gate.clone()).await;
             let cancellation = CancellationToken::new();
             let worker_task = env.anarlog_attachment_backup_gc_enabled.then(|| {
-                if env.shots.is_some() {
-                    let worker = anlg_api_subscription::CleanupWorker::for_shots(&env.supabase);
-                    return tokio::spawn(worker.run(cancellation.clone()));
-                }
-                let (stripe, loops) = env
-                    .subscription
-                    .as_ref()
-                    .expect("cleanup requires Stripe and Loops configuration");
-                let cloudsync_cleanup = anlg_api_subscription::CloudsyncCleanupConfig::new(
-                    env.sync
-                        .sqlitecloud_project_url
-                        .as_deref()
-                        .unwrap_or_default(),
-                    env.sync
-                        .sqlitecloud_token_issuer_api_key
-                        .as_deref()
-                        .unwrap_or_default(),
-                    env.sync
-                        .anarlog_cloudsync_e2ee_database_id
-                        .as_deref()
-                        .unwrap_or_default(),
-                    env.sqlitecloud_cloudsync_management_api_key
-                        .as_deref()
-                        .unwrap_or_default(),
-                )
-                .unwrap_or_else(|error| panic!("Failed to load environment: {error}"));
-                let config =
-                    anlg_api_subscription::SubscriptionConfig::new(&env.supabase, stripe, loops)
-                        .with_cloudsync_cleanup(cloudsync_cleanup);
-                let worker = anlg_api_subscription::CleanupWorker::new(&config);
-                let worker_cancellation = cancellation.clone();
-                tokio::spawn(worker.run(worker_cancellation))
+                let worker = anlg_api_subscription::CleanupWorker::for_shots(
+                    env.database.clone(),
+                    env.storage.clone(),
+                );
+                tokio::spawn(worker.run(cancellation.clone()))
             });
             tracing::info!(addr = %addr, "server_listening");
 
@@ -492,8 +446,6 @@ fn main() -> std::io::Result<()> {
 struct SubsystemHealthState {
     service: Service,
     integrations_configured: bool,
-    billing_configured: bool,
-    billing_webhooks: bool,
     cloudsync_configured: bool,
     transcription_configured: bool,
     llm_configured: bool,
@@ -507,22 +459,15 @@ async fn service_readiness(
     let configured = match state.service {
         Service::Ai => state.transcription_configured && state.llm_configured,
         Service::Sync => state.cloudsync_configured,
-        Service::Core => state.integrations_configured && state.billing_configured,
-        Service::Billing => state.billing_configured,
+        Service::Core => state.integrations_configured,
         Service::All => {
             state.transcription_configured
                 && state.llm_configured
                 && state.cloudsync_configured
                 && state.integrations_configured
-                && state.billing_configured
         }
     };
-    let webhook_ready = !state.billing_webhooks || billing_webhook::ready().await;
-    let expected_role = expected == state.service.name()
-        || (expected == "billing-unified"
-            && state.service == Service::Billing
-            && state.billing_webhooks);
-    let ready = expected_role && configured && webhook_ready && !state.session_gate.is_draining();
+    let ready = expected == state.service.name() && configured && !state.session_gate.is_draining();
     subsystem_health_response(
         ready,
         serde_json::json!({
@@ -530,7 +475,6 @@ async fn service_readiness(
             "service": state.service,
             "version": option_env!("APP_VERSION").unwrap_or("unknown"),
             "configured": configured,
-            "webhook_ready": webhook_ready,
             "draining": state.session_gate.is_draining(),
         }),
     )
@@ -598,67 +542,14 @@ async fn drain_status(
 }
 
 async fn drain_after_shutdown_signal(gate: anlg_transcribe_proxy::SessionGate) {
-    let force_timeout = wait_for_shutdown_kind().await;
+    stop_signal().await;
     gate.begin_drain();
-    tracing::info!(
-        active_streams = gate.active(),
-        force_timeout_ms = force_timeout.map(|timeout| timeout.as_millis() as u64),
-        "api_drain_started"
-    );
-
-    let idle = gate.wait_until_idle();
-    tokio::pin!(idle);
-
-    match force_timeout {
-        Some(timeout) => {
-            if tokio::time::timeout(timeout, idle).await.is_err() {
-                tracing::warn!(active_streams = gate.active(), "api_drain_timeout");
-            }
-        }
-        None => {
-            tokio::select! {
-                _ = &mut idle => {}
-                _ = stop_signal() => {
-                    tracing::info!(
-                        active_streams = gate.active(),
-                        "api_drain_force_stop_received"
-                    );
-                    if tokio::time::timeout(TERM_DRAIN_TIMEOUT, idle).await.is_err() {
-                        tracing::warn!(active_streams = gate.active(), "api_drain_timeout");
-                    }
-                }
-            }
-        }
-    }
-}
-
-async fn wait_for_shutdown_kind() -> Option<Duration> {
-    let ctrl_c = async {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("failed to install CTRL+C signal handler");
-    };
-
-    #[cfg(unix)]
+    tracing::info!(active_streams = gate.active(), "api_drain_started");
+    if tokio::time::timeout(TERM_DRAIN_TIMEOUT, gate.wait_until_idle())
+        .await
+        .is_err()
     {
-        let mut terminate =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-                .expect("failed to install SIGTERM signal handler");
-        let mut drain =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::user_defined1())
-                .expect("failed to install SIGUSR1 signal handler");
-
-        tokio::select! {
-            _ = ctrl_c => Some(TERM_DRAIN_TIMEOUT),
-            _ = terminate.recv() => Some(TERM_DRAIN_TIMEOUT),
-            _ = drain.recv() => None,
-        }
-    }
-
-    #[cfg(not(unix))]
-    {
-        ctrl_c.await;
-        Some(TERM_DRAIN_TIMEOUT)
+        tracing::warn!(active_streams = gate.active(), "api_drain_timeout");
     }
 }
 

@@ -8,12 +8,12 @@ import { schema, seedFragment } from "@anlg/editor/note";
 import type { SharedAttachmentResolver } from "@/components/shared-note-document";
 import { SharedNoteReadSurface } from "@/components/shared-note-read-surface";
 import { env } from "@/env";
+import { getCloudBrowserClient } from "@/functions/cloud-client";
 import {
   createSharedNoteLiveTicket,
   saveSharedNoteWebEdit,
 } from "@/functions/shared-note-live";
 import { readAuthenticatedSharedNote } from "@/functions/shared-notes";
-import { getSupabaseBrowserClient } from "@/functions/supabase";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import {
   buildSharedNoteLiveSocketUrl,
@@ -103,8 +103,7 @@ export function SharedNoteLiveSurface({
       if (result.status !== "ready") return result;
       let accessToken: string | undefined;
       if (result.ticket.requiresAuth) {
-        const { data, error } =
-          await getSupabaseBrowserClient().auth.getSession();
+        const { data, error } = await getCloudBrowserClient().auth.getSession();
         if (error) return { status: "error" };
         if (!data.session) return { status: "forbidden" };
         accessToken = data.session.access_token;

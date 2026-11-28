@@ -3,13 +3,13 @@ mod anarlog_routing;
 mod config;
 mod env;
 mod error;
+mod jobs;
 mod openapi;
 mod provider_selector;
 mod query_params;
 mod relay;
 mod routes;
 mod session_gate;
-mod supabase;
 mod upstream_url;
 
 pub use analytics::{SttAnalyticsReporter, SttEvent};

@@ -1,7 +1,6 @@
 use axum::http::HeaderMap;
 use serde::{Deserialize, Serialize};
 
-use super::SUPABASE_REQUEST_TIMEOUT;
 use crate::{
     error::{Result, SyncError},
     state::ReplicaState,
@@ -77,24 +76,16 @@ pub(super) async fn fetch_sync_device_limit(
     state: &ReplicaState,
     account_user_id: &str,
 ) -> Result<u8> {
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/get_sync_device_limit",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .json(&serde_json::json!({ "p_actor_user_id": account_user_id }))
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .send()
+    let limit: u8 = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "get_sync_device_limit",
+            &serde_json::json!({ "p_actor_user_id": account_user_id }),
+        )
         .await
         .map_err(|_| SyncError::Upstream)?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
-    match response.json::<u8>().await {
-        Ok(limit) if limit > 0 => Ok(limit),
+    match limit {
+        limit if limit > 0 => Ok(limit),
         _ => Err(SyncError::Upstream),
     }
 }
@@ -103,30 +94,31 @@ pub(super) async fn list_sync_devices(
     state: &ReplicaState,
     account_user_id: &str,
 ) -> Result<Vec<SyncDeviceRow>> {
-    let response = state
-        .client
-        .get(format!(
-            "{}/rest/v1/sync_devices",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .query(&[
-            ("user_id", format!("eq.{account_user_id}")),
-            (
-                "select",
-                "device_fingerprint,device_name,created_at,last_seen_at".to_string(),
-            ),
-            ("order", "last_seen_at.desc".to_string()),
-        ])
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .send()
+    use anlg_cloud_db::{Principal, entities::sync_device};
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
+    let user_id: uuid::Uuid = account_user_id.parse().map_err(|_| SyncError::Upstream)?;
+    let tx = state
+        .config
+        .database
+        .transaction(&Principal::Service)
         .await
         .map_err(|_| SyncError::Upstream)?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
-    response.json().await.map_err(|_| SyncError::Upstream)
+    let rows = sync_device::Entity::find()
+        .filter(sync_device::Column::UserId.eq(user_id))
+        .order_by_desc(sync_device::Column::LastSeenAt)
+        .all(&tx)
+        .await
+        .map_err(|_| SyncError::Upstream)?;
+    tx.commit().await.map_err(|_| SyncError::Upstream)?;
+    Ok(rows
+        .into_iter()
+        .map(|row| SyncDeviceRow {
+            device_fingerprint: row.device_fingerprint,
+            device_name: row.device_name,
+            created_at: row.created_at.to_rfc3339(),
+            last_seen_at: row.last_seen_at.to_rfc3339(),
+        })
+        .collect())
 }
 
 pub(super) async fn remove_sync_device(
@@ -139,25 +131,17 @@ pub(super) async fn remove_sync_device(
             "Sync device identity is invalid".to_string(),
         ));
     }
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/remove_sync_device",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .json(&RemoveSyncDeviceRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_device_fingerprint: fingerprint,
-        })
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .send()
+    let _: serde_json::Value = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "remove_sync_device",
+            &RemoveSyncDeviceRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_device_fingerprint: fingerprint,
+            },
+        )
         .await
         .map_err(|_| SyncError::Upstream)?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
     Ok(())
 }
 
@@ -178,26 +162,18 @@ pub(super) async fn rename_sync_device(
             "Sync device name must be between 1 and 128 bytes".to_string(),
         ));
     }
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/rename_sync_device",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .json(&RenameSyncDeviceRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_device_fingerprint: fingerprint,
-            p_device_name: name,
-        })
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .send()
+    let _: serde_json::Value = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "rename_sync_device",
+            &RenameSyncDeviceRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_device_fingerprint: fingerprint,
+                p_device_name: name,
+            },
+        )
         .await
         .map_err(|_| SyncError::Upstream)?;
-    if !response.status().is_success() {
-        return Err(SyncError::Upstream);
-    }
     Ok(())
 }
 
@@ -234,39 +210,20 @@ pub(super) async fn claim_sync_device(
         .map(str::trim)
         .filter(|name| !name.is_empty() && name.len() <= MAX_DEVICE_NAME_BYTES);
 
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/claim_sync_device",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&ClaimSyncDeviceRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_device_fingerprint: fingerprint,
-            p_device_name: device_name,
-        })
-        .send()
+    let rows: Vec<SyncDeviceClaimRow> = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "claim_sync_device",
+            &ClaimSyncDeviceRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_device_fingerprint: fingerprint,
+                p_device_name: device_name,
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase sync device claim failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(status = %response.status(), "Supabase sync device claim was rejected");
-        return Err(SyncError::Upstream);
-    }
-    let rows = response
-        .json::<Vec<SyncDeviceClaimRow>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase sync device claim response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(|_| SyncError::Upstream)?;
     let Some(row) = rows.first() else {
-        tracing::warn!("Supabase sync device claim returned no rows");
+        tracing::warn!("Cloud database sync device claim returned no rows");
         return Err(SyncError::Upstream);
     };
     if !row.allowed {
@@ -290,40 +247,21 @@ pub(super) async fn claim_personal_e2ee_key(
         ));
     }
 
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/claim_personal_workspace_e2ee_key",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_service_role_key)
-        .bearer_auth(&state.config.supabase_service_role_key)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&ClaimE2eeKeyRpcRequest {
-            p_actor_user_id: account_user_id,
-            p_key_id: requested_key_id,
-        })
-        .send()
+    let mut rows: Vec<E2eeKeyIdRow> = state
+        .rpc(
+            &anlg_cloud_db::Principal::Service,
+            "claim_personal_workspace_e2ee_key",
+            &ClaimE2eeKeyRpcRequest {
+                p_actor_user_id: account_user_id,
+                p_key_id: requested_key_id,
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE identity request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(status = %response.status(), "Supabase E2EE identity request was rejected");
-        return Err(SyncError::Upstream);
-    }
-    let mut rows = response
-        .json::<Vec<E2eeKeyIdRow>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE identity response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(|_| SyncError::Upstream)?;
     if rows.len() != 1 || !is_valid_e2ee_key_id(&rows[0].key_id) {
         tracing::warn!(
             row_count = rows.len(),
-            "Supabase E2EE identity response failed validation"
+            "Cloud database E2EE identity response failed validation"
         );
         return Err(SyncError::Upstream);
     }
@@ -336,7 +274,7 @@ pub(super) async fn claim_personal_e2ee_key(
 
 pub(super) async fn publish_e2ee_member_identity(
     state: &ReplicaState,
-    access_token: &str,
+    auth: &anlg_api_auth::AuthContext,
     public_key: &str,
 ) -> Result<()> {
     if !is_valid_e2ee_member_public_key(public_key) {
@@ -345,42 +283,20 @@ pub(super) async fn publish_e2ee_member_identity(
         ));
     }
 
-    let response = state
-        .client
-        .post(format!(
-            "{}/rest/v1/rpc/publish_e2ee_member_identity",
-            state.config.supabase_url
-        ))
-        .header("apikey", &state.config.supabase_anon_key)
-        .bearer_auth(access_token)
-        .timeout(SUPABASE_REQUEST_TIMEOUT)
-        .json(&PublishE2eeMemberIdentityRpcRequest {
-            p_public_key: public_key,
-        })
-        .send()
+    let rows: Vec<E2eeMemberIdentityRow> = state
+        .rpc(
+            &auth.principal().map_err(|_| SyncError::Upstream)?,
+            "publish_e2ee_member_identity",
+            &PublishE2eeMemberIdentityRpcRequest {
+                p_public_key: public_key,
+            },
+        )
         .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE member identity request failed");
-            SyncError::Upstream
-        })?;
-    if !response.status().is_success() {
-        tracing::warn!(
-            status = %response.status(),
-            "Supabase E2EE member identity request was rejected"
-        );
-        return Err(SyncError::Upstream);
-    }
-    let rows = response
-        .json::<Vec<E2eeMemberIdentityRow>>()
-        .await
-        .map_err(|error| {
-            tracing::warn!(%error, "Supabase E2EE member identity response was invalid");
-            SyncError::Upstream
-        })?;
+        .map_err(|_| SyncError::Upstream)?;
     if rows.len() != 1 || rows[0].public_key != public_key {
         tracing::warn!(
             row_count = rows.len(),
-            "Supabase E2EE member identity response failed validation"
+            "Cloud database E2EE member identity response failed validation"
         );
         return Err(SyncError::Upstream);
     }

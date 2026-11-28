@@ -1,5 +1,6 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import type { Session, CloudClient } from "@anlg/cloud-client";
 
 import { loadInitialSession } from "./initial-session";
 
@@ -17,7 +18,7 @@ const refreshedSession = { access_token: "refreshed" } as Session;
 function makeClient(getSession: () => unknown) {
   return {
     auth: { getSession },
-  } as unknown as SupabaseClient;
+  } as unknown as CloudClient;
 }
 
 describe("loadInitialSession", () => {

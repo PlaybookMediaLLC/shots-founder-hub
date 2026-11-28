@@ -166,7 +166,7 @@ export async function streamSharedNoteChat({
   snapshot: SharedNoteSnapshot;
 }): Promise<void> {
   // Dynamic imports keep this module loadable under node --test, which cannot
-  // resolve the "@/" alias used by the env and Supabase auth modules.
+  // resolve the "@/" alias used by the env and cloud auth modules.
   const [{ env }, { getAccessToken }] = await Promise.all([
     import("@/env"),
     import("@/functions/access-token"),

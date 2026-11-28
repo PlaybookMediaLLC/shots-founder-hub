@@ -50,7 +50,7 @@ use delete_guard::{
 };
 pub use delete_guard::{commit_delete_guard, prepare_delete_guard, reconcile_delete_guards};
 use download::{
-    DownloadObject, download_to_path, persist_staged_attachment, require_configured_supabase_url,
+    DownloadObject, download_to_path, persist_staged_attachment, require_configured_r2_url,
     stage_attachment_restore, validate_signed_download_url,
 };
 
@@ -518,7 +518,7 @@ pub async fn download_and_restore<R: Runtime>(
     }
     let download_url = validate_signed_download_url(
         signed_url,
-        require_configured_supabase_url(crate::configured_supabase_url())?,
+        require_configured_r2_url(crate::configured_r2_url())?,
         DownloadObject::Private(&record.object_key),
     )?;
     let cache_root = private_cache_root(app)?;
@@ -789,7 +789,7 @@ pub async fn download_shared_attachment<R: Runtime>(
     }
     let url = validate_signed_download_url(
         signed_url,
-        require_configured_supabase_url(crate::configured_supabase_url())?,
+        require_configured_r2_url(crate::configured_r2_url())?,
         DownloadObject::Shared(attachment_id),
     )?;
     let scope_path = shared_scope_path(app, scope_id)?;

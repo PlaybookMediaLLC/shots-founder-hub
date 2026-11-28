@@ -96,7 +96,9 @@ function AuthenticatedResourceShareButton({
     workspaceDraft ?? owned?.generalWorkspaceId ?? "personal";
   const guests = useQuery({
     queryKey: ["shared-resource-guests", owned?.shareId ?? ""],
-    enabled: Boolean(open && owned?.shareId && auth.session && auth.supabase),
+    enabled: Boolean(
+      open && owned?.shareId && auth.session && auth.cloudClient,
+    ),
     retry: false,
     queryFn: () =>
       listSharedResourceGuests(

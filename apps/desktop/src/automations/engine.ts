@@ -1,5 +1,3 @@
-import type { Session } from "@supabase/supabase-js";
-
 import {
   googleDrivePrepareExport,
   googleDriveExportMarkdown,
@@ -8,6 +6,7 @@ import {
   notionAppendUpdate,
 } from "@anlg/api-client";
 import { createClient } from "@anlg/api-client/client";
+import type { Session } from "@anlg/cloud-client";
 import { json2md } from "@anlg/editor/markdown";
 import {
   commands as localApiCommands,
@@ -31,7 +30,7 @@ import {
   type WorkflowTrigger,
 } from "./workflows";
 
-import { supabase } from "~/auth/client";
+import { cloudClient } from "~/auth/client";
 import { liveQueryClient } from "~/db";
 import { env } from "~/env";
 import {
@@ -535,7 +534,7 @@ async function executeSlackRecap(
   if (!recap) {
     throw new Error("no meeting summary is available yet");
   }
-  const session = await requireSupabaseSession();
+  const session = await requireCloudSession();
   await sendSlackRecap({
     apiBaseUrl: env.VITE_API_URL,
     accessToken: session.access_token,
@@ -558,7 +557,7 @@ async function executeLinearIssues(
   if (actionItems.length === 0) {
     return "no action items found for this meeting";
   }
-  const session = await requireSupabaseSession();
+  const session = await requireCloudSession();
   const client = apiClientForSession(session);
   const connectionId = await findConnectionId(client, "linear");
   const recap = await loadMeetingRecap(sessionId);
@@ -594,7 +593,7 @@ async function executeNotionUpdate(
   if (!recap) {
     throw new Error("no meeting summary is available yet");
   }
-  const session = await requireSupabaseSession();
+  const session = await requireCloudSession();
   const client = apiClientForSession(session);
   const connectionId = await findConnectionId(client, "notion");
   const { error } = await notionAppendUpdate({
@@ -612,11 +611,11 @@ async function executeNotionUpdate(
   return page.name;
 }
 
-async function requireSupabaseSession(): Promise<Session> {
-  if (!supabase) {
+async function requireCloudSession(): Promise<Session> {
+  if (!cloudClient) {
     throw new Error("sign in to run this automation");
   }
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await cloudClient.auth.getSession();
   if (error) {
     throw error;
   }
@@ -883,7 +882,7 @@ async function executeDriveStep(
   try {
     const prepared = await localApiCommands.prepareDriveMarkdown(sessionId);
     if (prepared.status === "error") throw new Error(prepared.error);
-    const client = apiClientForSession(await requireSupabaseSession());
+    const client = apiClientForSession(await requireCloudSession());
     if (!run.fileId) {
       const { data, error } = await googleDrivePrepareExport({
         client,

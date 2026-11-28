@@ -40,7 +40,7 @@ vi.mock("~/auth", () => ({
         },
       },
     },
-    supabase: {},
+    cloudClient: {},
   }),
 }));
 

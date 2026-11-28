@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("~/env", () => ({ env: mocks.env }));
 vi.mock("~/auth/client", () => ({
-  supabase: { auth: { getSession: mocks.getSession } },
+  cloudClient: { auth: { getSession: mocks.getSession } },
 }));
 
 vi.mock("@tauri-apps/api/app", () => ({

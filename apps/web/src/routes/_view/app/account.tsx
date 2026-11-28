@@ -3,16 +3,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { z } from "zod";
 
-import { getShotsSettingsUrl } from "@anlg/supabase/shots";
+import { getShotsSettingsUrl } from "@anlg/cloud-client/shots";
 
 import { AnarlogLogo } from "@/components/anarlog-logo";
 import { env } from "@/env";
+import { getCloudBrowserClient } from "@/functions/cloud-client";
 import { desktopSchemeSchema } from "@/functions/desktop-flow";
-import {
-  identityLinkMessages,
-  type IdentityLinkStatus,
-} from "@/functions/identity-link";
-import { getSupabaseBrowserClient } from "@/functions/supabase";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { accountWorkspacePlanQueryKey } from "@/lib/account-plan";
 import {
@@ -30,22 +26,12 @@ import { AccountTabs } from "./-account-nav";
 import { accountSessionQueryKey } from "./-account-session";
 import { accountPillSecondaryClassName } from "./-account-ui";
 
-const loadAccountIdentitiesSection = () => import("./-account-identities");
 const loadAccountAccessSection = () => import("./-account-access");
 const loadApiKeysSection = () => import("./-account-api-keys");
-const loadDangerAreaSection = () => import("./-account-danger");
 const loadDevicesSection = () => import("./-account-devices");
 const loadIntegrationsSection = () => import("./-account-integrations");
-const loadPlanSection = () => import("./-account-plan");
-const loadProfileInfoSection = () => import("./-account-profile-info");
-const loadReferralSection = () => import("./-account-referrals");
 const loadSharedNotesSection = () => import("./-account-shares");
 
-const AccountIdentitiesSection = lazy(() =>
-  loadAccountIdentitiesSection().then((module) => ({
-    default: module.AccountIdentitiesSection,
-  })),
-);
 const AccountAccessSection = lazy(() =>
   loadAccountAccessSection().then((module) => ({
     default: module.AccountAccessSection,
@@ -53,11 +39,6 @@ const AccountAccessSection = lazy(() =>
 );
 const ApiKeysSection = lazy(() =>
   loadApiKeysSection().then((module) => ({ default: module.ApiKeysSection })),
-);
-const DangerAreaSection = lazy(() =>
-  loadDangerAreaSection().then((module) => ({
-    default: module.DangerAreaSection,
-  })),
 );
 const DevicesSection = lazy(() =>
   loadDevicesSection().then((module) => ({ default: module.DevicesSection })),
@@ -67,19 +48,6 @@ const IntegrationsSection = lazy(() =>
     default: module.IntegrationsSection,
   })),
 );
-const PlanSection = lazy(() =>
-  loadPlanSection().then((module) => ({ default: module.PlanSection })),
-);
-const ProfileInfoSection = lazy(() =>
-  loadProfileInfoSection().then((module) => ({
-    default: module.ProfileInfoSection,
-  })),
-);
-const ReferralSection = lazy(() =>
-  loadReferralSection().then((module) => ({
-    default: module.ReferralSection,
-  })),
-);
 const SharedNotesSection = lazy(() =>
   loadSharedNotesSection().then((module) => ({
     default: module.SharedNotesSection,
@@ -87,15 +55,7 @@ const SharedNotesSection = lazy(() =>
 );
 
 const accountTabPreloaders: Record<AccountTabId, () => Promise<unknown>> = {
-  account: () =>
-    Promise.all([
-      loadProfileInfoSection(),
-      loadAccountIdentitiesSection(),
-      loadPlanSection(),
-      loadReferralSection(),
-      loadAccountAccessSection(),
-      loadDangerAreaSection(),
-    ]),
+  account: () => Promise.all([loadAccountAccessSection()]),
   connections: () =>
     Promise.all([loadIntegrationsSection(), loadDevicesSection()]),
   notes: () => Promise.all([loadSharedNotesSection()]),
@@ -120,12 +80,6 @@ const validateSearch = z
   .object({
     account_user_id: z.uuid(),
     section: z.literal("connected-accounts"),
-    identity_link: z.enum(
-      Object.keys(identityLinkMessages) as [
-        IdentityLinkStatus,
-        ...IdentityLinkStatus[],
-      ],
-    ),
     success: z.coerce.boolean(),
     trial: z.enum(["started"]),
     scheme: desktopSchemeSchema,
@@ -174,10 +128,9 @@ function Component() {
     }
 
     const syncBillingAnalytics = async () => {
-      const supabase = getSupabaseBrowserClient();
-      await supabase.auth.refreshSession();
-      // The refreshed JWT carries the post-checkout billing claims; cached
-      // account-session data is stale until it re-reads the session.
+      const cloudClient = getCloudBrowserClient();
+      await cloudClient.auth.refreshSession();
+      // Re-fetch the Shots billing snapshot after returning from settings.
       void queryClient.invalidateQueries({ queryKey: accountSessionQueryKey });
       void queryClient.invalidateQueries({
         queryKey: accountWorkspacePlanQueryKey,
@@ -270,7 +223,6 @@ function Component() {
               {sectionsForAccountTab(activeTab)
                 .filter(
                   (section) =>
-                    !env.VITE_SHOTS_URL ||
                     ![
                       "connected-accounts",
                       "plan",
@@ -283,11 +235,6 @@ function Component() {
                     <AccountSectionBody
                       id={section.id}
                       shotsUserId={user?.shotsUserId ?? undefined}
-                      email={user?.email}
-                      expectedUserId={search.account_user_id ?? user!.id}
-                      identityLinkResult={search.identity_link}
-                      perk={search.perk}
-                      referralIneligible={search.referral === "ineligible"}
                     />
                   </AccountSection>
                 ))}
@@ -340,65 +287,41 @@ function AccountSection({
 
 function AccountSectionBody({
   id,
-  email,
-  perk,
-  referralIneligible,
-  expectedUserId,
-  identityLinkResult,
   shotsUserId,
 }: {
   id: AccountSectionId;
-  email?: string;
-  perk?: "applied" | "claimed" | "invalid";
-  referralIneligible: boolean;
-  expectedUserId: string;
-  identityLinkResult?: IdentityLinkStatus;
   shotsUserId?: string;
 }) {
   switch (id) {
     case "profile":
-      if (env.VITE_SHOTS_URL) {
-        return (
-          <div className="flex flex-col gap-4">
-            <p>Your account, teams, and plan are managed by Shots.</p>
-            <div className="flex flex-wrap gap-3">
-              {(["account", "members", "billing", "security"] as const).map(
-                (section) => (
-                  <a
-                    key={section}
-                    className={accountPillSecondaryClassName}
-                    href={getShotsSettingsUrl(
-                      env.VITE_SHOTS_URL!,
-                      shotsUserId ?? "",
-                      section,
-                    )}
-                  >
-                    {section === "members"
-                      ? "Teams"
-                      : section === "account"
-                        ? "Account"
-                        : section === "billing"
-                          ? "Billing"
-                          : "Security"}
-                  </a>
-                ),
-              )}
-            </div>
-          </div>
-        );
-      }
-      return <ProfileInfoSection email={email} />;
-    case "connected-accounts":
       return (
-        <AccountIdentitiesSection
-          expectedUserId={expectedUserId}
-          result={identityLinkResult}
-        />
+        <div className="flex flex-col gap-4">
+          <p>Your account, teams, and plan are managed by Shots.</p>
+          <div className="flex flex-wrap gap-3">
+            {(["account", "members", "billing", "security"] as const).map(
+              (section) => (
+                <a
+                  key={section}
+                  className={accountPillSecondaryClassName}
+                  href={getShotsSettingsUrl(
+                    env.VITE_SHOTS_URL,
+                    shotsUserId ?? "",
+                    section,
+                  )}
+                >
+                  {section === "members"
+                    ? "Teams"
+                    : section === "account"
+                      ? "Account"
+                      : section === "billing"
+                        ? "Billing"
+                        : "Security"}
+                </a>
+              ),
+            )}
+          </div>
+        </div>
       );
-    case "plan":
-      return <PlanSection perk={perk} />;
-    case "referrals":
-      return <ReferralSection ineligible={referralIneligible} />;
     case "integrations":
       return <IntegrationsSection />;
     case "devices":
@@ -409,7 +332,7 @@ function AccountSectionBody({
       return <ApiKeysSection />;
     case "session":
       return <AccountAccessSection />;
-    case "danger":
-      return <DangerAreaSection />;
+    default:
+      return null;
   }
 }

@@ -60,7 +60,7 @@ export async function restoreAttachment(
     objectId: string;
     objectKey: string;
     signedUrl: string;
-    supabaseUrl: string;
+    r2BaseUrl: string;
     ciphertextSha256: string;
     ciphertextSizeBytes: number;
     formatVersion: number;
