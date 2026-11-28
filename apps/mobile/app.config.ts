@@ -108,9 +108,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       r2DownloadBaseUrl: process.env.EXPO_PUBLIC_R2_DOWNLOAD_BASE_URL ?? "",
       apiUrl:
         process.env.EXPO_PUBLIC_API_URL ??
-        (isDev
-          ? "http://localhost:3001"
-          : "https://founder-hub-api.shots.playbookmedia.io"),
+        (isDev ? "http://localhost:3001" : "https://hub.usedante.app"),
       appUrl:
         process.env.EXPO_PUBLIC_APP_URL ??
         (isDev ? "http://localhost:3000" : "https://shots.playbookmedia.io"),

@@ -31,7 +31,7 @@ env:
   SERVICE_NAME: founder-hub-api
   MIGRATE_JOB_NAME: founder-hub-api-migrate
   RUNTIME_SERVICE_ACCOUNT: sa-api-runtime@shots-founder-hub-prod.iam.gserviceaccount.com
-  HEALTH_URL: https://founder-hub-api.shots.playbookmedia.io/health
+  HEALTH_URL: https://hub.usedante.app/health
   DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:

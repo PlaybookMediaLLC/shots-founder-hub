@@ -10,7 +10,7 @@ const read = (key: string, fallback = ""): string => {
 };
 
 const shotsUrl = read("shotsUrl");
-const apiUrl = read("apiUrl", "https://founder-hub-api.shots.playbookmedia.io");
+const apiUrl = read("apiUrl", "https://hub.usedante.app");
 
 export const env = {
   appVariant: read("appVariant", __DEV__ ? "dev" : "stable"),

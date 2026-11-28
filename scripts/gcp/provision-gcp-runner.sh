@@ -388,7 +388,7 @@ if [[ "$ENV_NAME" == "prod" ]]; then
 
 4. Nango Cloud (Production environment):
    - Custom Callback URL: https://shots.playbookmedia.io/oauth/callback
-   - Webhook URL:         https://founder-hub-api.shots.playbookmedia.io/nango/webhook
+   - Webhook URL:         https://hub.usedante.app/nango/webhook
    - Providers:
        google-calendar -> shots-founder-hub-calendar (calendar.readonly, calendar.events.readonly)
        google-drive    -> shots-founder-hub-drive    (STRICTLY drive.file ONLY)

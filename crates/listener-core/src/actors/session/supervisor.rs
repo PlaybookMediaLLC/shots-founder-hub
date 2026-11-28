@@ -919,7 +919,7 @@ mod tests {
                 "direct soniox preserves recording",
             ),
             (
-                "https://founder-hub-api.shots.playbookmedia.io/stt?provider=soniox",
+                "https://hub.usedante.app/stt?provider=soniox",
                 "cloud",
                 false,
                 "anarlog proxy soniox enters batch fallback",
@@ -1029,7 +1029,7 @@ mod tests {
 
     #[tokio::test]
     async fn stalled_cloud_and_soniox_listeners_schedule_reconnection_without_stopping_recording() {
-        for base_url in ["https://founder-hub-api.shots.playbookmedia.io/stt", "https://api.soniox.com"] {
+        for base_url in ["https://hub.usedante.app/stt", "https://api.soniox.com"] {
             let runtime = Arc::new(RecordingRuntime {
                 lifecycle_events: std::sync::Mutex::new(vec![]),
             });

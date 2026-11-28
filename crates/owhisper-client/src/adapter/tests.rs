@@ -82,6 +82,8 @@ fn test_documented_language_codes_are_menu_safe() {
 
 #[test]
 fn test_is_anarlog_proxy() {
+    assert!(is_anarlog_proxy("https://hub.usedante.app/stt"));
+    assert!(is_anarlog_proxy("https://hub.usedante.app"));
     assert!(is_anarlog_proxy(
         "https://founder-hub-api.shots.playbookmedia.io/stt"
     ));
@@ -91,6 +93,8 @@ fn test_is_anarlog_proxy() {
     assert!(is_anarlog_proxy("http://localhost:3001/stt"));
     assert!(is_anarlog_proxy("http://127.0.0.1:3001/stt"));
 
+    assert!(!is_anarlog_proxy("https://hub.usedante.com/stt"));
+    assert!(!is_anarlog_proxy("https://hub.usedante.app.evil.com/stt"));
     assert!(!is_anarlog_proxy("https://api.hyprnote.com/stt"));
     assert!(!is_anarlog_proxy("https://api.char.com/stt"));
     assert!(!is_anarlog_proxy("https://notchar.com/stt"));
@@ -103,9 +107,7 @@ fn test_is_local_argmax() {
     assert!(is_local_argmax("http://localhost:50060/v1"));
     assert!(is_local_argmax("http://127.0.0.1:50060/v1"));
 
-    assert!(!is_local_argmax(
-        "https://founder-hub-api.shots.playbookmedia.io/stt"
-    ));
+    assert!(!is_local_argmax("https://hub.usedante.app/stt"));
     assert!(!is_local_argmax("http://localhost:3001/stt"));
     assert!(!is_local_argmax("http://localhost:8080/v1"));
     assert!(!is_local_argmax("http://127.0.0.1:8080/listen"));
@@ -119,68 +121,68 @@ fn test_adapter_kind_from_url_and_languages() {
     let cases: &[(&str, &[anlg_language::ISO639], Option<&str>, AdapterKind)] = &[
         // AnarlogCloud - always routes to Anarlog adapter (proxy owns provider selection)
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[En],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[En],
             Some("cloud"),
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[En, Ko],
             Some("cloud"),
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[Zh],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[Ja],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[Ar],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[De],
             None,
             AdapterKind::Anarlog,
         ),
         // AnarlogCloud - multi-language
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[En, Es],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[En, Ko],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[Ko, En],
             None,
             AdapterKind::Anarlog,
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt",
+            "https://hub.usedante.app/stt",
             &[En, De],
             None,
             AdapterKind::Anarlog,
@@ -302,37 +304,37 @@ fn test_build_proxy_ws_url() {
         ("https://api.fireworks.ai", None),
         ("https://api.assemblyai.com", None),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt?provider=soniox",
+            "https://hub.usedante.app/stt?provider=soniox",
             Some((
-                "wss://founder-hub-api.shots.playbookmedia.io/stt/listen",
+                "wss://hub.usedante.app/stt/listen",
                 vec![("provider", "soniox")],
             )),
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt?provider=deepgram",
+            "https://hub.usedante.app/stt?provider=deepgram",
             Some((
-                "wss://founder-hub-api.shots.playbookmedia.io/stt/listen",
+                "wss://hub.usedante.app/stt/listen",
                 vec![("provider", "deepgram")],
             )),
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt?provider=anarlog",
+            "https://hub.usedante.app/stt?provider=anarlog",
             Some((
-                "wss://founder-hub-api.shots.playbookmedia.io/stt/listen",
+                "wss://hub.usedante.app/stt/listen",
                 vec![("provider", "anarlog")],
             )),
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt/listen?provider=deepgram",
+            "https://hub.usedante.app/stt/listen?provider=deepgram",
             Some((
-                "wss://founder-hub-api.shots.playbookmedia.io/stt/listen",
+                "wss://hub.usedante.app/stt/listen",
                 vec![("provider", "deepgram")],
             )),
         ),
         (
-            "https://founder-hub-api.shots.playbookmedia.io/stt/some/path?provider=fireworks",
+            "https://hub.usedante.app/stt/some/path?provider=fireworks",
             Some((
-                "wss://founder-hub-api.shots.playbookmedia.io/stt/some/path/listen",
+                "wss://hub.usedante.app/stt/some/path/listen",
                 vec![("provider", "fireworks")],
             )),
         ),
@@ -390,7 +392,7 @@ fn test_anarlog_proxy_always_selects_anarlog_adapter() {
     use anlg_language::ISO639::*;
 
     let proxy_urls = &[
-        "https://founder-hub-api.shots.playbookmedia.io/stt",
+        "https://hub.usedante.app/stt",
         "http://localhost:3001/stt",
         "http://127.0.0.1:3001/stt",
     ];
@@ -534,10 +536,7 @@ fn test_direct_provider_urls_not_affected() {
 
 #[test]
 fn test_append_provider_param_replaces_existing() {
-    let url = append_provider_param(
-        "https://founder-hub-api.shots.playbookmedia.io/stt?provider=deepgram",
-        "anarlog",
-    );
+    let url = append_provider_param("https://hub.usedante.app/stt?provider=deepgram", "anarlog");
     assert!(
         url.contains("provider=anarlog"),
         "new provider value should be present: {url}"
@@ -556,7 +555,7 @@ fn test_append_provider_param_replaces_existing() {
 #[test]
 fn test_append_provider_param_preserves_other_params() {
     let url = append_provider_param(
-        "https://founder-hub-api.shots.playbookmedia.io/stt?model=cloud&provider=soniox&language=en",
+        "https://hub.usedante.app/stt?model=cloud&provider=soniox&language=en",
         "anarlog",
     );
     assert!(
@@ -573,10 +572,7 @@ fn test_append_provider_param_preserves_other_params() {
 
 #[test]
 fn test_append_provider_param_no_existing_provider() {
-    let url = append_provider_param(
-        "https://founder-hub-api.shots.playbookmedia.io/stt",
-        "anarlog",
-    );
+    let url = append_provider_param("https://hub.usedante.app/stt", "anarlog");
     assert!(url.contains("provider=anarlog"));
     assert_eq!(url.matches("provider=").count(), 1);
 }

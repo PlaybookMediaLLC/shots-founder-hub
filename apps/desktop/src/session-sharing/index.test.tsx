@@ -82,7 +82,7 @@ vi.mock("~/auth/billing-context", () => ({
 
 vi.mock("~/env", () => ({
   env: {
-    VITE_API_URL: "https://founder-hub-api.shots.playbookmedia.io",
+    VITE_API_URL: "https://hub.usedante.app",
     VITE_APP_URL: "https://shots.playbookmedia.io",
   },
 }));

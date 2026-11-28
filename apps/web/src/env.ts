@@ -27,7 +27,7 @@ export const env = createEnv({
       : z.string().min(1),
     VITE_API_URL: isDev
       ? z.string().default("http://localhost:3001")
-      : z.string().default("https://founder-hub-api.shots.playbookmedia.io"),
+      : z.string().default("https://hub.usedante.app"),
     VITE_POSTHOG_API_KEY: requiredInProd(z.string().min(1)),
     VITE_POSTHOG_HOST: z.string().default("https://us.i.posthog.com"),
     VITE_GOOGLE_ANALYTICS_ID: z.string().min(1).optional(),

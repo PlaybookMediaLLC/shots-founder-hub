@@ -14,7 +14,7 @@
   "skills": "./skills/",
   "mcpServers": {
     "sfh": {
-      "url": "https://founder-hub-api.shots.playbookmedia.io/mcp"
+      "url": "https://hub.usedante.app/mcp"
     }
   }
 }

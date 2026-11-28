@@ -11,7 +11,7 @@ set -euo pipefail
 #   --project <PROJECT_ID>     Override default GCP project ID.
 #   --region <REGION>          Artifact Registry region (default: us-west1).
 #   --web-origin <URL>         Override web origin (default: https://shots.playbookmedia.io for prod).
-#   --api-origin <URL>         Override API origin (default: https://founder-hub-api.shots.playbookmedia.io for prod).
+#   --api-origin <URL>         Override API origin (default: https://hub.usedante.app for prod).
 #   --skip-billing-resources   Skip billing-backed API & Artifact Registry checks.
 #   --skip-gcp                 Skip gcloud API / WIF / Artifact Registry checks.
 #   --skip-http                Skip live HTTP endpoint checks.
@@ -91,7 +91,7 @@ if [[ -z "$WEB_ORIGIN" ]]; then
 fi
 if [[ -z "$API_ORIGIN" ]]; then
   if [[ "$ENV_NAME" == "prod" ]]; then
-    API_ORIGIN="https://founder-hub-api.shots.playbookmedia.io"
+    API_ORIGIN="https://hub.usedante.app"
   else
     API_ORIGIN="http://localhost:4408"
   fi

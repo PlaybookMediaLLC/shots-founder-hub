@@ -44,7 +44,7 @@ env:
   NODE_OPTIONS: "--max-old-space-size=4096"
   VITE_APP_URL: https://shots.playbookmedia.io
   VITE_SHOTS_URL: https://shots.playbookmedia.io
-  VITE_API_URL: https://founder-hub-api.shots.playbookmedia.io
+  VITE_API_URL: https://hub.usedante.app
 
 jobs:
   check:

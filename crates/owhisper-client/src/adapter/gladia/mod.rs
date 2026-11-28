@@ -122,8 +122,8 @@ mod tests {
                 vec![],
             ),
             (
-                "https://founder-hub-api.shots.playbookmedia.io?provider=gladia",
-                "wss://founder-hub-api.shots.playbookmedia.io/listen",
+                "https://hub.usedante.app?provider=gladia",
+                "wss://hub.usedante.app/listen",
                 vec![("provider", "gladia")],
             ),
             (
