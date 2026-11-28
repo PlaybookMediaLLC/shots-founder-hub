@@ -82,7 +82,7 @@ test("publishes immutable media to R2 once and refuses different bytes at a publ
   const fetchImpl = async (url) => {
     assert.equal(
       url,
-      `https://static.anarlog.so/${assets[0].object.replace(" ", "%20")}`,
+      `https://static.shots.playbookmedia.io/${assets[0].object.replace(" ", "%20")}`,
     );
     return served === null
       ? new Response(null, { status: 404 })
@@ -123,7 +123,7 @@ test("public asset checks recover from transient failures and bound persistent f
   let transient = true;
   assert.equal(
     await existsAt("image.svg", async (url, { signal }) => {
-      assert.equal(url, "https://static.anarlog.so/image.svg");
+      assert.equal(url, "https://static.shots.playbookmedia.io/image.svg");
       assert.ok(signal instanceof AbortSignal);
       if (transient) {
         transient = false;

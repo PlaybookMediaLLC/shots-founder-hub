@@ -6,8 +6,8 @@
   "workers_dev": false,
   "routes": [
     {
-      "pattern": "static.anarlog.so/*",
-      "zone_name": "anarlog.so",
+      "pattern": "static.shots.playbookmedia.io/*",
+      "zone_name": "playbookmedia.io",
     },
   ],
   "observability": {

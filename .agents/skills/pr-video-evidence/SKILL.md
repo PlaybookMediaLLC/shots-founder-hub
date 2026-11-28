@@ -266,11 +266,11 @@ Derive element coordinates from live Playwright locators wherever possible. Keep
 
 ## 9. Spoken narration
 
-Every applicable demonstration must include audible, intelligible spoken narration.
+Every applicable demonstration must include natural, human-sounding, intelligible spoken narration.
 
-- **Default local TTS**: Kokoro (`kokoro-onnx`, cached under `~/.cache/kokoro-onnx/`).
-- **Local fallback**: `espeak-ng` when Kokoro weights are unavailable offline (disclosed in `tts_provider`).
-- **Optional cloud fallback**: approved cloud TTS provider (such as OpenAI TTS via `--tts-provider openai` with `OPENAI_API_KEY`) only when explicitly configured and authorized; never transmit sensitive data.
+- **Default local neural TTS**: Kokoro ONNX (`kokoro-onnx`, auto-downloaded with pinned SHA-256 verification under `~/.cache/kokoro-onnx/`, flagship voice `af_heart` at natural `1.0x` cadence with `220 ms` sentence pauses, engineering-term pronunciation normalization, and `-16 LUFS` speech mastering).
+- **Optional neural cloud fallback**: approved neural cloud TTS provider (such as OpenAI `gpt-4o-mini-tts` via `--tts-provider openai` with `OPENAI_API_KEY`, secret-scanned before transmission) only when explicitly configured and authorized; never transmit sensitive data.
+- **Robotic synthesizers disallowed**: formant/robotic engines such as `espeak-ng`, `espeak`, `flite`, or `festival` are disallowed and rejected by `pr-video-evidence` validation.
 
 Generate narration as individual segments per beat, measure exact audio duration, and synchronize the recording timeline accordingly.
 
@@ -409,7 +409,7 @@ Preserve prior recordings as historical evidence; never reuse an outdated record
 
 Use the repository-native pipeline:
 
-- **Record narrated video evidence**: `pnpm devx:video-evidence --plan <plan.json> [--tts-provider auto|kokoro|espeak|openai] [--video-url <url>] [--pr-number <N>]`
+- **Record narrated video evidence**: `pnpm devx:video-evidence --plan <plan.json> [--tts-provider auto|kokoro|openai] [--video-url <url>] [--pr-number <N>]`
 - **Document non-demonstrable exemption**: `pnpm devx:video-evidence exempt --reason "<reason>" --artifact "<artifact>" --plan <metadata.json>` (validated against the same CI schema; docs-only exemptions may record `review_report.independent: false` only with an explicit `review_report.exception_reason`).
 - **Update PR block after upload/PR creation**: `pnpm devx:video-evidence render-pr-block --manifest <evidence.json> --video-url <url> --pr-number <N>` (keeps `commit_sha` immutable and validates against live `HEAD` before writing).
 - **Validate locally**: `pnpm devx:video-evidence:verify --manifest <evidence.json> --head-sha <sha>` (same validator executed by `.github/workflows/pr-video-evidence.yml`; enforces `1280x720 @ 24 fps` minimum with `1920x1080 @ 30 fps` default).

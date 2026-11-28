@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "${FLATPAK_ID:-}" = "so.anarlog.Anarlog" ]; then
+if [ "${FLATPAK_ID:-}" = "io.playbookmedia.ShotsFounderHub" ]; then
   exec /app/libexec/sfh "$@"
 fi
 
@@ -13,4 +13,4 @@ exec flatpak run \
   --filesystem="$caller_dir" \
   --cwd="$caller_dir" \
   --command=/app/libexec/sfh \
-  so.anarlog.Anarlog "$@"
+  io.playbookmedia.ShotsFounderHub "$@"

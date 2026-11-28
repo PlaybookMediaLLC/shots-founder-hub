@@ -13,7 +13,7 @@ Prefer local Shots Founder Hub data when the agent can access it. Use OAuth-conn
 2. Otherwise, prefer a connected local MCP server. If shell access is available, use the `sfh` executable on `PATH` for every CLI command below, including the `sfh --json doctor` readiness check. Read with `sfh --json meetings --source local list` when ready, even if Cloud MCP is connected.
 3. When running remotely without the user's local database, or when the CLI or database is absent, use connected Cloud MCP: `list_meetings`, `get_meeting`, `get_meeting_transcript`, and `get_recurring_meeting_history`. If MCP is unavailable but CLI login is available, use `sfh --json meetings --source cloud list` for the same hosted snapshots.
 4. A local database compatibility, permission, or operation error needs to be reported; do not hide it by switching to Cloud. An empty local result does not mean the database is unavailable. If the requested meeting is missing, an already-connected alternate source can fill the gap unless the user restricted the source. Identify that source and keep the meeting's subsequent reads on it.
-5. Local reads need no Cloud login, Pro subscription, or completed sync. If neither source is available, offer [local CLI installation](https://docs.anarlog.so/agents/overview) for an agent on the user's computer, or **Cloud API & Connectors** plus OAuth for remote access. Do not install software or enable Cloud uploads unless the user asks.
+5. Local reads need no Cloud login, Pro subscription, or completed sync. If neither source is available, offer [local CLI installation](https://docs.shots.playbookmedia.io/agents/overview) for an agent on the user's computer, or **Cloud API & Connectors** plus OAuth for remote access. Do not install software or enable Cloud uploads unless the user asks.
 
 Never query or modify Shots Founder Hub's SQLite database directly. The CLI and MCP servers handle application-schema compatibility.
 
@@ -25,7 +25,7 @@ Never query or modify Shots Founder Hub's SQLite database directly. The CLI and 
 4. Ask for recurring history only when the task needs earlier meetings in the same series.
 5. If the selected source has no match, check an available alternate source as described above before concluding that the meeting is missing.
 
-See [CLI commands](https://docs.anarlog.so/reference/cli) and [MCP tools](https://docs.anarlog.so/reference/mcp).
+See [CLI commands](https://docs.shots.playbookmedia.io/reference/cli) and [MCP tools](https://docs.shots.playbookmedia.io/reference/mcp).
 
 ## Ground answers in tool output
 
@@ -55,6 +55,6 @@ See [CLI commands](https://docs.anarlog.so/reference/cli) and [MCP tools](https:
 - CLI export can create a file. Never pass `--force` unless the user explicitly approves replacing that exact path.
 - If search results are ambiguous, ask the user to choose a meeting.
 
-For setup and failures, see [setup](https://docs.anarlog.so/agents/overview) and [errors](https://docs.anarlog.so/reference/errors).
+For setup and failures, see [setup](https://docs.shots.playbookmedia.io/agents/overview) and [errors](https://docs.shots.playbookmedia.io/reference/errors).
 
 For an explicitly requested recording import, use the local CLI or local MCP import tools described in the references. The updated desktop app must be open. Imports create meetings and may use paid providers; save the returned job ID and check both processing and summary status before claiming completion. Hosted MCP does not import local files.

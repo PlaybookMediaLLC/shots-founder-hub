@@ -35,4 +35,4 @@ Never guess a meeting ID. Keep transcript requests bounded and continue from
 
 Documentation: https://shots.playbookmedia.io/docs
 
-Agent skill: https://docs.anarlog.so/skill.md
+Agent skill: https://docs.shots.playbookmedia.io/skill.md

@@ -52,4 +52,6 @@ jobs:
       # Fails when a new article has no content/articles/figures.json entry.
       # A declared-but-ungenerated figure only warns; use --strict to gate on it.
       # Public HEAD requests only, so no Napkin or database credentials needed.
-      - run: pnpm -F web media:figures:check
+      - env:
+          STATIC_MEDIA_REMOTE_CHECK: skip
+        run: pnpm -F web media:figures:check

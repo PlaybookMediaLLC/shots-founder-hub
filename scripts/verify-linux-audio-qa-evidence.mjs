@@ -12,7 +12,6 @@ export const linuxAudioQaPolicy = JSON.parse(
   ),
 );
 
-const APPLICATION = "fastrepl/hyprnote2";
 const SOURCE_WORKFLOW = ".github/workflows/desktop_cd.yaml";
 const ARCHITECTURES = [
   {
@@ -192,9 +191,12 @@ async function verifyArchitecture({
   const required = (basename) =>
     requireFile(root, basename, architecture.artifactArch);
 
+  // The CrabNebula application the release workflows publish (vars.CN_APPLICATION).
+  const application = process.env.CN_APPLICATION;
+  invariant(application, "Set CN_APPLICATION to the CrabNebula application");
   const provenance = await readJson(await required("provenance.json"));
   invariant(
-    provenance.application === APPLICATION,
+    provenance.application === application,
     `Linux ${architecture.artifactArch} application mismatch`,
   );
   invariant(

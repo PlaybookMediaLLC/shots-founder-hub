@@ -42,13 +42,14 @@ test("APT redirects retain the release and architecture", () => {
 
 test("desktop updater redirects are restricted to the desktop hostname", () => {
   assert.equal(
-    routeFor("https://desktop.anarlog.so/update/darwin/aarch64/1.4.22")
-      ?.destination,
+    routeFor(
+      "https://desktop.shots.playbookmedia.io/update/darwin/aarch64/1.4.22",
+    )?.destination,
     "https://github.com/PlaybookMediaLLC/shots-founder-hub/releases/latest/download/latest.json",
   );
   for (const url of [
-    "https://desktop.anarlog.so/download/latest/platform/dmg-aarch64?channel=stable",
-    "https://desktop.anarlog.so/",
+    "https://desktop.shots.playbookmedia.io/download/latest/platform/dmg-aarch64?channel=stable",
+    "https://desktop.shots.playbookmedia.io/",
     "https://desktop2.hyprnote.com/download/latest/platform/nsis-x86_64",
   ]) {
     assert.equal(
@@ -71,13 +72,16 @@ test("agent discovery proxies retain paths and their required origin header", ()
     "/.well-known/vercel/flags",
   ]) {
     const route = routeFor(`https://anarlog.so${path}`);
-    assert.equal(route.destination, `https://docs.anarlog.so${path}`);
+    assert.equal(
+      route.destination,
+      `https://docs.shots.playbookmedia.io${path}`,
+    );
     assert.deepEqual(route.transforms, [
       {
         type: "request.headers",
         op: "set",
         target: { key: "Origin" },
-        args: "docs.anarlog.so",
+        args: "docs.shots.playbookmedia.io",
       },
     ]);
   }
@@ -87,7 +91,10 @@ test("public asset redirects and legacy host redirects preserve suffixes", () =>
   for (const path of ["blog/library/image.webp", "team/john.png"]) {
     const route = routeFor(`https://anarlog.so/api/assets/${path}`);
     assert.equal(route?.status, 301);
-    assert.equal(route?.destination, `https://static.anarlog.so/${path}`);
+    assert.equal(
+      route?.destination,
+      `https://static.shots.playbookmedia.io/${path}`,
+    );
   }
   assert.equal(
     routeFor("https://char.com/blog/old-article/")?.destination,

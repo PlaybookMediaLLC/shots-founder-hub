@@ -87,7 +87,7 @@ async function main() {
   }
   if (values.manifest) await writeFile(MANIFEST, manifest);
   console.log(
-    `${values.upload ? "Published and verified" : "Prepared"} ${assets.length} assets (${(assets.reduce((sum, asset) => sum + asset.bytes.length, 0) / 1024 / 1024).toFixed(1)} MiB) for https://static.anarlog.so/desktop/`,
+    `${values.upload ? "Published and verified" : "Prepared"} ${assets.length} assets (${(assets.reduce((sum, asset) => sum + asset.bytes.length, 0) / 1024 / 1024).toFixed(1)} MiB) for https://static.shots.playbookmedia.io/desktop/`,
   );
 }
 

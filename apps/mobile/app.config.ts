@@ -10,21 +10,21 @@ const variants = {
     icon: "./assets/images/icon-dev.png",
     iconBackgroundColor: "#0A0A0A",
     scheme: "anarlog-dev",
-    bundleIdentifier: "so.anarlog.mobile.dev",
+    bundleIdentifier: "io.playbookmedia.shotsfounderhub.dev",
   },
   staging: {
     name: "Shots Founder Hub Staging",
     icon: "./assets/images/icon-staging.png",
     iconBackgroundColor: "#0A0A0A",
     scheme: "anarlog-staging",
-    bundleIdentifier: "so.anarlog.mobile.staging",
+    bundleIdentifier: "io.playbookmedia.shotsfounderhub.staging",
   },
   stable: {
     name: "Shots Founder Hub",
     icon: "./assets/images/icon.png",
     iconBackgroundColor: "#0A0A0A",
     scheme: "anarlog",
-    bundleIdentifier: "so.anarlog.mobile",
+    bundleIdentifier: "io.playbookmedia.shotsfounderhub",
   },
 } as const satisfies Record<
   AppVariant,
@@ -108,7 +108,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       r2DownloadBaseUrl: process.env.EXPO_PUBLIC_R2_DOWNLOAD_BASE_URL ?? "",
       apiUrl:
         process.env.EXPO_PUBLIC_API_URL ??
-        (isDev ? "http://localhost:3001" : "https://founder-hub-api.shots.playbookmedia.io"),
+        (isDev
+          ? "http://localhost:3001"
+          : "https://founder-hub-api.shots.playbookmedia.io"),
       appUrl:
         process.env.EXPO_PUBLIC_APP_URL ??
         (isDev ? "http://localhost:3000" : "https://shots.playbookmedia.io"),

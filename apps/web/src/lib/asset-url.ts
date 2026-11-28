@@ -1,5 +1,5 @@
 /** Public R2 object keys include their product folder; other URLs pass through. */
-export const PUBLIC_ASSET_ORIGIN = "https://static.fastrepl.com";
+export const PUBLIC_ASSET_ORIGIN = "https://static.shots.playbookmedia.io";
 
 export function assetUrl(path: string): string {
   return /^(?:char|anarlog|fastrepl)\//.test(path)

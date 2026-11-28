@@ -406,7 +406,7 @@ pnpm -F ui build
 pnpm -F desktop typecheck
 cargo check -p desktop --target x86_64-unknown-linux-gnu
 POSTHOG_API_KEY=phc_local_smoke \
-VITE_API_URL=https://api.anarlog.so \
+VITE_API_URL=https://api.shots.playbookmedia.io \
 pnpm -F desktop tauri build --no-bundle --target x86_64-unknown-linux-gnu --config ./src-tauri/tauri.conf.staging.json --features devtools
 ```
 

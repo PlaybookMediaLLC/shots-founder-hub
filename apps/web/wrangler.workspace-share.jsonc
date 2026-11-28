@@ -7,8 +7,8 @@
   // Set WORKSPACE_SHARE_PROXY_SECRET in this Worker and the Vercel web project.
   "routes": [
     {
-      "pattern": "*.anarlog.so/*",
-      "zone_name": "anarlog.so",
+      "pattern": "*.shots.playbookmedia.io/*",
+      "zone_name": "playbookmedia.io",
     },
   ],
   "observability": {

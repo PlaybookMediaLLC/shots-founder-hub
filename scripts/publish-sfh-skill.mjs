@@ -30,10 +30,11 @@ export const PLUGIN_PACKAGE_MIRRORS = [
 ];
 
 export const REFERENCE_LINK_REWRITES = {
-  "references/cli.md": "https://docs.anarlog.so/reference/cli",
-  "references/mcp.md": "https://docs.anarlog.so/reference/mcp",
-  "references/errors.md": "https://docs.anarlog.so/reference/errors",
-  "references/setup.md": "https://docs.anarlog.so/agents/overview",
+  "references/cli.md": "https://docs.shots.playbookmedia.io/reference/cli",
+  "references/mcp.md": "https://docs.shots.playbookmedia.io/reference/mcp",
+  "references/errors.md":
+    "https://docs.shots.playbookmedia.io/reference/errors",
+  "references/setup.md": "https://docs.shots.playbookmedia.io/agents/overview",
 };
 
 export function publishSkill(canonical) {

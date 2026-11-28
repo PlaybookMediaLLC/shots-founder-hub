@@ -316,6 +316,7 @@ test("rejects invalid video specs, IPv6/loopback URLs, invalid dates, out-of-ran
       width: 1920.5,
       has_audio: false,
       has_captions: false,
+      tts_provider: "espeak-ng",
     },
   });
   const result = validatePrVideoEvidence({
@@ -340,6 +341,7 @@ test("rejects invalid video specs, IPv6/loopback URLs, invalid dates, out-of-ran
   assert.match(combined, /codec_audio must be "aac"/);
   assert.match(combined, /has_audio must be true/);
   assert.match(combined, /has_captions must be true/);
+  assert.match(combined, /human-sounding neural TTS/);
 });
 
 test("enforces target-specific trace rules, pending-upload gating, and desktop capture_log support", () => {

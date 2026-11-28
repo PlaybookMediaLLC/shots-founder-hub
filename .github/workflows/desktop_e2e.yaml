@@ -24,7 +24,7 @@ jobs:
         env:
           CI: false
           POSTHOG_API_KEY: phc_e2e
-          VITE_API_URL: https://api.anarlog.so
+          VITE_API_URL: https://api.shots.playbookmedia.io
       - uses: ./.github/actions/desktop-e2e-linux
         with:
           channel: staging
@@ -48,7 +48,7 @@ jobs:
         env:
           CI: false
           POSTHOG_API_KEY: phc_e2e
-          VITE_API_URL: https://api.anarlog.so
+          VITE_API_URL: https://api.shots.playbookmedia.io
       - uses: FedericoCarboni/setup-ffmpeg@36c6454b5a2348e7794ba2d82a21506605921e3d # v3
         with:
           ffmpeg-version: release

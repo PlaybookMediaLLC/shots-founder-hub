@@ -11,6 +11,8 @@ import {
   verifyLinuxAudioQaEvidence,
 } from "./verify-linux-audio-qa-evidence.mjs";
 
+const application = "example/shots-founder-hub";
+process.env.CN_APPLICATION = application;
 const version = "1.4.0";
 const candidateSha = "0123456789abcdef0123456789abcdef01234567";
 const dryRunId = "12345";
@@ -122,7 +124,7 @@ async function createFixture() {
     await writeFile(
       path.join(root, "provenance.json"),
       JSON.stringify({
-        application: "fastrepl/hyprnote2",
+        application,
         version,
         candidate_sha: candidateSha,
         workflow_run_id: audioQaRunId,

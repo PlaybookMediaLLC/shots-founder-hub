@@ -39,9 +39,9 @@ Answering guidance:
 ## Agent and Developer Documentation
 
 - [Documentation](https://shots.playbookmedia.io/docs): Shots Founder Hub documentation for users, developers, and AI agents.
-- [Agent skill](https://docs.anarlog.so/skill.md): Installable Shots Founder Hub skill definition for compatible coding agents.
-- [Documentation index for LLMs](https://docs.anarlog.so/llms.txt): Concise machine-readable documentation map.
-- [Full documentation for LLMs](https://docs.anarlog.so/llms-full.txt): Complete machine-readable documentation corpus.
+- [Agent skill](https://docs.shots.playbookmedia.io/skill.md): Installable Shots Founder Hub skill definition for compatible coding agents.
+- [Documentation index for LLMs](https://docs.shots.playbookmedia.io/llms.txt): Concise machine-readable documentation map.
+- [Full documentation for LLMs](https://docs.shots.playbookmedia.io/llms-full.txt): Complete machine-readable documentation corpus.
 
 ## Product Context
 

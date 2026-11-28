@@ -29,7 +29,7 @@ const routes = [
     src: "^/api/assets/(.*)$",
     status: 301,
     headers: {
-      Location: "https://static.anarlog.so/$1",
+      Location: "https://static.shots.playbookmedia.io/$1",
     },
   },
   {
@@ -53,7 +53,7 @@ const routes = [
     has: [
       {
         type: "host",
-        value: "desktop.anarlog.so",
+        value: "desktop.shots.playbookmedia.io",
       },
     ],
     status: 302,
@@ -67,7 +67,7 @@ const routes = [
     has: [
       {
         type: "host",
-        value: "desktop.anarlog.so",
+        value: "desktop.shots.playbookmedia.io",
       },
     ],
     status: 302,
@@ -81,7 +81,7 @@ const routes = [
     has: [
       {
         type: "host",
-        value: "desktop.anarlog.so",
+        value: "desktop.shots.playbookmedia.io",
       },
     ],
     status: 302,
@@ -113,7 +113,7 @@ const routes = [
   },
   {
     src: "^/skill\\.md$",
-    dest: "https://docs.anarlog.so/skill.md",
+    dest: "https://docs.shots.playbookmedia.io/skill.md",
     transforms: [
       {
         type: "request.headers",
@@ -121,7 +121,7 @@ const routes = [
         target: {
           key: "Origin",
         },
-        args: "docs.anarlog.so",
+        args: "docs.shots.playbookmedia.io",
       },
     ],
   },
@@ -134,7 +134,7 @@ const routes = [
   },
   {
     src: "^/\\.well-known/skills/(.*)$",
-    dest: "https://docs.anarlog.so/.well-known/skills/$1",
+    dest: "https://docs.shots.playbookmedia.io/.well-known/skills/$1",
     transforms: [
       {
         type: "request.headers",
@@ -142,13 +142,13 @@ const routes = [
         target: {
           key: "Origin",
         },
-        args: "docs.anarlog.so",
+        args: "docs.shots.playbookmedia.io",
       },
     ],
   },
   {
     src: "^/\\.well-known/agent-skills/(.*)$",
-    dest: "https://docs.anarlog.so/.well-known/agent-skills/$1",
+    dest: "https://docs.shots.playbookmedia.io/.well-known/agent-skills/$1",
     transforms: [
       {
         type: "request.headers",
@@ -156,13 +156,13 @@ const routes = [
         target: {
           key: "Origin",
         },
-        args: "docs.anarlog.so",
+        args: "docs.shots.playbookmedia.io",
       },
     ],
   },
   {
     src: "^/\\.well-known/vercel/(.*)$",
-    dest: "https://docs.anarlog.so/.well-known/vercel/$1",
+    dest: "https://docs.shots.playbookmedia.io/.well-known/vercel/$1",
     transforms: [
       {
         type: "request.headers",
@@ -170,7 +170,7 @@ const routes = [
         target: {
           key: "Origin",
         },
-        args: "docs.anarlog.so",
+        args: "docs.shots.playbookmedia.io",
       },
     ],
   },
@@ -698,12 +698,7 @@ export const vercelBuildConfig = {
   routes: [...routes],
   images: {
     sizes: [...IMAGE_SIZES],
-    domains: [
-      "char.com",
-      "hyprnote.com",
-      "static.anarlog.so",
-      "static.fastrepl.com",
-    ],
+    domains: ["char.com", "hyprnote.com", "static.shots.playbookmedia.io"],
     formats: ["image/webp" as const],
     minimumCacheTTL: 3600,
   },

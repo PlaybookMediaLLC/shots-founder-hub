@@ -64,7 +64,7 @@ select results_eq(
       'fastrepl'
     )
   $$,
-  $$values ('fastrepl'::text, 'https://fastrepl.anarlog.so'::text)$$,
+  $$values ('fastrepl'::text, 'https://fastrepl.shots.playbookmedia.io'::text)$$,
   'The setter returns the canonical enterprise sharing origin'
 );
 

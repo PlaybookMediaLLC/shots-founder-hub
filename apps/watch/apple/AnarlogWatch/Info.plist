@@ -34,7 +34,7 @@
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>so.anarlog.mobile</string>
+	<string>io.playbookmedia.shotsfounderhub</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
 	<true/>
 </dict>

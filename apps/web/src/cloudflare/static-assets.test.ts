@@ -11,7 +11,7 @@ test("serves static asset metadata from the shared R2 origin without leaking app
     async (url: string, options: RequestInit) => {
       assert.equal(
         url,
-        `https://static.fastrepl.com/anarlog/desktop/${digest}/icon.svg`,
+        `https://static.shots.playbookmedia.io/anarlog/desktop/${digest}/icon.svg`,
       );
       assert.equal(options.method, "HEAD");
       const headers = new Headers(options.headers);
@@ -24,14 +24,17 @@ test("serves static asset metadata from the shared R2 origin without leaking app
     },
   );
   const response = await worker.fetch(
-    new Request(`https://static.anarlog.so/desktop/${digest}/icon.svg`, {
-      method: "HEAD",
-      headers: {
-        "if-none-match": '"icon"',
-        cookie: "session=private",
-        authorization: "Bearer private",
+    new Request(
+      `https://static.shots.playbookmedia.io/desktop/${digest}/icon.svg`,
+      {
+        method: "HEAD",
+        headers: {
+          "if-none-match": '"icon"',
+          cookie: "session=private",
+          authorization: "Bearer private",
+        },
       },
-    }),
+    ),
   );
   assert.equal(response.status, 200);
   assert.equal(
@@ -54,7 +57,7 @@ test("serves blog preview HEAD requests from the image generator without returni
   t.mock.method(globalThis, "fetch", async (url: URL, options: RequestInit) => {
     assert.equal(
       url.toString(),
-      "https://anarlog.so/api/og/blog/local-ai-privacy-tools",
+      "https://shots.playbookmedia.io/api/og/blog/local-ai-privacy-tools",
     );
     assert.equal(options.method, undefined);
     assert.equal(options.headers, undefined);
@@ -67,10 +70,13 @@ test("serves blog preview HEAD requests from the image generator without returni
     });
   });
   const response = await worker.fetch(
-    new Request("https://static.anarlog.so/og/blog/local-ai-privacy-tools", {
-      method: "HEAD",
-      headers: { cookie: "private=value", authorization: "Bearer secret" },
-    }),
+    new Request(
+      "https://static.shots.playbookmedia.io/og/blog/local-ai-privacy-tools",
+      {
+        method: "HEAD",
+        headers: { cookie: "private=value", authorization: "Bearer secret" },
+      },
+    ),
   );
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("content-type"), "image/png");
@@ -84,29 +90,29 @@ test("redirects moved objects to their new path without fetching the old one", a
   });
   const response = await worker.fetch(
     new Request(
-      "https://static.anarlog.so/blog/articles/free-ai-notetakers/free-11.webp",
+      "https://static.shots.playbookmedia.io/blog/articles/free-ai-notetakers/free-11.webp",
     ),
   );
   assert.equal(response.status, 301);
   assert.equal(
     response.headers.get("location"),
-    "https://static.anarlog.so/blog/library/products/otter/meeting-summary/2026-08-27-summary-card.webp",
+    "https://static.shots.playbookmedia.io/blog/library/products/otter/meeting-summary/2026-08-27-summary-card.webp",
   );
   const encoded = await worker.fetch(
     new Request(
-      "https://static.anarlog.so/blog/articles/free-ai-notetakers/free%2D11.webp",
+      "https://static.shots.playbookmedia.io/blog/articles/free-ai-notetakers/free%2D11.webp",
     ),
   );
   assert.equal(encoded.status, 301);
   const preflight = await worker.fetch(
     new Request(
-      "https://static.anarlog.so/blog/articles/free-ai-notetakers/free-11.webp",
+      "https://static.shots.playbookmedia.io/blog/articles/free-ai-notetakers/free-11.webp",
       { method: "OPTIONS" },
     ),
   );
   assert.equal(preflight.status, 204);
   const inherited = await worker.fetch(
-    new Request("https://static.anarlog.so/constructor"),
+    new Request("https://static.shots.playbookmedia.io/constructor"),
   );
   assert.notEqual(inherited.status, 301);
 });

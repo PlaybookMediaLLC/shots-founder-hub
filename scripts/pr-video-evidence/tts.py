@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Local-first TTS generator for PR narrated video evidence.
+"""Human-sounding local-first neural TTS generator for PR narrated video evidence.
 
-Default provider: Kokoro ONNX (kokoro-onnx) with pinned SHA-256 weight verification.
-Fallbacks: local espeak-ng, or explicitly opted-in OpenAI TTS (with secret scan).
+Default provider: Kokoro ONNX (kokoro-onnx, neural v1.0 model with pinned SHA-256).
+Fallback: explicitly configured OpenAI neural TTS (OPENAI_API_KEY, secret-scanned).
+Robotic formant synthesizers (e.g., espeak-ng, flite) are intentionally disallowed.
 """
 
 from __future__ import annotations
@@ -12,7 +13,6 @@ import hashlib
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -29,6 +29,15 @@ KOKORO_FILES = {
     "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
     "kokoro-v1.0.onnx": "7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5",
 }
+RECOMMENDED_KOKORO_VOICES = (
+    "af_heart",
+    "af_bella",
+    "af_sarah",
+    "am_michael",
+    "am_fenrir",
+    "bf_emma",
+    "bm_george",
+)
 OPENAI_VOICES = {
     "alloy",
     "ash",
@@ -40,6 +49,11 @@ OPENAI_VOICES = {
     "sage",
     "shimmer",
 }
+OPENAI_SPEECH_INSTRUCTIONS = (
+    "Speak like a calm, experienced software engineer walking a teammate through a "
+    "pull request demo. Natural human cadence, clear articulation, subtle pauses "
+    "between sentences, zero promotional tone or theatrical inflection."
+)
 SECRET_PATTERNS = [
     re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,})\b"),
     re.compile(r"\b(?:sk-[A-Za-z0-9_-]{20,}|(?:sk|rk)_live_[A-Za-z0-9]{16,})\b"),
@@ -48,11 +62,48 @@ SECRET_PATTERNS = [
     re.compile(r"\bBearer\s+[A-Za-z0-9._-]{20,}\b", re.IGNORECASE),
     re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"),
 ]
+SPEECH_REPLACEMENTS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"\bAGENTS\.md\b"), "agents dot M D"),
+    (re.compile(r"\bSKILL\.md\b"), "skill dot M D"),
+    (re.compile(r"\bREADME\.md\b"), "readme dot M D"),
+    (re.compile(r"\bpr-video-evidence\b", re.IGNORECASE), "P R video evidence"),
+    (re.compile(r"\bdevx:video-evidence\b", re.IGNORECASE), "dev X video evidence"),
+    (re.compile(r"\bH\.264/AAC\b", re.IGNORECASE), "H 264 and A A C"),
+    (re.compile(r"\b(\d{3,4})\s*[x×]\s*(\d{3,4})\b"), r"\1 by \2"),
+    (re.compile(r"\bE2E\b"), "end to end"),
+    (re.compile(r"\bPRs\b"), "P Rs"),
+    (re.compile(r"\bPR\b"), "P R"),
+    (re.compile(r"\bURLs\b"), "U R Ls"),
+    (re.compile(r"\bURL\b"), "U R L"),
+    (re.compile(r"\bCLI\b"), "C L I"),
+    (re.compile(r"\bAPIs\b"), "A P Is"),
+    (re.compile(r"\bAPI\b"), "A P I"),
+    (re.compile(r"\bCI\b"), "C I"),
+    (re.compile(r"\boxlint\b", re.IGNORECASE), "ox lint"),
+    (re.compile(r"\bdprint\b", re.IGNORECASE), "D print"),
+    (re.compile(r"\bffprobe\b", re.IGNORECASE), "F F probe"),
+    (re.compile(r"\bffmpeg\b", re.IGNORECASE), "F F mpeg"),
+]
+SENTENCE_PAUSE_SECONDS = 0.22
 
 
 def sanitize_filename_token(token: str) -> str:
     cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", token).strip(".-")
     return cleaned or "cue"
+
+
+def normalize_for_speech(text: str) -> str:
+    """Normalize code/engineering tokens so neural TTS pronounces them like a human."""
+    spoken = text.replace("`", "")
+    for pattern, replacement in SPEECH_REPLACEMENTS:
+        spoken = pattern.sub(replacement, spoken)
+    spoken = re.sub(r"\s+", " ", spoken).strip()
+    return spoken
+
+
+def split_sentences(text: str) -> list[str]:
+    parts = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()]
+    return parts or [text.strip()]
 
 
 def sha256_file(file_path: Path) -> str:
@@ -72,7 +123,8 @@ def wav_duration_seconds(wav_path: Path) -> float:
         return frames / float(rate)
 
 
-def normalize_wav(input_path: Path, output_path: Path) -> None:
+def master_speech_wav(input_path: Path, output_path: Path) -> None:
+    """Master speech to crisp, natural broadcast loudness (-16 LUFS, 48kHz mono PCM)."""
     cmd = [
         "ffmpeg",
         "-y",
@@ -80,6 +132,8 @@ def normalize_wav(input_path: Path, output_path: Path) -> None:
         "error",
         "-i",
         str(input_path),
+        "-af",
+        "highpass=f=70,loudnorm=I=-16:TP=-1.5:LRA=11",
         "-ac",
         "1",
         "-ar",
@@ -157,9 +211,13 @@ def ensure_kokoro_weights(cache_dir: Path, auto_download: bool) -> tuple[Path, P
             continue
         if not auto_download:
             raise FileNotFoundError(
-                f"Kokoro weights missing in {cache_dir}. Pass --auto-download or download "
-                f"kokoro-v1.0.onnx and voices-v1.0.bin."
+                f"Kokoro weights missing in {cache_dir}. Re-run without --no-auto-download "
+                f"or download kokoro-v1.0.onnx and voices-v1.0.bin."
             )
+        print(
+            f"[tts] downloading verified Kokoro neural voice asset {filename}...",
+            file=sys.stderr,
+        )
         download_verified(f"{KOKORO_RELEASE_BASE}/{filename}", target, expected_sha)
         paths[filename] = target
     return paths["kokoro-v1.0.onnx"], paths["voices-v1.0.bin"]
@@ -174,9 +232,10 @@ def run_cue_synthesis(
     for index, (cue_id, safe_token, text) in enumerate(validated_cues, start=1):
         raw_wav = out_dir / f"{index:02d}-{safe_token}.raw.wav"
         norm_wav = out_dir / f"{index:02d}-{safe_token}.wav"
+        spoken = normalize_for_speech(text)
         try:
-            render_raw(cue_id, text, raw_wav)
-            normalize_wav(raw_wav, norm_wav)
+            render_raw(cue_id, spoken, raw_wav)
+            master_speech_wav(raw_wav, norm_wav)
         finally:
             raw_wav.unlink(missing_ok=True)
         duration = round(wav_duration_seconds(norm_wav), 3)
@@ -193,50 +252,46 @@ def run_cue_synthesis(
 
 def init_kokoro(auto_download: bool):
     from kokoro_onnx import Kokoro
+    import numpy as np
     import soundfile as sf
 
     cache_dir = Path(os.environ.get("KOKORO_CACHE_DIR", str(DEFAULT_KOKORO_DIR)))
     model_path, voices_path = ensure_kokoro_weights(cache_dir, auto_download)
-    return Kokoro(str(model_path), str(voices_path)), sf
+    return Kokoro(str(model_path), str(voices_path)), np, sf
 
 
 def synthesize_kokoro(
     kokoro,
+    np,
     sf,
     validated_cues: list[tuple[str, str, str]],
     out_dir: Path,
     voice: str,
     speed: float,
 ) -> tuple[str, str, list[dict]]:
-    def render_raw(_cue_id: str, text: str, raw_wav: Path) -> None:
-        samples, sample_rate = kokoro.create(
-            text, voice=voice, speed=speed, lang="en-us"
+    available = set(kokoro.get_voices()) if hasattr(kokoro, "get_voices") else set()
+    if available and voice not in available:
+        raise ValueError(
+            f"Unknown Kokoro voice {voice!r}. Recommended human voices: "
+            f"{', '.join(RECOMMENDED_KOKORO_VOICES)}"
         )
-        sf.write(str(raw_wav), samples, sample_rate)
+
+    def render_raw(_cue_id: str, spoken_text: str, raw_wav: Path) -> None:
+        sentences = split_sentences(spoken_text)
+        chunks = []
+        sample_rate = 24000
+        for idx, sentence in enumerate(sentences):
+            samples, sample_rate = kokoro.create(
+                sentence, voice=voice, speed=speed, lang="en-us"
+            )
+            chunks.append(np.asarray(samples, dtype=np.float32))
+            if idx < len(sentences) - 1:
+                pause_samples = int(round(sample_rate * SENTENCE_PAUSE_SECONDS))
+                chunks.append(np.zeros(pause_samples, dtype=np.float32))
+        combined = np.concatenate(chunks) if len(chunks) > 1 else chunks[0]
+        sf.write(str(raw_wav), combined, sample_rate)
 
     return "kokoro-onnx", voice, run_cue_synthesis(validated_cues, out_dir, render_raw)
-
-
-def synthesize_espeak(
-    validated_cues: list[tuple[str, str, str]], out_dir: Path, speed: float
-) -> tuple[str, str, list[dict]]:
-    binary = shutil.which("espeak-ng") or shutil.which("espeak")
-    if not binary:
-        raise RuntimeError("espeak-ng is not installed.")
-    wpm = max(110, min(240, int(round(165 * speed))))
-
-    def render_raw(_cue_id: str, text: str, raw_wav: Path) -> None:
-        subprocess.run(
-            [binary, "-s", str(wpm), "-w", str(raw_wav), "--", text],
-            check=True,
-            timeout=60,
-        )
-
-    return (
-        "espeak-ng",
-        "default",
-        run_cue_synthesis(validated_cues, out_dir, render_raw),
-    )
 
 
 def synthesize_openai(
@@ -251,18 +306,19 @@ def synthesize_openai(
     for cue_id, _safe_token, text in validated_cues:
         assert_no_secrets(text, cue_id)
     model = os.environ.get("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
-    selected_voice = voice if voice in OPENAI_VOICES else "alloy"
+    selected_voice = voice if voice in OPENAI_VOICES else "coral"
 
-    def render_raw(_cue_id: str, text: str, raw_wav: Path) -> None:
-        payload = json.dumps(
-            {
-                "model": model,
-                "voice": selected_voice,
-                "input": text,
-                "response_format": "wav",
-                "speed": speed,
-            }
-        ).encode("utf-8")
+    def render_raw(_cue_id: str, spoken_text: str, raw_wav: Path) -> None:
+        body: dict[str, object] = {
+            "model": model,
+            "voice": selected_voice,
+            "input": spoken_text,
+            "response_format": "wav",
+            "speed": speed,
+        }
+        if model == "gpt-4o-mini-tts":
+            body["instructions"] = OPENAI_SPEECH_INSTRUCTIONS
+        payload = json.dumps(body).encode("utf-8")
         request = urllib.request.Request(
             "https://api.openai.com/v1/audio/speech",
             data=payload,
@@ -284,7 +340,7 @@ def synthesize_openai(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Synthesize per-cue narration WAV clips."
+        description="Synthesize natural human-sounding per-cue narration WAV clips."
     )
     parser.add_argument("--plan", required=True, help="Path to verification plan JSON")
     parser.add_argument(
@@ -293,19 +349,31 @@ def main() -> int:
     parser.add_argument(
         "--provider",
         default="auto",
-        choices=["auto", "kokoro", "espeak", "openai"],
-        help="TTS provider (default: auto -> kokoro-onnx, fallback espeak-ng)",
+        choices=["auto", "kokoro", "openai"],
+        help="Neural TTS provider (default: auto -> kokoro-onnx, optional openai fallback)",
     )
     parser.add_argument(
-        "--voice", default="af_heart", help="Voice ID for Kokoro/OpenAI"
+        "--voice",
+        default="af_heart",
+        help=f"Neural voice ID (default: af_heart; recommended: {', '.join(RECOMMENDED_KOKORO_VOICES)})",
     )
     parser.add_argument(
-        "--speed", type=float, default=1.02, help="Speech speed multiplier"
+        "--speed",
+        type=float,
+        default=1.0,
+        help="Speech speed multiplier (default: 1.0 natural cadence)",
     )
     parser.add_argument(
         "--auto-download",
         action="store_true",
-        help="Download verified Kokoro v1.0 ONNX weights into cache if missing",
+        default=True,
+        help="Automatically download verified Kokoro v1.0 ONNX weights if missing (default: enabled)",
+    )
+    parser.add_argument(
+        "--no-auto-download",
+        action="store_false",
+        dest="auto_download",
+        help="Fail instead of downloading Kokoro weights when missing from local cache",
     )
     args = parser.parse_args()
 
@@ -316,33 +384,36 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if args.provider == "kokoro":
-        kokoro, sf = init_kokoro(args.auto_download)
+        kokoro, np, sf = init_kokoro(args.auto_download)
         provider_used, voice_used, segments = synthesize_kokoro(
-            kokoro, sf, validated_cues, out_dir, args.voice, args.speed
-        )
-    elif args.provider == "espeak":
-        provider_used, voice_used, segments = synthesize_espeak(
-            validated_cues, out_dir, args.speed
+            kokoro, np, sf, validated_cues, out_dir, args.voice, args.speed
         )
     elif args.provider == "openai":
         provider_used, voice_used, segments = synthesize_openai(
             validated_cues, out_dir, args.voice, args.speed
         )
     else:
-        # Only fall back to espeak-ng when Kokoro package/weights are unavailable.
         try:
-            kokoro, sf = init_kokoro(args.auto_download)
+            kokoro, np, sf = init_kokoro(args.auto_download)
         except (ImportError, FileNotFoundError) as kokoro_err:
-            print(
-                f"[tts] kokoro-onnx unavailable ({kokoro_err}); falling back to espeak-ng",
-                file=sys.stderr,
-            )
-            provider_used, voice_used, segments = synthesize_espeak(
-                validated_cues, out_dir, args.speed
-            )
+            if os.environ.get("OPENAI_API_KEY", "").strip():
+                print(
+                    f"[tts] kokoro-onnx unavailable ({kokoro_err}); using OpenAI neural TTS",
+                    file=sys.stderr,
+                )
+                provider_used, voice_used, segments = synthesize_openai(
+                    validated_cues, out_dir, args.voice, args.speed
+                )
+            else:
+                raise SystemExit(
+                    "Human-sounding neural TTS is required (robotic synthesizers such as "
+                    "espeak-ng are disallowed). Install Kokoro locally via "
+                    "`python3 -m pip install kokoro-onnx soundfile` or configure OPENAI_API_KEY "
+                    f"for neural cloud TTS. Root cause: {kokoro_err}"
+                )
         else:
             provider_used, voice_used, segments = synthesize_kokoro(
-                kokoro, sf, validated_cues, out_dir, args.voice, args.speed
+                kokoro, np, sf, validated_cues, out_dir, args.voice, args.speed
             )
 
     manifest = {
