@@ -80,6 +80,7 @@ Only when the result is exactly `gitbutler/workspace`, use the repository-local 
 - Desktop dev: `pnpm dev:desktop`.
 - Web dev: `pnpm dev:web`.
 - Combined desktop/web/API/local Supabase: `pnpm dev`; backend only: `pnpm dev:api`. Requires Docker, Task, and API configuration. Process Compose 1.122.0+ owns process lifecycle and logs; Turbo owns the shared UI build. See `CONTRIBUTING.md` for control ports and headless use.
+- PR narrated video evidence: `pnpm devx:video-evidence --plan <plan.json>` (generate narrated H.264/AAC evidence + PR markdown block); `pnpm devx:video-evidence:verify` (validate evidence manifest and PR metadata locally).
 - Dev docs: https://shots.playbookmedia.io/docs
 
 ## Pre-commit verification
@@ -179,7 +180,7 @@ Naming rules:
 For implementation, bug fixes, and refactors, follow this sequence:
 
 Understand scope → implement → verify → independent review → fix confirmed
-blockers → verify again → report.
+blockers → verify again → narrated video evidence → report.
 
 Use the repository's existing feature-flow skill when available. The rules
 below also apply when that skill is not installed.
@@ -260,6 +261,79 @@ A directly requested review may run independently of implementation.
 These are agent execution instructions. Installing the agent definitions
 does not itself create a watcher, automatic trigger, or CI enforcement.
 
+## Mandatory narrated video evidence for pull requests
+
+Every coding agent and implementation thread — across every model, surface, and
+pull request (including follow-up review iterations) — MUST automatically invoke
+[.agents/skills/pr-video-evidence/SKILL.md](.agents/skills/pr-video-evidence/SKILL.md)
+before declaring implementation work complete or marking a pull request ready
+for review. Review-only subagents must not recursively initiate this workflow.
+
+### Required gate order
+
+1. **Inspect & implement**: read the original task, acceptance criteria, and
+   affected code paths, then implement the change without bypassing repository
+   guardrails.
+2. **Verify against the real running app**: start the actual application from
+   the proposed implementation in an isolated environment with seeded/sanitized
+   test data and run all applicable automated tests and CI checks.
+3. **Independent engineering review**: execute the mandatory independent review
+   process above (core `reviewer` perspectives plus affected domain
+   specialists). The implementing agent must never be the sole reviewer of its
+   own implementation. Resolve all blocking findings (`P0`, `P1`, and
+   unresolved `P2` blockers), rerun verification, and obtain independent
+   re-review before recording final video evidence.
+4. **Narrated, visually annotated video evidence**: run
+   `pnpm devx:video-evidence` against the verified implementation commit to
+   produce a concise (typically 30–120 s) MP4 (`H.264` video + `AAC` audio,
+   default `1920x1080` at `30 fps`, minimum enforced `1280x720` at `24 fps`,
+   `+faststart`, no background music or decorative transitions) featuring:
+   - Synchronized spoken narration (Kokoro local TTS by default, with local
+     `espeak-ng` fallback or explicitly authorized cloud TTS) strictly
+     describing verified observed behavior.
+   - Visible cursor movements, click indicators, element bounding-box
+     highlights, restrained zooms where needed for readability, and legible
+     synchronized captions (burned in plus `.srt`/`.vtt`).
+   - Actual user interactions, observed outcomes, relevant error/edge cases,
+     and coverage of the original acceptance criteria.
+   - For backend/CLI/API/infrastructure changes without a browser UI, record
+     terminal/API/database/observability verification through the same
+     pipeline. For genuinely non-demonstrable changes, generate a validated
+     exemption manifest via `pnpm devx:video-evidence exempt --reason ... --artifact ... --plan <metadata.json>`
+     with equivalent verification artifacts; never silently skip verification.
+     (The docs-only self-review exception above applies only to
+     `non-demonstrable` exemptions that explicitly record
+     `review_report.exception_reason`.)
+5. **Inspect, attach, and validate**: inspect the rendered recording (`ffprobe`,
+   audio level check, and frame-by-frame review for every demonstration beat),
+   confirm zero leaked credentials or sensitive data, and never commit binary
+   media or trace artifacts to git (keep them under `.tmp/pr-video-evidence/`).
+   Deliver the playable MP4 attachment and consolidated review report in the
+   review thread, include the accessible recording link plus the generated
+   evidence summary and `pr-video-evidence` metadata block in the PR
+   description, and validate locally with `pnpm devx:video-evidence:verify`.
+
+### Freshness, feedback loop, and draft policy
+
+- Every recording and review manifest MUST bind to the exact 40-character head
+  commit SHA, repository, branch, PR number (once assigned), capture timestamp,
+  routes/endpoints, isolated environment, acceptance criteria, test results,
+  and independent review verdict (`ship`, zero blocking findings).
+- When a reviewer submits video frame annotations or PR review comments:
+  inspect every marked frame and comment, convert feedback into concrete
+  acceptance criteria, implement fixes, repeat applicable independent review
+  and automated checks, record a **new** narrated video against the **new**
+  commit SHA, attach it to the same thread and PR, and explicitly map which
+  comments are addressed vs. outstanding. Never reuse an earlier commit's
+  recording after subsequent changes.
+- Missing, failed, incomplete, or stale evidence blocks readiness for review
+  and fails the `pr-video-evidence` GitHub Actions check
+  (`.github/workflows/pr-video-evidence.yml`) on ready PRs (and on any draft PR
+  with malformed/stale evidence or committed binary recordings). If any step or
+  pipeline fails, report the exact blocker and leave the pull request in
+  **draft**. Never fabricate evidence, weaken quality gates, or merge without
+  explicit authorization.
+
 ## Misc
 
 - Do not create summary docs or example code files unless requested.
@@ -276,4 +350,4 @@ The cloud image is Ubuntu 24.04 x86_64 with Node, pnpm, Rust, and the Linux libr
 - Swift formatting requires an available `swift format` executable. If missing, check changed non-Swift files and report the exact unchecked Swift paths; verify them on a host with the formatter. Do not treat a formatter startup error as proof that Swift files are formatted, or waive other formatting failures.
 - No audio input device exists in the headless pod; use `crates/audio-mock` for automated recording flows. Mobile TypeScript checks run on Linux; Android native builds require Java/Android SDK/NDK setup from `mobile_ci.yaml`. iOS and watchOS builds require macOS/Xcode.
 - The default `cc`/`c++` are clang. The native C++ dependencies need a matching `libstdc++` development package (the image provides `libstdc++-14-dev`). The default dev database is `~/.local/share/com.hyprnote.dev/app.db`, with notes in `sessions`/`session_documents`; confirm the running app's channel and configured storage location before inspecting data.
-- Changelog, release, and QA skills are exposed to Cursor Cloud via `.cursor/skills/` shims (`new-changelog`, `release-new-version`, `qa-critical-ux`, `qa-cli-mcp-api`). Canonical copies live in `.agents/skills/`; edit those only. `qa-critical-ux` is macOS-native and is not a cloud-environment gate.
+- Changelog, release, PR evidence, and QA skills are exposed to Cursor Cloud via `.cursor/skills/` shims (`new-changelog`, `release-new-version`, `pr-video-evidence`, `qa-critical-ux`, `qa-cli-mcp-api`). Canonical copies live in `.agents/skills/`; edit those only. `qa-critical-ux` is macOS-native and is not a cloud-environment gate.
